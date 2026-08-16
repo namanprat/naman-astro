@@ -1,8 +1,7 @@
 import { useEffect, useState } from "react";
 import * as THREE from "three";
-import { ARCHIVE_MEDIA_URLS } from "./archiveMedia";
+import { ARCHIVE_MEDIA_URLS } from "../../content/archive";
 import {
-  configureArchiveTexture,
   disposeArchiveMediaSource,
   loadArchiveMediaSource,
   type ArchiveMediaSource,
@@ -43,5 +42,3 @@ export function useArchiveTextures() {
 
   return textures;
 }
-
-export { configureArchiveTexture, loadArchiveMediaSource, disposeArchiveMediaSource };

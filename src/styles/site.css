@@ -1,8 +1,8 @@
-/* Site layout, chrome helpers, and original-page compositions.
-   Tokens stay unlayered so they always apply; rules sit on Lumos `components`. */
+/* Site layout, chrome helpers, and page compositions.
+   Tokens stay unlayered so they always apply; rules sit on `components`. */
 
 :root {
-  /* Lumos Grid counts: 4 / 6 / 8 / 12 at 30 / 48 / 64 rem. */
+  /* Column counts: 4 / 6 / 8 / 12 at 30 / 48 / 64 rem. */
   --site-column-count: 4;
   /* The widest count, i.e. the grid authors place content against. */
   --site-column-count-max: 12;
@@ -310,69 +310,5 @@
     border-radius: var(--radius-round);
     background: color-mix(in srgb, var(--ink) 45%, transparent);
     will-change: transform;
-  }
-
-  .grid-overlay {
-    position: fixed;
-    inset: 0;
-    z-index: var(--z--modal);
-    pointer-events: none;
-    opacity: 0;
-  }
-
-  .grid-overlay.is-active {
-    opacity: 1;
-  }
-
-  .grid-lines {
-    position: absolute;
-    inset-block: 0;
-    left: 50%;
-    transform: translateX(-50%);
-    width: var(--site-width);
-    max-width: var(--max-width-main);
-    display: grid;
-    grid-template-columns: repeat(var(--site-column-count), minmax(0, 1fr));
-    column-gap: var(--site-gutter);
-    pointer-events: none;
-  }
-
-  .grid-lines_col {
-    min-width: 0;
-    width: 100%;
-    border-left: var(--border-width) dashed color-mix(in srgb, var(--ink) 20%, transparent);
-    border-right: var(--border-width) dashed color-mix(in srgb, var(--ink) 20%, transparent);
-  }
-
-  .grid-lines_col.is-sm,
-  .grid-lines_col.is-md,
-  .grid-lines_col.is-lg {
-    display: none;
-  }
-
-  @media (width >= 30rem) {
-    .grid-lines_col.is-sm {
-      display: block;
-    }
-  }
-
-  @media (width >= 48rem) {
-    .grid-lines_col.is-md {
-      display: block;
-    }
-  }
-
-  @media (width >= 64rem) {
-    .grid-lines_col.is-lg {
-      display: block;
-    }
-  }
-
-  .grid-lines_col.is-overlay {
-    border-left-style: solid;
-    border-right-style: solid;
-    border-left-color: red;
-    border-right-color: red;
-    background-color: rgb(255 0 0 / 8%);
   }
 }

@@ -12,8 +12,9 @@ export interface SeoProps {
    * Force `robots: noindex, nofollow` on or off for this page.
    *
    * Leave unset to inherit from `NOINDEX_ROUTES`, which also drives sitemap
-   * exclusion. Setting it here only affects the robots tag — a page kept out of
-   * search results should be listed in `NOINDEX_ROUTES` so it leaves the sitemap too.
+   * exclusion and robots.txt `Disallow`. Setting it here only affects the
+   * robots tag — a page kept out of search results should be listed in
+   * `NOINDEX_ROUTES` so it leaves the sitemap and robots.txt too.
    */
   noindex?: boolean;
 }

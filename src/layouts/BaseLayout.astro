@@ -1,10 +1,9 @@
 ---
+import Analytics from "@vercel/analytics/astro";
 import "@/styles/global.css";
 import "@/styles/site.css";
 import BaseHead from "@/components/BaseHead.astro";
 import SkipLink from "@/components/SkipLink.astro";
-import Grid from "@/components/Grid.astro";
-import GridOverlay from "@/components/GridOverlay.astro";
 import SiteChrome from "@/components/site/SiteChrome";
 import GooeyFilter from "@/components/site/GooeyFilter.astro";
 import FluidCanvas from "@/components/site/FluidCanvas.astro";
@@ -13,20 +12,9 @@ import type { SeoProps } from "@/types.ts";
 type Props = SeoProps & {
   /** Theme for the whole page. `inherit` leaves the root defaults in place. */
   theme?: "inherit" | "light" | "dark" | "brand";
-  /**
-   * Unused by the overlay chrome; kept so existing page props still type-check.
-   */
-  overlap?: boolean;
-  /** When false, skip nav + About (e.g. /example-components). Default true. */
-  chrome?: boolean;
 };
 
-const {
-  theme = "inherit",
-  overlap: _overlap = false,
-  chrome = true,
-  ...seo
-} = Astro.props;
+const { theme = "inherit", ...seo } = Astro.props;
 
 const isArchive = Astro.url.pathname === "/archive";
 ---
@@ -35,6 +23,7 @@ const isArchive = Astro.url.pathname === "/archive";
 <html lang="en" class:list={[theme !== "inherit" && `theme-${theme}`]}>
   <head>
     <BaseHead {...seo} />
+    <Analytics />
     <script is:inline>
       document.documentElement.classList.add("is-line-revealing");
       document.documentElement.classList.add("is-gooey-arming");
@@ -60,21 +49,13 @@ const isArchive = Astro.url.pathname === "/archive";
     <slot name="head" />
   </head>
   <body>
-    <Grid render={false} />
     <SkipLink />
     {/* Every route: headings and the work label both filter through it, and a
         `url()` pointing at a missing node blanks the element on WebKit. */}
     <GooeyFilter />
     <div class="site-grain" aria-hidden="true"></div>
     <div class="transition-panel" aria-hidden="true"></div>
-    {
-      chrome && (
-        <SiteChrome
-          client:load
-          pathname={Astro.url.pathname}
-        />
-      )
-    }
+    <SiteChrome client:load pathname={Astro.url.pathname} />
     <div class="site-backdrop">
       <slot name="backdrop" />
     </div>
@@ -85,7 +66,6 @@ const isArchive = Astro.url.pathname === "/archive";
       {!isArchive && <FluidCanvas />}
       <slot />
     </main>
-    {import.meta.env.DEV && <GridOverlay />}
     <script>
       import { bootIfCovered } from "@/lib/site/pageTransition";
       import { revealLines } from "@/lib/site/lineReveal";

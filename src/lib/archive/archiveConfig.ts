@@ -32,8 +32,7 @@ export const ARCHIVE_CONFIG = {
   // this alone controls how much bigger the images read: 10 → 1000% of orb size.
   gridScaleVsOrb: 10,
   // Extra spacing between grid tiles (1 = tiles touch their cell, 2 = double the gap).
-  gridSpacing: 1.5 / 1.5,
-  gridGap: 0.38,
+  gridSpacing: 1,
   unwrapScale: 2.8,
 } as const;
 
@@ -76,6 +75,3 @@ export const ARCHIVE_GRID_ROWS = Math.ceil(
 /** Unwrap spread scaled to grid cells (legacy fallback; morph uses symmetric cells). */
 export const ARCHIVE_UNWRAP_SCALE =
   ARCHIVE_GRID_CELL_SIZE * (ARCHIVE_CONFIG.unwrapScale / 1.15);
-
-/** GridHelper: 120 units / 60 divisions = 2 units per line at scale 1. */
-export const ARCHIVE_GRID_HELPER_UNIT = 2;

@@ -1,15 +1,12 @@
----
-import Layout from "@/layouts/BaseLayout.astro";
----
-
-<Layout
-  title="About"
-  description="I'm a digital designer who makes things look good and work better."
-  theme="dark"
->
-  <script is:inline>
-    if (location.hash !== "#about") {
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta http-equiv="refresh" content="0;url=/#about" />
+    <title>About</title>
+    <script is:inline>
       location.replace("/#about");
-    }
-  </script>
-</Layout>
+    </script>
+  </head>
+  <body></body>
+</html>

@@ -155,15 +155,17 @@ html.work-transitioning * {
 
    Every tile is placed by GSAP transform (x / y / rotation / scale), so the
    layer just needs to be a full-viewport positioning context — no flex. */
-.work-page[data-work-view="slider"] .gallery {
-  /* WheelView writes --wheel-radius here each time it measures, so the anchor
-     marker below sits on exactly the ring the JS drew. This is only the value
-     before the island mounts. */
-  /* Width term mirrors WheelView's own cap so the anchor marker sits on the
-     right ring before the island mounts and takes over. */
+/* Ring geometry lives on the page root, not the gallery: the label is a sibling
+   of `.gallery`, and it has to size itself against the ring it sits inside.
+   WheelView overwrites --wheel-radius here on every measure; the value below is
+   only what stands before the island mounts, so the width term mirrors its cap. */
+.work-page[data-work-view="slider"] {
   --wheel-radius: min(350px, 32vh, calc(50vw - 3rem));
+  --wheel-tile-w: 64px;
   --wheel-tile-h: 91px;
+}
 
+.work-page[data-work-view="slider"] .gallery {
   position: fixed;
   inset: 0;
   display: block;
@@ -182,7 +184,7 @@ html.work-transitioning * {
   position: absolute;
   top: 0;
   left: 0;
-  width: 64px;
+  width: var(--wheel-tile-w);
   height: var(--wheel-tile-h);
   overflow: hidden;
   transform: none;
@@ -212,6 +214,29 @@ html.work-returning .work-page[data-work-view="slider"] .gallery::after {
   opacity: 0;
 }
 
+/* Kept inside the ring's clear span — the gap between the tiles at 9 and 3
+   o'clock — so it wraps rather than running under them. On a phone the ring is
+   width-capped, so this is the constraint that actually binds. */
+.work-page[data-work-view="slider"] .gallery-label {
+  /* 1.73 ≈ 2·cos(30°): on a six-position ring nothing sits at 3 o'clock, but the
+     tiles 30° either side reach further in at the label's own band than the full
+     diameter suggests. Sizing against the diameter let the last glyph touch them. */
+  max-width: min(
+    calc(100vw - 2 * var(--site--margin)),
+    calc(1.73 * var(--wheel-radius) - var(--wheel-tile-w) - 1rem)
+  );
+}
+
+/* A single word cannot wrap, so on a phone the max-width above only bounds the
+   box — the glyphs still spill over the tiles. Size the type to the ring
+   instead. Narrow screens only: the desktop ring is wide enough already, and
+   this would shrink type that has room. */
+@media (width < 1000px) {
+  .work-page[data-work-view="slider"] .gallery-label {
+    font-size: calc(var(--wheel-radius) * 0.42);
+  }
+}
+
 .work-page[data-work-view="slider"] .gallery__img-wrapper {
   width: 100%;
   height: 100%;
@@ -219,15 +244,10 @@ html.work-returning .work-page[data-work-view="slider"] .gallery::after {
   overflow: hidden;
 }
 
-@media (width < 1000px) {
-  .work-page[data-work-view="slider"] .gallery {
-    --wheel-tile-h: 54px;
-  }
-
-  .work-page[data-work-view="slider"] .gallery__slide {
-    width: 36px;
-  }
-}
+/* No tile shrink on narrow screens. Shrinking them was what made the phone ring
+   read as a band of stamps: twelve positions still fit, so nothing gave, and
+   every thumbnail was 36px wide. At full size the ring can only carry six, which
+   `WheelView.syncCopies` works out from the circumference on its own. */
 
 /* ── View switcher ──────────────────────────────────────────────────────
    Same pill as `.archive-view-switcher` (archive locks the colors to dark). */
@@ -409,37 +429,34 @@ html.work-returning .work-view-switcher {
     var(--site--margin);
 }
 
-/* Same box as the absolutely centered title, so services and body share its
-   vertical midpoint. Stretch overrides `.container`'s center/start alignment. */
+/* Sits under the title now rather than over it — the hero is a top-aligned
+   stack, not a centred lockup. */
 .project__hero-container {
-  position: absolute;
-  inset: 0;
+  position: relative;
   height: auto;
   min-height: 0;
-  justify-content: stretch;
-  align-items: stretch;
+  margin-top: var(--site--gutter);
   gap: 0;
 }
 
-/* One full-height row so services and description sit on the title's center. */
 .project__hero-grid {
-  height: 100%;
-  min-height: 100%;
-  grid-template-rows: 1fr;
-  align-items: center;
+  height: auto;
+  min-height: 0;
+  grid-template-rows: auto;
+  align-items: start;
 }
 
-/* Same viewport lockup as `.gallery-label` — dead-center, then scrolls away
-   with the hero instead of staying `position: fixed`. */
+/* In flow at the top of the hero. It arrives here from the work page's label
+   position — `Transition` tweens it up from viewport centre alongside the cover
+   morph, so the two land together. Hence no `position: absolute`: the resting
+   place has to be a real layout position for the tween to land on. */
 .project__title {
-  position: absolute;
-  top: 50%;
-  left: 50%;
+  position: relative;
   z-index: 1;
+  width: 100%;
   margin: 0;
   padding-inline: var(--site--margin);
-  max-width: calc(100vw - 2 * var(--site--margin));
-  transform: translate(-50%, -50%);
+  box-sizing: border-box;
   pointer-events: none;
   text-align: center;
   color: var(--ink);
@@ -447,7 +464,7 @@ html.work-returning .work-view-switcher {
 
 .project__services {
   grid-column: 1 / span 3;
-  align-self: center;
+  align-self: start;
   justify-self: start;
   text-align: left;
   display: flex;
@@ -473,7 +490,7 @@ html.work-returning .work-view-switcher {
 
 .project__body {
   grid-column: 10 / -1;
-  align-self: center;
+  align-self: start;
   justify-self: stretch;
   text-align: left;
   text-wrap: wrap;

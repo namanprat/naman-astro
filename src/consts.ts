@@ -5,13 +5,12 @@ export const SITE_DESCRIPTION =
   "Based out of Mumbai and Bangalore. Working with culture, curating digital experiences.";
 /** Canonical origin. Resolves canonical URLs, social images, and the sitemap. */
 export const SITE_URL = "https://namanpratulya.com";
-/** BCP 47 locale tag used to format dates and numbers. */
-export const SITE_LOCALE = "en-US";
 /**
- * Routes kept out of search results. Each is excluded from the sitemap and
- * served with a `robots: noindex, nofollow` tag, so the two can't disagree.
+ * Routes kept out of search results. Each is excluded from the sitemap,
+ * listed as `Disallow` in robots.txt, and served with a
+ * `robots: noindex, nofollow` tag, so the three can't disagree.
  *
  * Surrounding slashes are optional: `"/thanks"`, `"thanks"` and `"/thanks/"`
  * all match the same route.
  */
-export const NOINDEX_ROUTES: string[] = ["/404", "/example-components"];
+export const NOINDEX_ROUTES: string[] = ["/404", "/about"];

@@ -1,6 +1,4 @@
 ---
-import Button from "@/components/Button.astro";
-
 interface Props {
   /** Id of the element it jumps to, written without the `#`. */
   target?: string;
@@ -11,7 +9,7 @@ interface Props {
 const { target = "main", label = "Skip to main content" } = Astro.props;
 ---
 
-<Button element="link" href={`#${target}`} class="skip_link">{label}</Button>
+<a class="skip_link" href={`#${target}`}>{label}</a>
 
 <style is:global>
   @layer components {
@@ -23,6 +21,12 @@ const { target = "main", label = "Skip to main content" } = Astro.props;
       inset-inline-start: var(--space-2);
       z-index: 100;
       translate: 0 calc(-100% - var(--space-2) * 2);
+      padding: 0.75em 1.5em;
+      background-color: var(--button-background);
+      color: var(--button-text);
+      border: var(--border-width) solid var(--button-border);
+      border-radius: 0.5em;
+      text-decoration: none;
 
       &:focus {
         translate: 0 0;

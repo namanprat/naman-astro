@@ -25,8 +25,19 @@ const RADIUS_VH_CAP = 0.32;
 /** Air between the ring's outer edge and the viewport sides. */
 const EDGE_GUTTER = 16;
 
-/** Each project appears this many times around the ring, so six tiles fill it. */
-const COPIES = 2;
+/**
+ * How many times each project may repeat around the ring. Two fills a desktop
+ * circle; one is all a phone can hold without the tiles touching.
+ */
+const MAX_COPIES = 2;
+
+/**
+ * Arc length each tile wants, as a multiple of its own height. Below this the
+ * ring reads as a solid band rather than a set of thumbnails — which is what a
+ * fixed twelve positions did on a phone, where the radius is width-capped to
+ * about 150px.
+ */
+const SPACING_RATIO = 1.5;
 
 /**
  * Anchor sits at the top of the circle. Screen y grows downward, so that is
@@ -72,6 +83,10 @@ export default class WheelView {
   scrub!: gsap.core.Tween;
   observer!: Observer;
   private tiles: HTMLElement[] = [];
+  /** The six React slides, without any ring copies. */
+  private originals: HTMLElement[] = [];
+  /** Copies currently on the ring — derived per viewport, see `syncCopies`. */
+  private copies = 1;
   /** Clones this view added; removed again on destroy so the grid sees six. */
   private clones: HTMLElement[] = [];
   /** How many real projects there are — `tiles.length / COPIES`. */
@@ -106,7 +121,10 @@ export default class WheelView {
       this.root,
     );
     this.projectCount = originals.length;
-    this.tiles = [...originals, ...this.cloneRing(originals)];
+    this.originals = originals;
+    /* Starts at one copy so `measure` has tiles to read a size from; it then
+       derives how many the ring can actually carry and rebuilds if needed. */
+    this.tiles = [...originals];
 
     /* Start anchored on the first project. At rotation 0 tile 0 sits at 3
        o'clock and the anchor falls between two tiles, so nothing is focused. */
@@ -137,7 +155,9 @@ export default class WheelView {
        let it run off both sides of a phone — 32vh of an 812pt screen is a 520px
        ring on a 375px viewport. Tile width is read rather than hardcoded: it is
        CSS that sets it, and it changes at the breakpoint. */
-    const tileWidth = this.tiles[0]?.offsetWidth ?? 0;
+    const tile = this.tiles[0];
+    const tileWidth = tile?.offsetWidth ?? 0;
+    const tileHeight = tile?.offsetHeight ?? 0;
     const widthCap = (window.innerWidth - tileWidth) / 2 - EDGE_GUTTER;
 
     this.radius = Math.max(
@@ -145,24 +165,36 @@ export default class WheelView {
       Math.min(RADIUS, window.innerHeight * RADIUS_VH_CAP, widthCap),
     );
 
-    const gallery = this.root.querySelector<HTMLElement>(".gallery");
-    gallery?.style.setProperty("--wheel-radius", `${this.radius}px`);
+    /* On the page root, not the gallery: the label is a sibling of `.gallery`
+       and sizes itself against the ring, so it has to inherit this too. The
+       anchor marker inside `.gallery` still picks it up on the way down. */
+    const host =
+      this.root instanceof HTMLElement
+        ? this.root
+        : this.root.querySelector<HTMLElement>(".work-page");
+    host?.style.setProperty("--wheel-radius", `${this.radius}px`);
+
+    // Radius first — how many tiles fit is a question about the circumference.
+    this.syncCopies(tileHeight);
   }
 
   /**
-   * Six tiles on a 350px ring leave big gaps, so each project is repeated.
-   * The copies are appended in the same order, which puts a project's two
-   * tiles exactly opposite each other — even spacing, no clumping.
+   * Six tiles on a wide ring leave big gaps, so each project repeats. The
+   * copies are appended in the same order, which puts a project's copies
+   * exactly opposite each other — even spacing, no clumping.
    *
    * They are clones rather than extra React nodes so the grid view, the Flip
    * and `Transition` all still see exactly six slides.
    */
-  private cloneRing(originals: HTMLElement[]) {
-    const gallery = originals[0]?.parentElement;
-    if (!gallery) return [];
+  private buildRing(copies: number) {
+    const gallery = this.originals[0]?.parentElement;
+    if (!gallery) return;
 
-    for (let copy = 1; copy < COPIES; copy++) {
-      for (const el of originals) {
+    for (const el of this.clones) el.remove();
+    this.clones = [];
+
+    for (let copy = 1; copy < copies; copy++) {
+      for (const el of this.originals) {
         const clone = el.cloneNode(true) as HTMLElement;
         clone.dataset.wheelClone = "";
         // Cloned nodes carry no listeners; WorkGallery delegates clicks off
@@ -173,7 +205,38 @@ export default class WheelView {
         this.clones.push(clone);
       }
     }
-    return this.clones;
+
+    this.copies = copies;
+    this.tiles = [...this.originals, ...this.clones];
+  }
+
+  /**
+   * How many copies the current ring can carry. Derived rather than set per
+   * breakpoint: CSS owns the tile size and the radius is already width-capped,
+   * so the circumference is the only thing that decides, and it stays right at
+   * every width without a second copy of the breakpoint living here.
+   */
+  private syncCopies(tileHeight: number) {
+    if (!tileHeight || !this.projectCount) return;
+
+    const circumference = 2 * Math.PI * this.radius;
+    const wanted = Math.min(
+      MAX_COPIES,
+      Math.max(
+        1,
+        Math.round(
+          circumference / (this.projectCount * tileHeight * SPACING_RATIO),
+        ),
+      ),
+    );
+    if (wanted === this.copies) return;
+
+    // Hold the project that was at the anchor across the rebuild — ring indices
+    // are about to renumber underneath it.
+    const anchored = this.centeredIndex;
+    this.buildRing(wanted);
+    this.centerIndex = -1;
+    if (anchored >= 0) this.centerOn(anchored);
   }
 
   /** Which project a ring position shows. */

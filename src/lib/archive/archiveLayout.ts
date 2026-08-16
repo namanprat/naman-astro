@@ -10,17 +10,7 @@ export type Vec3 = { x: number; y: number; z: number };
 
 export type CellId = { cx: number; cy: number };
 
-export type CellBounds = {
-  minCx: number;
-  maxCx: number;
-  minCy: number;
-  maxCy: number;
-};
-
 const _v = new THREE.Vector3();
-const _from = new THREE.Vector3();
-const _to = new THREE.Vector3(0, 0, 1);
-const _qAlign = new THREE.Quaternion();
 
 /** Even-ish spread of `count` points on a sphere of `radius` (Fibonacci spiral). */
 export function fibonacciSpherePoints(count: number, radius: number): Vec3[] {
@@ -38,7 +28,7 @@ export function fibonacciSpherePoints(count: number, radius: number): Vec3[] {
 }
 
 /** Apply the orb's arcball orientation — same quaternion PosterTile uses. */
-export function rotateGlobePoint(pos: Vec3, orientation: THREE.Quaternion): Vec3 {
+function rotateGlobePoint(pos: Vec3, orientation: THREE.Quaternion): Vec3 {
   _v.set(pos.x, pos.y, pos.z).applyQuaternion(orientation);
   return { x: _v.x, y: _v.y, z: _v.z };
 }
@@ -75,87 +65,6 @@ export function stereographicUnwrap(
   const denom = radius - globePos.z;
   const k = Math.abs(denom) < 1e-4 ? scale : (scale * radius) / denom;
   return { x: globePos.x * k, y: globePos.y * k, z: 0 };
-}
-
-/** Unwrap relative to anchor direction — anchor lands at (0, 0). */
-export function stereographicUnwrapFromAnchor(
-  globePos: Vec3,
-  anchorDir: Vec3,
-  radius: number,
-  scale = ARCHIVE_UNWRAP_SCALE,
-): Vec3 {
-  _from.set(anchorDir.x, anchorDir.y, anchorDir.z).normalize();
-  _qAlign.setFromUnitVectors(_from, _to);
-  _v.set(globePos.x, globePos.y, globePos.z).applyQuaternion(_qAlign);
-  return stereographicUnwrap({ x: _v.x, y: _v.y, z: _v.z }, radius, scale);
-}
-
-export function unwrapToCellOffset(
-  unwrapPos: Vec3,
-  gridCellSize: number,
-): { dx: number; dy: number } {
-  return {
-    dx: Math.round(unwrapPos.x / gridCellSize),
-    dy: Math.round(unwrapPos.y / gridCellSize),
-  };
-}
-
-export function cellIdFromWorld(x: number, y: number, cellSize: number): CellId {
-  return {
-    cx: Math.floor(x / cellSize),
-    cy: Math.floor(y / cellSize),
-  };
-}
-
-export function worldFromCell(cx: number, cy: number, cellSize: number, panX = 0, panY = 0): Vec3 {
-  return {
-    x: cx * cellSize + panX,
-    y: cy * cellSize + panY,
-    z: 0,
-  };
-}
-
-/** Phantom-style hash for which texture fills a cell. */
-export function textureIndexForCell(cx: number, cy: number, count: number): number {
-  if (count <= 0) return 0;
-  const raw = cx + cy * 3;
-  return ((raw % count) + count) % count;
-}
-
-export function visibleCellBounds(
-  panX: number,
-  panY: number,
-  cameraZ: number,
-  fovDeg: number,
-  aspect: number,
-  cellSize: number,
-  padding = 2,
-): CellBounds {
-  const vFov = (fovDeg * Math.PI) / 180;
-  const halfH = cameraZ * Math.tan(vFov / 2);
-  const halfW = halfH * aspect;
-
-  const minX = panX - halfW;
-  const maxX = panX + halfW;
-  const minY = panY - halfH;
-  const maxY = panY + halfH;
-
-  return {
-    minCx: Math.floor(minX / cellSize) - padding,
-    maxCx: Math.ceil(maxX / cellSize) + padding,
-    minCy: Math.floor(minY / cellSize) - padding,
-    maxCy: Math.ceil(maxY / cellSize) + padding,
-  };
-}
-
-export function listCellsInBounds(bounds: CellBounds): CellId[] {
-  const cells: CellId[] = [];
-  for (let cy = bounds.minCy; cy <= bounds.maxCy; cy++) {
-    for (let cx = bounds.minCx; cx <= bounds.maxCx; cx++) {
-      cells.push({ cx, cy });
-    }
-  }
-  return cells;
 }
 
 /**
@@ -221,20 +130,6 @@ export function wrappedCellWorld(
 (() => {
   const p = stereographicUnwrap({ x: 5, y: 0, z: 0 }, 5);
   console.assert(p.z === 0 && p.x > 0, "stereographicUnwrap");
-  console.assert(textureIndexForCell(4, 2, 10) === 0, "textureIndexForCell");
-
-  const anchor = { x: 0, y: 0.6, z: 0.8 };
-  const len = Math.hypot(anchor.x, anchor.y, anchor.z);
-  const dir = { x: anchor.x / len, y: anchor.y / len, z: anchor.z / len };
-  const atAnchor = stereographicUnwrapFromAnchor(
-    { x: dir.x * 5, y: dir.y * 5, z: dir.z * 5 },
-    dir,
-    5,
-  );
-  console.assert(
-    Math.hypot(atAnchor.x, atAnchor.y) < 0.01,
-    "stereographicUnwrapFromAnchor anchor at center",
-  );
 
   const wcells = assignWrappedGridCells(5, 2, [
     { x: 5, y: 0, z: 0 },
@@ -251,7 +146,12 @@ export function wrappedCellWorld(
   // Layout repeats every period — proves the grid wraps seamlessly in both axes.
   const home = { cx: 1, cy: -2 };
   const w0 = wrappedCellWorld(home, 0, 0, 2);
-  const wP = wrappedCellWorld(home, ARCHIVE_GRID_COLS * 2, ARCHIVE_GRID_ROWS * 2, 2);
+  const wP = wrappedCellWorld(
+    home,
+    ARCHIVE_GRID_COLS * 2,
+    ARCHIVE_GRID_ROWS * 2,
+    2,
+  );
   console.assert(
     Math.abs(w0.x - wP.x) < 1e-9 && Math.abs(w0.y - wP.y) < 1e-9,
     "wrappedCellWorld periodic",

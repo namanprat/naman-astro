@@ -204,6 +204,23 @@ export default class Transition {
       { autoAlpha: 1, duration: FADE_DURATION, ease: "power2.out" },
       COPY_START,
     );
+
+    /* Rises from the label's spot to its own, on the morph's clock and easing,
+       so title and cover read as one gesture rather than two. Measured after
+       `.content` is displayed — before that the title has no layout position to
+       travel from. */
+    const title = this.activeTitle();
+    if (title) {
+      this.tl.from(
+        title,
+        {
+          y: this.titleOffset(title),
+          duration: MORPH_DURATION,
+          ease: MORPH_EASE,
+        },
+        0,
+      );
+    }
   }
 
   /**
@@ -298,10 +315,11 @@ export default class Transition {
 
     const bodyLines = this.splitBody?.lines ?? [];
 
+    const closingTitle = this.activeTitle();
+
     this.tl = gsap
       .timeline({ onComplete: () => this.reset() })
-      // Body leaves the way it arrived — back down behind its mask. The title
-      // stays put and simply goes with the overlay, as it arrived.
+      // Body leaves the way it arrived — back down behind its mask.
       .to(
         bodyLines,
         {
@@ -326,6 +344,19 @@ export default class Transition {
           ease: MORPH_EASE,
           absolute: true,
         }) as gsap.core.Tween,
+        CLOSE_MORPH_DELAY,
+      )
+      // Back down to the label's spot on the same clock, so the gallery label
+      // it hands off to is already in that exact box when it reappears.
+      .to(
+        closingTitle ?? [],
+        closingTitle
+          ? {
+              y: this.titleOffset(closingTitle),
+              duration: MORPH_DURATION,
+              ease: MORPH_EASE,
+            }
+          : {},
         CLOSE_MORPH_DELAY,
       )
       .to(
@@ -417,6 +448,22 @@ export default class Transition {
    * still through the whole transition, and not the cover, which is the thing
    * morphing. Without this the case study stays on screen for the entire close.
    */
+  /**
+   * How far the title has to travel to sit where the work page's label sits.
+   * The label is pinned at viewport centre, the title rests at the top of the
+   * hero, so this is the gap between the two — applied as a `from` on open and
+   * a `to` on close, both in lockstep with the cover morph.
+   */
+  private titleOffset(title: HTMLElement) {
+    const box = title.getBoundingClientRect();
+    return window.innerHeight / 2 - (box.top + box.height / 2);
+  }
+
+  private activeTitle() {
+    const group = this.groups.find((g) => g.classList.contains("active"));
+    return group?.querySelector<HTMLElement>(".project__title") ?? null;
+  }
+
   private contentParts() {
     const group = this.groups.find((g) => g.classList.contains("active"));
     if (!group) return [];
@@ -502,6 +549,13 @@ export default class Transition {
     const parts = this.contentParts();
     gsap.killTweensOf(parts);
     gsap.set(parts, { clearProps: "opacity,visibility" });
+
+    // Or the next open would measure its travel from a title already shifted.
+    const title = this.activeTitle();
+    if (title) {
+      gsap.killTweensOf(title);
+      gsap.set(title, { clearProps: "transform" });
+    }
 
     this.splitBody?.revert();
     this.splitBody = null;

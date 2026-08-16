@@ -61,39 +61,3 @@ const socialImage = new URL(image, Astro.site);
 <link rel="icon" type="image/svg+xml" href="/main-assets/favicon.svg" />
 <link rel="icon" href="/main-assets/favicon.ico" />
 <meta name="generator" content={Astro.generator} />
-
-<link rel="preconnect" href="https://use.typekit.net" crossorigin />
-<link rel="preconnect" href="https://p.typekit.net" crossorigin />
-<script is:inline>
-  (function (d) {
-    var config = {
-      kitId: "upa4ffy",
-      scriptTimeout: 3000,
-      async: true,
-    },
-      h = d.documentElement,
-      t = setTimeout(function () {
-        h.className =
-          h.className.replace(/\bwf-loading\b/g, "") + " wf-inactive";
-      }, config.scriptTimeout),
-      tk = d.createElement("script"),
-      f = false,
-      s = d.getElementsByTagName("script")[0],
-      a;
-    h.className += " wf-loading";
-    tk.src = "https://use.typekit.net/" + config.kitId + ".js";
-    tk.async = true;
-    tk.onload = tk.onreadystatechange = function () {
-      a = this.readyState;
-      if (f || (a && a != "complete" && a != "loaded")) return;
-      f = true;
-      clearTimeout(t);
-      try {
-        Typekit.load(config);
-      } catch (e) {
-        /* Kit load failures are non-fatal; --primary-family fallbacks apply. */
-      }
-    };
-    s.parentNode.insertBefore(tk, s);
-  })(document);
-</script>

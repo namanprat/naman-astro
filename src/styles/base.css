@@ -13,8 +13,7 @@
   --brand-text: var(--light-100);
 
   /* Typography primitives */
-  --primary-family: "Hitmarker Condensed", "neue-haas-grotesk-display",
-    "neue-haas-grotesk-text", system-ui, sans-serif;
+  --primary-family: "Hitmarker Condensed", system-ui, sans-serif;
   /* Duforn Mono is a 68-glyph subset — no `:`, `/`, `%`, `(`, `-`, etc. Those
      fall through to the next family, so it must be a mono, not the condensed
      display face (which rendered stray punctuation in Hitmarker). */

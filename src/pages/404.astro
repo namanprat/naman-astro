@@ -1,31 +1,38 @@
 ---
 import Layout from "@/layouts/BaseLayout.astro";
-import Section from "@/components/Section.astro";
-import Heading from "@/components/Heading.astro";
-import Paragraph from "@/components/Paragraph.astro";
-import ButtonWrapper from "@/components/ButtonWrapper.astro";
-import Button from "@/components/Button.astro";
-import ContentWrapper from "@/components/ContentWrapper.astro";
 ---
 
 <Layout
   title="Page not found"
   description="The page you're looking for doesn't exist."
   theme="dark"
-  overlap={true}
 >
-  <Section paddingTop="navoverlap" paddingBottom="navoverlap" class="flex-grow">
-    <ContentWrapper centered={true}>
-      <Heading variant="h3" tag="h1" maxWidth={17}
-        >This page doesn't exist</Heading
-      >
-      <Paragraph variant="large" maxWidth={36}
-        >The page you're looking for may have moved, or the link that brought
-        you here might be out of date.</Paragraph
-      >
-      <ButtonWrapper>
-        <Button element="link" href="/">Back to home</Button>
-      </ButtonWrapper>
-    </ContentWrapper>
-  </Section>
+  <section class="not-found">
+    <h1 class="text-style-h3">This page doesn't exist</h1>
+    <p class="text-style-large">
+      The page you're looking for may have moved, or the link that brought you
+      here might be out of date.
+    </p>
+    <a class="not-found__link text-style-main" href="/">Back to home</a>
+  </section>
 </Layout>
+
+<style>
+  .not-found {
+    box-sizing: border-box;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: flex-start;
+    padding: var(--section-space-nav-overlap) var(--site-margin);
+    gap: var(--space-4);
+    max-width: 36rem;
+  }
+
+  .not-found__link {
+    color: var(--link-text);
+    text-decoration: underline;
+    text-underline-offset: 0.2em;
+  }
+</style>

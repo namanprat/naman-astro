@@ -19,9 +19,6 @@ export const rigState = {
   gridPanTarget: { x: 0, y: 0 },
   isGridPanning: false,
 
-  /** Virtual cell per mesh slot — filled each frame in grid mode. */
-  gridSlots: [] as CellId[],
-
   /** Populated when tiles build — used for anchor pick on grid morph. */
   globePositions: [] as Vec3[],
   tileTextureIndices: [] as number[],
@@ -41,8 +38,4 @@ export function resetRigToOrb() {
   rigState.gridAnchorIndex = -1;
   rigState.gridAnchorTextureIndex = 0;
   rigState.tileGridCells = [];
-}
-
-export function resetRigToGlobe() {
-  resetRigToOrb();
 }
