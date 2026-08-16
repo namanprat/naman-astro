@@ -1,0 +1,15 @@
+---
+import Layout from "@/layouts/BaseLayout.astro";
+---
+
+<Layout
+  title="About"
+  description="I'm a digital designer who makes things look good and work better."
+  theme="dark"
+>
+  <script is:inline>
+    if (location.hash !== "#about") {
+      location.replace("/#about");
+    }
+  </script>
+</Layout>

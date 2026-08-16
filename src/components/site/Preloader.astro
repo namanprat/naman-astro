@@ -1,0 +1,175 @@
+---
+/**
+ * Home boot overlay. Static markup so it paints on first paint — no island, no
+ * hydration gap. Driven by `@/lib/site/preloader`.
+ *
+ * Sits in the backdrop slot so the hero FluidCanvas shows through it; the
+ * rest of the page is hidden by `html.is-preloading` (see site.css).
+ *
+ * Layout is Lumos: `.grid.is-12` for the card, utilities for padding, gap, flex
+ * and type. Every grid child spans the full row and splits internally with
+ * flex, so the left/right pairing survives all four column counts.
+ */
+---
+
+<div class="preloader" role="dialog" aria-modal="true" aria-label="Loading">
+  <div class="preloader__clip">
+    <div class="preloader__card padding-4">
+      <div class="preloader__grid grid is-12 gap-2 gap-row-4">
+        <div class="preloader__mark" role="img" aria-label="Naman Pratulya">
+        </div>
+
+        <div
+          class="preloader__row flex-horizontal-nowrap justify-content-between gap-2"
+        >
+          <p class="text-style-mono">
+            Loaded <span data-preload-percent aria-live="polite">0%</span>
+          </p>
+          <p class="text-style-mono">
+            Assets <span data-preload-assets>0/0</span>
+          </p>
+        </div>
+
+        <div class="preloader__bar" aria-hidden="true">
+          <div class="preloader__fill" data-preload-fill></div>
+        </div>
+
+        <div
+          class="preloader__row preloader__foot justify-content-between align-items-end gap-2"
+        >
+          <p class="text-style-mono">
+            Based out of Mumbai and Bangalore<br />
+            Working with culture, curating digital experiences
+          </p>
+          <button
+            type="button"
+            class="preloader__cta text-style-mono radius-round"
+            data-preload-cta
+            disabled
+          >
+            <span class="roll-text" data-preload-cta-label>Enter</span>
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<style>
+  .preloader {
+    position: fixed;
+    inset: 0;
+    /* Just under .site-grain (1000000) so the grain overlays the card like it
+       does every other surface. Transparent so the hero canvas behind it is
+       the backdrop. */
+    z-index: 999999;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: var(--site-margin);
+    will-change: transform;
+  }
+
+  /* Dark mode: black on accent. Light mode: white on frost — the same
+     --surface-accent / --panel-ink pairing the About panel uses. */
+  /* Exit mask — the card animates to yPercent -100 inside this, so it slides
+     up behind the clip edge instead of drifting off over the page. */
+  .preloader__clip {
+    width: 100%;
+    max-width: 38rem;
+    overflow: hidden;
+  }
+
+  .preloader__card {
+    --card-ink: var(--black);
+    width: 100%;
+    background-color: var(--surface-accent);
+    color: var(--card-ink);
+  }
+
+  /* Blur only — the fill stays --surface-accent in both themes, matching
+     .about-panel__surface and .footer-child exactly. */
+  :global(html.theme-light) .preloader__card {
+    --card-ink: var(--white);
+    backdrop-filter: blur(var(--surface-frost-blur));
+    -webkit-backdrop-filter: blur(var(--surface-frost-blur));
+  }
+
+  /* Every row spans the full grid, so the 4/6/8/12 column counts never
+     reposition anything — the splits are flex, not grid placement. */
+  .preloader__mark,
+  .preloader__row,
+  .preloader__bar {
+    grid-column: 1 / -1;
+  }
+
+  /* Masked rather than <img> so the wordmark takes the card's ink colour, the
+     same trick .name-hero__lockup uses in Menu.css. */
+  .preloader__mark {
+    width: min(16rem, 55%);
+    aspect-ratio: 446 / 70;
+    background-color: var(--card-ink);
+    -webkit-mask: url(/main-assets/name-hero.svg) left center / contain no-repeat;
+    mask: url(/main-assets/name-hero.svg) left center / contain no-repeat;
+  }
+
+  .preloader__foot {
+    display: flex;
+    flex-flow: row wrap;
+  }
+
+  .preloader__cta {
+    flex: none;
+    padding: 0.75em 2em;
+    border: 0;
+    background-color: var(--white);
+    color: var(--black);
+    cursor: pointer;
+    /* Opacity only, never `visibility: hidden` — a hidden element can't take
+       focus, so the keyboard path would break the moment it unlocked. */
+    opacity: 0;
+  }
+
+  .preloader__cta:disabled {
+    cursor: default;
+  }
+
+  /* Two rows of dots. background-size tiles on both axes, so the row count is
+     just the height divided by the pitch — no extra elements.
+     Pitch matches the reference's cell rhythm (~60 columns across the card);
+     the dot fills 80% of its cell so it reads as chunky as the ref's squares
+     rather than a thin polka run. */
+  .preloader__bar {
+    --pitch: 9px;
+    --dot: 40%;
+    --rows: 3;
+    position: relative;
+    height: calc(var(--pitch) * var(--rows));
+    background-image: radial-gradient(
+      circle at center,
+      color-mix(in srgb, var(--card-ink) 30%, transparent) var(--dot),
+      transparent calc(var(--dot) + 1%)
+    );
+    background-size: var(--pitch) var(--pitch);
+  }
+
+  /* Same dots at full strength, clipped by width. JS snaps that width to whole
+     --pitch steps so a dot is never cut in half mid-column. */
+  .preloader__fill {
+    position: absolute;
+    inset: 0 auto 0 0;
+    width: 0;
+    background-image: radial-gradient(
+      circle at center,
+      var(--card-ink) var(--dot),
+      transparent calc(var(--dot) + 1%)
+    );
+    background-size: var(--pitch) var(--pitch);
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .preloader {
+      will-change: auto;
+    }
+  }
+</style>

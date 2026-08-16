@@ -1,0 +1,181 @@
+---
+import Layout from '@/layouts/BaseLayout.astro';
+import Section from '@/components/Section.astro';
+import ContentWrapper from '@/components/ContentWrapper.astro';
+import Eyebrow from '@/components/Eyebrow.astro';
+import Heading from '@/components/Heading.astro';
+import Paragraph from '@/components/Paragraph.astro';
+import ButtonWrapper from '@/components/ButtonWrapper.astro';
+import Button from '@/components/Button.astro';
+import Img from '@/components/Img.astro';
+import lumos_background from '@/assets/lumos-background.svg';
+import Grid from '@/components/Grid.astro';
+import Card from '@/components/Card.astro';
+
+const heading = "We build things that help people work smarter";
+const text =
+  "We build things that help people work smarter, move faster, and grow further.";
+---
+<Layout title="Example Components" description="Every layout variant, side by side." theme="dark" noindex={true}>
+  <!-- stack -->
+  <Section paddingTop="small" paddingBottom="small">
+    <ContentWrapper>
+      <Eyebrow>stack</Eyebrow>
+      <Heading tag="h2" variant="h3" maxWidth={17}>{heading}</Heading>
+      <Paragraph maxWidth={36}>{text}</Paragraph>
+      <ButtonWrapper>
+        <Button element="link" href="/about">Learn more</Button>
+        <Button variant="secondary">Send</Button>
+      </ButtonWrapper>
+      <Img src={lumos_background} slot="column2" />
+    </ContentWrapper>
+  </Section>
+  <!-- stack centered -->
+  <Section paddingTop="small" paddingBottom="small">
+    <ContentWrapper centered={true}>
+      <Eyebrow>stack · centered</Eyebrow>
+      <Heading tag="h2" variant="h3" maxWidth={17}>{heading}</Heading>
+      <Paragraph maxWidth={36}>{text}</Paragraph>
+      <ButtonWrapper>
+        <Button element="link" href="/about">Learn more</Button>
+        <Button variant="secondary">Send</Button>
+      </ButtonWrapper>
+      <Img src={lumos_background} slot="column2" />
+    </ContentWrapper>
+  </Section>
+  <!-- auto-width -->
+  <Section paddingTop="small" paddingBottom="small">
+    <ContentWrapper variant="auto-width">
+      <Eyebrow>auto-width</Eyebrow>
+      <Heading tag="h2" variant="h3" maxWidth={17}>{heading}</Heading>
+      <Paragraph maxWidth={28} slot="column2">{text}</Paragraph>
+      <ButtonWrapper slot="column2" marginTop="4">
+        <Button element="link" href="/about">Learn more</Button>
+      </ButtonWrapper>
+    </ContentWrapper>
+  </Section>
+  <!-- columns -->
+  <Section paddingTop="small" paddingBottom="small">
+    <ContentWrapper variant="columns">
+      <Eyebrow>columns</Eyebrow>
+      <Heading tag="h2" variant="h3" maxWidth={17}>{heading}</Heading>
+      <Paragraph maxWidth={36}>{text}</Paragraph>
+      <ButtonWrapper>
+        <Button element="link" href="/about">Learn more</Button>
+      </ButtonWrapper>
+      <Img slot="column2" src={lumos_background} width={1920} height={1080} />
+    </ContentWrapper>
+  </Section>
+  <!-- columns reverse -->
+  <Section paddingTop="small" paddingBottom="small">
+    <ContentWrapper variant="columns" reverse>
+      <Eyebrow>columns · reverse</Eyebrow>
+      <Heading tag="h2" variant="h3" maxWidth={17}>{heading}</Heading>
+      <Paragraph maxWidth={36}>{text}</Paragraph>
+      <ButtonWrapper>
+        <Button element="link" href="/about">Learn more</Button>
+      </ButtonWrapper>
+      <Img slot="column2" src={lumos_background} width={1920} height={1080} />
+    </ContentWrapper>
+  </Section>
+  <!-- breakout -->
+  <Section paddingTop="small" paddingBottom="small">
+    <ContentWrapper variant="breakout">
+      <Eyebrow>breakout</Eyebrow>
+      <Heading tag="h2" variant="h3" maxWidth={17}>{heading}</Heading>
+      <Paragraph maxWidth={36}>{text}</Paragraph>
+      <ButtonWrapper>
+        <Button element="link" href="/about">Learn more</Button>
+      </ButtonWrapper>
+      <Img slot="column2" src={lumos_background} width={1920} height={1080} />
+    </ContentWrapper>
+  </Section>
+  <!-- breakout reverse -->
+  <Section paddingTop="small" paddingBottom="small">
+    <ContentWrapper variant="breakout" reverse>
+      <Eyebrow>breakout · reverse</Eyebrow>
+      <Heading tag="h2" variant="h3" maxWidth={17}>{heading}</Heading>
+      <Paragraph maxWidth={36}>{text}</Paragraph>
+      <ButtonWrapper>
+        <Button element="link" href="/about">Learn more</Button>
+      </ButtonWrapper>
+      <Img slot="column2" src={lumos_background} width={1920} height={1080} />
+    </ContentWrapper>
+  </Section>
+  <!-- contain -->
+  <Section paddingTop="small" paddingBottom="small">
+    <ContentWrapper variant="contain">
+      <Eyebrow>contain</Eyebrow>
+      <Heading tag="h2" variant="h3" maxWidth={17}>{heading}</Heading>
+      <Paragraph maxWidth={36}>{text}</Paragraph>
+      <ButtonWrapper>
+        <Button element="link" href="/about">Learn more</Button>
+      </ButtonWrapper>
+      <Img slot="column2" src={lumos_background} width={1920} height={1080} />
+    </ContentWrapper>
+  </Section>
+  <!-- contain reverse -->
+  <Section paddingTop="small" paddingBottom="small">
+    <ContentWrapper variant="contain" reverse>
+      <Eyebrow>contain · reverse</Eyebrow>
+      <Heading tag="h2" variant="h3" maxWidth={17}>{heading}</Heading>
+      <Paragraph maxWidth={36}>{text}</Paragraph>
+      <ButtonWrapper>
+        <Button element="link" href="/about">Learn more</Button>
+      </ButtonWrapper>
+      <Img slot="column2" src={lumos_background} width={1920} height={1080} />
+    </ContentWrapper>
+  </Section>
+  <!-- sticky-content -->
+  <Section paddingTop="small" paddingBottom="small">
+    <ContentWrapper variant="sticky-content">
+      <Eyebrow>sticky-content</Eyebrow>
+      <Heading tag="h2" variant="h3" maxWidth={17}>{heading}</Heading>
+      <Paragraph maxWidth={36}>{text}</Paragraph>
+      <ButtonWrapper>
+        <Button element="link" href="/about">Learn more</Button>
+      </ButtonWrapper>
+      <Img slot="column2" src={lumos_background} width={1920} height={1080} />
+    </ContentWrapper>
+  </Section>
+  <!-- sticky-visual -->
+  <Section paddingTop="small" paddingBottom="small">
+    <ContentWrapper variant="sticky-visual">
+      <Eyebrow>sticky-visual</Eyebrow>
+      <Heading tag="h2" variant="h3" maxWidth={17}>{heading}</Heading>
+      <Paragraph>Lorem ipsum dolor sit amet consectetur adipiscing elit. Quisque faucibus ex sapien vitae pellentesque sem placerat. In id cursus mi pretium tellus duis convallis. Tempus leo eu aenean sed diam urna tempor. Pulvinar vivamus fringilla lacus nec metus bibendum egestas. Iaculis massa nisl malesuada lacinia integer nunc posuere. Ut hendrerit semper vel class aptent taciti sociosqu. Ad litora torquent per conubia nostra inceptos himenaeos. Lorem ipsum dolor sit amet consectetur adipiscing elit. Quisque faucibus ex sapien vitae pellentesque sem placerat. In id cursus mi pretium tellus duis convallis. Tempus leo eu aenean sed diam urna tempor. Pulvinar vivamus fringilla lacus nec metus bibendum egestas. Iaculis massa nisl malesuada lacinia integer nunc posuere. Ut hendrerit semper vel class aptent taciti sociosqu. Ad litora torquent per conubia nostra inceptos himenaeos. Lorem ipsum dolor sit amet consectetur adipiscing elit. Quisque faucibus ex sapien vitae pellentesque sem placerat. In id cursus mi pretium tellus duis convallis. Tempus leo eu aenean sed diam urna tempor. Pulvinar vivamus fringilla lacus nec metus bibendum egestas. Iaculis massa nisl malesuada lacinia integer nunc posuere. Ut hendrerit semper vel class aptent taciti sociosqu. Ad litora torquent per conubia nostra inceptos himenaeos. Lorem ipsum dolor sit amet consectetur adipiscing elit. Quisque faucibus ex sapien vitae pellentesque sem placerat. In id cursus mi pretium tellus duis convallis. Tempus leo eu aenean sed diam urna tempor. Pulvinar vivamus fringilla lacus nec metus bibendum egestas. Iaculis massa nisl malesuada lacinia integer nunc posuere. Ut hendrerit semper vel class aptent taciti sociosqu. Ad litora torquent per conubia nostra inceptos himenaeos.</Paragraph>
+      <ButtonWrapper>
+        <Button element="link" href="/about">Learn more</Button>
+      </ButtonWrapper>
+      <Img slot="column2" src={lumos_background} width={1920} height={1080} />
+    </ContentWrapper>
+  </Section>
+  <!-- card -->
+  <Section paddingTop="small" paddingBottom="large">
+    <ContentWrapper variant="card" mediaOpacity={30}>
+      <Eyebrow variant="tag">card</Eyebrow>
+      <Heading tag="h2" variant="h3" maxWidth={17}>{heading}</Heading>
+      <Paragraph maxWidth={36}>{text}</Paragraph>
+      <ButtonWrapper>
+        <Button element="link" href="/about">Learn more</Button>
+      </ButtonWrapper>
+      <Img slot="column2" src={lumos_background} width={1920} height={1080} />
+    </ContentWrapper>
+  </Section>
+  <!-- grid -->
+  <Section paddingTop="small" paddingBottom="small">
+    <ContentWrapper variant="auto-width">
+      <Eyebrow>auto-width</Eyebrow>
+      <Heading tag="h2" variant="h3" maxWidth={17}>{heading}</Heading>
+      <Paragraph maxWidth={28} slot="column2">{text}</Paragraph>
+      <ButtonWrapper slot="column2" marginTop="4">
+        <Button element="link" href="/about">Learn more</Button>
+      </ButtonWrapper>
+    </ContentWrapper>
+    <Grid medium={3}>
+      <Card heading="Heading" text="Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod." buttonHref="/about" buttonLabel="Learn More" />
+      <Card heading="Heading" text="Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod." buttonHref="/about" buttonLabel="Learn More" variant="cover" image={lumos_background} />
+      <Card heading="Heading" text="Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod." buttonHref="/about" buttonLabel="Learn More" variant="stacked" image={lumos_background} />
+    </Grid>
+  </Section>
+</Layout>

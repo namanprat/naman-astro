@@ -1,0 +1,9 @@
+---
+/**
+ * Fixed full-viewport fluid backdrop. The React island hydrates client-side
+ * only; the simulation has no SSR output.
+ */
+import FluidCanvas from "./FluidCanvas.tsx";
+---
+
+<FluidCanvas client:only="react" />

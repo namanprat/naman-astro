@@ -1,0 +1,30 @@
+.roll-text {
+  display: inline-block;
+  vertical-align: top;
+  /* Tight leading so the duplicate glyph sits fully below the mask. */
+  line-height: 1;
+}
+
+/* 1em tall so exactly one glyph shows; the duplicate sits below the clip. Kept
+   in CSS rather than a measured px height so it tracks fluid type and resize. */
+.roll-char {
+  display: inline-block;
+  height: 1em;
+  overflow: hidden;
+  vertical-align: top;
+  position: relative;
+  line-height: 1;
+}
+
+.roll-char__inner {
+  display: flex;
+  flex-direction: column;
+  will-change: transform;
+  line-height: 1;
+}
+
+.roll-char__glyph {
+  display: block;
+  height: 1em;
+  line-height: 1;
+}

@@ -1,0 +1,18 @@
+---
+import Layout from "@/layouts/BaseLayout.astro";
+import WorkPage from "@/components/work/WorkPage.astro";
+---
+
+<Layout title="Work" description="Selected work." theme="dark">
+  {/* Returning from a hard-loaded project page: hide the gallery before the
+      first paint, or it flashes for a frame before the overlay snaps open.
+      The island consumes the flag itself — this only reads it. */}
+  <script is:inline>
+    try {
+      if (sessionStorage.getItem("work:return")) {
+        document.documentElement.classList.add("work-returning");
+      }
+    } catch (e) {}
+  </script>
+  <WorkPage />
+</Layout>

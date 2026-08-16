@@ -1,0 +1,59 @@
+---
+import Layout from "@/layouts/BaseLayout.astro";
+import PortfolioHome from "@/components/site/PortfolioHome.astro";
+import Preloader from "@/components/site/Preloader.astro";
+---
+
+<Layout
+  title="Naman Pratulya"
+  description="Based out of Mumbai and Bangalore. Working with culture, curating digital experiences."
+  theme="dark"
+>
+  <script slot="head" is:inline>
+    // Once per browser session. Claimed here rather than on ENTER so a reload
+    // mid-load skips it too; a new tab or a new day gets it again.
+    try {
+      if (sessionStorage.getItem("preload:seen") !== "1") {
+        document.documentElement.classList.add("is-preloading");
+        sessionStorage.setItem("preload:seen", "1");
+      }
+    } catch (e) {
+      document.documentElement.classList.add("is-preloading");
+    }
+    // Only when the preloader is actually showing: it replaces any inbound
+    // page-transition cover, so park the panel rather than uncovering into a
+    // second full-screen overlay. When it's skipped, the normal uncover runs.
+    if (document.documentElement.classList.contains("is-preloading")) {
+      try {
+        if (sessionStorage.getItem("pt:cover") === "1") {
+          sessionStorage.removeItem("pt:cover");
+          document.documentElement.classList.remove("is-page-transitioning");
+        }
+      } catch (e) {}
+    }
+    // Follow the device's colour scheme unless the visitor has picked a theme.
+    // Runs after BaseLayout's restore script (head slot is last), so it only
+    // fills the gap where nothing is stored.
+    try {
+      var stored = localStorage.getItem("site-theme");
+      if (stored !== "light" && stored !== "dark") {
+        var root = document.documentElement;
+        var prefersDark = window.matchMedia(
+          "(prefers-color-scheme: dark)",
+        ).matches;
+        root.classList.remove("theme-light", "theme-dark", "theme-brand");
+        root.classList.add(prefersDark ? "theme-dark" : "theme-light");
+      }
+    } catch (e) {}
+  </script>
+  {
+    /* The preloader rides in the backdrop so the fluid canvas shows through it
+      while `html.is-preloading` hides the rest of the page. */
+  }
+  <Preloader slot="backdrop" />
+  <PortfolioHome />
+  <script>
+    import { bootPreloader } from "@/lib/site/preloader";
+    bootPreloader();
+  </script>
+</Layout>

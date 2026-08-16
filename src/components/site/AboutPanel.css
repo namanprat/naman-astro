@@ -1,0 +1,633 @@
+.about-panel__backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: calc(var(--z--nav) - 2);
+  margin: 0;
+  padding: 0;
+  border: 0;
+  background-color: color-mix(in srgb, var(--black) 50%, transparent);
+  cursor: pointer;
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+}
+
+.about-panel__backdrop.is-open {
+  pointer-events: all;
+}
+
+/* Soften the scrim in light mode so the frosted surface can read the page. */
+html.theme-light .about-panel__backdrop {
+  background-color: transparent;
+}
+
+.about-panel {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: auto;
+  z-index: calc(var(--z--nav) - 1);
+  /* Fill lives on __surface — the panel stays transparent so it can carry the
+     floating gutter as padding. Overflow stays visible so the surface can
+     slide in from above (scroll lives on __surface). */
+  background-color: transparent;
+  /* Dark mode: black on accent. Light mode: white on frost.
+     Never inherit the page's light-mode grey ink. */
+  --panel-ink: var(--black);
+  --ink: var(--panel-ink);
+  color: var(--panel-ink);
+  overflow: visible;
+  pointer-events: none;
+  visibility: hidden;
+  box-sizing: border-box;
+  /* Outer float — gutter air on all four sides; surface is width 100% inside. */
+  padding: var(--site--gutter);
+  display: flex;
+  flex-direction: column;
+  /*
+    Distance from the surface edge to the content band, on every side.
+
+    The band stays locked to the site grid (`--site--grid-width`), so its side
+    inset is not a padding at all — it is what is left over after centring a
+    `100vw - margin*2` band inside a `100vw - gutter*2` surface, i.e. exactly
+    `margin - gutter`. `--max-width-main` is `100vw`, so the band never clamps
+    and that identity always holds.
+
+    Mirroring it on the block axis is what makes top match the sides. Hardcoding
+    a gutter here is what drifted them apart: both tokens are fluid clamps with
+    different ranges (gutter 16→32, margin 16→48), so the gap between them —
+    and so the mismatch — grew with the viewport.
+  */
+  --about--inset: calc(var(--site--margin) - var(--site--gutter));
+}
+
+html.theme-light .about-panel {
+  --panel-ink: var(--white);
+}
+
+.about-panel__surface {
+  background-color: var(--surface-accent);
+  width: 100%;
+  max-height: calc(85vh - var(--site--gutter) * 2);
+  overflow-x: hidden;
+  overflow-y: auto;
+  /* Matches the page scroller in `site.css` — the site shows no native bars. */
+  scrollbar-width: none;
+  box-sizing: border-box;
+  /* No CSS transform — GSAP parks/slides via yPercent. A stylesheet
+     translateY(-100%) gets baked into GSAP as pixel `y` and stays put after
+     yPercent animates to 0, so the card never finishes opening. */
+  will-change: transform;
+}
+
+.about-panel__surface::-webkit-scrollbar {
+  width: 0;
+  height: 0;
+  display: none;
+  background: transparent;
+}
+
+/* Frost on the sliding node (no transformed ancestor). */
+html.theme-light .about-panel__surface {
+  backdrop-filter: blur(var(--surface-frost-blur));
+  -webkit-backdrop-filter: blur(var(--surface-frost-blur));
+}
+
+.about-panel--padded {
+  padding-top: calc(
+    var(--nav-offset, var(--site--nav-offset)) + var(--site--gutter)
+  );
+}
+
+.about-panel--in-menu {
+  z-index: var(--z--menu);
+  inset: 0;
+  width: 100%;
+  height: 100dvh;
+  /* Orange overlay is the field — no floating card gutter. Inline padding is
+     the gutter, not the margin, so the surface sits where it does in the card
+     modes and `--about--inset` resolves to the same number in all three. The
+     band inside is still `--site--grid-width`, so content lands on the same
+     grid line either way — only the (transparent) surface edge moves. */
+  padding: 0;
+  padding-top: var(--nav-offset, var(--site--nav-offset));
+  padding-inline: var(--site--gutter);
+  padding-bottom: calc(var(--site--margin) + var(--site--safe-area-bottom));
+  overflow: hidden;
+  /* Overlay links are black on accent in both themes. */
+  --panel-ink: #000;
+  --ink: #000;
+}
+
+html.theme-light .about-panel--in-menu {
+  --panel-ink: #000;
+}
+
+.about-panel--in-menu .about-panel__backdrop {
+  pointer-events: none;
+  visibility: hidden;
+}
+
+.about-panel--in-menu .about-panel__surface {
+  background-color: transparent;
+  border-radius: 0;
+  max-height: none;
+  height: 100%;
+  overflow-x: hidden;
+  overflow-y: auto;
+  will-change: auto;
+}
+
+html.theme-light .about-panel--in-menu .about-panel__surface {
+  background-color: transparent;
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+}
+
+/* No width/padding override — inMenu uses the same grid band and the same
+   `--about--inset` as the card modes. */
+
+.about-panel--in-menu .about-panel__reveal:not(.about-panel__intro) {
+  overflow: hidden;
+  clip-path: polygon(0 0, 100% 0, 100% 100%, 0% 100%);
+}
+
+/* Desktop: inner is transparent to the parent grid. inMenu: a real box GSAP can move. */
+.about-panel__reveal-inner {
+  display: contents;
+}
+
+.about-panel--in-menu .about-panel__reveal-inner {
+  display: block;
+  will-change: transform, opacity;
+}
+
+.about-panel--in-menu .about-panel__intro .about-panel__reveal-inner {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  min-width: 0;
+}
+
+.about-panel--in-menu .about-panel__col--services .about-panel__reveal-inner,
+.about-panel--in-menu .about-panel__col--clients .about-panel__reveal-inner {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.about-panel--in-menu .about-panel__media .about-panel__reveal-inner {
+  width: 100%;
+  height: 100%;
+}
+
+.about-panel.is-open {
+  pointer-events: all;
+  visibility: visible;
+}
+
+.about-panel:focus {
+  outline: none;
+}
+
+/*
+  Same column band as the page overlay / nav. Vertical pad only.
+*/
+.about-panel__inner.container {
+  flex: 0 1 auto;
+  min-height: 0;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  /* `--site-width` is `%`-based, so it shrinks inside this padded card.
+     `--site--grid-width` is `vw`-based — same band as the Shift+G overlay. */
+  width: var(--site--grid-width);
+  max-width: var(--max-width-main);
+  margin-inline: auto;
+  padding-block: var(--about--inset);
+  padding-inline: 0;
+}
+
+/*
+  12-col map, on the nav stacks' own tracks:
+    media 1–4, lead 5–end
+    Services 8–9 (.nav-stack--home)
+    Clients 10–12 (.nav-stack--about + .nav-utility-stack)
+
+  Two rows: the lead takes row 1, the lists row 2. Media spans both, and
+  row 2 is the 1fr that absorbs whatever height the media's square forces —
+  which is what lets the lists sit on its bottom edge.
+*/
+.about-panel__grid {
+  flex: 0 1 auto;
+  width: 100%;
+  min-height: 0;
+  align-items: start;
+  grid-template-rows: auto 1fr;
+  /* Row gap only used when content stacks under media on small. */
+  row-gap: var(--space-8);
+}
+
+@media (width >= 64rem) {
+  .about-panel:not(.about-panel--in-menu) {
+    padding: 0;
+    /* Ride mode (desktop About) is not --padded. Side gap is --about--inset
+       (margin − gutter); mirror it on top. Do not use --nav-offset here: it
+       tracks the transformed nav as it docks to the card and would feed back. */
+    padding-top: var(--about--inset);
+  }
+
+  .about-panel--padded:not(.about-panel--in-menu) {
+    padding-top: calc(
+      var(--nav-offset, var(--site--nav-offset)) + var(--about--inset)
+    );
+  }
+
+  .about-panel:not(.about-panel--in-menu) .about-panel__surface {
+    width: calc(var(--site--grid-width) + var(--site--gutter) * 2);
+    margin-inline: auto;
+    max-height: 85vh;
+  }
+
+  .about-panel:not(.about-panel--in-menu) .about-panel__inner.container {
+    width: 100%;
+    max-width: none;
+    margin-inline: 0;
+    padding: var(--site--gutter);
+  }
+
+  .about-panel:not(.about-panel--in-menu) .about-panel__grid {
+    width: 100%;
+    max-width: none;
+    margin-inline: 0;
+  }
+}
+
+.about-panel__media {
+  grid-column: 1 / span 4;
+  grid-row: 1 / span 2;
+  justify-self: stretch;
+  align-self: start;
+  position: relative;
+  margin: 0;
+  box-sizing: border-box;
+  width: 100%;
+  max-width: 100%;
+  aspect-ratio: 1;
+  height: auto;
+  overflow: hidden;
+  /* Panel media ground — always --black (both themes) for the dither clear. */
+  background-color: var(--black);
+  pointer-events: auto;
+}
+
+.about-panel__media canvas,
+.about-panel__canvas {
+  width: 100%;
+  height: 100%;
+  display: block;
+  cursor: grab;
+  pointer-events: auto;
+  mix-blend-mode: screen;
+}
+
+.about-panel__media canvas:active,
+.about-panel__canvas:active {
+  cursor: grabbing;
+}
+
+.about-panel__intro {
+  grid-column: 5 / -1;
+  grid-row: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  min-width: 0;
+  /* Lead spans 8 of 12 tracks (5–12). Two tracks in = column 7.
+     Indent is % of this box so it tracks the about grid, not a page token
+     that can resolve to 0. */
+  --about--indent-cols: 2;
+  --about--lead-cols: 8;
+  --about--indent: calc(
+    var(--about--indent-cols) * (100% + var(--site-gutter)) /
+      var(--about--lead-cols)
+  );
+}
+
+.about-panel__lead {
+  margin: 0;
+  max-width: none;
+  color: var(--panel-ink);
+  line-height: 1.1;
+  display: block;
+  text-wrap: wrap;
+  /* Leading-trim ::before would swallow text-indent. */
+  text-indent: var(--about--indent);
+}
+
+.about-panel__lead::before,
+.about-panel__lead::after {
+  content: none;
+  display: none;
+  margin: 0;
+}
+
+.about-panel__cv {
+  display: inline-flex;
+  /* Top, not baseline: RollingText clips each glyph to a 1em box, so its
+     baseline sits wherever the mask ends rather than on the text's. */
+  align-items: flex-start;
+  margin: var(--space-4) 0 0;
+  padding: 0;
+  color: var(--panel-ink);
+  text-decoration: none;
+  width: max-content;
+  align-self: flex-start;
+}
+
+.about-panel__cv-clip {
+  display: block;
+  width: max-content;
+}
+
+.about-panel--in-menu .about-panel__cv-clip {
+  overflow: hidden;
+}
+
+/* `line-height: 1` so the box hugs the glyphs. Inheriting the 1.5 body leading
+   left the rule floating ~10px under the word, reading as a detached line. */
+.about-panel__cv-label {
+  display: inline-block;
+  line-height: 1;
+  border-bottom: 1px solid currentColor;
+  padding-bottom: 0.18em;
+}
+
+/* No gap — the arrow leaves the last glyph rather than hovering beside it. */
+.about-panel__cv-icon {
+  display: inline-block;
+  font-size: 0.5em;
+  line-height: 1;
+}
+
+.about-panel__col--services {
+  grid-column: 8 / span 2;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.about-panel__col--clients {
+  grid-column: 10 / -1;
+  display: grid;
+  grid-template-columns: subgrid;
+  grid-template-rows: auto auto;
+  gap: var(--space-3) var(--site-gutter);
+}
+
+.about-panel__col--services,
+.about-panel__col--clients {
+  grid-row: 2;
+  align-self: end;
+}
+
+.about-panel :is(h1, h2, h3, h4, h5, h6, p) {
+  color: var(--panel-ink);
+}
+
+.about-panel__col {
+  min-width: 0;
+}
+
+.about-panel__col-label {
+  margin: 0;
+  color: var(--panel-ink);
+}
+
+/* Grid placement owns the width now — a span token here would fight it. */
+.about-panel__col-list {
+  margin: 0;
+  padding: 0;
+  color: var(--panel-ink);
+  max-width: 100%;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+
+.about-panel__col-list p {
+  margin: 0;
+}
+
+.about-panel__col--clients .about-panel__col-label {
+  grid-column: 1 / span 2;
+  grid-row: 1;
+}
+
+.about-panel__clients-cols {
+  display: grid;
+  grid-template-columns: subgrid;
+  grid-column: 1 / -1;
+  grid-row: 2;
+  align-items: start;
+}
+
+/* Hug the names rather than stretching to a track, while each column's left
+   edge still lands on a site grid line. Two columns (8 clients / 4 per col)
+   placed two tracks apart — one track is 72px and the longest name needs
+   123px, so adjacent tracks would collide. */
+.about-panel__clients-cols .about-panel__col-list {
+  /* Hug the longest name. `max-width: none` is load-bearing: the base
+     .about-panel__col-list sets `max-width: 100%`, which resolves against the
+     72px track and clamps max-content straight back to a wrapping column. */
+  width: max-content;
+  max-width: none;
+  min-width: 0;
+  justify-self: start;
+}
+
+.about-panel__clients-cols > *:nth-child(2) {
+  grid-column: 3;
+}
+
+.about-panel__lists {
+  display: contents;
+}
+
+/*
+  Stacked card: h3, then canvas, then Services | Clients.
+  inMenu always; standalone padded About below 48rem.
+*/
+.about-panel--in-menu .about-panel__grid {
+  grid-template-rows: auto auto auto;
+}
+
+.about-panel--in-menu .about-panel__intro {
+  grid-column: 1 / -1;
+  grid-row: 1;
+  --about--indent-cols: 0;
+  --about--lead-cols: 1;
+  --about--indent: 0;
+}
+
+.about-panel--in-menu .about-panel__lead {
+  text-indent: 0;
+}
+
+.about-panel--in-menu .about-panel__media {
+  grid-column: 1 / -1;
+  grid-row: 2;
+  width: 100%;
+  max-width: none;
+}
+
+.about-panel--in-menu .about-panel__lists {
+  display: grid;
+  grid-column: 1 / -1;
+  grid-row: 3;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1.4fr);
+  gap: var(--space-8) var(--site-gutter);
+  align-items: start;
+}
+
+.about-panel--in-menu .about-panel__col--services,
+.about-panel--in-menu .about-panel__col--clients {
+  grid-column: auto;
+  grid-row: auto;
+  align-self: start;
+}
+
+.about-panel--in-menu .about-panel__col--clients {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.about-panel--in-menu .about-panel__clients-cols {
+  display: grid;
+  grid-template-columns: repeat(2, max-content);
+  grid-column: auto;
+  grid-row: auto;
+  gap: var(--space-3) var(--site-gutter);
+}
+
+.about-panel--in-menu .about-panel__clients-cols > *:nth-child(2) {
+  grid-column: auto;
+}
+
+.about-panel--in-menu .about-panel__col--clients .about-panel__col-label {
+  grid-column: auto;
+  grid-row: auto;
+}
+
+
+/* 8-col band (Lumos medium) */
+@media (width < 64rem) {
+  /* Run-off room under the last row. On the content, not the panel — padding on
+     the fixed shell would just shorten the scrollport instead of adding travel
+     the reader can scroll into. */
+  .about-panel__inner.container {
+    padding-bottom: 20vh;
+  }
+
+  .about-panel:not(.about-panel--in-menu) .about-panel__media {
+    grid-column: 1 / span 3;
+  }
+
+  .about-panel:not(.about-panel--in-menu) .about-panel__intro {
+    grid-column: 4 / -1;
+    --about--indent-cols: 1;
+    --about--lead-cols: 5;
+  }
+
+  .about-panel:not(.about-panel--in-menu) .about-panel__col--services {
+    grid-column: 5 / span 2;
+  }
+
+  .about-panel:not(.about-panel--in-menu) .about-panel__col--clients {
+    grid-column: 7 / -1;
+  }
+
+  /* Only 2 tracks here, so the two-track offset above would push the second
+     column into an implicit track. */
+  .about-panel:not(.about-panel--in-menu)
+    .about-panel__clients-cols
+    > *:nth-child(2) {
+    grid-column: auto;
+  }
+}
+
+/* Stack on 6/4-col (standalone padded About) */
+@media (width < 48rem) {
+  .about-panel:not(.about-panel--in-menu) .about-panel__surface {
+    max-height: calc(90vh - var(--site--gutter) * 2);
+  }
+
+  .about-panel:not(.about-panel--in-menu) .about-panel__grid {
+    grid-template-rows: auto auto auto;
+  }
+
+  .about-panel:not(.about-panel--in-menu) .about-panel__intro {
+    grid-column: 1 / -1;
+    grid-row: 1;
+    --about--indent-cols: 0;
+    --about--lead-cols: 1;
+    --about--indent: 0;
+  }
+
+  .about-panel:not(.about-panel--in-menu) .about-panel__lead {
+    text-indent: 0;
+  }
+
+  .about-panel:not(.about-panel--in-menu) .about-panel__media {
+    grid-column: 1 / -1;
+    grid-row: 2;
+    width: 100%;
+    max-width: none;
+  }
+
+  .about-panel:not(.about-panel--in-menu) .about-panel__lists {
+    display: grid;
+    grid-column: 1 / -1;
+    grid-row: 3;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1.4fr);
+    gap: var(--space-8) var(--site-gutter);
+    align-items: start;
+  }
+
+  .about-panel:not(.about-panel--in-menu) .about-panel__col--services,
+  .about-panel:not(.about-panel--in-menu) .about-panel__col--clients {
+    grid-column: auto;
+    grid-row: auto;
+    align-self: start;
+  }
+
+  .about-panel:not(.about-panel--in-menu) .about-panel__col--clients {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-3);
+  }
+
+  .about-panel:not(.about-panel--in-menu) .about-panel__clients-cols {
+    display: grid;
+    grid-template-columns: repeat(2, max-content);
+    grid-column: auto;
+    grid-row: auto;
+    gap: var(--space-3) var(--site-gutter);
+  }
+
+  .about-panel:not(.about-panel--in-menu)
+    .about-panel__clients-cols
+    > *:nth-child(2) {
+    grid-column: auto;
+  }
+
+  .about-panel:not(.about-panel--in-menu)
+    .about-panel__col--clients
+    .about-panel__col-label {
+    grid-column: auto;
+    grid-row: auto;
+  }
+}

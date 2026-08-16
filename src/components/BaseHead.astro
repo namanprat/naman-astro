@@ -1,0 +1,99 @@
+---
+import { SITE_NAME, SITE_DESCRIPTION } from "@/consts.ts";
+import { isNoindexRoute } from "@/utils/seo.ts";
+import type { SeoProps } from "@/types.ts";
+
+type Props = SeoProps;
+
+const {
+  title,
+  description = SITE_DESCRIPTION,
+  image = "/main-assets/og-image.jpg",
+  type = "website",
+  noindex,
+} = Astro.props;
+
+const isNoindex = noindex ?? isNoindexRoute(Astro.url.pathname);
+
+const pageTitle = title ? `${title} | ${SITE_NAME}` : SITE_NAME;
+const canonical = new URL(Astro.url.pathname, Astro.site);
+const socialImage = new URL(image, Astro.site);
+---
+
+<meta charset="utf-8" />
+<style is:inline>
+  @layer base, patterns, components, utilities;
+  @font-face {
+    font-family: "Duforn Mono";
+    src:
+      url("/fonts/DufornMono-Regular.woff2") format("woff2"),
+      url("/fonts/DufornMono-Regular.woff") format("woff");
+    font-weight: 400;
+    font-style: normal;
+    font-display: swap;
+  }
+  @font-face {
+    font-family: "Hitmarker Condensed";
+    src: url("/fonts/HitmarkerCondensed-Black.woff2") format("woff2");
+    font-weight: 100 900;
+    font-style: normal;
+    font-display: swap;
+  }
+</style>
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>{pageTitle}</title>
+<meta name="description" content={description} />
+<link rel="canonical" href={canonical} />
+{isNoindex && <meta name="robots" content="noindex, nofollow" />}
+
+<meta property="og:type" content={type} />
+<meta property="og:site_name" content={SITE_NAME} />
+<meta property="og:title" content={pageTitle} />
+<meta property="og:description" content={description} />
+<meta property="og:url" content={canonical} />
+<meta property="og:image" content={socialImage} />
+
+<meta name="twitter:card" content="summary_large_image" />
+<meta name="twitter:title" content={pageTitle} />
+<meta name="twitter:description" content={description} />
+<meta name="twitter:image" content={socialImage} />
+
+<link rel="icon" type="image/svg+xml" href="/main-assets/favicon.svg" />
+<link rel="icon" href="/main-assets/favicon.ico" />
+<meta name="generator" content={Astro.generator} />
+
+<link rel="preconnect" href="https://use.typekit.net" crossorigin />
+<link rel="preconnect" href="https://p.typekit.net" crossorigin />
+<script is:inline>
+  (function (d) {
+    var config = {
+      kitId: "upa4ffy",
+      scriptTimeout: 3000,
+      async: true,
+    },
+      h = d.documentElement,
+      t = setTimeout(function () {
+        h.className =
+          h.className.replace(/\bwf-loading\b/g, "") + " wf-inactive";
+      }, config.scriptTimeout),
+      tk = d.createElement("script"),
+      f = false,
+      s = d.getElementsByTagName("script")[0],
+      a;
+    h.className += " wf-loading";
+    tk.src = "https://use.typekit.net/" + config.kitId + ".js";
+    tk.async = true;
+    tk.onload = tk.onreadystatechange = function () {
+      a = this.readyState;
+      if (f || (a && a != "complete" && a != "loaded")) return;
+      f = true;
+      clearTimeout(t);
+      try {
+        Typekit.load(config);
+      } catch (e) {
+        /* Kit load failures are non-fatal; --primary-family fallbacks apply. */
+      }
+    };
+    s.parentNode.insertBefore(tk, s);
+  })(document);
+</script>

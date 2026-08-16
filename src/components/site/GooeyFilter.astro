@@ -1,0 +1,31 @@
+---
+/**
+ * Alpha-threshold filter for the gooey reveal, ported from
+ * `codegrid-gooey-text-reveal/src/components/GooeyFilter/GooeyFilter.jsx`.
+ *
+ * The last matrix row (×255, −140) hard-thresholds alpha: blur a shape
+ * underneath this and its soft edges snap back to hard ones while overlapping
+ * areas fuse, which is what produces the melt. RGB passes through untouched, so
+ * it never shifts the colour it's applied to.
+ *
+ * Must be in the DOM for `filter: url(#blur-matrix)` to resolve — a missing
+ * reference makes the filtered element vanish, not degrade.
+ */
+---
+
+<svg
+  aria-hidden="true"
+  width="1"
+  height="1"
+  style="position:absolute;left:-9999px;width:1px;height:1px;overflow:hidden;pointer-events:none"
+>
+  <defs>
+    <filter id="blur-matrix" x="-50%" y="-50%" width="200%" height="200%">
+      <feColorMatrix
+        in="SourceGraphic"
+        type="matrix"
+        values="1 0 0 0 0  0 1 0 0 0  0 0 1 0 0  0 0 0 255 -140"
+      />
+    </filter>
+  </defs>
+</svg>

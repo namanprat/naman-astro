@@ -1,0 +1,22 @@
+---
+import Layout from "@/layouts/BaseLayout.astro";
+import { workItems } from "@/content/work.ts";
+import WorkProject from "@/components/work/WorkProject.astro";
+
+export function getStaticPaths() {
+  return workItems.map((item) => ({
+    params: { slug: item.slug },
+    props: { item },
+  }));
+}
+
+const { item } = Astro.props;
+---
+
+<Layout
+  title={item.title}
+  description={item.description}
+  theme="dark"
+>
+  <WorkProject item={item} />
+</Layout>

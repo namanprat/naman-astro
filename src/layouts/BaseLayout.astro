@@ -1,0 +1,103 @@
+---
+import "@/styles/global.css";
+import "@/styles/site.css";
+import BaseHead from "@/components/BaseHead.astro";
+import SkipLink from "@/components/SkipLink.astro";
+import Grid from "@/components/Grid.astro";
+import GridOverlay from "@/components/GridOverlay.astro";
+import SiteChrome from "@/components/site/SiteChrome";
+import GooeyFilter from "@/components/site/GooeyFilter.astro";
+import FluidCanvas from "@/components/site/FluidCanvas.astro";
+import type { SeoProps } from "@/types.ts";
+
+type Props = SeoProps & {
+  /** Theme for the whole page. `inherit` leaves the root defaults in place. */
+  theme?: "inherit" | "light" | "dark" | "brand";
+  /**
+   * Unused by the overlay chrome; kept so existing page props still type-check.
+   */
+  overlap?: boolean;
+  /** When false, skip nav + About (e.g. /example-components). Default true. */
+  chrome?: boolean;
+};
+
+const {
+  theme = "inherit",
+  overlap: _overlap = false,
+  chrome = true,
+  ...seo
+} = Astro.props;
+
+const isArchive = Astro.url.pathname === "/archive";
+---
+
+<!doctype html>
+<html lang="en" class:list={[theme !== "inherit" && `theme-${theme}`]}>
+  <head>
+    <BaseHead {...seo} />
+    <script is:inline>
+      document.documentElement.classList.add("is-line-revealing");
+      document.documentElement.classList.add("is-gooey-arming");
+      (function () {
+        try {
+          if (sessionStorage.getItem("pt:cover") === "1") {
+            document.documentElement.classList.add("is-page-transitioning");
+          }
+        } catch (e) {}
+      })();
+    </script>
+    <script is:inline>
+      (function () {
+        try {
+          var t = localStorage.getItem("site-theme");
+          if (t !== "light" && t !== "dark") return;
+          var root = document.documentElement;
+          root.classList.remove("theme-light", "theme-dark", "theme-brand");
+          root.classList.add("theme-" + t);
+        } catch (e) {}
+      })();
+    </script>
+    <slot name="head" />
+  </head>
+  <body>
+    <Grid render={false} />
+    <SkipLink />
+    {/* Every route: headings and the work label both filter through it, and a
+        `url()` pointing at a missing node blanks the element on WebKit. */}
+    <GooeyFilter />
+    <div class="site-grain" aria-hidden="true"></div>
+    <div class="transition-panel" aria-hidden="true"></div>
+    {
+      chrome && (
+        <SiteChrome
+          client:load
+          pathname={Astro.url.pathname}
+        />
+      )
+    }
+    <div class="site-backdrop">
+      <slot name="backdrop" />
+    </div>
+    {
+      /* `tabindex` so the jump moves focus here, not just the scroll position */
+    }
+    <main id="main" tabindex="-1">
+      {!isArchive && <FluidCanvas />}
+      <slot />
+    </main>
+    {import.meta.env.DEV && <GridOverlay />}
+    <script>
+      import { bootIfCovered } from "@/lib/site/pageTransition";
+      import { revealLines } from "@/lib/site/lineReveal";
+      import { bootGooeyHeadings } from "@/lib/site/gooeyReveal";
+      import { bootOverlayScrollbar } from "@/lib/site/overlayScrollbar";
+      bootOverlayScrollbar();
+      // Parallel, not chained: each owns its own hold class and its own 2s
+      // failsafe, so chaining would stack the two budgets into a 4s worst case.
+      void bootIfCovered().then(() => {
+        void bootGooeyHeadings();
+        void revealLines();
+      });
+    </script>
+  </body>
+</html>

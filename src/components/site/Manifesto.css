@@ -1,0 +1,25 @@
+.manifesto {
+  position: relative;
+  width: 100%;
+  margin: 0;
+  background-color: transparent;
+  color: var(--ink);
+  padding-bottom: 50vh;
+}
+
+.manifesto__grid {
+  width: 100%;
+}
+
+.manifesto__lead {
+  grid-column: 1 / -1;
+  margin: 0;
+  max-width: none;
+  color: var(--ink);
+}
+
+@media (width >= 64rem) {
+  .manifesto__lead {
+    grid-column: 3 / span 8;
+  }
+}

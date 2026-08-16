@@ -1,0 +1,30 @@
+---
+/**
+ * Dashed Lumos column guides. Always render 12 tracks; extras hide so the
+ * visible count matches `.grid.is-12` (4 / 6 / 8 / 12 at 30 / 48 / 64rem).
+ */
+interface Props {
+  overlay?: boolean;
+}
+
+const { overlay = false } = Astro.props;
+---
+
+<div class="grid-lines" aria-hidden="true">
+  {
+    Array.from({ length: 12 }, (_, i) => {
+      const n = i + 1;
+      return (
+        <div
+          class:list={[
+            "grid-lines_col",
+            n > 8 && "is-lg",
+            n > 6 && n <= 8 && "is-md",
+            n > 4 && n <= 6 && "is-sm",
+            overlay && "is-overlay",
+          ]}
+        />
+      );
+    })
+  }
+</div>

@@ -1,0 +1,13 @@
+---
+import Layout from "@/layouts/BaseLayout.astro";
+import ArchiveCanvas from "@/components/archive/ArchiveCanvas";
+---
+
+<Layout title="Archive" description="Poster archive." theme="dark">
+  {/* Paint black + white nav before the island mounts — otherwise light theme
+      flashes grey ground and ink-colored chrome for a frame. */}
+  <script is:inline>
+    document.documentElement.classList.add("page-archive");
+  </script>
+  <ArchiveCanvas client:only="react" />
+</Layout>

@@ -1,0 +1,31 @@
+---
+import GridLines from "./GridLines.astro";
+---
+
+<div class="grid-overlay" data-grid-overlay aria-hidden="true">
+  <GridLines overlay />
+</div>
+
+<script>
+  document.addEventListener("DOMContentLoaded", () => {
+    document.querySelectorAll<HTMLElement>("[data-grid-overlay]").forEach((overlay) => {
+      if (overlay.dataset.scriptInitialized) return;
+      overlay.dataset.scriptInitialized = "true";
+
+      document.addEventListener("keydown", (event) => {
+        if (!event.shiftKey || event.key.toLowerCase() !== "g") return;
+
+        const target = event.target as HTMLElement | null;
+        if (
+          target?.isContentEditable ||
+          ["INPUT", "TEXTAREA", "SELECT"].includes(target?.tagName ?? "")
+        ) {
+          return;
+        }
+
+        event.preventDefault();
+        overlay.classList.toggle("is-active");
+      });
+    });
+  });
+</script>

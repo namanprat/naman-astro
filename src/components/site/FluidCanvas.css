@@ -1,0 +1,48 @@
+.fluid-wrap {
+  position: relative;
+  width: 100%;
+  height: 100svh;
+  height: 100dvh;
+  /* Sit under the in-flow chrome, same pull-up .hero used when the sim was fixed. */
+  margin-top: calc(
+    -1 * (var(--hero-chrome-pad, 0px) + var(--hero-chrome-content, 0px))
+  );
+  pointer-events: none;
+  z-index: 0;
+  overflow: hidden;
+  flex-shrink: 0;
+  /* Under the sim — matches theme toggle; never paints over the logo. */
+  background-color: var(--dark);
+}
+
+.fluid-wrap canvas {
+  display: block;
+  width: 100%;
+  height: 100%;
+  opacity: 0.4;
+  transition: opacity 0.45s ease;
+}
+
+/* Home first paint: hero is in view, so the sim starts at full strength. */
+html:has(.hero) .fluid-wrap canvas {
+  opacity: 1;
+}
+
+html.is-hero-fluid-dim .fluid-wrap canvas {
+  opacity: 0.4;
+}
+
+html.page-work .fluid-wrap {
+  position: absolute;
+  inset: 0;
+  height: auto;
+  margin-top: 0;
+}
+
+/* Scrolling case-study — keep the sim as a viewport backdrop, not extra height. */
+html.page-work-project .fluid-wrap {
+  position: fixed;
+  inset: 0;
+  height: auto;
+  margin-top: 0;
+}

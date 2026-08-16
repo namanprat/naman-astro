@@ -1,0 +1,12 @@
+---
+import type { WorkItem } from "../../content/work";
+import WorkProject from "./WorkProject.tsx";
+
+interface Props {
+  item: WorkItem;
+}
+
+const { item } = Astro.props;
+---
+
+<WorkProject client:only="react" item={item} />

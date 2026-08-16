@@ -1,0 +1,378 @@
+/* Site layout, chrome helpers, and original-page compositions.
+   Tokens stay unlayered so they always apply; rules sit on Lumos `components`. */
+
+:root {
+  /* Lumos Grid counts: 4 / 6 / 8 / 12 at 30 / 48 / 64 rem. */
+  --site-column-count: 4;
+  /* The widest count, i.e. the grid authors place content against. */
+  --site-column-count-max: 12;
+  --site--column-count: var(--site-column-count);
+  --site--safe-area-top: env(safe-area-inset-top, 0px);
+  --site--safe-area-bottom: env(safe-area-inset-bottom, 0px);
+  --site--grid-width: min(var(--max-width-main), calc(100vw - var(--site-margin) * 2));
+  --site--column-width: calc((var(--site--grid-width) - (var(--site-gutter) * (var(--site-column-count) - 1))) / var(--site-column-count));
+  --site--column-width-plus-gutter: calc(var(--site--column-width) + var(--site-gutter));
+  --site--span-1: var(--site--column-width);
+  --site--span-2: calc(var(--site--column-width-plus-gutter) * 2 - var(--site-gutter));
+  --site--span-3: calc(var(--site--column-width-plus-gutter) * 3 - var(--site-gutter));
+  --site--span-4: calc(var(--site--column-width-plus-gutter) * 4 - var(--site-gutter));
+  --site--span-5: calc(var(--site--column-width-plus-gutter) * 5 - var(--site-gutter));
+  --site--span-8: calc(var(--site--column-width-plus-gutter) * 8 - var(--site-gutter));
+  --muted: color-mix(in srgb, var(--ink) 70%, transparent);
+  --site--nav-offset: 0px;
+
+  --z--negative: -10;
+  --z--default: 0;
+  --z--raised: 1;
+  --z--pin: 5;
+  --z--dropdown: 10;
+  --z--sticky: 100;
+  --z--nav: 200;
+  --z--menu: 210;
+  --z--overlay: 999;
+  --z--modal: 9999;
+}
+
+@media (width >= 30rem) {
+  :root {
+    --site-column-count: 6;
+  }
+}
+
+@media (width >= 48rem) {
+  :root {
+    --site-column-count: 8;
+  }
+}
+
+@media (width >= 64rem) {
+  :root {
+    --site-column-count: 12;
+  }
+}
+
+.theme-light {
+  /* Scrim over the frosted surfaces (About panel, footer). 65%, not 50% — the
+     panels read 30% darker so the ink holds against a bright page behind. */
+  --surface-accent: color-mix(in srgb, var(--text) 65%, transparent);
+  --surface-frost-blur: 20px;
+}
+
+@layer components {
+  .grid {
+    --_cols: var(--_cols-xs);
+    --_cols-xs: 1;
+    --_cols-sm: var(--_cols-xs);
+    --_cols-md: var(--_cols-sm);
+    --_cols-lg: var(--_cols-md);
+    --_gap-size: var(--site-gutter);
+    width: 100%;
+    display: grid;
+    grid-column-gap: var(--_gap-size);
+    grid-row-gap: var(--_gap-size);
+    grid-template-columns: repeat(var(--_cols), minmax(0, 1fr));
+  }
+
+  @media (width >= 30rem) {
+    .grid {
+      --_cols: var(--_cols-sm);
+    }
+  }
+
+  @media (width >= 48rem) {
+    .grid {
+      --_cols: var(--_cols-md);
+    }
+  }
+
+  @media (width >= 64rem) {
+    .grid {
+      --_cols: var(--_cols-lg);
+    }
+  }
+
+  .grid.is-12 {
+    --_cols-xs: 4;
+    --_cols-sm: 6;
+    --_cols-md: 8;
+    --_cols-lg: 12;
+  }
+
+  /* Home scroll composition — one viewport of fluid, then the studio stack. */
+
+  .hero {
+    /* The in-flow fluid-wrap is the first viewport; this stays as a marker
+       for html:has(.hero) and the dim observer, without adding a second 100svh. */
+    position: relative;
+    z-index: 1;
+    width: 100%;
+    height: 0;
+    margin: 0;
+    padding-block: 0;
+    background-color: transparent;
+    color: var(--ink);
+    overflow: visible;
+    pointer-events: none;
+  }
+
+  .studio {
+    position: relative;
+    z-index: 2;
+    width: 100%;
+    margin: 0;
+    background-color: transparent;
+  }
+
+  .hero,
+  .team {
+    padding-block: 0;
+    padding-top: 0;
+  }
+
+  .revealer {
+    position: relative;
+    width: max-content;
+    clip-path: polygon(0 0, 100% 0, 100% 100%, 0% 100%);
+  }
+
+  .site-grain {
+    position: fixed;
+    inset: -50%;
+    width: 200%;
+    height: 200%;
+    z-index: 1000000;
+    pointer-events: none;
+    opacity: 0.4;
+    background-image: url("/main-assets/grain.webp");
+    background-repeat: repeat;
+    background-size: 60rem 60rem;
+    mix-blend-mode: overlay;
+    animation: site-grain-shift 0.45s steps(1) infinite;
+  }
+
+  @keyframes site-grain-shift {
+    0% {
+      transform: translate(0, 0);
+    }
+    10% {
+      transform: translate(-3%, -4%);
+    }
+    20% {
+      transform: translate(4%, 1%);
+    }
+    30% {
+      transform: translate(-2%, 3%);
+    }
+    40% {
+      transform: translate(3%, -2%);
+    }
+    50% {
+      transform: translate(-4%, 2%);
+    }
+    60% {
+      transform: translate(2%, 4%);
+    }
+    70% {
+      transform: translate(-1%, -3%);
+    }
+    80% {
+      transform: translate(4%, 2%);
+    }
+    90% {
+      transform: translate(-3%, 1%);
+    }
+    100% {
+      transform: translate(0, 0);
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .site-grain {
+      animation: none;
+    }
+  }
+
+  .transition-panel {
+    position: fixed;
+    inset: 0;
+    width: 100%;
+    height: 100svh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    background-color: var(--accent);
+    transform: translateY(100%);
+    pointer-events: none;
+    z-index: 1000001;
+    will-change: transform;
+  }
+
+  html.is-page-transitioning .transition-panel {
+    transform: translateY(0);
+    pointer-events: all;
+  }
+
+  html.is-page-transitioning,
+  html.is-page-transitioning body,
+  html.is-preloading,
+  html.is-preloading body {
+    overflow: hidden !important;
+    overscroll-behavior: none;
+    touch-action: none;
+  }
+
+  /* While the preloader is up, only the backdrop overlay, the in-flow fluid,
+     and the grain may paint — the overlay is transparent so the canvas reads
+     through it, which means the rest of the page has to be hidden. */
+  html.is-preloading body > *:not(.site-backdrop):not(.site-grain):not(main) {
+    visibility: hidden;
+  }
+
+  html.is-preloading main > *:not(.fluid-wrap) {
+    visibility: hidden;
+  }
+
+  /* Two independent pre-paint holds, one per entrance module. Each list mirrors
+     the SKIP constant in its own module — `lineReveal.ts` for the first,
+     `gooeyReveal.ts` for the second — and the two lists differ on purpose:
+     `.manifesto` opts out of the line reveal but not the gooey. */
+
+  html.is-line-revealing .text-style-main:not(:is(.nav-container, .footer, .menu, .about-panel, .manifesto, .content__group, .transition-panel, [data-no-reveal]) *) {
+    visibility: hidden;
+  }
+
+  html.is-gooey-arming :is(h1, h2, h3):not(:is(.nav-container, .footer, .menu, .about-panel, .content__group, .transition-panel, [data-no-reveal]) *) {
+    visibility: hidden;
+  }
+
+  /* Outer layer of the gooey: the alpha threshold that turns a soft blur into a
+     melt. The 0.4px is codegrid's anti-alias softener — the threshold's hard cut
+     aliases badly on curves without it. Removed once the entrance settles. */
+  .gooey-reveal {
+    filter: url(#blur-matrix) blur(0.4px);
+  }
+
+  /* Opt-out via `data-reveal="soft"`, for faces too thin to survive the
+     threshold: same blur-to-sharp entrance, no fusing. */
+  .gooey-reveal--soft {
+    filter: none;
+  }
+
+  .gooey-reveal__line {
+    display: block;
+  }
+
+  /* `text-indent` is a first-line property that inherits, and the split turns
+     every line into its own block — so an indented heading would repeat its
+     indent on each line and shove the wide ones past the edge. The first line
+     keeps the inherited value; the rest start flush. */
+  .gooey-reveal__line + .gooey-reveal__line {
+    text-indent: 0;
+  }
+
+  .gooey-reveal__inner {
+    display: inline-block;
+    will-change: filter;
+    /* Also a first-line box, nested inside one that already took the indent. */
+    text-indent: 0;
+  }
+
+  html {
+    overflow-x: clip;
+    scrollbar-gutter: auto;
+    scrollbar-width: none;
+  }
+
+  html::-webkit-scrollbar {
+    width: 0;
+    height: 0;
+    display: none;
+    background: transparent;
+  }
+
+  .overlay-scrollbar {
+    position: fixed;
+    top: 0.625rem;
+    right: 0.25rem;
+    bottom: 0.625rem;
+    width: 0.3125rem;
+    z-index: 1000002;
+    pointer-events: none;
+    background: transparent;
+  }
+
+  .overlay-scrollbar[hidden] {
+    display: none;
+  }
+
+  .overlay-scrollbar__thumb {
+    width: 100%;
+    border-radius: var(--radius-round);
+    background: color-mix(in srgb, var(--ink) 45%, transparent);
+    will-change: transform;
+  }
+
+  .grid-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: var(--z--modal);
+    pointer-events: none;
+    opacity: 0;
+  }
+
+  .grid-overlay.is-active {
+    opacity: 1;
+  }
+
+  .grid-lines {
+    position: absolute;
+    inset-block: 0;
+    left: 50%;
+    transform: translateX(-50%);
+    width: var(--site-width);
+    max-width: var(--max-width-main);
+    display: grid;
+    grid-template-columns: repeat(var(--site-column-count), minmax(0, 1fr));
+    column-gap: var(--site-gutter);
+    pointer-events: none;
+  }
+
+  .grid-lines_col {
+    min-width: 0;
+    width: 100%;
+    border-left: var(--border-width) dashed color-mix(in srgb, var(--ink) 20%, transparent);
+    border-right: var(--border-width) dashed color-mix(in srgb, var(--ink) 20%, transparent);
+  }
+
+  .grid-lines_col.is-sm,
+  .grid-lines_col.is-md,
+  .grid-lines_col.is-lg {
+    display: none;
+  }
+
+  @media (width >= 30rem) {
+    .grid-lines_col.is-sm {
+      display: block;
+    }
+  }
+
+  @media (width >= 48rem) {
+    .grid-lines_col.is-md {
+      display: block;
+    }
+  }
+
+  @media (width >= 64rem) {
+    .grid-lines_col.is-lg {
+      display: block;
+    }
+  }
+
+  .grid-lines_col.is-overlay {
+    border-left-style: solid;
+    border-right-style: solid;
+    border-left-color: red;
+    border-right-color: red;
+    background-color: rgb(255 0 0 / 8%);
+  }
+}

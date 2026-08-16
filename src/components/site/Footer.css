@@ -1,0 +1,191 @@
+.footer {
+  position: relative;
+  width: 100%;
+  /* Same identity as .about-panel: leftover after the orange is grid + 2*gutter. */
+  --about--inset: calc(var(--site--margin) - var(--site--gutter));
+  /* Outer float — gutter air on all four sides; child is width 100% inside. */
+  padding: var(--site--gutter);
+  padding-bottom: calc(var(--site--gutter) + var(--site--safe-area-bottom));
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  box-sizing: border-box;
+  /* Don't contain — backdrop-filter on .footer-child needs to sample the page. */
+  background-color: transparent;
+}
+
+/*
+  Fill + frost live on the scrubbed node itself. Putting backdrop-filter on a
+  child of a transformed .footer-child only samples inside that transform
+  (empty), so the orange looked solid in light mode.
+*/
+.footer-child {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  transform-origin: center bottom;
+  background-color: var(--surface-accent);
+}
+
+html.theme-light .footer-child {
+  backdrop-filter: blur(var(--surface-frost-blur));
+  -webkit-backdrop-filter: blur(var(--surface-frost-blur));
+}
+
+.footer-box {
+  width: 100%;
+  background-color: transparent;
+  /* Dark mode: black on accent. Light mode: white on frost. */
+  color: var(--black);
+  box-sizing: border-box;
+  /* Vertical gutter only. Horizontal inset comes from the shared site grid
+     band below — padding here too would inset the band a second time and pull
+     every column off the site grid (it was landing 40px in, so the footer
+     links never lined up with the nav or the About panel).
+     Matches .about-panel__inner. Page light-mode ink is grey; this card keeps
+     black / white. */
+  --ink: var(--black);
+  padding-block: var(--site--gutter);
+  padding-inline: 0;
+}
+
+html.theme-light .footer-box {
+  --ink: var(--white);
+  color: var(--white);
+}
+
+/* Full-width content shell inside the padded box. */
+.footer_contain.container {
+  gap: 0;
+  width: var(--site--grid-width);
+  max-width: var(--max-width-main);
+  margin-inline: auto;
+  padding: 0;
+}
+
+@media (width >= 64rem) {
+  .footer {
+    padding: 0;
+    padding-top: var(--about--inset);
+    padding-bottom: calc(var(--about--inset) + var(--site--safe-area-bottom));
+  }
+
+  .footer-child {
+    width: calc(var(--site--grid-width) + var(--site--gutter) * 2);
+    margin-inline: auto;
+  }
+
+  .footer-box {
+    padding: var(--site--gutter);
+  }
+
+  .footer_contain.container {
+    width: 100%;
+    max-width: none;
+    margin-inline: 0;
+  }
+}
+
+/*
+  tokens.css sets `body, h1..h6, p, a, time { color: var(--ink) }` — a direct
+  type-selector hit, which beats the panel's colour arriving by inheritance. So
+  every typographic element in here has to opt back in explicitly.
+*/
+.footer :is(h1, h2, h3, h4, h5, h6, p, a, time) {
+  color: inherit;
+}
+
+.footer a {
+  text-decoration: none;
+}
+
+/* Gooey reveal host — the GSAP pass blurs .footer-text-content inside it.
+   No `overflow: hidden` here: it was the mask for the old slide-up, and it
+   would now crop the blur bleed off the top and bottom of every link. */
+.footer-text {
+  display: block;
+}
+
+.footer-text-content {
+  display: block;
+  will-change: filter;
+}
+
+/* ─── Main block ────────────────────────────────────────────────────────────
+   12-col map, on the navbar's own tracks: tagline 1–5, Navigation 8–9
+   (.nav-stack--home), Connect 10–12 (.nav-stack--about + .nav-utility-stack).
+   Columns 6–7 stay empty. */
+.footer-main {
+  width: 100%;
+  align-items: start;
+  row-gap: var(--space-6);
+}
+
+.footer-tagline {
+  grid-column: 1 / span 5;
+  margin: 0;
+  text-wrap: balance;
+}
+
+.footer-col--nav {
+  grid-column: 8 / span 2;
+}
+
+.footer-col--connect {
+  grid-column: 10 / -1;
+}
+
+.footer-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+/* Hover is the navbar's rolling-char effect (RollingText), not a fade — the
+   roll clips per character, so it nests inside the reveal mask safely. */
+.footer-link {
+  display: inline-block;
+  line-height: 1.05;
+}
+
+.footer-link__icon {
+  display: inline-block;
+  margin-left: 0.25em;
+  font-size: 0.45em;
+  vertical-align: super;
+}
+
+/* Full width of the padded box. Section space separates the top block from
+   the wordmark. */
+.footer-logo {
+  width: 100%;
+  min-width: 0;
+  margin-top: var(--section-space-large);
+  box-sizing: border-box;
+}
+
+/* ─── Bands ─────────────────────────────────────────────────────────────────
+   12-col anchors only exist at large. Re-anchor on 8-col, then stack. */
+
+@media (width < 64rem) {
+  .footer-tagline {
+    grid-column: 1 / -1;
+  }
+
+  .footer-col--nav {
+    grid-column: 1 / span 4;
+  }
+
+  .footer-col--connect {
+    grid-column: 5 / span 4;
+  }
+}
+
+@media (width < 48rem) {
+  .footer-tagline,
+  .footer-col--nav,
+  .footer-col--connect {
+    grid-column: 1 / -1;
+  }
+}
