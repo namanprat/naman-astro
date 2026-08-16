@@ -23,7 +23,6 @@ const isArchive = Astro.url.pathname === "/archive";
 <html lang="en" class:list={[theme !== "inherit" && `theme-${theme}`]}>
   <head>
     <BaseHead {...seo} />
-    <Analytics />
     <script is:inline>
       document.documentElement.classList.add("is-line-revealing");
       document.documentElement.classList.add("is-gooey-arming");
@@ -79,5 +78,6 @@ const isArchive = Astro.url.pathname === "/archive";
         void revealLines();
       });
     </script>
+    <Analytics />
   </body>
 </html>
