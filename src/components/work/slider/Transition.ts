@@ -209,15 +209,17 @@ export default class Transition {
        so title and cover read as one gesture rather than two. Measured after
        `.content` is displayed — before that the title has no layout position to
        travel from. */
+    /* Only where the title actually has somewhere to go. Above 64rem it rests
+       dead-centre — exactly where the label was — so the offset is ~0 and there
+       is nothing to animate. Skipping rather than tweening by zero also keeps
+       GSAP off its `translate(-50%, -50%)`: taking ownership of a percentage
+       transform is what strands elements, as `AboutPanel.css` already notes. */
     const title = this.activeTitle();
-    if (title) {
+    const offset = title ? this.titleOffset(title) : 0;
+    if (title && Math.abs(offset) > 1) {
       this.tl.from(
         title,
-        {
-          y: this.titleOffset(title),
-          duration: MORPH_DURATION,
-          ease: MORPH_EASE,
-        },
+        { y: offset, duration: MORPH_DURATION, ease: MORPH_EASE },
         0,
       );
     }
@@ -315,7 +317,11 @@ export default class Transition {
 
     const bodyLines = this.splitBody?.lines ?? [];
 
+    /* Same guard as the open: zero on desktop, where the title never left the
+       label's box. `0` is falsy, which is exactly the "don't tween" case. */
     const closingTitle = this.activeTitle();
+    const rawOffset = closingTitle ? this.titleOffset(closingTitle) : 0;
+    const closingTitleOffset = Math.abs(rawOffset) > 1 ? rawOffset : 0;
 
     this.tl = gsap
       .timeline({ onComplete: () => this.reset() })
@@ -349,10 +355,10 @@ export default class Transition {
       // Back down to the label's spot on the same clock, so the gallery label
       // it hands off to is already in that exact box when it reappears.
       .to(
-        closingTitle ?? [],
-        closingTitle
+        closingTitleOffset ? closingTitle! : [],
+        closingTitleOffset
           ? {
-              y: this.titleOffset(closingTitle),
+              y: closingTitleOffset,
               duration: MORPH_DURATION,
               ease: MORPH_EASE,
             }

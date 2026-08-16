@@ -1,6 +1,5 @@
 import { useEffect, useRef, useState, type CSSProperties } from "react";
 import { gsap } from "gsap";
-import { Flip } from "gsap/Flip";
 import Lenis from "lenis";
 import { workItems } from "../../content/work";
 import { gooeyMorph } from "../../lib/site/gooeyReveal";
@@ -9,6 +8,7 @@ import {
   SCROLL_SETTINGS,
   driveLenisWithGsap,
 } from "../../lib/site/lenisScroll";
+import { prefersReducedMotion } from "../../lib/site/prefersReducedMotion";
 import { takeWorkReturn } from "../../lib/site/workReturn";
 import {
   readWorkView,
@@ -23,15 +23,12 @@ import Transition from "./slider/Transition";
 import WorkViewSwitcher from "./WorkViewSwitcher";
 import "./Work.css";
 
-gsap.registerPlugin(Flip);
-
 /** Settled hover before a morph fires, so sweeping across tiles doesn't melt
  *  the label once per tile the cursor crosses. */
 const MORPH_DELAY_MS = 80;
 
-/** One speed knob for the mode switch, same convention as Transition's. */
-const SWITCH_DURATION = 0.85;
-const SWITCH_EASE = "power4.inOut";
+/** Fade each way when swapping slider ↔ grid. Title gooey runs in parallel. */
+const DISSOLVE_S = 0.35;
 
 /**
  * What `WorkGallery` needs from whichever view is driving the tiles. `Slider`
@@ -188,68 +185,78 @@ export default function WorkGallery() {
       });
     };
 
-    /** Flip the same six tiles between the two rest layouts. */
+    /** Dissolve the tiles, swap layout, dissolve in. Title gooey is the hover
+     *  morph already wired to `hoverTitle`. */
     const switchView = (next: WorkView) => {
       const engine = engineRef.current;
       if (!engine || switchingRef.current) return;
       if (next === viewRef.current) return;
-      // The overlay owns `data-flip-id="preview"`; two Flips on one tile fight.
       if (!transition || transition.state !== "closed") return;
 
       switchingRef.current = true;
       setSwitching(true);
 
       const centered = engine.centeredIndex;
-      const slides = slideEls();
+      const gallery = root.querySelector<HTMLElement>(".gallery");
+
+      if (next === "grid") setHoverTitle(null);
+      else setHoverTitle(workItems[centered]?.title ?? null);
 
       engine.suspendResize(true);
       engine.stop();
-      engine.neutralise();
-      engine.destroy();
 
-      // Flip cannot animate what Reveal left at visibility:hidden.
-      gsap.set(root.querySelectorAll(".gallery__img-wrapper"), {
-        autoAlpha: 1,
-      });
+      const swap = () => {
+        engine.neutralise();
+        engine.destroy();
 
-      const state = Flip.getState(slides);
+        viewRef.current = next;
+        setView(next);
+        writeWorkView(next);
+        root.dataset.workView = next;
 
-      viewRef.current = next;
-      setView(next);
-      writeWorkView(next);
-      root.dataset.workView = next;
+        /* Several authors share each slide's transform — CSS translateX
+           (absorbed into GSAP's cached x), the loop's yPercent, the parallax y,
+           and the ring's placement. Clear them or the cached values fight the new
+           layout. Same reason Slider.rebuild() does this before re-measuring. */
+        gsap.set(slideEls(), { clearProps: "transform,zIndex" });
 
-      /* Several authors share each slide's transform — CSS translateX
-         (absorbed into GSAP's cached x), the loop's yPercent, the parallax y,
-         and the ring's placement. Clear them or the cached values fight the new
-         layout. Same reason Slider.rebuild() does this before re-measuring. */
-      gsap.set(slides, { clearProps: "transform,zIndex" });
-
-      /* Which end state Flip measures depends on where that layout comes from.
-         The ring is placed entirely by GSAP transform, so it has to exist
-         *before* Flip.from reads the destination. The grid's comes from flow,
-         and verticalLoop measures offsetTop — which `absolute: true` would read
-         as an empty gallery mid-flight — so that one is built on completion. */
-      let built: ViewEngine | null = null;
-      if (next === "slider") {
-        built = makeEngine(next);
+        const built = makeEngine(next);
         built.centerOn(centered);
+        built.stop();
+        engineRef.current = built;
+      };
+
+      const done = () => {
+        if (cancelled) return;
+        engineRef.current?.start();
+        switchingRef.current = false;
+        setSwitching(false);
+      };
+
+      if (!gallery || prefersReducedMotion()) {
+        swap();
+        if (gallery) gsap.set(gallery, { autoAlpha: 1 });
+        done();
+        return;
       }
 
-      Flip.from(state, {
-        absolute: true,
-        duration: SWITCH_DURATION,
-        ease: SWITCH_EASE,
+      gsap.to(gallery, {
+        autoAlpha: 0,
+        duration: DISSOLVE_S,
+        ease: "power2.inOut",
         onComplete: () => {
           if (cancelled) return;
-          if (!built) {
-            built = makeEngine(next);
-            built.centerOn(centered);
-          }
-          engineRef.current = built;
-          if (next === "grid") setHoverTitle(null);
-          switchingRef.current = false;
-          setSwitching(false);
+          swap();
+          gsap.fromTo(
+            gallery,
+            { autoAlpha: 0 },
+            {
+              autoAlpha: 1,
+              duration: DISSOLVE_S,
+              ease: "power2.inOut",
+              onComplete: done,
+            },
+          );
         },
       });
     };
@@ -452,6 +459,7 @@ export default function WorkGallery() {
       engineRef.current?.destroy();
       transition?.tl?.kill();
       morphTlRef.current?.kill();
+      gsap.killTweensOf(root.querySelector(".gallery"));
       stopDrivingLenis?.();
       overlayLenis?.destroy();
       setSiteLenis(null);

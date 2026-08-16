@@ -214,26 +214,20 @@ html.work-returning .work-page[data-work-view="slider"] .gallery::after {
   opacity: 0;
 }
 
-/* Kept inside the ring's clear span — the gap between the tiles at 9 and 3
-   o'clock — so it wraps rather than running under them. On a phone the ring is
-   width-capped, so this is the constraint that actually binds. */
-.work-page[data-work-view="slider"] .gallery-label {
-  /* 1.73 ≈ 2·cos(30°): on a six-position ring nothing sits at 3 o'clock, but the
-     tiles 30° either side reach further in at the label's own band than the full
-     diameter suggests. Sizing against the diameter let the last glyph touch them. */
-  max-width: min(
-    calc(100vw - 2 * var(--site--margin)),
-    calc(1.73 * var(--wheel-radius) - var(--wheel-tile-w) - 1rem)
-  );
-}
+/* No max-width clamp here, deliberately. Sizing the label to the ring's clear
+   span pushed the text off-centre on every breakpoint: the inner is an
+   inline-block, and one wider than its line box cannot overflow leftward past
+   the content edge — it anchors at the line start and spills right. Clamping a
+   439px word into a 232px box moved it 104px off centre. Font-size is the only
+   safe lever, since it shrinks the ink rather than the box. */
 
-/* A single word cannot wrap, so on a phone the max-width above only bounds the
-   box — the glyphs still spill over the tiles. Size the type to the ring
-   instead. Narrow screens only: the desktop ring is wide enough already, and
-   this would shrink type that has room. */
-@media (width < 1000px) {
+/* Phones only, where the ring is width-capped and the label would otherwise run
+   under the tiles. The `min()` is load-bearing: above ~48rem the radius is capped
+   by height instead and grows to ~330, so the bare ratio *enlarged* the label to
+   137px rather than shrinking it. This can only ever take size away. */
+@media (width < 48rem) {
   .work-page[data-work-view="slider"] .gallery-label {
-    font-size: calc(var(--wheel-radius) * 0.42);
+    font-size: min(4.2rem, calc(var(--wheel-radius) * 0.42));
   }
 }
 
@@ -429,34 +423,40 @@ html.work-returning .work-view-switcher {
     var(--site--margin);
 }
 
-/* Sits under the title now rather than over it — the hero is a top-aligned
-   stack, not a centred lockup. */
+/* Same box as the absolutely centered title, so services and body share its
+   vertical midpoint. Stretch overrides `.container`'s center/start alignment. */
 .project__hero-container {
-  position: relative;
+  position: absolute;
+  inset: 0;
   height: auto;
   min-height: 0;
-  margin-top: var(--site--gutter);
+  justify-content: stretch;
+  align-items: stretch;
   gap: 0;
 }
 
+/* One full-height row so services and description sit on the title's center. */
 .project__hero-grid {
-  height: auto;
-  min-height: 0;
-  grid-template-rows: auto;
-  align-items: start;
+  height: 100%;
+  min-height: 100%;
+  grid-template-rows: 1fr;
+  align-items: center;
 }
 
-/* In flow at the top of the hero. It arrives here from the work page's label
-   position — `Transition` tweens it up from viewport centre alongside the cover
-   morph, so the two land together. Hence no `position: absolute`: the resting
-   place has to be a real layout position for the tween to land on. */
+/* Same viewport lockup as `.gallery-label` — dead-center, so opening a project
+   leaves it exactly where the label was and `Transition` has nothing to travel.
+   Under 64rem it drops into flow at the top of the hero instead, and there the
+   morph does carry it up. No `width` here: absolutely positioned at `left: 50%`,
+   a full width would put a viewport-wide box half a screen off centre. */
 .project__title {
-  position: relative;
+  position: absolute;
+  top: 50%;
+  left: 50%;
   z-index: 1;
-  width: 100%;
   margin: 0;
   padding-inline: var(--site--margin);
-  box-sizing: border-box;
+  max-width: calc(100vw - 2 * var(--site--margin));
+  transform: translate(-50%, -50%);
   pointer-events: none;
   text-align: center;
   color: var(--ink);
@@ -464,7 +464,7 @@ html.work-returning .work-view-switcher {
 
 .project__services {
   grid-column: 1 / span 3;
-  align-self: start;
+  align-self: center;
   justify-self: start;
   text-align: left;
   display: flex;
@@ -490,7 +490,7 @@ html.work-returning .work-view-switcher {
 
 .project__body {
   grid-column: 10 / -1;
-  align-self: start;
+  align-self: center;
   justify-self: stretch;
   text-align: left;
   text-wrap: wrap;
@@ -612,9 +612,15 @@ html.work-returning .work-view-switcher {
     min-height: 0;
   }
 
+  /* Phone only: the hero becomes a top-aligned stack — title in flow at the top
+     with the copy beneath it — instead of the desktop lockup that centres
+     services and description on an absolutely-centred title. This is also what
+     gives the title somewhere to travel to, so the morph carries it up here and
+     leaves it still on desktop. */
   .project__hero-container {
     position: relative;
     inset: auto;
+    margin-top: var(--site--gutter);
   }
 
   .project__hero-container,
@@ -625,6 +631,12 @@ html.work-returning .work-view-switcher {
 
   .project__hero-grid {
     grid-template-rows: none;
+    align-items: start;
+  }
+
+  .project__services,
+  .project__body {
+    align-self: start;
   }
 
   .project__cover {
