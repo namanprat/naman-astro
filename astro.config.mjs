@@ -28,6 +28,23 @@ export default defineConfig({
     // Upgrade path if it drifts often: derive it in this config from that scan.
     optimizeDeps: {
       include: [
+        // React and its scheduler are named even though nothing here imports
+        // them as bare specifiers from a client:only island. `@react-three/fiber`
+        // depends on `scheduler` directly, so force-including fiber without
+        // these pre-bundles fiber (and the scheduler it pulls in) while React
+        // itself is still served raw from node_modules. The two halves then come
+        // from different builds — a development `react/jsx-runtime` meeting a
+        // production `scheduler` — and hydration dies with
+        // "dispatcher.getOwner is not a function" on whichever route mounts the
+        // R3F canvas first. Naming them puts every piece in one optimize pass,
+        // in one mode. Whether it breaks otherwise depends on optimize-pass
+        // ordering, so it reproduces on some machines and not others.
+        "react",
+        "react-dom",
+        "react-dom/client",
+        "react/jsx-runtime",
+        "react/jsx-dev-runtime",
+        "scheduler",
         "three",
         "@react-three/fiber",
         "@react-three/drei",
