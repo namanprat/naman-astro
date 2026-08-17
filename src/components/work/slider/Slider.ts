@@ -251,8 +251,9 @@ export default class Slider {
     if (!this.enabled()) return;
 
     const delta = Math.abs(deltaX) > Math.abs(deltaY) ? deltaX : deltaY;
+    const sign = isWorkGridMobile() ? -1 : 1;
 
-    this.scrub.vars.time += delta / 100;
+    this.scrub.vars.time += (sign * delta) / 100;
     this.scrub.invalidate().restart();
   }
 

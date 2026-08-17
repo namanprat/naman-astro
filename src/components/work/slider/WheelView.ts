@@ -1,5 +1,6 @@
 import { gsap } from "gsap";
 import { Observer } from "gsap/Observer";
+import { isWorkGridMobile } from "./Slider";
 
 gsap.registerPlugin(Observer);
 
@@ -66,6 +67,10 @@ const SNAP_EASE = "power2.out";
 /** Below this the ring is close enough that snapping would only read as drift. */
 const SNAP_EPSILON_DEG = 0.2;
 
+/** Inner disc of the iPod wheel — samples inside this fraction of the radius
+    are ignored so a swipe across the title cannot spike the angle. */
+const DEADZONE_RATIO = 0.4;
+
 const rad = (deg: number) => (deg * Math.PI) / 180;
 
 /** Wrap into (−180, 180] so every angular comparison takes the short way. */
@@ -100,6 +105,10 @@ export default class WheelView {
   private cy = 0;
   private radius = RADIUS;
   private snapTween: gsap.core.Tween | null = null;
+  /** Last finger angle around the centre, in degrees. Null between gestures. */
+  private lastAngle: number | null = null;
+  /** True once this gesture has actually turned the ring. */
+  private spinning = false;
   private resizeId?: ReturnType<typeof setTimeout>;
   private resizeSuspended = false;
   private onResize: () => void;
@@ -315,6 +324,7 @@ export default class WheelView {
       onChange: (self) => {
         this.scroll(self);
       },
+      onStop: () => this.endSpin(),
       // Same reason as Slider: touch + preventDefault swallows the browser
       // click, but Observer still reports a tap that didn't drag.
       onClick: (self) => {
@@ -328,10 +338,25 @@ export default class WheelView {
     });
   }
 
-  scroll({ deltaX, deltaY }: { deltaX: number; deltaY: number }) {
+  scroll(self: {
+    deltaX: number;
+    deltaY: number;
+    x?: number;
+    y?: number;
+    event?: Event;
+  }) {
     if (!this.enabled()) return;
 
-    const delta = Math.abs(deltaX) > Math.abs(deltaY) ? deltaX : deltaY;
+    /* Phones: spin the ring from the finger's angle around the centre, 1:1,
+       like an iPod click wheel. Desktop (and a wheel event on a phone) keep
+       the linear swipe-to-degrees mapping. */
+    if (isWorkGridMobile() && !(self.event instanceof WheelEvent)) {
+      this.spinFromPointer(self.x, self.y);
+      return;
+    }
+
+    const delta =
+      Math.abs(self.deltaX) > Math.abs(self.deltaY) ? self.deltaX : self.deltaY;
 
     // A new scroll overrides a settle in progress, or the two fight over `rot`.
     this.killSnap();
@@ -341,6 +366,43 @@ export default class WheelView {
 
     this.scrub.vars.value += delta * degPerPx;
     this.scrub.invalidate().restart();
+  }
+
+  /**
+   * Turn the ring by the same angle the finger just travelled around the
+   * viewport centre. Applied immediately so the tiles follow the drag.
+   */
+  private spinFromPointer(x?: number, y?: number) {
+    if (x == null || y == null) return;
+
+    const dx = x - this.cx;
+    const dy = y - this.cy;
+    if (Math.hypot(dx, dy) < this.radius * DEADZONE_RATIO) {
+      // Crossing the title would otherwise jump by ~180°. Drop the sample
+      // so the next point on the ring starts a fresh delta.
+      this.lastAngle = null;
+      return;
+    }
+
+    const ang = (Math.atan2(dy, dx) * 180) / Math.PI;
+    if (this.lastAngle != null) {
+      this.killSnap();
+      this.scrub.pause();
+      this.rot.value += shortest(ang - this.lastAngle);
+      this.place();
+      this.scrub.vars.value = this.rot.value;
+      this.scrub.invalidate();
+      this.spinning = true;
+    }
+    this.lastAngle = ang;
+  }
+
+  /** Finger up after an iPod-style spin: settle onto the nearest tile. */
+  private endSpin() {
+    const wasSpinning = this.spinning;
+    this.spinning = false;
+    this.lastAngle = null;
+    if (wasSpinning) this.snap();
   }
 
   private killSnap() {
@@ -412,6 +474,8 @@ export default class WheelView {
     this.scrub.pause();
     this.scrub.vars.value = this.rot.value;
     this.scrub.invalidate();
+    this.lastAngle = null;
+    this.spinning = false;
   }
 
   stop() {
