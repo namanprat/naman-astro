@@ -36,8 +36,12 @@ const MAX_COPIES = 2;
  * ring reads as a solid band rather than a set of thumbnails — which is what a
  * fixed twelve positions did on a phone, where the radius is width-capped to
  * about 150px.
+ *
+ * Held at ~2.13 so a 64px square keeps the same ~136px arc the 91px portrait
+ * tiles used at 1.5. Dropping height without this would pack two copies on
+ * phones and bring the band of stamps back.
  */
-const SPACING_RATIO = 1.5;
+const SPACING_RATIO = 2.13;
 
 /**
  * Anchor sits at the top of the circle. Screen y grows downward, so that is
