@@ -135,6 +135,10 @@ export class FluidSimulation {
   private raf = 0;
   private lastTime = 0;
   private lastTheme = { ink: "", surface: "" };
+  /** Last user pointer activity — ambient preload splats pause while the
+   *  visitor is painting trails themselves. */
+  private lastPointerAt = 0;
+  private ambientPhase = 0;
 
   constructor(canvas: HTMLCanvasElement) {
     this.renderer = new THREE.WebGLRenderer({
@@ -175,6 +179,17 @@ export class FluidSimulation {
     signal.addEventListener("abort", () => observer.disconnect());
 
     this.startLoop();
+
+    // Opening bloom so the first preloader frame isn't a flat dark plane —
+    // deferred one tick so DPR size is committed.
+    if (
+      !this.reduced &&
+      document.documentElement.classList.contains("is-preloading")
+    ) {
+      requestAnimationFrame(() => {
+        if (!this.disposed) this.seedOpeningSplats();
+      });
+    }
   }
 
   dispose(): void {
@@ -336,6 +351,7 @@ export class FluidSimulation {
     this.mouse.x = x;
     this.mouse.y = y;
     this.mouse.moved = true;
+    this.lastPointerAt = performance.now();
   };
 
   private onVisibility = (): void => {
@@ -384,6 +400,11 @@ export class FluidSimulation {
           this.mouse.velocityY,
         );
         this.mouse.moved = false;
+      } else if (
+        document.documentElement.classList.contains("is-preloading") &&
+        performance.now() - this.lastPointerAt > 240
+      ) {
+        this.ambientPreloadSplat(dt);
       }
       this.simulate(dt);
     }
@@ -393,6 +414,41 @@ export class FluidSimulation {
       this.painted = true;
       reportHomeCanvasReady();
     }
+  }
+
+  /** A few radial bursts so dye exists before the first pointermove. */
+  private seedOpeningSplats(): void {
+    const cx = this.width * 0.5;
+    const cy = this.height * 0.5;
+    const r = Math.min(this.width, this.height) * 0.18;
+    const force = CONFIG.forceStrength * 12;
+    for (let i = 0; i < 6; i++) {
+      const angle = (i / 6) * Math.PI * 2;
+      this.splat(
+        cx + Math.cos(angle) * r,
+        cy + Math.sin(angle) * r,
+        Math.cos(angle) * force,
+        Math.sin(angle) * force,
+      );
+    }
+  }
+
+  /** Slow orbit while the preloader is up and the pointer is idle. */
+  private ambientPreloadSplat(dt: number): void {
+    this.ambientPhase += dt * 1.35;
+    const cx = this.width * 0.5;
+    const cy = this.height * 0.5;
+    const rx = this.width * 0.2;
+    const ry = this.height * 0.16;
+    const x = cx + Math.cos(this.ambientPhase) * rx;
+    const y = cy + Math.sin(this.ambientPhase * 1.25) * ry;
+    const speed = CONFIG.forceStrength * 0.35;
+    this.splat(
+      x,
+      y,
+      -Math.sin(this.ambientPhase) * rx * speed,
+      Math.cos(this.ambientPhase * 1.25) * ry * speed,
+    );
   }
 
   private setUniforms(
