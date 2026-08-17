@@ -33,6 +33,17 @@ const isArchive = Astro.url.pathname === "/archive";
           }
         } catch (e) {}
       })();
+      /* Safari blanks HTML under filter:url(#feColorMatrix). Soft gooey drops
+         the threshold before any island paints a url() filter. */
+      (function () {
+        try {
+          var ua = navigator.userAgent;
+          if (!/AppleWebKit/i.test(ua)) return;
+          if (/Chrome|CriOS|Chromium|Edg|Firefox|FxiOS|Opera|OPR/i.test(ua))
+            return;
+          document.documentElement.classList.add("is-gooey-soft");
+        } catch (e) {}
+      })();
     </script>
     <script is:inline>
       (function () {

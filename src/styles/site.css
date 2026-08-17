@@ -255,8 +255,10 @@
   }
 
   /* Opt-out via `data-reveal="soft"`, for faces too thin to survive the
-     threshold: same blur-to-sharp entrance, no fusing. */
-  .gooey-reveal--soft {
+     threshold: same blur-to-sharp entrance, no fusing. Also forced site-wide
+     on Safari via `html.is-gooey-soft` — WebKit blanks HTML under the svg url. */
+  .gooey-reveal--soft,
+  html.is-gooey-soft .gooey-reveal {
     filter: none;
   }
 
