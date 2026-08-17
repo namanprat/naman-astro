@@ -10,22 +10,34 @@
  *
  * Must be in the DOM for `filter: url(#blur-matrix)` to resolve — a missing
  * reference makes the filtered element vanish, not degrade.
+ *
+ * Hidden with clip (not `left:-9999px`): Safari often fails to resolve
+ * `filter: url(#…)` when the defs SVG is translated far off-screen.
  */
 ---
 
 <svg
   aria-hidden="true"
-  width="1"
-  height="1"
-  style="position:absolute;left:-9999px;width:1px;height:1px;overflow:hidden;pointer-events:none"
+  xmlns="http://www.w3.org/2000/svg"
+  width="0"
+  height="0"
+  style="position:absolute;overflow:hidden;clip:rect(0,0,0,0);pointer-events:none"
 >
   <defs>
-    <filter id="blur-matrix" x="-50%" y="-50%" width="200%" height="200%">
+    <filter
+      id="blur-matrix"
+      x="-50%"
+      y="-50%"
+      width="200%"
+      height="200%"
+      color-interpolation-filters="sRGB"
+      filterUnits="objectBoundingBox"
+    >
       <feColorMatrix
         in="SourceGraphic"
         type="matrix"
         values="1 0 0 0 0  0 1 0 0 0  0 0 1 0 0  0 0 0 255 -140"
-      />
+      ></feColorMatrix>
     </filter>
   </defs>
 </svg>

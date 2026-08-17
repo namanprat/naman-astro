@@ -10,7 +10,7 @@ import gsap from "gsap";
 import CustomEase from "gsap/CustomEase";
 import { prefersReducedMotion } from "./prefersReducedMotion";
 import { PAGE_REVEALED_EVENT, isPageRevealed } from "./pageReveal";
-import { gooeyFilter } from "./gooeyReveal";
+import { gooeyFilter, usesSoftGooey } from "./gooeyReveal";
 
 gsap.registerPlugin(CustomEase);
 CustomEase.create("introHop", "0.9, 0, 0.1, 1");
@@ -39,9 +39,8 @@ const NAV_STAGGER = 0.06;
 const GOOEY_BLUR_RATIO = 0.1125;
 
 /**
- * Below the desktop nav breakpoint the mark is too small: a 4px+ blur plus the
- * alpha threshold eats the strokes, and `filter: url(#blur-matrix)` on WebKit
- * can vanish the element entirely. Skip the melt; keep the lockup painted.
+ * Full threshold melt needs desktop-sized strokes. Soft mode (Safari) is
+ * blur-only, so it can run at any size without blanking or eating the mark.
  */
 const GOOEY_MIN_MQ = "(width >= 64rem)";
 
@@ -54,6 +53,7 @@ const GOOEY_MIN_MQ = "(width >= 64rem)";
  */
 function canRunGooey(el: HTMLElement | null): el is HTMLElement {
   if (!el) return false;
+  if (usesSoftGooey()) return true;
   if (!document.getElementById("blur-matrix")) return false;
   return window.matchMedia(GOOEY_MIN_MQ).matches;
 }
@@ -87,7 +87,7 @@ export function bootHomeIntro(): () => void {
   // Park the melt immediately so the sharp lockup never paints. A leftover
   // url() filter on WebKit (killed timeline, missing #blur-matrix) leaves the
   // mark invisible — only apply it when canRunGooey is true, and always clear
-  // it in settle / onComplete.
+  // it in settle / onComplete. Soft mode writes blur-only via gooeyFilter.
   if (gooey) {
     gooey.style.filter = gooeyFilter(startBlur);
     gooey.classList.add(GOOEY_PARKED);
