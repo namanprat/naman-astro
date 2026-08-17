@@ -24,12 +24,34 @@
 }
 
 /* Home first paint: hero is in view, so the sim starts at full strength. */
-html:has(.hero) .fluid-wrap canvas {
+html:has(.hero) .fluid-wrap canvas,
+html.is-preloading .fluid-wrap canvas {
   opacity: 1;
 }
 
 html.is-hero-fluid-dim .fluid-wrap canvas {
   opacity: 0.4;
+}
+
+/* Preloader: `.hero` may not have hydrated yet, and the dim observer can
+   fire while the wrap is still laying out. Keep the sim at full strength
+   behind the overlay. After the dim rule so it wins that collision. */
+html.is-preloading .fluid-wrap canvas {
+  opacity: 1;
+}
+
+/* In-flow wrap pulls under the hero chrome via negative margin. While the
+   preloader is up, html/body overflow is hidden, which clips that pull-up
+   and leaves a blank page behind the transparent overlay. Pin to the
+   viewport instead. Same file as `.fluid-wrap` so the override actually
+   wins the cascade (this sheet is unlayered; site.css is not). */
+html.is-preloading .fluid-wrap {
+  position: fixed;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  margin-top: 0;
+  z-index: 0;
 }
 
 html.page-work .fluid-wrap {

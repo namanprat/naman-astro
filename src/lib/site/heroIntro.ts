@@ -10,7 +10,12 @@ import gsap from "gsap";
 import CustomEase from "gsap/CustomEase";
 import { prefersReducedMotion } from "./prefersReducedMotion";
 import { PAGE_REVEALED_EVENT, isPageRevealed } from "./pageReveal";
-import { GOOEY_BLUR_VAR, clearGooeyBlur, setGooeyBlur } from "./gooeyReveal";
+import {
+  GOOEY_BLUR_VAR,
+  clearGooeyBlur,
+  setGooeyBlur,
+  usesSoftGooey,
+} from "./gooeyReveal";
 
 gsap.registerPlugin(CustomEase);
 CustomEase.create("introHop", "0.9, 0, 0.1, 1");
@@ -41,15 +46,16 @@ const NAV_STAGGER = 0.06;
 const GOOEY_BLUR_RATIO = 0.1125;
 
 /**
- * Below the desktop nav breakpoint the mark is too small for the melt to read:
- * `startBlur` floors at 4px, which on a small lockup is a large fraction of
- * stroke width, so the alpha threshold eats the strokes. Skip the melt; keep the
- * lockup painted.
+ * Below the desktop nav breakpoint the mark is too small for the *threshold* to
+ * read: `startBlur` floors at 4px, which on a small lockup is a large fraction
+ * of stroke width, so the alpha threshold eats the strokes. Skip the melt; keep
+ * the lockup painted.
  *
- * This is a design constraint, not a WebKit workaround — the separate hazard of
- * a `url()` pointing at a missing filter is handled by the `getElementById`
- * check below. Lowering the floor is what would let this media query go; the
- * two knobs are independent.
+ * A design constraint, not a WebKit workaround — the separate hazard of a
+ * `url()` pointing at a missing filter is handled by the `getElementById` check
+ * below. Lowering the floor is what would let this media query go; the two knobs
+ * are independent. Soft mode is exempt: it is blur-only, so it neither blanks
+ * nor eats the mark at any size.
  */
 const GOOEY_MIN_MQ = "(width >= 64rem)";
 
@@ -62,6 +68,7 @@ const GOOEY_MIN_MQ = "(width >= 64rem)";
  */
 function canRunGooey(el: HTMLElement | null): el is HTMLElement {
   if (!el) return false;
+  if (usesSoftGooey()) return true;
   if (!document.getElementById("blur-matrix")) return false;
   return window.matchMedia(GOOEY_MIN_MQ).matches;
 }
@@ -98,7 +105,8 @@ export function bootHomeIntro(): () => void {
   // Park the melt immediately so the sharp lockup never paints. A leftover
   // url() filter on WebKit (killed timeline, missing #blur-matrix) leaves the
   // mark invisible — only arm when canRunGooey is true, and always disarm in
-  // settle / onComplete.
+  // settle / onComplete. In soft mode the armed class resolves to a blur-only
+  // chain, so there is no url() to leave behind.
   if (gooey) {
     setGooeyBlur(gooey, startBlur);
     gooey.classList.add(GOOEY_ARMED, GOOEY_PARKED);

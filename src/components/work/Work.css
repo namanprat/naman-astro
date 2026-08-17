@@ -94,8 +94,10 @@ html.page-work-project main {
   color: var(--ink);
   transition: opacity 0.35s ease;
   /* No filter here: the `.gooey-reveal` class in the markup puts the chain on
-     the inner instead. `text-style-display` is heavy enough to survive the
-     threshold sitting on permanently. */
+     the inner instead, so the soft-mode rule in site.css already covers this
+     label and it needs no `html.is-gooey-soft` override of its own.
+     `text-style-display` is heavy enough to survive the threshold sitting on
+     permanently. */
 }
 
 .work-page .gallery-label__count {

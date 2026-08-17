@@ -241,13 +241,27 @@
 
   /* While the preloader is up, only the backdrop overlay, the in-flow fluid,
      and the grain may paint — the overlay is transparent so the canvas reads
-     through it, which means the rest of the page has to be hidden. */
+     through it, which means the rest of the page has to be hidden.
+     The wrap itself is pinned to the viewport in FluidCanvas.css (unlayered)
+     so the hero-chrome pull-up isn't clipped by overflow:hidden here. */
   html.is-preloading body > *:not(.site-backdrop):not(.site-grain):not(main) {
     visibility: hidden;
   }
 
   html.is-preloading main > *:not(.fluid-wrap) {
     visibility: hidden;
+  }
+
+  /* In-flow fluid sits under the chrome after preload; while the overlay is up
+     pin it as a true viewport backdrop so it fills the screen behind the
+     transparent preloader (chrome is visibility:hidden but still in flow). */
+  html.is-preloading .fluid-wrap {
+    position: fixed;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    margin-top: 0;
+    z-index: 0;
   }
 
   /* Two independent pre-paint holds, one per entrance module. Each list mirrors
@@ -285,12 +299,19 @@
 
   /* Opt-out via `data-reveal="soft"`, for faces too thin to survive the
      threshold, and the automatic fallback when `#blur-matrix` is missing: same
-     blur-to-sharp entrance, no fusing. `html[data-gooey="soft"]` is the same
-     thing site-wide from one attribute — set it on the root to compare against
-     the threshold while eyeballing a browser. */
+     blur-to-sharp entrance, no fusing.
+
+     `html.is-gooey-soft` is the same thing site-wide from one class. It is no
+     longer set by UA detection — the threshold is meant to work on WebKit now —
+     but the switch is kept so soft mode can be forced from `BaseLayout`'s
+     pre-paint script, and so `isSafariGooeyUnsafe()` in `gooeyReveal.ts` is one
+     line away from re-arming it if Safari turns out to still not manage.
+
+     Blur-only rather than `filter: none`: the entrance still has to run, it just
+     must not name a `url()`. */
   .gooey-reveal--soft .gooey-reveal__inner,
-  html[data-gooey="soft"] .gooey-reveal .gooey-reveal__inner,
-  html[data-gooey="soft"] .is-gooey-armed {
+  html.is-gooey-soft .gooey-reveal .gooey-reveal__inner,
+  html.is-gooey-soft .is-gooey-armed {
     filter: blur(var(--gooey-blur, 0px));
   }
 

@@ -1,7 +1,8 @@
 ---
 /**
- * Fixed full-viewport fluid backdrop. The React island hydrates client-side
- * only; the simulation has no SSR output.
+ * Fluid backdrop. In-flow on home (pulls under the hero chrome); fixed while
+ * `html.is-preloading` so it fills the viewport behind the transparent
+ * preloader. The React island hydrates client-side only — no SSR output.
  */
 import FluidCanvas from "./FluidCanvas.tsx";
 ---

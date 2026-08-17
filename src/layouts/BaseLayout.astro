@@ -33,6 +33,22 @@ const isArchive = Astro.url.pathname === "/archive";
           }
         } catch (e) {}
       })();
+      /* Soft gooey: blur-only entrance, no alpha threshold. Opt-in rather than
+         UA-detected — this used to force itself on for every WebKit build, back
+         when the threshold was assumed impossible there. It has to run pre-paint
+         because it decides the filter chain before any island paints a url().
+
+         `?gooey=soft` flips one page load and sticks, `?gooey=melt` clears it. */
+      (function () {
+        try {
+          var q = new URLSearchParams(location.search).get("gooey");
+          if (q === "soft") localStorage.setItem("gooey", "soft");
+          else if (q) localStorage.removeItem("gooey");
+          if (localStorage.getItem("gooey") === "soft") {
+            document.documentElement.classList.add("is-gooey-soft");
+          }
+        } catch (e) {}
+      })();
     </script>
     <script is:inline>
       (function () {
@@ -49,8 +65,10 @@ const isArchive = Astro.url.pathname === "/archive";
   </head>
   <body>
     <SkipLink />
-    {/* Every route: headings and the work label both filter through it, and a
-        `url()` pointing at a missing node blanks the element on WebKit. */}
+    {
+      /* Every route: headings and the work label both filter through it, and a
+        `url()` pointing at a missing node blanks the element on WebKit. */
+    }
     <GooeyFilter />
     <div class="site-grain" aria-hidden="true"></div>
     <div class="transition-panel" aria-hidden="true"></div>
