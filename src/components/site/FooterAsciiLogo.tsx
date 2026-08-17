@@ -1,40 +1,75 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, type RefObject } from "react";
 import "./FooterAsciiLogo.css";
-import { DEFAULT_ASCII_CHARSET, useAsciiControls } from "./footerAsciiControls";
 
-const WORDMARK_URL = "/main-assets/name-hero.svg";
-const THRESHOLD = 0.5;
-const PUSH_RADIUS = 5;
-const PUSH_FORCE = 30;
-const SPRING = 0.025;
-const DAMPING = 0.5;
-/** Fallback only — the live value is read off the wrapper's `color` at setup,
- *  so the glyphs track the panel's ink token instead of a second hardcoded hex
- *  that silently goes invisible when the panel colour changes. */
+const CELL_SIZE = 8;
+const CELL_GAP = 3;
+const CELL_STEP = CELL_SIZE + CELL_GAP;
+const ASCII_CHARS = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+const BRIGHTNESS_THRESHOLD = 0.5;
+const HOVER_RADIUS = 10;
+const HOVER_PUSH = 7;
+const HOVER_EASE = 0.1;
+const SCATTER_RANGE = 20;
+const SCATTER_EASE = 0.075;
+const GRAVITY = 0.05;
+const BOUNCE = 0.25;
+const RESET_EASE = 0.05;
+const STAGGER_FRAMES = 18;
+const DESKTOP_MQ = "(min-width: 64rem)";
+const REDUCE_MQ = "(prefers-reduced-motion: reduce)";
+/** Fallback only — live ink is read off the wrapper's `color`. */
 const CHAR_COLOR_FALLBACK = "#f14827";
+
+type Phase = "logo" | "scattered" | "fallen" | "returning";
 
 type Cell = {
   col: number;
   row: number;
   char: string;
-  isLit: boolean;
   offsetX: number;
   offsetY: number;
-  velX: number;
-  velY: number;
+  fallSpeed: number;
+  wait: number;
+  scatterX: number;
+  scatterY: number;
 };
 
+function randomAsciiChar() {
+  return ASCII_CHARS[Math.floor(Math.random() * ASCII_CHARS.length)];
+}
+
+function easeToward(
+  cell: Cell,
+  targetX: number,
+  targetY: number,
+  ease: number,
+) {
+  cell.offsetX += (targetX - cell.offsetX) * ease;
+  cell.offsetY += (targetY - cell.offsetY) * ease;
+}
+
+function localScale(wrap: HTMLElement, wrapRect: DOMRect) {
+  const w = Math.max(1, wrap.clientWidth);
+  const h = Math.max(1, wrap.clientHeight);
+  return {
+    w,
+    h,
+    scaleX: wrapRect.width / w || 1,
+    scaleY: wrapRect.height / h || 1,
+  };
+}
+
 /**
- * Interactive ASCII wordmark — port of codegrid-artefakt-interactive-ascii-logo,
- * scoped to the footer logo slot and sampling `/main-assets/name-hero.svg`.
+ * Interactive ASCII wordmark — port of codegrid-interactive-ascii-footer-hover,
+ * painted across the footer card and sampling the `.footer-logo` source SVG.
  */
-export default function FooterAsciiLogo() {
+export default function FooterAsciiLogo({
+  sourceRef,
+}: {
+  sourceRef: RefObject<HTMLImageElement | null>;
+}) {
   const wrapRef = useRef<HTMLDivElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
-  const sourceRef = useRef<HTMLImageElement>(null);
-  const controls = useAsciiControls();
-  const controlsRef = useRef(controls);
-  controlsRef.current = controls;
 
   useEffect(() => {
     const wrap = wrapRef.current;
@@ -42,44 +77,34 @@ export default function FooterAsciiLogo() {
     const logoImg = sourceRef.current;
     if (!wrap || !canvas || !logoImg) return;
 
+    const box = wrap.parentElement;
+    if (!box) return;
+
     const ctx = canvas.getContext("2d", { alpha: true });
     if (!ctx) return;
 
-    const charset = () => {
-      const custom = controlsRef.current.custom.trim();
-      if (custom.length > 0) return custom;
-      const raw = controlsRef.current.charset;
-      return raw.length > 0 ? raw : DEFAULT_ASCII_CHARSET;
-    };
+    const desktopMq = window.matchMedia(DESKTOP_MQ);
+    const reduceMq = window.matchMedia(REDUCE_MQ);
+    const enabled = () => desktopMq.matches && !reduceMq.matches;
 
-    let cellSize = controlsRef.current.cellSize;
-    let cellGap = Math.max(0, Math.round(cellSize / 4));
-    let cellStep = cellSize + cellGap;
-    let cols = 0;
-    let rows = 0;
+    let phase: Phase = "logo";
+    let gridCols = 0;
+    let gridRows = 0;
     let cells: Cell[] = [];
     let raf = 0;
-    let scrambleId = 0;
-    let idleTimer = 0;
     let disposed = false;
-    let appliedCellSize = -1;
-    let appliedCharset = "";
-    let appliedCustom = "";
-    let appliedScramble = -1;
-    const mouse = { col: -999, row: -999, isMoving: false };
+    let running = false;
+    let charColor = getComputedStyle(box).color || CHAR_COLOR_FALLBACK;
+    const cursor = { col: -999, row: -999 };
     const dpr = () => Math.min(window.devicePixelRatio || 1, 2);
 
-    /* Inherited from .footer-box via the wrapper's `color`. */
-    let charColor = getComputedStyle(wrap).color || CHAR_COLOR_FALLBACK;
+    const readCharColor = () => {
+      charColor = getComputedStyle(box).color || CHAR_COLOR_FALLBACK;
+    };
 
     const setupCanvas = () => {
       const w = Math.max(1, wrap.clientWidth);
       const h = Math.max(1, wrap.clientHeight);
-      cellSize = controlsRef.current.cellSize;
-      cellGap = Math.max(0, Math.round(cellSize / 4));
-      cellStep = cellSize + cellGap;
-      cols = Math.max(1, Math.floor(w / cellStep));
-      rows = Math.max(1, Math.floor(h / cellStep));
       const ratio = dpr();
       canvas.width = Math.floor(w * ratio);
       canvas.height = Math.floor(h * ratio);
@@ -88,212 +113,236 @@ export default function FooterAsciiLogo() {
       ctx.setTransform(ratio, 0, 0, ratio, 0, 0);
     };
 
-    /*
-      Sample into the cell grid using the SVG's intrinsic ratio, contained so a
-      taller/shorter wordmark never paints past the available rows/cols.
-    */
-    const sampleLogoIntoCells = () => {
-      const srcW = logoImg.naturalWidth || 1;
-      const srcH = logoImg.naturalHeight || 1;
-      let logoCols = cols;
-      let logoRows = Math.max(1, Math.round(logoCols * (srcH / srcW)));
-      if (logoRows > rows) {
-        logoRows = Math.max(1, rows);
-        logoCols = Math.max(1, Math.round(logoRows * (srcW / srcH)));
+    const buildAsciiFromLogo = () => {
+      if (!enabled()) {
+        cells = [];
+        ctx.clearRect(0, 0, wrap.clientWidth, wrap.clientHeight);
+        return;
       }
-      logoCols = Math.min(logoCols, cols);
-      const startCol = Math.max(0, Math.round((cols - logoCols) / 2));
-      const startRow = Math.max(0, Math.round((rows - logoRows) / 2));
 
-      const sampleCanvas = document.createElement("canvas");
-      sampleCanvas.width = logoCols;
-      sampleCanvas.height = logoRows;
-      const sampleCtx = sampleCanvas.getContext("2d");
-      if (!sampleCtx) return;
+      setupCanvas();
+      readCharColor();
+      const wrapRect = wrap.getBoundingClientRect();
+      const { w, h, scaleX, scaleY } = localScale(wrap, wrapRect);
+      gridCols = Math.max(1, Math.floor(w / CELL_STEP));
+      gridRows = Math.max(1, Math.floor(h / CELL_STEP));
 
-      sampleCtx.fillStyle = "#000";
-      sampleCtx.fillRect(0, 0, logoCols, logoRows);
-      sampleCtx.drawImage(logoImg, 0, 0, logoCols, logoRows);
-      const { data } = sampleCtx.getImageData(0, 0, logoCols, logoRows);
+      const logoRect = logoImg.getBoundingClientRect();
+      const sampler = document.createElement("canvas");
+      sampler.width = gridCols;
+      sampler.height = gridRows;
+      const samplerContext = sampler.getContext("2d");
+      if (!samplerContext) return;
+
+      samplerContext.drawImage(
+        logoImg,
+        (logoRect.left - wrapRect.left) / scaleX / CELL_STEP,
+        (logoRect.top - wrapRect.top) / scaleY / CELL_STEP,
+        logoRect.width / scaleX / CELL_STEP,
+        logoRect.height / scaleY / CELL_STEP,
+      );
+      const { data } = samplerContext.getImageData(0, 0, gridCols, gridRows);
+
+      const litCells = new Set<string>();
+      for (let row = 0; row < gridRows; row++) {
+        for (let col = 0; col < gridCols; col++) {
+          const pixel = (row * gridCols + col) * 4;
+          const alpha = data[pixel + 3] / 255;
+          const brightness =
+            ((data[pixel] * 0.299 +
+              data[pixel + 1] * 0.587 +
+              data[pixel + 2] * 0.114) /
+              255) *
+            alpha;
+          if (brightness > BRIGHTNESS_THRESHOLD) {
+            litCells.add(`${col},${row}`);
+            if (col + 1 < gridCols) litCells.add(`${col + 1},${row}`);
+          }
+        }
+      }
 
       cells = [];
-      for (let row = 0; row < rows; row++) {
-        for (let col = 0; col < cols; col++) {
-          const inLogo =
-            col >= startCol &&
-            col < startCol + logoCols &&
-            row >= startRow &&
-            row < startRow + logoRows;
-          let isLit = false;
-          let char = " ";
-          if (inLogo) {
-            const idx = ((row - startRow) * logoCols + (col - startCol)) * 4;
-            const brightness =
-              (data[idx] * 0.299 +
-                data[idx + 1] * 0.587 +
-                data[idx + 2] * 0.114) /
-              255;
-            // SVG wordmark is white-on-transparent; treat alpha as presence.
-            const alpha = data[idx + 3] / 255;
-            isLit = alpha > THRESHOLD && brightness > THRESHOLD * 0.25;
-            const chars = charset();
-            char = isLit
-              ? chars[
-                  Math.min(
-                    chars.length - 1,
-                    Math.floor(brightness * chars.length),
-                  )
-                ]
-              : " ";
-          }
-          cells.push({
-            col,
-            row,
-            char,
-            isLit,
-            offsetX: 0,
-            offsetY: 0,
-            velX: 0,
-            velY: 0,
-          });
-        }
+      for (const key of litCells) {
+        const [col, row] = key.split(",").map(Number);
+        cells.push({
+          col,
+          row,
+          char: randomAsciiChar(),
+          offsetX: 0,
+          offsetY: 0,
+          fallSpeed: 0,
+          wait: 0,
+          scatterX: (Math.random() - 0.5) * SCATTER_RANGE,
+          scatterY: (Math.random() - 0.5) * SCATTER_RANGE,
+        });
+      }
+      phase = "logo";
+    };
+
+    const staggerCells = () => {
+      for (const cell of cells) {
+        cell.wait = Math.floor(Math.random() * STAGGER_FRAMES);
       }
     };
 
-    const renderFrame = () => {
+    const updateAsciiCells = () => {
+      let everyoneHome = phase === "returning";
+
+      for (const cell of cells) {
+        if (cell.wait > 0) {
+          cell.wait--;
+          everyoneHome = false;
+          continue;
+        }
+
+        switch (phase) {
+          case "scattered":
+            easeToward(cell, cell.scatterX, cell.scatterY, SCATTER_EASE);
+            break;
+          case "fallen": {
+            const floorOffset = gridRows - 1 - cell.row;
+            cell.fallSpeed += GRAVITY;
+            cell.offsetY += cell.fallSpeed;
+            if (cell.offsetY > floorOffset) {
+              cell.offsetY = floorOffset;
+              cell.fallSpeed *= -BOUNCE;
+            }
+            break;
+          }
+          case "returning":
+            easeToward(cell, 0, 0, RESET_EASE);
+            if (
+              Math.abs(cell.offsetX) > 0.05 ||
+              Math.abs(cell.offsetY) > 0.05
+            ) {
+              everyoneHome = false;
+            }
+            break;
+          case "logo": {
+            let targetX = 0;
+            let targetY = 0;
+            const distX = cell.col - cursor.col;
+            const distY = cell.row - cursor.row;
+            const distance = Math.sqrt(distX * distX + distY * distY);
+            if (distance < HOVER_RADIUS && distance > 0) {
+              const push = (1 - distance / HOVER_RADIUS) * HOVER_PUSH;
+              targetX = (distX / distance) * push;
+              targetY = (distY / distance) * push;
+            }
+            easeToward(cell, targetX, targetY, HOVER_EASE);
+            break;
+          }
+          default: {
+            const _exhaustive: never = phase;
+            void _exhaustive;
+          }
+        }
+      }
+
+      if (everyoneHome) phase = "logo";
+    };
+
+    const drawAscii = () => {
       const w = wrap.clientWidth;
       const h = wrap.clientHeight;
-      /* Re-read each frame so theme toggles (light → white ink) take effect. */
-      charColor = getComputedStyle(wrap).color || CHAR_COLOR_FALLBACK;
       ctx.clearRect(0, 0, w, h);
-      ctx.font = `${controlsRef.current.fontSize}px "Duforn Mono"`;
+      if (cells.length === 0) return;
+      ctx.font = `${CELL_SIZE + 2}px "Duforn Mono"`;
       ctx.textBaseline = "top";
       ctx.textAlign = "center";
       ctx.fillStyle = charColor;
-      for (const { col, row, char, isLit, offsetX, offsetY } of cells) {
-        if (!isLit) continue;
-        const x = (col + Math.round(offsetX)) * cellStep;
-        const y = (row + Math.round(offsetY)) * cellStep;
-        ctx.fillText(char, x + cellSize / 2, y);
+      for (const { col, row, char, offsetX, offsetY } of cells) {
+        const x = (col + offsetX) * CELL_STEP + CELL_SIZE / 2;
+        const y = (row + offsetY) * CELL_STEP;
+        ctx.fillText(char, x, y);
       }
     };
 
-    const init = () => {
+    const renderLoop = () => {
+      if (disposed || !running) return;
+      if (cells.length > 0) {
+        updateAsciiCells();
+        drawAscii();
+      }
+      raf = requestAnimationFrame(renderLoop);
+    };
+
+    const startLoop = () => {
+      if (disposed || running) return;
+      running = true;
+      raf = requestAnimationFrame(renderLoop);
+    };
+
+    const stopLoop = () => {
+      running = false;
+      cancelAnimationFrame(raf);
+      raf = 0;
+    };
+
+    const syncEnabled = () => {
       if (disposed) return;
-      charColor = getComputedStyle(wrap).color || CHAR_COLOR_FALLBACK;
-      setupCanvas();
-      sampleLogoIntoCells();
-      renderFrame();
-    };
-
-    const updatePhysics = () => {
-      for (const cell of cells) {
-        if (!cell.isLit) continue;
-        if (mouse.isMoving) {
-          const dx = cell.col + cell.offsetX - mouse.col;
-          const dy = cell.row + cell.offsetY - mouse.row;
-          const dist = Math.sqrt(dx * dx + dy * dy);
-          if (dist < PUSH_RADIUS && dist > 0) {
-            const force = (1 - dist / PUSH_RADIUS) ** 2 * PUSH_FORCE;
-            cell.velX += (dx / dist) * force;
-            cell.velY += (dy / dist) * force;
-          }
-        }
-        cell.velX += -cell.offsetX * SPRING;
-        cell.velY += -cell.offsetY * SPRING;
-        cell.velX *= DAMPING;
-        cell.velY *= DAMPING;
-        cell.offsetX += cell.velX;
-        cell.offsetY += cell.velY;
-        if (Math.abs(cell.offsetX) < 0.01 && Math.abs(cell.velX) < 0.01) {
-          cell.offsetX = cell.velX = 0;
-        }
-        if (Math.abs(cell.offsetY) < 0.01 && Math.abs(cell.velY) < 0.01) {
-          cell.offsetY = cell.velY = 0;
-        }
+      if (enabled()) {
+        buildAsciiFromLogo();
+        startLoop();
+      } else {
+        stopLoop();
+        cells = [];
+        ctx.clearRect(0, 0, wrap.clientWidth, wrap.clientHeight);
       }
     };
 
-    const startScramble = () => {
-      window.clearInterval(scrambleId);
-      scrambleId = 0;
-      const ms = controlsRef.current.scrambleMs;
-      if (ms <= 0) return;
-      scrambleId = window.setInterval(() => {
-        const chars = charset();
-        for (const cell of cells) {
-          if (cell.isLit) {
-            cell.char = chars[Math.floor(Math.random() * chars.length)];
-          }
+    const onPointerMove = (event: PointerEvent) => {
+      const wrapRect = wrap.getBoundingClientRect();
+      const { scaleX, scaleY } = localScale(wrap, wrapRect);
+      cursor.col = (event.clientX - wrapRect.left) / scaleX / CELL_STEP;
+      cursor.row = (event.clientY - wrapRect.top) / scaleY / CELL_STEP;
+    };
+
+    const onClick = (event: MouseEvent) => {
+      if (!enabled() || cells.length === 0) return;
+      const target = event.target;
+      if (target instanceof Element && target.closest("a, button")) return;
+
+      switch (phase) {
+        case "logo":
+          phase = "scattered";
+          staggerCells();
+          break;
+        case "scattered":
+          phase = "fallen";
+          for (const cell of cells) cell.fallSpeed = 0;
+          break;
+        case "fallen":
+          phase = "returning";
+          staggerCells();
+          break;
+        case "returning":
+          break;
+        default: {
+          const _exhaustive: never = phase;
+          void _exhaustive;
         }
-      }, ms);
-    };
-
-    const syncControls = () => {
-      const c = controlsRef.current;
-      if (
-        c.cellSize !== appliedCellSize ||
-        c.charset !== appliedCharset ||
-        c.custom !== appliedCustom
-      ) {
-        appliedCellSize = c.cellSize;
-        appliedCharset = c.charset;
-        appliedCustom = c.custom;
-        init();
       }
-      if (c.scrambleMs !== appliedScramble) {
-        appliedScramble = c.scrambleMs;
-        startScramble();
-      }
-    };
-
-    const animationLoop = () => {
-      if (disposed) return;
-      syncControls();
-      updatePhysics();
-      renderFrame();
-      raf = requestAnimationFrame(animationLoop);
-    };
-
-    const onPointerMove = (e: PointerEvent) => {
-      const rect = canvas.getBoundingClientRect();
-      mouse.col = (e.clientX - rect.left) / cellStep;
-      mouse.row = (e.clientY - rect.top) / cellStep;
-      mouse.isMoving = true;
-      window.clearTimeout(idleTimer);
-      idleTimer = window.setTimeout(() => {
-        mouse.isMoving = false;
-      }, 50);
-    };
-
-    const onPointerLeave = () => {
-      mouse.col = mouse.row = -999;
-      mouse.isMoving = false;
-    };
-
-    const onResize = () => init();
-
-    const start = () => {
-      if (disposed) return;
-      appliedCellSize = controlsRef.current.cellSize;
-      appliedCharset = controlsRef.current.charset;
-      appliedCustom = controlsRef.current.custom;
-      appliedScramble = controlsRef.current.scrambleMs;
-      init();
-      startScramble();
-      raf = requestAnimationFrame(animationLoop);
     };
 
     const fontsReady =
-      document.fonts?.load('16px "Duforn Mono"') ?? Promise.resolve();
+      document.fonts?.load(`${CELL_SIZE + 2}px "Duforn Mono"`) ??
+      Promise.resolve();
 
     const startWhenReady = () => {
-      void fontsReady.then(start);
+      void fontsReady.then(syncEnabled);
     };
 
-    canvas.addEventListener("pointermove", onPointerMove, { passive: true });
-    canvas.addEventListener("pointerleave", onPointerLeave);
-    window.addEventListener("resize", onResize);
+    box.addEventListener("pointermove", onPointerMove, { passive: true });
+    box.addEventListener("click", onClick);
+    desktopMq.addEventListener("change", syncEnabled);
+    reduceMq.addEventListener("change", syncEnabled);
+
+    const themeObserver = new MutationObserver(readCharColor);
+    themeObserver.observe(document.documentElement, {
+      attributes: true,
+      attributeFilter: ["class"],
+    });
 
     if (logoImg.complete && logoImg.naturalWidth > 0) {
       startWhenReady();
@@ -301,33 +350,27 @@ export default function FooterAsciiLogo() {
       logoImg.addEventListener("load", startWhenReady, { once: true });
     }
 
-    const ro = new ResizeObserver(() => init());
+    const ro = new ResizeObserver(() => {
+      if (enabled()) buildAsciiFromLogo();
+    });
     ro.observe(wrap);
+    ro.observe(logoImg);
 
     return () => {
       disposed = true;
-      cancelAnimationFrame(raf);
-      window.clearInterval(scrambleId);
-      window.clearTimeout(idleTimer);
-      canvas.removeEventListener("pointermove", onPointerMove);
-      canvas.removeEventListener("pointerleave", onPointerLeave);
-      window.removeEventListener("resize", onResize);
+      stopLoop();
+      box.removeEventListener("pointermove", onPointerMove);
+      box.removeEventListener("click", onClick);
+      desktopMq.removeEventListener("change", syncEnabled);
+      reduceMq.removeEventListener("change", syncEnabled);
+      themeObserver.disconnect();
       ro.disconnect();
     };
-  }, []);
+  }, [sourceRef]);
 
   return (
     <div className="footer-ascii" ref={wrapRef} aria-hidden="true">
       <canvas className="footer-ascii__canvas" ref={canvasRef} />
-      <div className="footer-ascii__source">
-        <img
-          ref={sourceRef}
-          src={WORDMARK_URL}
-          alt=""
-          decoding="async"
-          draggable={false}
-        />
-      </div>
     </div>
   );
 }

@@ -45,6 +45,7 @@ function Reveal({ children }: { children: React.ReactNode }) {
 
 export default function Footer() {
   const footerRef = useRef<HTMLElement>(null);
+  const asciiSourceRef = useRef<HTMLImageElement>(null);
   const lenis = useLenis();
   const emailCopy = useCopyEmail(EMAIL_HREF);
 
@@ -135,6 +136,7 @@ export default function Footer() {
       <div className="footer-child">
         {/* Panel is the floating card; the container inside keeps content on grid. */}
         <div className="footer-box">
+          <FooterAsciiLogo sourceRef={asciiSourceRef} />
           <div className="footer_contain container gap-0">
             <div className="footer-main grid is-12">
               <h3 className="footer-tagline text-style-main">
@@ -200,7 +202,14 @@ export default function Footer() {
             {/* Same container as the copy above so the wordmark locks to the
                 12-col band, not the full card bleed. */}
             <div className="footer-logo">
-              <FooterAsciiLogo />
+              <img
+                ref={asciiSourceRef}
+                className="footer-logo__source"
+                src="/main-assets/name-hero.svg"
+                alt=""
+                decoding="async"
+                draggable={false}
+              />
             </div>
           </div>
         </div>
