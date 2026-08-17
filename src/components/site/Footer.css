@@ -39,9 +39,9 @@ html.theme-light .footer-child {
   /* Dark mode: black on accent. Light mode: white on frost. */
   color: var(--black);
   box-sizing: border-box;
-  /* Equal inset on every side — one token so top/bottom never drift from
-     inline. Below 64rem the contain is width 100% so this pad is real air
-     inside the orange card, not a second pass over a vw-sized grid band. */
+  /* Gutter on all sides — same inner pad as desktop. Below 64rem the contain
+     is width 100% so this inset is real air inside the orange card, not a
+     second pass over a vw-sized grid band. */
   --ink: var(--black);
   padding: var(--site--gutter);
 }
@@ -60,9 +60,12 @@ html.theme-light .footer-box {
   padding: 0;
 }
 
-/* Mobile / tablet: contain fills the padded box so gutter insets are real
-   air on every side (same token top/bottom/inline — no block-only bump). */
+/* Mobile / tablet: let the box padding inset content; bump vertical air. */
 @media (width < 64rem) {
+  .footer-box {
+    padding-block: var(--space-6);
+  }
+
   .footer_contain.container {
     width: 100%;
     max-width: none;
