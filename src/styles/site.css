@@ -240,8 +240,8 @@
   }
 
   /* While the preloader is up, only the backdrop overlay, the in-flow fluid,
-     and the grain may paint — the overlay is transparent so the canvas reads
-     through it, which means the rest of the page has to be hidden.
+     and the grain may paint — the overlay is transparent so the blurred canvas
+     reads through it, which means the rest of the page has to be hidden.
      `.fluid-wrap` is static HTML (a real child of main). `:has(.fluid-wrap)`
      covers a nested client:only island if the wrap is ever inside one — WebGL
      will not composite a canvas whose ancestor is `visibility: hidden`.
@@ -256,8 +256,9 @@
   }
 
   /* In-flow fluid sits under the chrome after preload; while the overlay is up
-     pin it as a true viewport backdrop so it fills the screen behind the
-     transparent preloader (chrome is visibility:hidden but still in flow). */
+     pin it as a true viewport backdrop so the blurred sim fills the screen
+     behind the transparent preloader (chrome is visibility:hidden but still
+     in flow). */
   html.is-preloading .fluid-wrap {
     position: fixed;
     inset: 0;

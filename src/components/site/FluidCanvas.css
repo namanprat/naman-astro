@@ -1,4 +1,14 @@
+/* Preload blur on the sim. GSAP tweens this to 0px on Enter so the canvas
+   sharpens with the card exit. Registered so the length interpolates; inherits
+   so the wrap can hold the value and the canvas can read it. */
+@property --fluid-preload-blur {
+  syntax: "<length>";
+  inherits: true;
+  initial-value: 0px;
+}
+
 .fluid-wrap {
+  --fluid-preload-blur: 0px;
   position: relative;
   width: 100%;
   height: 100svh;
@@ -38,19 +48,13 @@ html.is-hero-fluid-dim .fluid-wrap canvas {
   opacity: 0.4;
 }
 
-/* Preloader: `.hero` may not have hydrated yet, and the dim observer can
-   fire while the wrap is still laying out. Keep the sim at full strength
-   behind the overlay. After the dim rule so it wins that collision. */
-html.is-preloading .fluid-wrap canvas {
-  opacity: 1;
-}
-
 /* In-flow wrap pulls under the hero chrome via negative margin. While the
    preloader is up, html/body overflow is hidden, which clips that pull-up
    and leaves a blank page behind the transparent overlay. Pin to the
    viewport instead. Same file as `.fluid-wrap` so the override actually
    wins the cascade (this sheet is unlayered; site.css is not). */
 html.is-preloading .fluid-wrap {
+  --fluid-preload-blur: 32px;
   position: fixed;
   inset: 0;
   width: 100%;
@@ -61,6 +65,21 @@ html.is-preloading .fluid-wrap {
      This wrap is a real child of main, so the preload hide rule skips it;
      force descendants visible in case the island is ever nested again. */
   visibility: visible;
+}
+
+/* Preloader: `.hero` may not have hydrated yet, and the dim observer can
+   fire while the wrap is still laying out. Keep the sim at full strength
+   behind the overlay, but blurred. Filter sits on the canvas, not the wrap:
+   a filter on a WebGL ancestor can blank the sim. After the dim rule so
+   opacity and blur both win that collision. */
+html.is-preloading .fluid-wrap canvas {
+  opacity: 1;
+  /* Pad past the wrap so overflow:hidden clips a full-bleed blur, not a
+     sharp 32px frame at the viewport edge. */
+  inset: -48px;
+  width: auto;
+  height: auto;
+  filter: blur(var(--fluid-preload-blur));
 }
 
 html.is-preloading .fluid-wrap * {

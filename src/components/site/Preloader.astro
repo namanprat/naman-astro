@@ -3,8 +3,9 @@
  * Home boot overlay. Static markup so it paints on first paint — no island, no
  * hydration gap. Driven by `@/lib/site/preloader`.
  *
- * Sits in the backdrop slot so the hero FluidCanvas shows through it; the
- * rest of the page is hidden by `html.is-preloading` (see site.css).
+ * Sits in the backdrop slot so the hero FluidCanvas shows through it, blurred
+ * until Enter; the rest of the page is hidden by `html.is-preloading`
+ * (see site.css).
  *
  * Layout is Lumos: `.grid.is-12` for the card, utilities for padding, gap, flex
  * and type. Every grid child spans the full row and splits internally with

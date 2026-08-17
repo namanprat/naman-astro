@@ -148,6 +148,18 @@ export function bootPreloader(): void {
 
     if (prefersReducedMotion()) return finish();
 
+    // Sharpen the sim with the card exit. The radius lives on `.fluid-wrap`
+    // (static HTML) so this does not wait on the canvas island. `is-preloading`
+    // still holds the `filter` declaration until `finish()` removes it.
+    const wrap = document.querySelector<HTMLElement>(".fluid-wrap");
+    if (wrap) {
+      gsap.to(wrap, {
+        "--fluid-preload-blur": "0px",
+        duration: EXIT_S,
+        ease: "introHop",
+      });
+    }
+
     // Slides up inside .preloader__clip, so the mask edge eats it rather than
     // letting it fly over the page it's about to reveal.
     gsap.to(card, {
