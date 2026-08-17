@@ -28,16 +28,13 @@
  * the end unit, silently jumping to `0.35px` on the first frame; and px is the
  * only form that works for the wordmark, which is a masked shape with no
  * font-size to hang an `em` off.
- * Two layers rather than one filter string: the outer element carries the
- * threshold from CSS and the inner is what GSAP blurs. That keeps a tween to a
- * plain `blur()` on one property, instead of `heroIntro`'s per-frame rewrite of
- * the whole filter string — which it only needs because the wordmark is a
- * masked shape with no font-size to hang an `em` off.
  *
- * Safari (desktop + iOS) cannot reliably apply the SVG `feColorMatrix`
- * threshold to HTML via `filter: url(#…)` — it blanks the element. Soft mode
- * drops the threshold and keeps the blur-to-sharp entrance so copy stays
- * visible. Marked early via `html.is-gooey-soft` (see BaseLayout).
+ * Soft mode — `html.is-gooey-soft`, or `data-reveal="soft"` per element — drops
+ * the threshold and keeps the blur-to-sharp entrance. It exists for faces too
+ * thin to survive the cut, as the automatic fallback when `#blur-matrix` is
+ * missing, and as the site-wide escape hatch if a browser turns out not to
+ * manage the threshold at all. It is deliberately *not* armed by UA detection
+ * any more; see `isSafariGooeyUnsafe`.
  */
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
@@ -93,8 +90,15 @@ const ARMING = "is-gooey-arming";
 const SOFT = "is-gooey-soft";
 
 /**
- * Apple WebKit without Chromium/Firefox — Safari and iOS WebViews. Those are
- * the engines that blank HTML when `filter: url(#feColorMatrix)` is applied.
+ * Apple WebKit without Chromium/Firefox — Safari and iOS WebViews.
+ *
+ * Deliberately not wired into `usesSoftGooey` any more. It was, back when the
+ * threshold was assumed impossible on WebKit; the two reasons it actually failed
+ * are fixed (see the module note and `GooeyFilter.astro`), so Safari now gets
+ * the melt like everyone else and `/gooey-lab` is what confirms it.
+ *
+ * Kept because re-arming it is the one-line retreat if that turns out wrong:
+ * call it from `usesSoftGooey` and the whole site drops back to blur-only.
  */
 export function isSafariGooeyUnsafe(): boolean {
   if (typeof navigator === "undefined") return false;
@@ -105,15 +109,13 @@ export function isSafariGooeyUnsafe(): boolean {
 }
 
 /**
- * Soft mode: blur-to-sharp only, no SVG threshold. Forced on Safari; also
- * when the filter node is missing so we never point `url()` at nothing.
+ * Soft mode: blur-to-sharp only, no SVG threshold. Set by `BaseLayout`'s
+ * pre-paint script as an explicit opt-out, and by `markGooeySupport` when the
+ * filter node is missing so we never point `url()` at nothing.
  */
 export function usesSoftGooey(): boolean {
-  if (isSafariGooeyUnsafe()) return true;
-  if (typeof document !== "undefined") {
-    if (document.documentElement.classList.contains(SOFT)) return true;
-  }
-  return false;
+  if (typeof document === "undefined") return false;
+  return document.documentElement.classList.contains(SOFT);
 }
 
 /**
@@ -141,14 +143,6 @@ export function setGooeyBlur(el: HTMLElement, px: number): void {
 
 export function clearGooeyBlur(el: HTMLElement): void {
   el.style.removeProperty(GOOEY_BLUR_VAR);
- * Blur first, threshold second — see the module note. Shared with `heroIntro`,
- * which applies both halves to one element, so the ordering rule lives here
- * rather than being spelled out in two places. Soft mode omits the threshold
- * so Safari never gets a blanking `url(#blur-matrix)`.
- */
-export function gooeyFilter(px: number): string {
-  if (usesSoftGooey() || !hasThreshold()) return `blur(${px}px)`;
-  return `blur(${px}px) url(#blur-matrix)`;
 }
 
 /**
@@ -163,14 +157,16 @@ function hasThreshold(): boolean {
 /**
  * Route the whole document to the soft chain when `#blur-matrix` is missing.
  *
- * The class-based fallback in `gooeyClass` only covers targets that go through
+ * The per-target fallback in `gooeyClass` only covers targets that go through
  * park/arm. `.gallery-label` carries `.gooey-reveal` statically in JSX, so
  * without this its filter list would still name a `url()` that resolves to
- * nothing — which on WebKit blanks the element rather than degrading. One
- * attribute on the root closes that off for every consumer at once.
+ * nothing — which on WebKit blanks the element rather than degrading. One class
+ * on the root closes that off for every consumer at once.
  */
 function markGooeySupport(): void {
-  if (!hasThreshold()) document.documentElement.dataset.gooey = "soft";
+  if (!hasThreshold()) document.documentElement.classList.add(SOFT);
+}
+
 function canPrepareGooey(): boolean {
   if (prefersReducedMotion()) return false;
   // Soft path only needs CSS blur — the SVG node is optional.
@@ -206,9 +202,7 @@ const registry = new WeakMap<HTMLElement, GooeyTarget>();
  * capability bail-out belongs here too.
  */
 function gooeyClass(el: HTMLElement): "gooey-reveal" | "gooey-reveal--soft" {
-  if (el.dataset.reveal === "soft" || !hasThreshold())
-    return "gooey-reveal--soft";
-  if (usesSoftGooey() || el.dataset.reveal === "soft") {
+  if (usesSoftGooey() || el.dataset.reveal === "soft" || !hasThreshold()) {
     return "gooey-reveal--soft";
   }
   return "gooey-reveal";
@@ -245,9 +239,9 @@ export function armGooey(target: GooeyTarget | GooeyTarget[]): void {
 export function prepareGooey(el: HTMLElement): GooeyTarget | null {
   const cached = registry.get(el);
   if (cached) return cached;
-  // No `hasThreshold()` check: without the filter `gooeyClass` falls back to the
-  // soft variant, so the entrance still runs rather than being cancelled.
-  if (prefersReducedMotion()) return null;
+  // `canPrepareGooey` allows a missing `#blur-matrix` through when soft mode is
+  // on, because `gooeyClass` then falls back to the blur-only variant and the
+  // entrance still runs rather than being cancelled.
   if (!canPrepareGooey()) return null;
 
   el.dataset.gooey = "";
@@ -353,17 +347,12 @@ export async function bootGooeyHeadings(): Promise<void> {
   const root = document.documentElement;
   const done = () => root.classList.remove(ARMING);
 
+  // Routes the document to the soft chain if the filter node is missing, so the
+  // entrance still runs — blur-only — rather than being skipped outright. Has to
+  // come first: `canPrepareGooey` reads the flag it sets.
   markGooeySupport();
-  // No `hasThreshold()` bail: `markGooeySupport` has just routed the whole
-  // document to the soft chain if the filter is missing, so the entrance still
-  // runs — blur-only — rather than being skipped outright.
-  if (prefersReducedMotion()) return done();
   if (prefersReducedMotion()) return done();
   if (!canPrepareGooey()) return done();
-
-  // Belt-and-suspenders with the inline BaseLayout probe — islands may boot
-  // before that script if the markup order ever drifts.
-  if (usesSoftGooey()) root.classList.add(SOFT);
 
   let expired = false;
   const failsafe = setTimeout(() => {
