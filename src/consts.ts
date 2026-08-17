@@ -4,7 +4,7 @@ export const SITE_NAME = "Naman Pratulya";
 export const SITE_DESCRIPTION =
   "Based out of Mumbai and Bangalore. Working with culture, curating digital experiences.";
 /** Canonical origin. Resolves canonical URLs, social images, and the sitemap. */
-export const SITE_URL = "https://namanpratulya.com";
+export const SITE_URL = "https://namanprat.com";
 /**
  * Routes kept out of search results. Each is excluded from the sitemap,
  * listed as `Disallow` in robots.txt, and served with a

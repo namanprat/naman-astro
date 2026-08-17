@@ -1,6 +1,6 @@
-# namanpratulya.com
+# namanprat.com
 
-Personal site for [Naman Pratulya](https://namanpratulya.com). Astro + React.
+Personal site for [Naman Pratulya](https://namanprat.com). Astro + React.
 
 ```sh
 npm install
