@@ -163,7 +163,7 @@ html.work-transitioning * {
 .work-page[data-work-view="slider"] {
   --wheel-radius: min(350px, 32vh, calc(50vw - 3rem));
   --wheel-tile-w: 64px;
-  --wheel-tile-h: 91px;
+  --wheel-tile-h: 64px;
 }
 
 .work-page[data-work-view="slider"] .gallery {
@@ -177,10 +177,9 @@ html.work-transitioning * {
   gap: 0;
 }
 
-/* The reference's 35×50, scaled up ~52% over three passes, keeping its ~0.7
-   ratio. The grid's span tokens and its translateX column placement are both
-   meaningless on the ring — the tile is a thumbnail whose position is polar,
-   not a grid block. */
+/* Square thumbnails on the ring. The grid's span tokens and its translateX
+   column placement are both meaningless here — the tile's position is polar,
+   not a grid block. The project cover keeps its 0.8 crop; Flip interpolates. */
 .work-page[data-work-view="slider"] .gallery__slide {
   position: absolute;
   top: 0;
