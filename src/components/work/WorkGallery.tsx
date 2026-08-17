@@ -17,7 +17,7 @@ import {
 } from "../../lib/site/workView";
 import ProjectDetail from "./ProjectDetail";
 import Reveal from "./slider/Reveal";
-import Slider from "./slider/Slider";
+import Slider, { isWorkGridMobile, WORK_GRID_MOBILE_MQ } from "./slider/Slider";
 import WheelView from "./slider/WheelView";
 import Transition from "./slider/Transition";
 import WorkViewSwitcher from "./WorkViewSwitcher";
@@ -169,6 +169,12 @@ export default function WorkGallery() {
           root,
           enabled: engineEnabled,
           onToggle: (changes, immediate) => reveal.toggle(changes, immediate),
+          onCenterChange: (index) => {
+            if (viewRef.current !== "grid") return;
+            if (switchingRef.current) return;
+            if (!isWorkGridMobile()) return;
+            setHoverTitle(workItems[index]?.title ?? null);
+          },
         });
       }
 
@@ -199,8 +205,13 @@ export default function WorkGallery() {
       const centered = engine.centeredIndex;
       const gallery = root.querySelector<HTMLElement>(".gallery");
 
-      if (next === "grid") setHoverTitle(null);
-      else setHoverTitle(workItems[centered]?.title ?? null);
+      if (next === "grid") {
+        setHoverTitle(
+          isWorkGridMobile() ? (workItems[centered]?.title ?? null) : null,
+        );
+      } else {
+        setHoverTitle(workItems[centered]?.title ?? null);
+      }
 
       engine.suspendResize(true);
       engine.stop();
@@ -219,6 +230,9 @@ export default function WorkGallery() {
            and the ring's placement. Clear them or the cached values fight the new
            layout. Same reason Slider.rebuild() does this before re-measuring. */
         gsap.set(slideEls(), { clearProps: "transform,zIndex" });
+        gsap.set(root.querySelectorAll(".gallery__img"), {
+          clearProps: "transform",
+        });
 
         const built = makeEngine(next);
         built.centerOn(centered);
@@ -307,6 +321,10 @@ export default function WorkGallery() {
               history.pushState({ workProject: null }, "", "/work");
             }
             engineRef.current?.start();
+            if (viewRef.current === "grid" && isWorkGridMobile()) {
+              const centered = engineRef.current?.centeredIndex ?? -1;
+              setHoverTitle(workItems[centered]?.title ?? null);
+            }
           },
           onOpenComplete: (slug) => {
             // The overlay *is* the project view — no document swap, just the URL.
@@ -325,6 +343,10 @@ export default function WorkGallery() {
         transitionRef.current = transition;
 
         engineRef.current = makeEngine(viewRef.current);
+        if (viewRef.current === "grid" && isWorkGridMobile()) {
+          const centered = engineRef.current.centeredIndex;
+          setHoverTitle(workItems[centered]?.title ?? null);
+        }
 
         const slides = slideEls();
 
@@ -377,13 +399,15 @@ export default function WorkGallery() {
         };
 
         /* Leaving a tile: the ring always names something — fall back to
-           whichever project sits at the anchor. The grid names nothing. */
+           whichever project sits at the anchor. The phone grid does the same
+           for the tile crossing the title; desktop grid names nothing. */
         const clearName = () => {
           const centered = engineRef.current?.centeredIndex ?? -1;
+          const fromCenter =
+            viewRef.current === "slider" ||
+            (viewRef.current === "grid" && isWorkGridMobile());
           setHoverTitle(
-            viewRef.current === "slider"
-              ? (workItems[centered]?.title ?? null)
-              : null,
+            fromCenter ? (workItems[centered]?.title ?? null) : null,
           );
         };
 
@@ -448,12 +472,25 @@ export default function WorkGallery() {
     if (!pending.length || returnIndex >= 0) scheduleBoot();
     else void imgsSettled().then(scheduleBoot);
 
+    const mobileMq = window.matchMedia(WORK_GRID_MOBILE_MQ);
+    const onMobileMq = () => {
+      if (viewRef.current !== "grid") return;
+      if (mobileMq.matches) {
+        const centered = engineRef.current?.centeredIndex ?? -1;
+        setHoverTitle(workItems[centered]?.title ?? null);
+      } else {
+        setHoverTitle(null);
+      }
+    };
+    mobileMq.addEventListener("change", onMobileMq);
+
     return () => {
       cancelled = true;
       document.documentElement.classList.remove("page-work");
       document.documentElement.classList.remove("work-project-open");
       document.documentElement.classList.remove("work-morphing");
       endReturn();
+      mobileMq.removeEventListener("change", onMobileMq);
       window.removeEventListener("work:close", onCloseRequest);
       window.removeEventListener("popstate", onPopState);
       engineRef.current?.destroy();
