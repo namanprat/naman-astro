@@ -11,6 +11,7 @@ import CustomEase from "gsap/CustomEase";
 import { prefersReducedMotion } from "./prefersReducedMotion";
 import { PAGE_REVEALED_EVENT, isPageRevealed } from "./pageReveal";
 import { GOOEY_BLUR_VAR, clearGooeyBlur, setGooeyBlur } from "./gooeyReveal";
+import { gooeyFilter, usesSoftGooey } from "./gooeyReveal";
 
 gsap.registerPlugin(CustomEase);
 CustomEase.create("introHop", "0.9, 0, 0.1, 1");
@@ -50,6 +51,8 @@ const GOOEY_BLUR_RATIO = 0.1125;
  * a `url()` pointing at a missing filter is handled by the `getElementById`
  * check below. Lowering the floor is what would let this media query go; the
  * two knobs are independent.
+ * Full threshold melt needs desktop-sized strokes. Soft mode (Safari) is
+ * blur-only, so it can run at any size without blanking or eating the mark.
  */
 const GOOEY_MIN_MQ = "(width >= 64rem)";
 
@@ -62,6 +65,7 @@ const GOOEY_MIN_MQ = "(width >= 64rem)";
  */
 function canRunGooey(el: HTMLElement | null): el is HTMLElement {
   if (!el) return false;
+  if (usesSoftGooey()) return true;
   if (!document.getElementById("blur-matrix")) return false;
   return window.matchMedia(GOOEY_MIN_MQ).matches;
 }
@@ -99,6 +103,8 @@ export function bootHomeIntro(): () => void {
   // url() filter on WebKit (killed timeline, missing #blur-matrix) leaves the
   // mark invisible — only arm when canRunGooey is true, and always disarm in
   // settle / onComplete.
+  // mark invisible — only apply it when canRunGooey is true, and always clear
+  // it in settle / onComplete. Soft mode writes blur-only via gooeyFilter.
   if (gooey) {
     setGooeyBlur(gooey, startBlur);
     gooey.classList.add(GOOEY_ARMED, GOOEY_PARKED);

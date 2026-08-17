@@ -28,6 +28,16 @@
  * the end unit, silently jumping to `0.35px` on the first frame; and px is the
  * only form that works for the wordmark, which is a masked shape with no
  * font-size to hang an `em` off.
+ * Two layers rather than one filter string: the outer element carries the
+ * threshold from CSS and the inner is what GSAP blurs. That keeps a tween to a
+ * plain `blur()` on one property, instead of `heroIntro`'s per-frame rewrite of
+ * the whole filter string — which it only needs because the wordmark is a
+ * masked shape with no font-size to hang an `em` off.
+ *
+ * Safari (desktop + iOS) cannot reliably apply the SVG `feColorMatrix`
+ * threshold to HTML via `filter: url(#…)` — it blanks the element. Soft mode
+ * drops the threshold and keeps the blur-to-sharp entrance so copy stays
+ * visible. Marked early via `html.is-gooey-soft` (see BaseLayout).
  */
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
@@ -80,6 +90,31 @@ const FAILSAFE_MS = 2000;
 const POLL_MS = 50;
 
 const ARMING = "is-gooey-arming";
+const SOFT = "is-gooey-soft";
+
+/**
+ * Apple WebKit without Chromium/Firefox — Safari and iOS WebViews. Those are
+ * the engines that blank HTML when `filter: url(#feColorMatrix)` is applied.
+ */
+export function isSafariGooeyUnsafe(): boolean {
+  if (typeof navigator === "undefined") return false;
+  const ua = navigator.userAgent;
+  if (!/AppleWebKit/i.test(ua)) return false;
+  // Chrome, Edge, Firefox iOS, Opera all include AppleWebKit in their UA.
+  return !/Chrome|CriOS|Chromium|Edg|Firefox|FxiOS|Opera|OPR/i.test(ua);
+}
+
+/**
+ * Soft mode: blur-to-sharp only, no SVG threshold. Forced on Safari; also
+ * when the filter node is missing so we never point `url()` at nothing.
+ */
+export function usesSoftGooey(): boolean {
+  if (isSafariGooeyUnsafe()) return true;
+  if (typeof document !== "undefined") {
+    if (document.documentElement.classList.contains(SOFT)) return true;
+  }
+  return false;
+}
 
 /**
  * Resolve an em ratio against an element's own font-size — see the module note
@@ -106,6 +141,14 @@ export function setGooeyBlur(el: HTMLElement, px: number): void {
 
 export function clearGooeyBlur(el: HTMLElement): void {
   el.style.removeProperty(GOOEY_BLUR_VAR);
+ * Blur first, threshold second — see the module note. Shared with `heroIntro`,
+ * which applies both halves to one element, so the ordering rule lives here
+ * rather than being spelled out in two places. Soft mode omits the threshold
+ * so Safari never gets a blanking `url(#blur-matrix)`.
+ */
+export function gooeyFilter(px: number): string {
+  if (usesSoftGooey() || !hasThreshold()) return `blur(${px}px)`;
+  return `blur(${px}px) url(#blur-matrix)`;
 }
 
 /**
@@ -128,6 +171,11 @@ function hasThreshold(): boolean {
  */
 function markGooeySupport(): void {
   if (!hasThreshold()) document.documentElement.dataset.gooey = "soft";
+function canPrepareGooey(): boolean {
+  if (prefersReducedMotion()) return false;
+  // Soft path only needs CSS blur — the SVG node is optional.
+  if (usesSoftGooey()) return true;
+  return hasThreshold();
 }
 
 function wait(ms: number): Promise<void> {
@@ -160,6 +208,9 @@ const registry = new WeakMap<HTMLElement, GooeyTarget>();
 function gooeyClass(el: HTMLElement): "gooey-reveal" | "gooey-reveal--soft" {
   if (el.dataset.reveal === "soft" || !hasThreshold())
     return "gooey-reveal--soft";
+  if (usesSoftGooey() || el.dataset.reveal === "soft") {
+    return "gooey-reveal--soft";
+  }
   return "gooey-reveal";
 }
 
@@ -197,6 +248,7 @@ export function prepareGooey(el: HTMLElement): GooeyTarget | null {
   // No `hasThreshold()` check: without the filter `gooeyClass` falls back to the
   // soft variant, so the entrance still runs rather than being cancelled.
   if (prefersReducedMotion()) return null;
+  if (!canPrepareGooey()) return null;
 
   el.dataset.gooey = "";
   const split = SplitText.create(el, {
@@ -306,6 +358,12 @@ export async function bootGooeyHeadings(): Promise<void> {
   // document to the soft chain if the filter is missing, so the entrance still
   // runs — blur-only — rather than being skipped outright.
   if (prefersReducedMotion()) return done();
+  if (prefersReducedMotion()) return done();
+  if (!canPrepareGooey()) return done();
+
+  // Belt-and-suspenders with the inline BaseLayout probe — islands may boot
+  // before that script if the markup order ever drifts.
+  if (usesSoftGooey()) root.classList.add(SOFT);
 
   let expired = false;
   const failsafe = setTimeout(() => {
@@ -347,7 +405,7 @@ export function gooeyMorph(
   inner: HTMLElement,
   swap: () => void,
 ): gsap.core.Timeline | null {
-  if (prefersReducedMotion() || !hasThreshold()) {
+  if (prefersReducedMotion() || !canPrepareGooey()) {
     swap();
     return null;
   }

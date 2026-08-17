@@ -39,15 +39,11 @@ html.theme-light .footer-child {
   /* Dark mode: black on accent. Light mode: white on frost. */
   color: var(--black);
   box-sizing: border-box;
-  /* Vertical gutter only. Horizontal inset comes from the shared site grid
-     band below — padding here too would inset the band a second time and pull
-     every column off the site grid (it was landing 40px in, so the footer
-     links never lined up with the nav or the About panel).
-     Matches .about-panel__inner. Page light-mode ink is grey; this card keeps
-     black / white. */
+  /* Gutter on all sides — same inner pad as desktop. Below 64rem the contain
+     is width 100% so this inset is real air inside the orange card, not a
+     second pass over a vw-sized grid band. */
   --ink: var(--black);
-  padding-block: var(--site--gutter);
-  padding-inline: 0;
+  padding: var(--site--gutter);
 }
 
 html.theme-light .footer-box {
@@ -64,6 +60,19 @@ html.theme-light .footer-box {
   padding: 0;
 }
 
+/* Mobile / tablet: let the box padding inset content; bump vertical air. */
+@media (width < 64rem) {
+  .footer-box {
+    padding-block: var(--space-6);
+  }
+
+  .footer_contain.container {
+    width: 100%;
+    max-width: none;
+    margin-inline: 0;
+  }
+}
+
 @media (width >= 64rem) {
   .footer {
     padding: 0;
@@ -74,10 +83,6 @@ html.theme-light .footer-box {
   .footer-child {
     width: calc(var(--site--grid-width) + var(--site--gutter) * 2);
     margin-inline: auto;
-  }
-
-  .footer-box {
-    padding: var(--site--gutter);
   }
 
   .footer_contain.container {
