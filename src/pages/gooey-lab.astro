@@ -40,6 +40,11 @@ const ROWS = [
     note: "No CSS filter functions at all: feGaussianBlur (stdDeviation driven by the slider) → feColorMatrix → feGaussianBlur.",
   },
   {
+    id: "e",
+    name: "E — B, but defs parked off-screen",
+    note: "Byte-identical to B except the filter lives in an <svg> hidden at left:-9999px instead of clip:rect(0,0,0,0). If B fuses and E does not, the off-screen defs were the cause.",
+  },
+  {
     id: "d",
     name: "D — Soft fallback",
     note: "Blur only, no threshold. The accepted degradation if nothing above fuses.",
@@ -148,12 +153,40 @@ const ROWS = [
       </defs>
     </svg>
 
+    {
+      /* A second defs host, hidden the OLD way — translated far off-screen
+        rather than clipped in place. `main` landed the clip-rect change on the
+        theory that Safari fails to resolve `url(#…)` against defs parked at
+        `left:-9999px`; row E is what tests it, against an otherwise byte-identical
+        copy of B's filter. */
+    }
+    <svg aria-hidden="true" class="lab__defs lab__defs--offscreen">
+      <defs>
+        <filter
+          id="lab-offscreen"
+          color-interpolation-filters="sRGB"
+          filterUnits="objectBoundingBox"
+          x="-50%"
+          y="-120%"
+          width="200%"
+          height="340%"
+        >
+          <feColorMatrix
+            in="SourceGraphic"
+            type="matrix"
+            values="1 0 0 0 0  0 1 0 0 0  0 0 1 0 0  0 0 0 255 -140"
+          ></feColorMatrix>
+          <feGaussianBlur stdDeviation="0.4"></feGaussianBlur>
+        </filter>
+      </defs>
+    </svg>
+
     <header class="lab__head">
       <h1 class="lab__title">Gooey filter lab</h1>
       <p class="lab__lede">
         Drag the blur up and look for glyphs <strong>fusing into blobs</strong> with
         hard edges. A row that stays a soft cloud is a row where the alpha threshold
-        is not landing — that is the whole test. Rows 0/A/B/C should look identical
+        is not landing — that is the whole test. Rows 0/A/B/C/E should look identical
         in Chrome; if they differ in Safari, the one that fuses wins. Past roughly
         0.25em a row can disappear entirely: that is the threshold working, not a
         bug, since nothing clears alpha 0.549 any more.
@@ -257,13 +290,22 @@ const ROWS = [
         font-family: var(--body-font-family, system-ui, sans-serif);
       }
 
+      /* Clipped in place, matching what GooeyFilter.astro now ships. */
       .lab__defs {
         position: absolute;
+        width: 0;
+        height: 0;
+        overflow: hidden;
+        clip: rect(0, 0, 0, 0);
+        pointer-events: none;
+      }
+
+      /* The old technique, kept only so row E can test it. */
+      .lab__defs--offscreen {
         left: -9999px;
         width: 1px;
         height: 1px;
-        overflow: hidden;
-        pointer-events: none;
+        clip: auto;
       }
 
       .lab__head {
@@ -399,6 +441,11 @@ const ROWS = [
          in user-space px, so JS resolves the em against this row's font-size. */
       .lab-vc .lab__inner {
         filter: url(#lab-c);
+      }
+
+      /* Same chain as B, pointed at the filter in the off-screen defs host. */
+      .lab-ve .lab__inner {
+        filter: blur(calc(var(--lab-blur, 0) * 1em)) url(#lab-offscreen);
       }
 
       .lab-vd .lab__inner {
