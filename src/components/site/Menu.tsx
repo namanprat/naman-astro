@@ -1036,8 +1036,9 @@ export default function Menu({ initialPathname = "/" }: MenuProps) {
         <div className="name-hero">
           <div className="name-hero_contain container gap-0">
             <div className="name-hero_grid grid is-12">
-              {/* Two layers for the gooey reveal: this one carries the alpha
-                    threshold, the lockup inside it animates its own blur. */}
+              {/* Carries the gooey reveal itself rather than wrapping a child
+                    that does: CSS applies `filter` before `mask`, so the chain
+                    has to sit above the masked lockup. heroIntro arms it. */}
               <div className="name-hero__gooey">
                 {/* On inner pages this lockup is the only logo on screen (the
                     text wordmark hides below 64rem), so it has to go home.

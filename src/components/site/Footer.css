@@ -100,16 +100,18 @@ html.theme-light .footer-box {
   text-decoration: none;
 }
 
-/* Gooey reveal host — the GSAP pass blurs .footer-text-content inside it.
+/* Gooey reveal host — .footer-text-content inside it also carries
+   `.gooey-reveal__inner`, which is what the filter chain hangs off.
    No `overflow: hidden` here: it was the mask for the old slide-up, and it
    would now crop the blur bleed off the top and bottom of every link. */
 .footer-text {
   display: block;
 }
 
+/* Beats `.gooey-reveal__inner { display: inline-block }` because component CSS
+   is unlayered and `site.css` puts that rule in `@layer components`. */
 .footer-text-content {
   display: block;
-  will-change: filter;
 }
 
 /* ─── Main block ────────────────────────────────────────────────────────────

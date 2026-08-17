@@ -3,10 +3,12 @@
  * Alpha-threshold filter for the gooey reveal, ported from
  * `codegrid-gooey-text-reveal/src/components/GooeyFilter/GooeyFilter.jsx`.
  *
- * The last matrix row (×255, −140) hard-thresholds alpha: blur a shape
- * underneath this and its soft edges snap back to hard ones while overlapping
- * areas fuse, which is what produces the melt. RGB passes through untouched, so
- * it never shifts the colour it's applied to.
+ * The matrix row (×255, −140) hard-thresholds alpha: blur a shape underneath
+ * this and its soft edges snap back to hard ones while overlapping areas fuse,
+ * which is what produces the melt. RGB passes through untouched, so it never
+ * shifts the colour it's applied to. The trailing blur is codegrid's anti-alias
+ * softener — the threshold's hard cut aliases badly on curves without it, and it
+ * has to run *after* the matrix to do that job.
  *
  * Must be in the DOM for `filter: url(#blur-matrix)` to resolve — a missing
  * reference makes the filtered element vanish, not degrade.
@@ -20,12 +22,45 @@
   style="position:absolute;left:-9999px;width:1px;height:1px;overflow:hidden;pointer-events:none"
 >
   <defs>
-    <filter id="blur-matrix" x="-50%" y="-50%" width="200%" height="200%">
+    {
+      /*
+      `color-interpolation-filters` defaults to linearRGB, and `feColorMatrix` is
+      specified to run on non-premultiplied RGBA — so the default forces
+      un-premultiply → linearise → matrix → de-linearise → re-premultiply. On a
+      blurred glyph edge alpha runs continuously through near-zero, so that round
+      trip divides 8-bit RGB by a tiny alpha and scales the quantised result back
+      up. Blink keeps enough precision through it; WebKit does not, and the loss
+      lands exactly where the threshold is meant to cut, which is why Safari saw
+      a plain blur instead of a melt. sRGB removes the round trip entirely. It is
+      an inheriting presentation attribute, so on `<filter>` it covers both
+      primitives.
+
+      The region is tall as insurance, not as a fix for anything observed. The
+      threshold now sits on a single line box (`.gooey-reveal__inner`) rather
+      than on the whole heading, and `filterUnits` defaults to objectBoundingBox
+      — so the reference box shrank from a multi-line heading to ~1em, while
+      `blur(0.35em)` spreads roughly 3σ ≈ 1.05em. In practice Blink shows no
+      clipping at either region, because the threshold discards everything below
+      alpha 0.549 and the surviving blob sits far inside the halo. WebKit's
+      region handling for CSS-referenced filters differs, so the wider box is
+      the cheaper side to be wrong on. Horizontal stays at ±50%: a line box is
+      always many em wide.
+    */
+    }
+    <filter
+      id="blur-matrix"
+      color-interpolation-filters="sRGB"
+      x="-50%"
+      y="-120%"
+      width="200%"
+      height="340%"
+    >
       <feColorMatrix
         in="SourceGraphic"
         type="matrix"
         values="1 0 0 0 0  0 1 0 0 0  0 0 1 0 0  0 0 0 255 -140"
-      />
+      ></feColorMatrix>
+      <feGaussianBlur stdDeviation="0.4"></feGaussianBlur>
     </filter>
   </defs>
 </svg>

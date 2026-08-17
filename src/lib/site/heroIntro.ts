@@ -10,13 +10,15 @@ import gsap from "gsap";
 import CustomEase from "gsap/CustomEase";
 import { prefersReducedMotion } from "./prefersReducedMotion";
 import { PAGE_REVEALED_EVENT, isPageRevealed } from "./pageReveal";
-import { gooeyFilter } from "./gooeyReveal";
+import { GOOEY_BLUR_VAR, clearGooeyBlur, setGooeyBlur } from "./gooeyReveal";
 
 gsap.registerPlugin(CustomEase);
 CustomEase.create("introHop", "0.9, 0, 0.1, 1");
 
 const GOOEY = ".name-hero__gooey";
 const GOOEY_PARKED = "is-gooey-parked";
+/** Opts the mark into the shared filter chain defined in `site.css`. */
+const GOOEY_ARMED = "is-gooey-armed";
 /**
  * The h5s, not the text inside them — `initRollingText` has already split those
  * into `.roll-char` stacks for the hover, and a second SplitText on the same
@@ -39,18 +41,24 @@ const NAV_STAGGER = 0.06;
 const GOOEY_BLUR_RATIO = 0.1125;
 
 /**
- * Below the desktop nav breakpoint the mark is too small: a 4px+ blur plus the
- * alpha threshold eats the strokes, and `filter: url(#blur-matrix)` on WebKit
- * can vanish the element entirely. Skip the melt; keep the lockup painted.
+ * Below the desktop nav breakpoint the mark is too small for the melt to read:
+ * `startBlur` floors at 4px, which on a small lockup is a large fraction of
+ * stroke width, so the alpha threshold eats the strokes. Skip the melt; keep the
+ * lockup painted.
+ *
+ * This is a design constraint, not a WebKit workaround — the separate hazard of
+ * a `url()` pointing at a missing filter is handled by the `getElementById`
+ * check below. Lowering the floor is what would let this media query go; the
+ * two knobs are independent.
  */
 const GOOEY_MIN_MQ = "(width >= 64rem)";
 
 /**
- * `gooeyFilter` comes from gooeyReveal — the blur-before-threshold ordering is
- * the same rule there. The wordmark is the one place it goes on a single
- * element rather than the two-layer split: CSS applies `filter` before `mask`,
- * so blurring the masked lockup itself would blur a solid colour box and then
- * clip it with a razor-sharp mask, leaving nothing visible.
+ * The mark carries the filter chain on itself rather than on a child, unlike
+ * every other gooey target: CSS applies `filter` before `mask`, so blurring the
+ * masked lockup from a wrapper would blur a solid colour box and then clip it
+ * with a razor-sharp mask, leaving nothing visible. `.is-gooey-armed` in
+ * `site.css` is the single-element form of the same chain.
  */
 function canRunGooey(el: HTMLElement | null): el is HTMLElement {
   if (!el) return false;
@@ -71,6 +79,9 @@ export function bootHomeIntro(): () => void {
   /** Final state: no filter at all, so the mark ends pixel-crisp. */
   const settle = () => {
     if (gooeyEl) {
+      clearGooeyBlur(gooeyEl);
+      gooeyEl.classList.remove(GOOEY_ARMED);
+      // Sweeps any inline filter left by an older build of this module.
       gooeyEl.style.filter = "";
       gooeyEl.classList.add(GOOEY_PARKED);
     }
@@ -86,11 +97,11 @@ export function bootHomeIntro(): () => void {
 
   // Park the melt immediately so the sharp lockup never paints. A leftover
   // url() filter on WebKit (killed timeline, missing #blur-matrix) leaves the
-  // mark invisible — only apply it when canRunGooey is true, and always clear
-  // it in settle / onComplete.
+  // mark invisible — only arm when canRunGooey is true, and always disarm in
+  // settle / onComplete.
   if (gooey) {
-    gooey.style.filter = gooeyFilter(startBlur);
-    gooey.classList.add(GOOEY_PARKED);
+    setGooeyBlur(gooey, startBlur);
+    gooey.classList.add(GOOEY_ARMED, GOOEY_PARKED);
   }
 
   let tl: gsap.core.Timeline | null = null;
@@ -98,16 +109,16 @@ export function bootHomeIntro(): () => void {
   const play = () => {
     tl = gsap.timeline();
     if (gooey) {
-      const state = { blur: startBlur };
-      tl.to(state, {
-        blur: 0,
+      // Tweening the custom property rather than rewriting the whole filter
+      // string per frame: the old form forced a filter-list re-parse on every
+      // update and, on WebKit, could rebuild the filter chain with it.
+      tl.to(gooey, {
+        [GOOEY_BLUR_VAR]: "0px",
         duration: GOOEY_S,
         ease: "power3.out",
-        onUpdate: () => {
-          gooey.style.filter = gooeyFilter(state.blur);
-        },
         onComplete: () => {
-          gooey.style.filter = "";
+          clearGooeyBlur(gooey);
+          gooey.classList.remove(GOOEY_ARMED);
         },
       });
     } else if (gooeyEl) {

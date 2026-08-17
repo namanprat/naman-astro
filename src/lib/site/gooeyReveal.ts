@@ -3,16 +3,31 @@
  * heading and as the swap for text that changes in place.
  *
  * The effect is two filters in a fixed order. A CSS `blur()` softens the shape,
- * then `url(#blur-matrix)` — a lone alpha threshold, with no blur of its own —
- * snaps the soft edges back to hard ones, fusing neighbouring glyphs on the way
- * through. Reverse the order and the threshold sees a still-sharp shape, which
- * is a no-op, and you are left with a plain blur rather than a melt.
+ * then `url(#blur-matrix)` snaps the soft edges back to hard ones, fusing
+ * neighbouring glyphs on the way through. Reverse the order and the threshold
+ * sees a still-sharp shape, which is a no-op, and you are left with a plain blur
+ * rather than a melt.
  *
- * Two layers rather than one filter string: the outer element carries the
- * threshold from CSS and the inner is what GSAP blurs. That keeps a tween to a
- * plain `blur()` on one property, instead of `heroIntro`'s per-frame rewrite of
- * the whole filter string — which it only needs because the wordmark is a
- * masked shape with no font-size to hang an `em` off.
+ * Both halves sit on one element — the line's `.gooey-reveal__inner` — and the
+ * chain is declared once in `styles/site.css`. It used to be split in two, the
+ * heading carrying the threshold and its inners carrying the animated blur, but
+ * WebKit never GPU-accelerates a reference filter, so that split fed a
+ * composited texture into a software filter pass and Safari lost the threshold
+ * altogether. See the note on the rule in `site.css`.
+ *
+ * That leaves the problem the split was solving: GSAP cannot interpolate a
+ * `filter` string containing a `url()`. So GSAP tweens `--gooey-blur` instead —
+ * a registered custom property the CSS interpolates into the chain — which keeps
+ * stagger, easing and timeline positions working exactly as a plain property
+ * tween, and means `heroIntro`'s per-frame rewrite of the whole filter string
+ * goes away too.
+ *
+ * Blur radii are authored as em ratios but resolved to px here, at park time,
+ * against each element's own font-size. Two reasons: on an engine without
+ * `@property` support GSAP would tween `0.35em → 0px` as bare numbers and emit
+ * the end unit, silently jumping to `0.35px` on the first frame; and px is the
+ * only form that works for the wordmark, which is a masked shape with no
+ * font-size to hang an `em` off.
  */
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
@@ -46,15 +61,18 @@ const SKIP = [
   "[data-no-reveal]",
 ].join(", ");
 
+/** The property `site.css` interpolates into the filter chain. */
+export const GOOEY_BLUR_VAR = "--gooey-blur";
+
 /** codegrid's numbers — below ~0.3em the threshold never fuses the glyphs. */
-const BLUR_START = "blur(0.35em)";
-const BLUR_END = "blur(0em)";
+const BLUR_START_EM = 0.35;
+const BLUR_END = "0px";
 const REVEAL_S = 1.5;
 const REVEAL_STAGGER = 0.1;
 const REVEAL_START = "top 80%";
 
 /** Blur peak for a swap. Lower than the entrance — it is a shorter beat. */
-const MORPH_BLUR = "blur(0.3em)";
+const MORPH_BLUR_EM = 0.3;
 const MORPH_S = 0.22;
 
 /** Matches lineReveal: text must never stay hidden if fonts or an island fail. */
@@ -64,12 +82,30 @@ const POLL_MS = 50;
 const ARMING = "is-gooey-arming";
 
 /**
- * Blur first, threshold second — see the module note. Shared with `heroIntro`,
- * which applies both halves to one element, so the ordering rule lives here
- * rather than being spelled out in two places.
+ * Resolve an em ratio against an element's own font-size — see the module note
+ * on why nothing on the wire is in `em`. Falls back to a 16px root if the
+ * element has no usable computed size yet.
  */
-export function gooeyFilter(px: number): string {
-  return `blur(${px}px) url(#blur-matrix)`;
+function blurPx(el: Element, em: number): string {
+  const fontSize = parseFloat(getComputedStyle(el).fontSize);
+  return `${(Number.isFinite(fontSize) ? fontSize : 16) * em}px`;
+}
+
+/**
+ * GSAP function-based value: each inner resolves against its own font-size,
+ * which matters for the hand-built targets in `Footer` that span differently
+ * sized elements.
+ */
+const BLUR_START = (_i: number, el: Element) => blurPx(el, BLUR_START_EM);
+
+/** Park a blur radius directly. For `heroIntro`, which sizes off a bounding box
+ *  rather than a font-size and so has its px in hand already. */
+export function setGooeyBlur(el: HTMLElement, px: number): void {
+  el.style.setProperty(GOOEY_BLUR_VAR, `${px}px`);
+}
+
+export function clearGooeyBlur(el: HTMLElement): void {
+  el.style.removeProperty(GOOEY_BLUR_VAR);
 }
 
 /**
@@ -81,12 +117,25 @@ function hasThreshold(): boolean {
   return !!document.getElementById("blur-matrix");
 }
 
+/**
+ * Route the whole document to the soft chain when `#blur-matrix` is missing.
+ *
+ * The class-based fallback in `gooeyClass` only covers targets that go through
+ * park/arm. `.gallery-label` carries `.gooey-reveal` statically in JSX, so
+ * without this its filter list would still name a `url()` that resolves to
+ * nothing — which on WebKit blanks the element rather than degrading. One
+ * attribute on the root closes that off for every consumer at once.
+ */
+function markGooeySupport(): void {
+  if (!hasThreshold()) document.documentElement.dataset.gooey = "soft";
+}
+
 function wait(ms: number): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
-/** Move a line's children into a span, so the line can hold the threshold
- *  while its inner takes the animated blur. */
+/** Move a line's children into a span. The inner is what carries the filter
+ *  chain and the animated blur; the line itself stays unfiltered. */
 function wrapInner(line: Element): HTMLElement {
   const inner = document.createElement("span");
   inner.className = "gooey-reveal__inner";
@@ -102,20 +151,33 @@ export type GooeyTarget = {
 
 const registry = new WeakMap<HTMLElement, GooeyTarget>();
 
+/**
+ * The one place that decides whether a target gets the threshold or just the
+ * blur. A missing `#blur-matrix` routes here rather than cancelling the reveal,
+ * so the entrance still runs — soft — instead of not running at all. Any future
+ * capability bail-out belongs here too.
+ */
 function gooeyClass(el: HTMLElement): "gooey-reveal" | "gooey-reveal--soft" {
-  return el.dataset.reveal === "soft" ? "gooey-reveal--soft" : "gooey-reveal";
+  if (el.dataset.reveal === "soft" || !hasThreshold())
+    return "gooey-reveal--soft";
+  return "gooey-reveal";
 }
 
 function innersOf(target: GooeyTarget | GooeyTarget[]): HTMLElement[] {
   return (Array.isArray(target) ? target : [target]).flatMap((t) => t.inners);
 }
 
-/** Drop the threshold class and clear blur once a reveal has landed sharp. */
+/** Drop the threshold class and clear blur once a reveal has landed sharp.
+ *  Explicit `removeProperty` rather than `clearProps`: no ambiguity about how
+ *  GSAP clears a custom property, and it sweeps the inline `filter` too. */
 export function settleGooey(target: GooeyTarget | GooeyTarget[]): void {
   const list = Array.isArray(target) ? target : [target];
   for (const t of list) {
     t.el.classList.remove("gooey-reveal", "gooey-reveal--soft");
-    gsap.set(t.inners, { clearProps: "filter" });
+    for (const inner of t.inners) {
+      inner.style.removeProperty(GOOEY_BLUR_VAR);
+      inner.style.removeProperty("filter");
+    }
   }
 }
 
@@ -132,7 +194,9 @@ export function armGooey(target: GooeyTarget | GooeyTarget[]): void {
 export function prepareGooey(el: HTMLElement): GooeyTarget | null {
   const cached = registry.get(el);
   if (cached) return cached;
-  if (!hasThreshold() || prefersReducedMotion()) return null;
+  // No `hasThreshold()` check: without the filter `gooeyClass` falls back to the
+  // soft variant, so the entrance still runs rather than being cancelled.
+  if (prefersReducedMotion()) return null;
 
   el.dataset.gooey = "";
   const split = SplitText.create(el, {
@@ -158,7 +222,7 @@ export function parkGooey(target: GooeyTarget | GooeyTarget[]): void {
   const list = Array.isArray(target) ? target : [target];
   for (const t of list) {
     t.el.classList.add(gooeyClass(t.el));
-    gsap.set(t.inners, { filter: BLUR_START });
+    gsap.set(t.inners, { [GOOEY_BLUR_VAR]: BLUR_START });
   }
 }
 
@@ -173,7 +237,7 @@ export function addGooeyReveal(
   tl.to(
     inners,
     {
-      filter: BLUR_END,
+      [GOOEY_BLUR_VAR]: BLUR_END,
       duration: REVEAL_S,
       ease: "power3.out",
       stagger: REVEAL_STAGGER,
@@ -195,12 +259,12 @@ export function addGooeyUnreveal(
   if (!inners.length) return;
   for (const t of list) {
     t.el.classList.add(gooeyClass(t.el));
-    gsap.set(t.inners, { filter: BLUR_END });
+    gsap.set(t.inners, { [GOOEY_BLUR_VAR]: BLUR_END });
   }
   tl.to(
     inners,
     {
-      filter: BLUR_START,
+      [GOOEY_BLUR_VAR]: BLUR_START,
       duration: 0.7,
       ease: "power3.in",
       stagger: { each: REVEAL_STAGGER, from: "end" },
@@ -220,7 +284,7 @@ function armHeading(el: HTMLElement): void {
   if (!target) return;
   parkGooey(target);
   gsap.to(target.inners, {
-    filter: BLUR_END,
+    [GOOEY_BLUR_VAR]: BLUR_END,
     duration: REVEAL_S,
     ease: "power3.out",
     stagger: REVEAL_STAGGER,
@@ -237,7 +301,11 @@ export async function bootGooeyHeadings(): Promise<void> {
   const root = document.documentElement;
   const done = () => root.classList.remove(ARMING);
 
-  if (prefersReducedMotion() || !hasThreshold()) return done();
+  markGooeySupport();
+  // No `hasThreshold()` bail: `markGooeySupport` has just routed the whole
+  // document to the soft chain if the filter is missing, so the entrance still
+  // runs — blur-only — rather than being skipped outright.
+  if (prefersReducedMotion()) return done();
 
   let expired = false;
   const failsafe = setTimeout(() => {
@@ -284,13 +352,22 @@ export function gooeyMorph(
     return null;
   }
 
+  // Recomputed per call: the label's font-size is both breakpoint- and
+  // view-dependent, so a value cached at mount would be wrong after a resize or
+  // a slider/grid swap.
+  const peak = blurPx(inner, MORPH_BLUR_EM);
+
   return gsap
     .timeline()
     .to(inner, {
-      filter: MORPH_BLUR,
+      [GOOEY_BLUR_VAR]: peak,
       duration: MORPH_S,
       ease: "power2.in",
       onComplete: swap,
     })
-    .to(inner, { filter: BLUR_END, duration: MORPH_S, ease: "power2.out" });
+    .to(inner, {
+      [GOOEY_BLUR_VAR]: BLUR_END,
+      duration: MORPH_S,
+      ease: "power2.out",
+    });
 }

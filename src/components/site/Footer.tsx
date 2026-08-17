@@ -33,7 +33,9 @@ const FOOTER_LINKS = [
 function Reveal({ children }: { children: React.ReactNode }) {
   return (
     <span className="footer-text">
-      <span className="footer-text-content">{children}</span>
+      <span className="footer-text-content gooey-reveal__inner">
+        {children}
+      </span>
     </span>
   );
 }
@@ -72,8 +74,10 @@ export default function Footer() {
          `prepareGooey`: that splits the element with SplitText, and RollingText
          has already split this same text into per-char glyph stacks for its
          hover roll — a second split fights it. Each link is one line anyway, so
-         the split buys nothing; the mask span carries the threshold class and
-         its content span takes the blur. */
+         the split buys nothing; `.footer-text` stands in for the split line and
+         its content span stands in for the `.gooey-reveal__inner` that would
+         normally be minted — which is why that span carries the inner class in
+         the markup above, since the filter chain hangs off it. */
       /* Hand-building the target also skips the reduced-motion guard that
          `prepareGooey` applies, so it has to be re-stated here — otherwise
          these links would animate while every other gooey heading sits still. */

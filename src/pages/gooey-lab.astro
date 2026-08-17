@@ -1,0 +1,488 @@
+---
+/**
+ * TEMPORARY diagnostic page — delete once Safari has picked a winner.
+ *
+ * The gooey melt renders correctly in Blink and degraded to a plain blur in
+ * WebKit. This page puts the candidate filter forms side by side under one
+ * shared blur control so a single Safari visit says which of them actually
+ * fuses glyphs, instead of guessing from a Linux container with no Safari.
+ *
+ * Deliberately standalone — not `BaseLayout` — so the preloader, the page
+ * transition cover and `bootGooeyHeadings` can't interfere. It defines its own
+ * filters with `lab-` ids and its own classes, so it keeps showing the *old*
+ * baseline even though `site.css` no longer implements it.
+ */
+import "@/styles/global.css";
+import "@/styles/site.css";
+
+const HEADING = "Melting Glyphs";
+
+/** Every row runs the same string at the same size; only the filter differs. */
+const ROWS = [
+  {
+    id: "0",
+    name: "0 — Current (baseline)",
+    note: "Two elements, no sRGB. What shipped before this rework, and what Safari renders as a plain blur.",
+  },
+  {
+    id: "a",
+    name: "A — sRGB only",
+    note: 'Same two-element nesting, but the filter declares color-interpolation-filters="sRGB".',
+  },
+  {
+    id: "b",
+    name: "B — Single element + sRGB  ← shipped",
+    note: "One element carries blur(var(--gooey-blur)) url(#…). sRGB, tall filter region, 0.4px softener inside the filter.",
+  },
+  {
+    id: "c",
+    name: "C — All-SVG",
+    note: "No CSS filter functions at all: feGaussianBlur (stdDeviation driven by the slider) → feColorMatrix → feGaussianBlur.",
+  },
+  {
+    id: "d",
+    name: "D — Soft fallback",
+    note: "Blur only, no threshold. The accepted degradation if nothing above fuses.",
+  },
+] as const;
+---
+
+<!doctype html>
+<html lang="en" data-no-reveal>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="robots" content="noindex, nofollow" />
+    <title>Gooey filter lab</title>
+  </head>
+  <body class="lab">
+    <svg aria-hidden="true" class="lab__defs">
+      <defs>
+        {/* Row 0 — verbatim reproduction of the pre-rework filter. */}
+        <filter id="lab-0" x="-50%" y="-50%" width="200%" height="200%">
+          <feColorMatrix
+            in="SourceGraphic"
+            type="matrix"
+            values="1 0 0 0 0  0 1 0 0 0  0 0 1 0 0  0 0 0 255 -140"
+          ></feColorMatrix>
+        </filter>
+
+        {/* Row A — the one-attribute change, nesting otherwise unchanged. */}
+        <filter
+          id="lab-a"
+          color-interpolation-filters="sRGB"
+          x="-50%"
+          y="-50%"
+          width="200%"
+          height="200%"
+        >
+          <feColorMatrix
+            in="SourceGraphic"
+            type="matrix"
+            values="1 0 0 0 0  0 1 0 0 0  0 0 1 0 0  0 0 0 255 -140"
+          ></feColorMatrix>
+        </filter>
+
+        {/* Row B — identical to the shipped #blur-matrix. */}
+        <filter
+          id="lab-b"
+          color-interpolation-filters="sRGB"
+          x="-50%"
+          y="-120%"
+          width="200%"
+          height="340%"
+        >
+          <feColorMatrix
+            in="SourceGraphic"
+            type="matrix"
+            values="1 0 0 0 0  0 1 0 0 0  0 0 1 0 0  0 0 0 255 -140"
+          ></feColorMatrix>
+          <feGaussianBlur stdDeviation="0.4"></feGaussianBlur>
+        </filter>
+
+        {
+          /* Row C — blur inside the filter. stdDeviation is driven from JS
+            because it is an attribute on a shared node, which is exactly the
+            cost that makes this form expensive to ship for real. */
+        }
+        <filter
+          id="lab-c"
+          color-interpolation-filters="sRGB"
+          x="-50%"
+          y="-120%"
+          width="200%"
+          height="340%"
+        >
+          <feGaussianBlur
+            in="SourceGraphic"
+            stdDeviation="0"
+            result="lab-c-blur"
+            data-lab-blur></feGaussianBlur>
+          <feColorMatrix
+            in="lab-c-blur"
+            type="matrix"
+            values="1 0 0 0 0  0 1 0 0 0  0 0 1 0 0  0 0 0 255 -140"
+          ></feColorMatrix>
+          <feGaussianBlur stdDeviation="0.4"></feGaussianBlur>
+        </filter>
+
+        {
+          /* Wordmark row — same definition as B, separate id so the two rows
+            can never share filter state. */
+        }
+        <filter
+          id="lab-mark"
+          color-interpolation-filters="sRGB"
+          x="-50%"
+          y="-120%"
+          width="200%"
+          height="340%"
+        >
+          <feColorMatrix
+            in="SourceGraphic"
+            type="matrix"
+            values="1 0 0 0 0  0 1 0 0 0  0 0 1 0 0  0 0 0 255 -140"
+          ></feColorMatrix>
+          <feGaussianBlur stdDeviation="0.4"></feGaussianBlur>
+        </filter>
+      </defs>
+    </svg>
+
+    <header class="lab__head">
+      <h1 class="lab__title">Gooey filter lab</h1>
+      <p class="lab__lede">
+        Drag the blur up and look for glyphs <strong>fusing into blobs</strong> with
+        hard edges. A row that stays a soft cloud is a row where the alpha threshold
+        is not landing — that is the whole test. Rows 0/A/B/C should look identical
+        in Chrome; if they differ in Safari, the one that fuses wins. Past roughly
+        0.25em a row can disappear entirely: that is the threshold working, not a
+        bug, since nothing clears alpha 0.549 any more.
+      </p>
+
+      <div class="lab__controls">
+        <label class="lab__control">
+          Blur
+          <input
+            id="lab-range"
+            type="range"
+            min="0"
+            max="0.45"
+            step="0.005"
+            value="0.15"
+          />
+          <output id="lab-out">0.220em</output>
+        </label>
+        <button id="lab-play" type="button">Play the real 1.5s reveal</button>
+      </div>
+
+      <p class="lab__ua" id="lab-ua"></p>
+    </header>
+
+    <main>
+      {
+        ROWS.map((row) => (
+          <section class="lab__row" data-variant={row.id}>
+            <div class="lab__meta">
+              <h2 class="lab__name">{row.name}</h2>
+              <p class="lab__note">{row.note}</p>
+            </div>
+            <div class={`lab__stage lab-v${row.id}`}>
+              <p class="lab__outer text-style-display">
+                <span class="lab__inner">{HEADING}</span>
+              </p>
+            </div>
+          </section>
+        ))
+      }
+
+      <section class="lab__row">
+        <div class="lab__meta">
+          <h2 class="lab__name">B at small size</h2>
+          <p class="lab__note">
+            The winning form on a small face. Thin strokes are what the
+            threshold eats first — check this on iOS before trusting the big
+            rows.
+          </p>
+        </div>
+        <div class="lab__stage lab-vb lab__stage--small">
+          <p class="lab__outer">
+            <span class="lab__inner">Selected Work — Archive (12)</span>
+          </p>
+        </div>
+      </section>
+
+      <section class="lab__row">
+        <div class="lab__meta">
+          <h2 class="lab__name">B on the wordmark</h2>
+          <p class="lab__note">
+            A masked shape, not type — the chain has to sit above the mask. This
+            row decides whether heroIntro's <code>(width &gt;= 64rem)</code> gate
+            and its 4px blur floor can drop.
+          </p>
+        </div>
+        <div class="lab__stage lab__stage--mark">
+          <span class="lab__mark"></span>
+        </div>
+      </section>
+    </main>
+
+    <style is:global>
+      /* The site declares these in BaseHead.astro, which this page deliberately
+         does not use. Without them every row falls back to a thin system face
+         and the threshold reads as spidery outlines rather than fused blobs —
+         which would make the whole comparison meaningless. */
+      @font-face {
+        font-family: "Hitmarker Condensed";
+        src: url("/fonts/HitmarkerCondensed-Black.woff2") format("woff2");
+        font-weight: 100 900;
+        font-style: normal;
+        font-display: block;
+      }
+
+      @font-face {
+        font-family: "Duforn Mono";
+        src:
+          url("/fonts/DufornMono-Regular.woff2") format("woff2"),
+          url("/fonts/DufornMono-Regular.woff") format("woff");
+        font-weight: 400;
+        font-style: normal;
+        font-display: block;
+      }
+
+      .lab {
+        margin: 0;
+        padding: 2rem 1.25rem 6rem;
+        background: var(--surface, #0c0c0c);
+        color: var(--ink, #f2f2f2);
+        font-family: var(--body-font-family, system-ui, sans-serif);
+      }
+
+      .lab__defs {
+        position: absolute;
+        left: -9999px;
+        width: 1px;
+        height: 1px;
+        overflow: hidden;
+        pointer-events: none;
+      }
+
+      .lab__head {
+        position: sticky;
+        top: 0;
+        z-index: 2;
+        margin: 0 0 2rem;
+        padding: 1rem 0;
+        background: var(--surface, #0c0c0c);
+      }
+
+      .lab__title {
+        margin: 0 0 0.35rem;
+        font-size: 1.1rem;
+        letter-spacing: 0.02em;
+        text-transform: uppercase;
+      }
+
+      .lab__lede,
+      .lab__note,
+      .lab__ua {
+        margin: 0;
+        max-width: 60ch;
+        font-size: 0.8rem;
+        line-height: 1.45;
+        opacity: 0.65;
+      }
+
+      .lab__controls {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: 1rem;
+        margin: 0.9rem 0 0.5rem;
+      }
+
+      .lab__control {
+        display: flex;
+        align-items: center;
+        gap: 0.6rem;
+        font-size: 0.75rem;
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+      }
+
+      .lab__control input {
+        width: min(20rem, 55vw);
+      }
+
+      .lab__control output {
+        min-width: 5ch;
+        font-variant-numeric: tabular-nums;
+      }
+
+      .lab__ua {
+        margin-top: 0.4rem;
+        font-size: 0.7rem;
+        opacity: 0.4;
+        overflow-wrap: anywhere;
+      }
+
+      #lab-play {
+        border: 1px solid currentColor;
+        border-radius: 999px;
+        background: none;
+        padding: 0.4rem 0.9rem;
+        color: inherit;
+        font: inherit;
+        font-size: 0.75rem;
+        cursor: pointer;
+      }
+
+      .lab__row {
+        border-top: 1px solid color-mix(in srgb, currentColor 18%, transparent);
+        padding: 1.25rem 0 2rem;
+      }
+
+      .lab__name {
+        margin: 0 0 0.25rem;
+        font-size: 0.85rem;
+        letter-spacing: 0.02em;
+      }
+
+      /* Room for the blur halo so no row clips its own bleed and gets mistaken
+         for a filter-region bug. */
+      .lab__stage {
+        padding: 2.5rem 0;
+      }
+
+      .lab__outer {
+        margin: 0;
+      }
+
+      .lab__inner {
+        display: inline-block;
+      }
+
+      .lab__stage--small .lab__outer {
+        font-family: var(--primary-family);
+        font-size: 1.5rem;
+        font-weight: 900;
+      }
+
+      /* ── The variants. Only these five declarations differ. ────────────── */
+
+      /* `--lab-blur` is a unitless ratio multiplied into `1em`, so every row
+         blurs by the same fraction of its OWN font-size — the way the shipped
+         code resolves 0.35em per element. A shared px value would give the 112px
+         display rows a fraction of the blur the 16px row gets and the comparison
+         would be worthless. */
+
+      /* Two elements: threshold on the outer, animated blur on the inner —
+         plus the `will-change` that pinned the inner to its own compositing
+         layer, which is half of what the rework removed. */
+      .lab-v0 .lab__outer {
+        filter: url(#lab-0) blur(0.4px);
+      }
+      .lab-va .lab__outer {
+        filter: url(#lab-a) blur(0.4px);
+      }
+      .lab-v0 .lab__inner,
+      .lab-va .lab__inner {
+        will-change: filter;
+        filter: blur(calc(var(--lab-blur, 0) * 1em));
+      }
+
+      /* One element, one chain. */
+      .lab-vb .lab__inner {
+        filter: blur(calc(var(--lab-blur, 0) * 1em)) url(#lab-b);
+      }
+
+      /* No CSS filter functions — the blur lives in the filter. stdDeviation is
+         in user-space px, so JS resolves the em against this row's font-size. */
+      .lab-vc .lab__inner {
+        filter: url(#lab-c);
+      }
+
+      .lab-vd .lab__inner {
+        filter: blur(calc(var(--lab-blur, 0) * 1em));
+      }
+
+      .lab__stage--mark {
+        max-width: 28rem;
+      }
+
+      .lab__mark {
+        display: block;
+        width: 100%;
+        aspect-ratio: 446 / 70;
+        background-color: currentColor;
+        -webkit-mask-image: url("/main-assets/name-hero.svg");
+        -webkit-mask-repeat: no-repeat;
+        -webkit-mask-size: 100% 100%;
+        mask-image: url("/main-assets/name-hero.svg");
+        mask-repeat: no-repeat;
+        mask-size: 100% 100%;
+        filter: blur(var(--lab-mark-blur, 0px)) url(#lab-mark);
+      }
+    </style>
+
+    <script>
+      const range = document.getElementById("lab-range") as HTMLInputElement;
+      const out = document.getElementById("lab-out") as HTMLOutputElement;
+      const play = document.getElementById("lab-play") as HTMLButtonElement;
+      const ua = document.getElementById("lab-ua");
+      const root = document.documentElement;
+
+      if (ua) ua.textContent = navigator.userAgent;
+
+      /** Row C's blur is an attribute, not a property — the whole reason that
+       *  form needs one filter instance per animated element. */
+      const svgBlur = document.querySelector("[data-lab-blur]");
+
+      /** The wordmark is a masked shape with no font-size, so it scales its
+       *  blur off its own box exactly as heroIntro does. */
+      const mark = document.querySelector<HTMLElement>(".lab__mark");
+      const MARK_RATIO = 0.1125;
+
+      /** Row C's own font-size, for turning the em ratio into user-space px. */
+      const cInner = document.querySelector<HTMLElement>(".lab-vc .lab__inner");
+
+      function apply(em: number) {
+        // Unitless: the CSS multiplies it into 1em per row.
+        root.style.setProperty("--lab-blur", String(em));
+
+        if (svgBlur && cInner) {
+          const fs = parseFloat(getComputedStyle(cInner).fontSize) || 16;
+          svgBlur.setAttribute("stdDeviation", String(em * fs));
+        }
+
+        if (mark) {
+          const h = mark.getBoundingClientRect().height;
+          // Scaled by em/0.35 so the mark tracks the slider across its range
+          // while peaking at the ratio heroIntro actually parks at.
+          const peak = h * MARK_RATIO;
+          root.style.setProperty("--lab-mark-blur", `${(peak * em) / 0.35}px`);
+        }
+
+        out.value = `${em.toFixed(3)}em`;
+      }
+
+      range.addEventListener("input", () => apply(Number(range.value)));
+      apply(Number(range.value));
+
+      /** The shipped entrance: 1.5s of power3.out, 0.35em → 0. */
+      play.addEventListener("click", () => {
+        const start = performance.now();
+        const DURATION = 1500;
+        const FROM = 0.35;
+        const step = (now: number) => {
+          const t = Math.min(1, (now - start) / DURATION);
+          const eased = 1 - Math.pow(1 - t, 3);
+          const em = FROM * (1 - eased);
+          range.value = String(em);
+          apply(em);
+          if (t < 1) requestAnimationFrame(step);
+        };
+        requestAnimationFrame(step);
+      });
+    </script>
+  </body>
+</html>

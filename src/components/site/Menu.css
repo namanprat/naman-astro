@@ -39,12 +39,12 @@ html.menu-open {
   width: 100%;
 }
 
-/* Carries the gooey reveal. heroIntro.ts writes the whole filter here —
-   `blur(Npx) url(#blur-matrix)` — because both halves have to sit above the
-   mask: CSS applies `filter` before `mask`, so blurring the lockup itself
-   would blur a flat colour box and then clip it with a razor-sharp mask.
-   Hidden until bootHomeIntro parks the start filter (or skips it), so the
-   sharp lockup never flashes before the melt. */
+/* Carries the gooey reveal. heroIntro.ts adds `.is-gooey-armed` here and tweens
+   `--gooey-blur`; the filter chain itself lives on that class in site.css. Both
+   halves have to sit above the mask: CSS applies `filter` before `mask`, so
+   blurring the lockup itself would blur a flat colour box and then clip it with
+   a razor-sharp mask. Hidden until bootHomeIntro parks the start blur (or skips
+   it), so the sharp lockup never flashes before the melt. */
 .name-hero__gooey {
   grid-column: 1 / -1;
   min-width: 0;
@@ -98,10 +98,7 @@ html.menu-open {
   The margin floor keeps it sane on viewports too short to centre.
 */
 :root {
-  --hero-chrome-pad: max(
-    calc(var(--site--safe-area-top) + var(--site--margin)),
-    calc((100svh - var(--hero-chrome-content, 0px)) / 2)
-  );
+  --hero-chrome-pad: max(calc(var(--site--safe-area-top) + var(--site--margin)), calc((100svh - var(--hero-chrome-content, 0px)) / 2));
 }
 
 .name-hero {

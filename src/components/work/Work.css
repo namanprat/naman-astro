@@ -93,10 +93,9 @@ html.page-work-project main {
   text-align: center;
   color: var(--ink);
   transition: opacity 0.35s ease;
-  /* Threshold stays on permanently here, unlike the one-shot heading entrance —
-     the label morphs repeatedly, and at blur 0 the threshold is a near no-op.
-     `text-style-display` is heavy enough to survive it. */
-  filter: url(#blur-matrix);
+  /* No filter here: the `.gooey-reveal` class in the markup puts the chain on
+     the inner instead. `text-style-display` is heavy enough to survive the
+     threshold sitting on permanently. */
 }
 
 .work-page .gallery-label__count {
@@ -317,21 +316,10 @@ html.work-returning .work-view-switcher {
   --_span: min(var(--slide-span, 3), calc(var(--site-column-count) - 1));
   --_max-col: calc(var(--site-column-count) - var(--_span));
   --_ref-max-col: calc(var(--site-column-count-max) - var(--slide-span, 3));
-  --_col: clamp(
-    0,
-    round(nearest, var(--slide-col, 0) * var(--_max-col) / var(--_ref-max-col), 1),
-    var(--_max-col)
-  );
-  --_span-width: calc(
-    var(--_span) * var(--site--column-width-plus-gutter) - var(--site-gutter)
-  );
+  --_col: clamp(0, round(nearest, var(--slide-col, 0) * var(--_max-col) / var(--_ref-max-col), 1), var(--_max-col));
+  --_span-width: calc(var(--_span) * var(--site--column-width-plus-gutter) - var(--site-gutter));
   flex-shrink: 0;
-  transform: translateX(
-    calc(
-      var(--_col) * var(--site--column-width-plus-gutter) -
-        (var(--site--grid-width) - var(--_span-width)) / 2
-    )
-  );
+  transform: translateX(calc(var(--_col) * var(--site--column-width-plus-gutter) - (var(--site--grid-width) - var(--_span-width)) / 2));
   cursor: pointer;
   outline: none;
   padding: 0;
@@ -419,8 +407,7 @@ html.work-returning .work-view-switcher {
   min-height: 100dvh;
   box-sizing: border-box;
   overflow: visible;
-  padding-block: calc(var(--hero-chrome-height, 4rem) + var(--site--gutter))
-    var(--site--margin);
+  padding-block: calc(var(--hero-chrome-height, 4rem) + var(--site--gutter)) var(--site--margin);
 }
 
 /* Same box as the absolutely centered title, so services and body share its

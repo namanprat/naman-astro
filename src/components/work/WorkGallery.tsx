@@ -472,9 +472,16 @@ export default function WorkGallery() {
       className={`work-page${ready ? "" : " is-loading"}`}
       data-work-view={view}
     >
-      {/* Outer carries the alpha threshold, inner takes the animated blur —
-          same two-layer split the heading entrance uses. */}
-      <p className="gallery-label text-style-display" aria-live="polite">
+      {/* Permanently armed, unlike the one-shot heading entrance: the label
+          morphs repeatedly and at blur 0 the threshold is a near no-op, so
+          `.gooey-reveal` is static here rather than being toggled by
+          park/settle. The inner carries the filter chain, same as everywhere
+          else — keeping it off the `<p>` also keeps the filter away from a
+          `position: fixed` + `transform` box, which WebKit handles badly. */}
+      <p
+        className="gallery-label gooey-reveal text-style-display"
+        aria-live="polite"
+      >
         <span ref={labelInnerRef} className="gooey-reveal__inner">
           {shownTitle ? (
             shownTitle

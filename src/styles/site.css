@@ -1,6 +1,24 @@
 /* Site layout, chrome helpers, and page compositions.
    Tokens stay unlayered so they always apply; rules sit on `components`. */
 
+/* The gooey's animated blur radius. GSAP tweens this rather than `filter`
+   itself, because the filter list has to carry `url(#blur-matrix)` alongside the
+   blur and GSAP's filter parser can't interpolate a string containing a `url()`.
+
+   Registered, not merely used, for two reasons. `inherits: false` stops a parked
+   blur leaking into descendants — `.gallery-label__count` already sits inside a
+   `.gooey-reveal__inner`. And a registered property can never substitute
+   invalidly: an invalid `var()` would make the whole `filter` declaration
+   compute to `none`, silently dropping the threshold, which is the exact failure
+   this rework exists to fix. Unsupported engines fall back to an ordinary
+   inheriting custom property and the `blur(var(--gooey-blur, 0px))` still
+   works. */
+@property --gooey-blur {
+  syntax: "<length>";
+  inherits: false;
+  initial-value: 0px;
+}
+
 :root {
   /* Column counts: 4 / 6 / 8 / 12 at 30 / 48 / 64 rem. */
   --site-column-count: 4;
@@ -245,17 +263,35 @@
     visibility: hidden;
   }
 
-  /* Outer layer of the gooey: the alpha threshold that turns a soft blur into a
-     melt. The 0.4px is codegrid's anti-alias softener — the threshold's hard cut
-     aliases badly on curves without it. Removed once the entrance settles. */
-  .gooey-reveal {
-    filter: url(#blur-matrix) blur(0.4px);
+  /* The gooey, as one filter list on one element: blur first, then the alpha
+     threshold that turns it into a melt.
+
+     It used to be split across two — the heading carried the threshold while its
+     inner lines carried the animated blur. That reads fine in Blink but breaks
+     in WebKit, which never GPU-accelerates a reference (`url()`) filter and so
+     was handing a composited, premultiplied texture from the inner straight into
+     a software SVG filter on the parent. The threshold got lost in that handoff
+     and Safari showed a plain blur. One element, one chain, one rasteriser is
+     the form `heroIntro` has always used on the wordmark, and it is why the
+     0.4px softener moved inside `#blur-matrix`: it keeps this list at exactly
+     two functions.
+
+     `.gooey-reveal` is now a pure marker class — park/arm/settle toggle it, it
+     paints nothing itself. */
+  .gooey-reveal .gooey-reveal__inner,
+  .is-gooey-armed {
+    filter: blur(var(--gooey-blur, 0px)) url(#blur-matrix);
   }
 
   /* Opt-out via `data-reveal="soft"`, for faces too thin to survive the
-     threshold: same blur-to-sharp entrance, no fusing. */
-  .gooey-reveal--soft {
-    filter: none;
+     threshold, and the automatic fallback when `#blur-matrix` is missing: same
+     blur-to-sharp entrance, no fusing. `html[data-gooey="soft"]` is the same
+     thing site-wide from one attribute — set it on the root to compare against
+     the threshold while eyeballing a browser. */
+  .gooey-reveal--soft .gooey-reveal__inner,
+  html[data-gooey="soft"] .gooey-reveal .gooey-reveal__inner,
+  html[data-gooey="soft"] .is-gooey-armed {
+    filter: blur(var(--gooey-blur, 0px));
   }
 
   .gooey-reveal__line {
@@ -270,9 +306,13 @@
     text-indent: 0;
   }
 
+  /* No `will-change: filter` here: the chain contains a `url()`, which WebKit
+     rasterises on the CPU regardless, so promoting a compositing layer buys
+     nothing and is half of what broke the threshold in the first place. Every
+     consumer parks with a `gsap.set` a frame before its tween, so there is no
+     first-frame hitch to protect against. */
   .gooey-reveal__inner {
     display: inline-block;
-    will-change: filter;
     /* Also a first-line box, nested inside one that already took the indent. */
     text-indent: 0;
   }
