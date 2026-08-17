@@ -105,7 +105,7 @@ html.theme-light .about-panel__surface {
   inset: 0;
   width: 100%;
   height: 100dvh;
-  /* Orange overlay is the field — no floating card gutter. Inline padding is
+  /* Overlay is the field — no floating card gutter. Inline padding is
      the gutter, not the margin, so the surface sits where it does in the card
      modes and `--about--inset` resolves to the same number in all three. The
      band inside is still `--site--grid-width`, so content lands on the same
@@ -115,13 +115,14 @@ html.theme-light .about-panel__surface {
   padding-inline: var(--site--gutter);
   padding-bottom: calc(var(--site--margin) + var(--site--safe-area-bottom));
   overflow: hidden;
-  /* Overlay links are black on accent in both themes. */
-  --panel-ink: #000;
-  --ink: #000;
+  /* Overlay ink: black on accent (dark), white on frost (light). */
+  --panel-ink: var(--menu-ink, var(--black));
+  --ink: var(--menu-ink, var(--black));
 }
 
 html.theme-light .about-panel--in-menu {
-  --panel-ink: #000;
+  --panel-ink: var(--menu-ink, var(--white));
+  --ink: var(--menu-ink, var(--white));
 }
 
 .about-panel--in-menu .about-panel__backdrop {

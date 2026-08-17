@@ -35,7 +35,7 @@ html.page-archive .nav-container.is-menu-open .nav_grid a,
 html.page-archive .nav-container.is-menu-open .nav_grid .nav-menu-toggle,
 html.page-archive .nav-container.is-menu-open .nav_grid .nav-theme-toggle,
 html.page-archive .nav-container.is-menu-open .nav_grid h5 {
-  color: #000;
+  color: var(--menu-ink);
 }
 
 .archive-stage {

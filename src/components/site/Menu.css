@@ -1,5 +1,11 @@
 html.menu-open {
   overflow: hidden;
+  /* Dark: black on accent. Light: white on frost. Same pairing as footer / About. */
+  --menu-ink: var(--black);
+}
+
+html.theme-light.menu-open {
+  --menu-ink: var(--white);
 }
 
 .menu {
@@ -15,7 +21,7 @@ html.menu-open {
 .menu a,
 .menu p {
   position: relative;
-  color: #000;
+  color: var(--menu-ink);
   display: block;
   text-decoration: none;
   will-change: transform;
@@ -118,9 +124,8 @@ html.menu-open {
   mix-blend-mode: difference;
 }
 
-/* Over the menu the blend has to go: the overlay turns this copy #000, and
-   `difference` leaves black identical to its backdrop — the Close pill and the
-   wordmark would both render invisible. */
+/* Over the menu the blend has to go: overlay ink is a flat `--menu-ink`, and
+   `difference` would cancel it against the panel (black-on-accent, white-on-frost). */
 html.menu-open .name-hero,
 html.menu-open .nav-container {
   mix-blend-mode: normal;
@@ -172,7 +177,7 @@ html.menu-open .nav-container {
 .nav-container.is-menu-open .nav_grid .nav-menu-toggle,
 .nav-container.is-menu-open .nav_grid .nav-theme-toggle,
 .nav-container.is-menu-open .nav_grid h5 {
-  color: #000;
+  color: var(--menu-ink);
 }
 
 .nav-logo a {
@@ -497,7 +502,7 @@ html.menu-open .nav-container {
     padding-block: var(--lockup-gap);
   }
 
-  /* Menu open: pin the wordmark to the top, above the overlay, in black —
+  /* Menu open: pin the wordmark to the top, above the overlay —
      the logo stays put while the panel covers everything else. */
   html.menu-open .name-hero {
     position: fixed;
@@ -508,8 +513,8 @@ html.menu-open .nav-container {
     width: 100%;
     padding-top: var(--lockup-top);
     /* The lockup paints `background-color: var(--ink)` through its mask, so
-       the mark follows the overlay's ink rather than the page theme. */
-    --ink: #000;
+       the mark follows the overlay's themed ink. */
+    --ink: var(--menu-ink);
     pointer-events: none;
   }
 
@@ -611,7 +616,7 @@ img.logo-img {
   width: 100%;
   height: 100dvh;
   overflow: hidden;
-  background-color: var(--accent);
+  background-color: var(--surface-accent);
   transform: translateY(100%);
   will-change: transform;
   pointer-events: none;
@@ -622,10 +627,15 @@ img.logo-img {
   justify-content: center;
 }
 
+html.theme-light .menu-overlay {
+  backdrop-filter: blur(var(--surface-frost-blur));
+  -webkit-backdrop-filter: blur(var(--surface-frost-blur));
+}
+
 .menu-overlay a,
 .menu-overlay p,
 .menu-overlay .nav-theme-toggle {
-  color: #000;
+  color: var(--menu-ink);
 }
 
 .menu-overlay-items {
@@ -708,7 +718,7 @@ img.logo-img {
 
 .menu-footer .nav-theme-toggle {
   height: 1.25em;
-  color: #000;
+  color: var(--menu-ink);
 }
 
 .menu-footer .nav-theme-toggle__svg {
