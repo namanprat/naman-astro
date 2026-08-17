@@ -939,24 +939,6 @@ export default function Menu({ initialPathname = "/" }: MenuProps) {
 
     if (aboutOpen) closeAboutPanel();
 
-    /* Measured here, synchronously, before `menu-open` lands and pins these two
-       to `fixed`. Their height leaves the flow the moment it does, which shifts
-       the whole page up — the snap before the overlay animates. `.hero-chrome`
-       reserves this back (Menu.css). Not reusing `--hero-chrome-height`: it is
-       driven by a ResizeObserver for a different purpose and lags a generation
-       behind a webfont swap, which left the reserve tens of pixels short. */
-    const chrome = heroChromeRef.current;
-    if (chrome) {
-      let reserve = 0;
-      for (const child of chrome.children) {
-        reserve += (child as HTMLElement).offsetHeight;
-      }
-      document.documentElement.style.setProperty(
-        "--menu-chrome-reserve",
-        `${reserve}px`,
-      );
-    }
-
     phaseRef.current = "opening";
     setIsOpen(true);
     navContainerRef.current?.classList.add("is-menu-open");
@@ -964,9 +946,9 @@ export default function Menu({ initialPathname = "/" }: MenuProps) {
     const overlay = menuOverlayRef.current;
     const nav = navContainerRef.current;
     parkOverlayCopy();
-    /* No dock translate: `html.menu-open .nav-container` pins the bar with
-       `position: fixed` below the pinned wordmark (Menu.css, <64rem). Nudging
-       it by its own offset as well drove it off the top by the hero's height. */
+    /* No dock translate: the lockup keeps its closed-state position (sticky on
+       home, fixed on inner pages). Nudging it by its own offset drove it off
+       the top by the hero's height. */
     if (nav) gsap.set(nav, { clearProps: "transform" });
 
     if (prefersReducedMotion()) {

@@ -203,16 +203,14 @@ export default function TeamCylinderCarousel() {
     camera.lookAt(0, 0, 0);
 
     const applyStrip = () => {
-      const next = getResponsiveDimensions(
-        section.clientWidth || window.innerWidth,
-        gapRatio,
-        STRIP.radius,
-      );
+      const width = section.clientWidth || window.innerWidth;
+      const next = getResponsiveDimensions(width, gapRatio, STRIP.radius);
       const sx = next.radius / dims.radius;
       const sy = next.height / dims.height;
+      const scale = width < 768 ? STRIP.scale - 0.2 : STRIP.scale;
       cylinder.position.set(STRIP.posX, STRIP.posY, STRIP.posZ);
       cylinder.rotation.set(STRIP.rotX, STRIP.rotY + scrollRotY, STRIP.rotZ);
-      cylinder.scale.set(sx * STRIP.scale, sy * STRIP.scale, sx * STRIP.scale);
+      cylinder.scale.set(sx * scale, sy * scale, sx * scale);
     };
 
     const applyAtlas = (gapPct: number) => {

@@ -497,43 +497,18 @@ html.menu-open .nav-container {
     padding-block: var(--lockup-gap);
   }
 
-  /* Menu open: pin the wordmark to the top, above the overlay, in black —
-     the logo stays put while the panel covers everything else. */
+  /* Menu open: keep the lockup where it already sits (sticky on home, fixed
+     on inner pages). Re-homing it to `position: fixed; top: 0` pulled its
+     height out of the flow and jumped every page; a spacer on `.hero-chrome`
+     then *inserted* height on routes where the lockup was already out of flow.
+     Stack it over the overlay and switch the mark to overlay ink instead. */
   html.menu-open .name-hero {
-    position: fixed;
-    top: 0;
-    left: 0;
     /* Over .menu (--z--menu) and the nav that lifts to --z--menu + 1. */
     z-index: calc(var(--z--menu) + 2);
-    width: 100%;
-    padding-top: var(--lockup-top);
     /* The lockup paints `background-color: var(--ink)` through its mask, so
        the mark follows the overlay's ink rather than the page theme. */
     --ink: #000;
     pointer-events: none;
-  }
-
-  /* Drop the Close pill below the pinned mark instead of under it. Fixed, not
-     sticky: pinning .name-hero pulls its height out of the flow, and a sticky
-     nav then loses its containing block and scrolls off the top. */
-  html.menu-open .nav-container {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    padding-top: calc(var(--lockup-top) + var(--mark-h));
-  }
-
-  /* Pinning both of the above to `fixed` pulls their height out of the document,
-     so the page shifts up by exactly that much the instant the menu opens — the
-     snap you see before the overlay animates in. `.hero-chrome` is
-     `display: contents`, so it normally holds no box of its own; give it one for
-     the duration and the flow keeps its height. `--menu-chrome-reserve` is
-     measured in `openMenu` immediately before the class lands, so it is exactly
-     the height that leaves. */
-  html.menu-open .hero-chrome {
-    display: block;
-    height: var(--menu-chrome-reserve, 0px);
   }
 
   /* Pages without the hero lockup: pill clears the notch on its own. */
@@ -560,18 +535,17 @@ html.menu-open .nav-container {
   }
 
   /* Inner pages: same stuck lockup as home (wordmark + pill), overlaying the
-     stage so overflow-hidden routes don't get pushed down. Drop out while the
-     menu is open so the pin rules above keep the mark over the overlay. */
-  html:not(:has(.hero)):not(.menu-open) .name-hero {
+     stage so overflow-hidden routes don't get pushed down. Stays fixed while
+     the menu is open — stacking/ink on `html.menu-open .name-hero` is enough. */
+  html:not(:has(.hero)) .name-hero {
     position: fixed;
     top: 0;
     left: 0;
     width: 100%;
     padding-top: var(--lockup-top);
-    z-index: calc(var(--z--nav) + 1);
   }
 
-  html:not(:has(.hero)):not(.menu-open) .nav-container {
+  html:not(:has(.hero)) .nav-container {
     position: fixed;
     top: 0;
     left: 0;
