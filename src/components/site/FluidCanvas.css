@@ -24,7 +24,8 @@
 }
 
 /* Home first paint: hero is in view, so the sim starts at full strength. */
-html:has(.hero) .fluid-wrap canvas {
+html:has(.hero) .fluid-wrap canvas,
+html.is-preloading .fluid-wrap canvas {
   opacity: 1;
 }
 
