@@ -9,6 +9,17 @@ const clamp = gsap.utils.clamp;
 
 const SPEEDS = [1.3, 0.8, 1.15, 0.7, 1.25, 0.85];
 
+/** Shared speed on the phone grid — every cover uses this, applied to the
+    image inside the crop rather than the slide, so the centred stack stays even. */
+const MOBILE_SPEED = 1.15;
+
+/** Matches the CSS `scale(1.2)` crop on `.gallery__img`. */
+const IMAGE_SCALE = 1.2;
+
+/** Extra crop on each side of a scale(1.2) image, as a fraction of wrapper height.
+    Displacement is capped here so a pan never shows empty edges. */
+const IMAGE_PARALLAX_ROOM = (IMAGE_SCALE - 1) / 2;
+
 /** Strongest deviation from 1× in SPEEDS — normalises the ramp so the fastest
     slide reaches exactly ±cap at the viewport edge and the rest scale under it. */
 const MAX_FACTOR = Math.max(...SPEEDS.map((s) => Math.abs(s - 1)));
@@ -18,8 +29,16 @@ const MAX_FACTOR = Math.max(...SPEEDS.map((s) => Math.abs(s - 1)));
     exactly close the gap and touch. */
 const PARALLAX_CAP_RATIO = 0.45;
 
+/** Same cutoff as the wheel-label / centred-stack rules in Work.css. */
+export const WORK_GRID_MOBILE_MQ = "(width < 48rem)";
+
+export function isWorkGridMobile() {
+  return window.matchMedia(WORK_GRID_MOBILE_MQ).matches;
+}
+
 type ParallaxItem = {
   el: HTMLElement;
+  img: HTMLElement | null;
   factor: number;
   offset: number;
   visible: boolean;
@@ -29,12 +48,15 @@ type SliderOptions = {
   root?: ParentNode;
   enabled?: () => boolean;
   onToggle?: (changes: RevealChange[], immediate?: boolean) => void;
+  /** Fires when the slide nearest the viewport-centred title changes. */
+  onCenterChange?: (index: number) => void;
 };
 
 /** Infinite slider driven by wheel/touch scrolling */
 export default class Slider {
   enabled: () => boolean;
   onToggle?: (changes: RevealChange[], immediate?: boolean) => void;
+  onCenterChange?: (index: number) => void;
   root: ParentNode;
   loop!: gsap.core.Timeline;
   wrap!: (value: number) => number;
@@ -44,23 +66,32 @@ export default class Slider {
   observer!: Observer;
   /** Ceiling on a slide's parallax displacement — see applyParallax. */
   private parallaxCap = 0;
+  /** Phone grid: uniform image parallax. Desktop: per-slide y. */
+  private mobile = false;
+  private centerIndex = -1;
   private resizeId?: ReturnType<typeof setTimeout>;
   private resizeSuspended = false;
   private onResize: () => void;
+  private mobileMq: MediaQueryList;
+  private onMobileMq: () => void;
 
   constructor({
     root = document,
     enabled = () => true,
     onToggle,
+    onCenterChange,
   }: SliderOptions = {}) {
     this.root = root;
     this.enabled = enabled;
     this.onToggle = onToggle;
+    this.onCenterChange = onCenterChange;
+    this.mobileMq = window.matchMedia(WORK_GRID_MOBILE_MQ);
     this.onResize = () => {
       if (this.resizeSuspended) return;
       clearTimeout(this.resizeId);
       this.resizeId = setTimeout(() => this.rebuild(), 200);
     };
+    this.onMobileMq = () => this.onResize();
 
     this.createLoop();
     this.createParallax();
@@ -87,23 +118,32 @@ export default class Slider {
   }
 
   createParallax() {
-    const speeds = SPEEDS;
-    const gallery = this.root.querySelector(".gallery") as HTMLElement;
-    const gap = parseFloat(getComputedStyle(gallery).rowGap) || 0;
-
-    /* Two neighbours can be pushed in opposite directions, so the worst
-       relative shift is 2× this cap. Keeping that under the flow gap is what
-       makes one slide overtaking another arithmetically impossible. */
-    this.parallaxCap = gap * PARALLAX_CAP_RATIO;
-
-    this.parallax = this.slides().map((slide, i) => ({
+    this.parallax = this.slides().map((slide) => ({
       el: slide,
-      factor: speeds[i % speeds.length] - 1,
+      img: slide.querySelector<HTMLElement>(".gallery__img"),
+      factor: 0,
       offset: 0,
       visible: false,
     }));
 
+    this.configureParallax();
     this.applyParallax();
+  }
+
+  /** Re-derive factors and cap for the current viewport. Desktop keeps the
+      per-slide speed list; phones share one factor and pan the image instead. */
+  private configureParallax() {
+    this.mobile = isWorkGridMobile();
+
+    const gallery = this.root.querySelector(".gallery") as HTMLElement;
+    const gap = parseFloat(getComputedStyle(gallery).rowGap) || 0;
+    this.parallaxCap = gap * PARALLAX_CAP_RATIO;
+
+    const factor = this.mobile ? MOBILE_SPEED - 1 : 0;
+    this.parallax.forEach((item, i) => {
+      item.factor = this.mobile ? factor : SPEEDS[i % SPEEDS.length] - 1;
+      item.offset = 0;
+    });
   }
 
   applyParallax(immediate = false) {
@@ -112,7 +152,10 @@ export default class Slider {
 
     this.parallax.forEach((item) => {
       const rect = item.el.getBoundingClientRect();
-      const loopTop = rect.top - item.offset;
+      /* On desktop the slide itself carries `y`, so subtract it to recover the
+         loop position. On mobile that offset lives on the image; the slide rect
+         is already the loop box. */
+      const loopTop = this.mobile ? rect.top : rect.top - item.offset;
 
       /* Offset ramps across the viewport and saturates outside it.
 
@@ -130,10 +173,22 @@ export default class Slider {
          which is what bounds divergence and kills both failures. */
       const fromMid = loopTop + rect.height / 2 - viewportMid;
       const ramp = clamp(-1, 1, fromMid / viewportMid);
-      item.offset = this.parallaxCap * (item.factor / MAX_FACTOR) * ramp;
-      gsap.set(item.el, { y: item.offset });
 
-      const top = loopTop + item.offset;
+      if (this.mobile) {
+        const wrapperH =
+          item.img?.parentElement?.getBoundingClientRect().height ?? 0;
+        const cap = wrapperH * IMAGE_PARALLAX_ROOM;
+        item.offset = cap * ramp;
+        gsap.set(item.el, { y: 0 });
+        if (item.img) {
+          gsap.set(item.img, { scale: IMAGE_SCALE, y: item.offset });
+        }
+      } else {
+        item.offset = this.parallaxCap * (item.factor / MAX_FACTOR) * ramp;
+        gsap.set(item.el, { y: item.offset });
+      }
+
+      const top = this.mobile ? loopTop : loopTop + item.offset;
       const visible = top < window.innerHeight && top + rect.height > 0;
 
       if (visible !== item.visible) {
@@ -143,6 +198,12 @@ export default class Slider {
     });
 
     if (changes.length) this.onToggle?.(changes, immediate);
+
+    const next = this.centeredIndex;
+    if (next !== this.centerIndex) {
+      this.centerIndex = next;
+      this.onCenterChange?.(next);
+    }
   }
 
   createScrub() {
@@ -183,6 +244,7 @@ export default class Slider {
 
   bindResize() {
     window.addEventListener("resize", this.onResize);
+    this.mobileMq.addEventListener("change", this.onMobileMq);
   }
 
   scroll({ deltaX, deltaY }: { deltaX: number; deltaY: number }) {
@@ -254,6 +316,9 @@ export default class Slider {
     this.parallax.forEach((item) => {
       item.offset = 0;
       gsap.set(item.el, { y: 0 });
+      if (this.mobile && item.img) {
+        gsap.set(item.img, { y: 0, scale: IMAGE_SCALE });
+      }
     });
   }
 
@@ -278,16 +343,14 @@ export default class Slider {
     this.freeze();
     this.loop.kill();
     gsap.set(this.slides(), { clearProps: "transform" });
+    this.parallax.forEach((item) => {
+      if (item.img) gsap.set(item.img, { clearProps: "transform" });
+    });
 
     this.createLoop();
     this.loop.progress(progress, true);
 
-    // Gap is 12vh, so the cap has to be re-derived against the new height.
-    const gallery = this.root.querySelector(".gallery") as HTMLElement;
-    const gap = parseFloat(getComputedStyle(gallery).rowGap) || 0;
-    this.parallaxCap = gap * PARALLAX_CAP_RATIO;
-
-    this.parallax.forEach((item) => (item.offset = 0));
+    this.configureParallax();
     this.applyParallax(true);
 
     this.playhead.time = this.loop.time();
@@ -297,9 +360,13 @@ export default class Slider {
 
   destroy() {
     window.removeEventListener("resize", this.onResize);
+    this.mobileMq.removeEventListener("change", this.onMobileMq);
     clearTimeout(this.resizeId);
     this.observer?.kill();
     this.scrub?.kill();
     this.loop?.kill();
+    this.parallax?.forEach((item) => {
+      if (item.img) gsap.set(item.img, { clearProps: "transform" });
+    });
   }
 }

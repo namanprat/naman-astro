@@ -311,8 +311,8 @@ html.work-returning .work-view-switcher {
    `col` is authored against the 12-column grid, so narrower breakpoints scale
    it into the starts they actually have (rounded back to a whole column) and
    span shrinks to fit. Straight clamping would pile every slide onto the last
-   legal column at 4 columns and flatten the left/right rhythm; this keeps it.
-   That is also why there are no per-breakpoint overrides below. */
+   legal column at 4 columns and flatten the left/right rhythm; this keeps it
+   on desktop. Phones drop the translate so the stack sits on centre. */
 .work-page .gallery__slide {
   --_span: min(var(--slide-span, 3), calc(var(--site-column-count) - 1));
   --_max-col: calc(var(--site-column-count) - var(--_span));
@@ -346,6 +346,18 @@ html.work-returning .work-view-switcher {
   height: 100%;
   object-fit: cover;
   transform: scale(1.2);
+}
+
+/* Phone grid: no column stagger — flex already centres the stack. Cover crop
+   is centred too; image parallax (same factor on every tile) lives in Slider. */
+@media (width < 48rem) {
+  .work-page[data-work-view="grid"] .gallery__slide {
+    transform: none;
+  }
+
+  .work-page[data-work-view="grid"] .gallery__img-wrapper img {
+    object-position: center;
+  }
 }
 
 /* Flip destination / project overlay */
