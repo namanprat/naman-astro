@@ -15,16 +15,12 @@
   background-color: var(--dark);
 }
 
-/* client:only mounts an <astro-island> around the canvas. Size it so the
-   canvas can fill this wrap; `display: contents` would drop the island out of
-   box generation and break percentage heights on the canvas. */
-.fluid-wrap > * {
-  display: block;
-  width: 100%;
-  height: 100%;
-}
-
 .fluid-wrap canvas {
+  /* Fill the wrap, not the island. client:only injects a sibling <script>
+     inside this wrap; sizing every child to 100% stacked that script as a
+     viewport-tall box and clipped the canvas out of view. */
+  position: absolute;
+  inset: 0;
   display: block;
   width: 100%;
   height: 100%;
