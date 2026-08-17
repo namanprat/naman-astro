@@ -457,7 +457,8 @@ html.theme-light .about-panel--in-menu .about-panel__surface {
 }
 
 /*
-  Stacked card: h3, then canvas, then Services | Clients.
+  Stacked card: h3, then canvas, then Services | Clients (side by side).
+  Below 48rem the lists stack with Clients above Services.
   inMenu always; standalone padded About below 48rem.
 */
 .about-panel--in-menu .about-panel__grid {
@@ -559,7 +560,7 @@ html.theme-light .about-panel--in-menu .about-panel__surface {
   }
 }
 
-/* Stack on 6/4-col (standalone padded About) */
+/* Stack on 6/4-col (standalone padded About + in-menu on small screens) */
 @media (width < 48rem) {
   .about-panel:not(.about-panel--in-menu) .about-panel__surface {
     max-height: calc(90vh - var(--site--gutter) * 2);
@@ -588,15 +589,18 @@ html.theme-light .about-panel--in-menu .about-panel__surface {
     max-width: none;
   }
 
+  .about-panel--in-menu .about-panel__lists,
   .about-panel:not(.about-panel--in-menu) .about-panel__lists {
     display: grid;
     grid-column: 1 / -1;
     grid-row: 3;
-    grid-template-columns: minmax(0, 1fr) minmax(0, 1.4fr);
-    gap: var(--space-8) var(--site-gutter);
+    grid-template-columns: minmax(0, 1fr);
+    gap: var(--space-8) 0;
     align-items: start;
   }
 
+  .about-panel--in-menu .about-panel__col--services,
+  .about-panel--in-menu .about-panel__col--clients,
   .about-panel:not(.about-panel--in-menu) .about-panel__col--services,
   .about-panel:not(.about-panel--in-menu) .about-panel__col--clients {
     grid-column: auto;
@@ -604,12 +608,16 @@ html.theme-light .about-panel--in-menu .about-panel__surface {
     align-self: start;
   }
 
+  /* Clients above Services on small screens (DOM order is Services, Clients). */
+  .about-panel--in-menu .about-panel__col--clients,
   .about-panel:not(.about-panel--in-menu) .about-panel__col--clients {
+    order: -1;
     display: flex;
     flex-direction: column;
     gap: var(--space-3);
   }
 
+  .about-panel--in-menu .about-panel__clients-cols,
   .about-panel:not(.about-panel--in-menu) .about-panel__clients-cols {
     display: grid;
     grid-template-columns: repeat(2, max-content);
@@ -618,12 +626,14 @@ html.theme-light .about-panel--in-menu .about-panel__surface {
     gap: var(--space-3) var(--site-gutter);
   }
 
+  .about-panel--in-menu .about-panel__clients-cols > *:nth-child(2),
   .about-panel:not(.about-panel--in-menu)
     .about-panel__clients-cols
     > *:nth-child(2) {
     grid-column: auto;
   }
 
+  .about-panel--in-menu .about-panel__col--clients .about-panel__col-label,
   .about-panel:not(.about-panel--in-menu)
     .about-panel__col--clients
     .about-panel__col-label {
