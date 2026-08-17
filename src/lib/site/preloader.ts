@@ -84,16 +84,13 @@ export function bootPreloader(): void {
     // Fonts are in by now (they're one of the segments), so SplitText measures
     // the real glyphs rather than the fallback.
     if (ctaLabel) disposeRoll = initRollingText(ctaLabel);
-    const focus = () => cta.focus({ preventScroll: true });
     if (prefersReducedMotion()) {
       gsap.set(cta, { opacity: 1 });
-      focus();
     } else {
       gsap.to(cta, {
         opacity: 1,
         duration: 0.45,
         ease: "power2.out",
-        onComplete: focus,
       });
     }
   };

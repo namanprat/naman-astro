@@ -328,7 +328,6 @@ export class FluidSimulation {
 
   private onPointerMove = (event: PointerEvent): void => {
     if (this.reduced) return;
-    if (document.documentElement.classList.contains("is-preloading")) return;
 
     const x = event.clientX * this.dpr;
     const y = event.clientY * this.dpr;

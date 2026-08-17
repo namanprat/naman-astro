@@ -61,13 +61,21 @@
     inset: 0;
     /* Just under .site-grain (1000000) so the grain overlays the card like it
        does every other surface. Transparent so the hero canvas behind it is
-       the backdrop. */
+       the backdrop. Let the fluid keep receiving pointermove through the
+       empty frame; only the card captures hits. */
     z-index: 999999;
     display: flex;
     align-items: center;
     justify-content: center;
     padding: var(--site-margin);
+    pointer-events: none;
     will-change: transform;
+  }
+
+  .preloader__clip,
+  .preloader__card,
+  .preloader__cta {
+    pointer-events: auto;
   }
 
   /* Dark mode: black on accent. Light mode: white on frost — the same
