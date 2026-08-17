@@ -110,9 +110,22 @@ function innersOf(target: GooeyTarget | GooeyTarget[]): HTMLElement[] {
   return (Array.isArray(target) ? target : [target]).flatMap((t) => t.inners);
 }
 
-function settleGooey(target: GooeyTarget): void {
-  target.el.classList.remove("gooey-reveal", "gooey-reveal--soft");
-  gsap.set(target.inners, { clearProps: "filter" });
+/** Drop the threshold class and clear blur once a reveal has landed sharp. */
+export function settleGooey(target: GooeyTarget | GooeyTarget[]): void {
+  const list = Array.isArray(target) ? target : [target];
+  for (const t of list) {
+    t.el.classList.remove("gooey-reveal", "gooey-reveal--soft");
+    gsap.set(t.inners, { clearProps: "filter" });
+  }
+}
+
+/** Put the threshold class back without parking blur — used before reversing a
+ *  settled reveal so the melt still has both filter halves. */
+export function armGooey(target: GooeyTarget | GooeyTarget[]): void {
+  const list = Array.isArray(target) ? target : [target];
+  for (const t of list) {
+    t.el.classList.add(gooeyClass(t.el));
+  }
 }
 
 /** Split once. Safe to call again — returns the cached target. */
@@ -165,7 +178,7 @@ export function addGooeyReveal(
       ease: "power3.out",
       stagger: REVEAL_STAGGER,
       onComplete: () => {
-        for (const t of list) settleGooey(t);
+        settleGooey(list);
       },
     },
     position,

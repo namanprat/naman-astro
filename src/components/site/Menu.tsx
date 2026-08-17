@@ -24,9 +24,11 @@ import { useCopyEmail } from "../../lib/site/copyEmail";
 import {
   addGooeyReveal,
   addGooeyUnreveal,
+  armGooey,
   parkGooey,
   prepareGooey,
   prepareGooeyAll,
+  settleGooey,
   type GooeyTarget,
 } from "../../lib/site/gooeyReveal";
 import AboutPanel, { type AboutPanelMode } from "./AboutPanel";
@@ -79,8 +81,6 @@ const SECTION_IDS = ["hero", "team", "contact"];
 
 const MENU_COPY = ".menu-overlay-items .revealer a";
 const MENU_FOOTER_COPY = ".menu-footer .revealer > *";
-/* Closing moves this as one block — see `unrevealAboutCopy`. */
-const ABOUT_SURFACE = ".about-panel--in-menu .about-panel__surface";
 /* The dither canvas has no lines to split, so it dissolves rather than melts —
    same duration and start as the lead's gooey, so the two arrive as one. */
 const ABOUT_MEDIA =
@@ -506,26 +506,6 @@ export default function Menu({ initialPathname = "/" }: MenuProps) {
     );
   };
 
-  const revealOverlayCopy = (tl: gsap.core.Timeline) => {
-    const heads = menuHeads();
-    tl.add(() => {
-      gsap.set(MENU_COPY, { y: "0%", autoAlpha: 1 });
-      if (heads.length) parkGooey(heads);
-      gsap.set(MENU_FOOTER_COPY, { y: "100%" });
-    });
-    addGooeyReveal(tl, heads);
-    tl.to(
-      MENU_FOOTER_COPY,
-      {
-        y: "0%",
-        duration: 1,
-        stagger: 0.1,
-        ease: "power3.out",
-      },
-      "<",
-    );
-  };
-
   /** Whatever is currently split — the close runs against the live wrappers. */
   const aboutLineTargets = (): Element[] => {
     const lines = aboutSplitRef.current?.lines ?? [];
@@ -583,27 +563,20 @@ export default function Menu({ initialPathname = "/" }: MenuProps) {
   };
 
   /**
-   * Closing is one move: the whole surface slides back up off the top, then
-   * everything the entrance parked is reset behind it.
+   * Back from About reverses the open timeline — menu copy returns the same
+   * way it left, About lines and media rewind. A hand-written exit (surface
+   * slide, second reveal) drifted from the entrance ease.
    *
-   * Nothing unreveals itself on the way out. Staggering the lines and fading
-   * the head back to blur made leaving a second choreography rather than the
-   * reverse of arriving — and re-blurring the head re-applied the threshold
-   * filter to the entire heading, which read as the whole panel going soft.
-   * Everything re-parks on the next open via `parkAboutCopy`.
+   * The lead's gooey settles on open complete (drops the threshold class); arm
+   * it again before reverse so the melt still has both filter halves.
    */
-  const unrevealAboutCopy = (tl: gsap.core.Timeline) => {
-    tl.to(ABOUT_SURFACE, {
-      yPercent: -100,
-      duration: 0.7,
-      ease: "power3.in",
-    });
-    /* Off-screen by now, so the reset is unseen. `hideChrome` clears the
-       surface transform itself once `setAboutOpen(false)` lands. */
-    tl.call(() => {
-      revertAboutCopy();
-      gsap.set(ABOUT_MEDIA, { clearProps: "opacity,visibility" });
-    });
+  const finishAboutInMenuClose = () => {
+    revertAboutCopy();
+    gsap.set(ABOUT_MEDIA, { clearProps: "opacity,visibility" });
+    const heads = menuHeads();
+    if (heads.length) settleGooey(heads);
+    overlayTlRef.current = null;
+    setAboutOpen(false);
   };
 
   const focusAboutPanel = () => {
@@ -725,20 +698,29 @@ export default function Menu({ initialPathname = "/" }: MenuProps) {
     if (prefersReducedMotion()) {
       gsap.set(ABOUT_MEDIA, { autoAlpha: 0 });
       revertAboutCopy();
-      gsap.set(MENU_COPY, { y: "0%" });
+      gsap.set(MENU_COPY, { y: "0%", autoAlpha: 1 });
       gsap.set(MENU_FOOTER_COPY, { y: "0%" });
       setAboutOpen(false);
       return;
     }
 
-    killOverlayTl();
-    const tl = gsap.timeline();
-    overlayTlRef.current = tl;
-    unrevealAboutCopy(tl);
-    tl.call(() => {
-      setAboutOpen(false);
-    });
-    revealOverlayCopy(tl);
+    const tl = overlayTlRef.current;
+    if (tl && tl.progress() > 0) {
+      const head = aboutHead();
+      if (head) armGooey(head);
+      tl.eventCallback("onComplete", null);
+      tl.eventCallback("onReverseComplete", finishAboutInMenuClose);
+      tl.reverse();
+      return;
+    }
+
+    gsap.set(ABOUT_MEDIA, { autoAlpha: 0 });
+    revertAboutCopy();
+    gsap.set(MENU_COPY, { y: "0%", autoAlpha: 1 });
+    gsap.set(MENU_FOOTER_COPY, { y: "0%" });
+    const heads = menuHeads();
+    if (heads.length) settleGooey(heads);
+    setAboutOpen(false);
   };
 
   const dismissAbout = () => {
