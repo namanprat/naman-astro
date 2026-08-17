@@ -1,5 +1,4 @@
 import { useEffect, useRef } from "react";
-import "./FluidCanvas.css";
 import { FluidSimulation } from "../../lib/site/fluid/FluidSimulation";
 
 const HERO_DIM = "is-hero-fluid-dim";
