@@ -1,10 +1,16 @@
 ---
 /**
- * Fluid backdrop. In-flow on home (pulls under the hero chrome); fixed while
+ * Fluid backdrop. The wrap is static HTML so it is a real child of `main` —
+ * `html.is-preloading main > *:not(.fluid-wrap)` can keep it visible. The
+ * React island only mounts the canvas (`client:only` has no SSR output).
+ *
+ * In-flow on home (pulls under the hero chrome); fixed while
  * `html.is-preloading` so it fills the viewport behind the transparent
- * preloader. The React island hydrates client-side only — no SSR output.
+ * preloader.
  */
 import FluidCanvas from "./FluidCanvas.tsx";
 ---
 
-<FluidCanvas client:only="react" />
+<div class="fluid-wrap" data-fluid aria-hidden="true">
+  <FluidCanvas client:only="react" />
+</div>

@@ -242,13 +242,16 @@
   /* While the preloader is up, only the backdrop overlay, the in-flow fluid,
      and the grain may paint — the overlay is transparent so the canvas reads
      through it, which means the rest of the page has to be hidden.
+     `.fluid-wrap` is static HTML (a real child of main). `:has(.fluid-wrap)`
+     covers a nested client:only island if the wrap is ever inside one — WebGL
+     will not composite a canvas whose ancestor is `visibility: hidden`.
      The wrap itself is pinned to the viewport in FluidCanvas.css (unlayered)
      so the hero-chrome pull-up isn't clipped by overflow:hidden here. */
   html.is-preloading body > *:not(.site-backdrop):not(.site-grain):not(main) {
     visibility: hidden;
   }
 
-  html.is-preloading main > *:not(.fluid-wrap) {
+  html.is-preloading main > *:not(.fluid-wrap):not(:has(.fluid-wrap)) {
     visibility: hidden;
   }
 
@@ -262,6 +265,10 @@
     height: 100%;
     margin-top: 0;
     z-index: 0;
+    visibility: visible;
+  }
+
+  html.is-preloading .fluid-wrap * {
     visibility: visible;
   }
 

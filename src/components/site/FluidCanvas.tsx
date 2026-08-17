@@ -6,7 +6,6 @@ const HERO_DIM = "is-hero-fluid-dim";
 
 export default function FluidCanvas() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
-  const wrapRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -16,7 +15,8 @@ export default function FluidCanvas() {
   }, []);
 
   useEffect(() => {
-    const wrap = wrapRef.current;
+    const canvas = canvasRef.current;
+    const wrap = canvas?.closest<HTMLElement>(".fluid-wrap");
     const root = document.documentElement;
     if (!wrap || !document.querySelector(".hero")) {
       root.classList.remove(HERO_DIM);
@@ -42,9 +42,5 @@ export default function FluidCanvas() {
     };
   }, []);
 
-  return (
-    <div ref={wrapRef} className="fluid-wrap" data-fluid aria-hidden="true">
-      <canvas ref={canvasRef} />
-    </div>
-  );
+  return <canvas ref={canvasRef} />;
 }
