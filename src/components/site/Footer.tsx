@@ -21,10 +21,13 @@ import "./Footer.css";
 
 gsap.registerPlugin(ScrollTrigger);
 
-/** Same routes the navbar carries, flattened, with Archive on the end. */
+/** Same routes the navbar carries, flattened, with Archive on the end.
+ *  Contact is omitted — the footer *is* the contact section. */
 const FOOTER_LINKS = [
   ...NAV_STACKS.flatMap(({ links }) =>
-    links.map(({ label, path }) => ({ label, path })),
+    links
+      .filter(({ id }) => id !== "contact")
+      .map(({ label, path }) => ({ label, path })),
   ),
   { label: "Archive", path: "/archive" },
 ];
@@ -57,9 +60,6 @@ export default function Footer() {
     if (id === "about" || id === "team") {
       toggleAboutPanel();
       return;
-    }
-    if (id === "contact") {
-      scrollToSection(lenis, "contact");
     }
   };
 
