@@ -52,6 +52,9 @@ html.is-preloading .fluid-wrap {
   height: 100%;
   margin-top: 0;
   z-index: 0;
+  /* Island parent is `visibility: hidden` (it is not `.fluid-wrap`); this
+     restores the sim so it reads through the transparent overlay. */
+  visibility: visible;
 }
 
 html.page-work .fluid-wrap {

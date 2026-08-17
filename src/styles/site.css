@@ -262,6 +262,7 @@
     height: 100%;
     margin-top: 0;
     z-index: 0;
+    visibility: visible;
   }
 
   /* Two independent pre-paint holds, one per entrance module. Each list mirrors
