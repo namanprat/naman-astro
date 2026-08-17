@@ -95,8 +95,13 @@ html.page-work-project main {
   transition: opacity 0.35s ease;
   /* Threshold stays on permanently here, unlike the one-shot heading entrance —
      the label morphs repeatedly, and at blur 0 the threshold is a near no-op.
-     `text-style-display` is heavy enough to survive it. */
+     `text-style-display` is heavy enough to survive it. Safari soft mode drops
+     it — WebKit blanks HTML under filter:url(#feColorMatrix). */
   filter: url(#blur-matrix);
+}
+
+html.is-gooey-soft .work-page .gallery-label {
+  filter: none;
 }
 
 .work-page .gallery-label__count {
