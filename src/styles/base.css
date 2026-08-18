@@ -382,6 +382,8 @@
   --black: var(--dark-900);
   --surface-accent: var(--brand-500);
   --surface-frost-blur: 0px;
+  --surface-frost-saturate: 1;
+  --surface-frost-contrast: 1;
   --site--margin: var(--site-margin);
   --site--gutter: var(--site-gutter);
   --max-width--main: var(--max-width-main);

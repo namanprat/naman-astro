@@ -29,8 +29,17 @@
   width: 100%;
   transform-origin: center bottom;
   background-color: var(--surface-accent);
-  backdrop-filter: blur(var(--surface-frost-blur));
-  -webkit-backdrop-filter: blur(var(--surface-frost-blur));
+  backdrop-filter: blur(var(--surface-frost-blur)) saturate(var(--surface-frost-saturate, 1))
+    contrast(var(--surface-frost-contrast, 1));
+  -webkit-backdrop-filter: blur(var(--surface-frost-blur)) saturate(var(--surface-frost-saturate, 1))
+    contrast(var(--surface-frost-contrast, 1));
+}
+
+/* Dark mode: fully opaque orange; disable blur for crisp edges. */
+html.theme-dark .footer-child {
+  background-color: var(--accent);
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
 }
 
 /* Dark mode: fully opaque orange; disable blur for crisp edges. */

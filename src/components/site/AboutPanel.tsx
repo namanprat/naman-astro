@@ -204,6 +204,8 @@ export default function AboutPanel({ open, mode, onClose }: AboutPanelProps) {
            Overflow lives on the inner scroller so the slide isn't clipped
            and frost can sample the page. Force y:0 so any previously parsed
            pixel translate can't keep the card parked above. */
+           and frost isn't on an overflow node. Force y:0 so any previously
+           parsed pixel translate can't keep the card parked above. */
         tl.fromTo(
           surface,
           { yPercent: -100, y: 0 },
@@ -301,14 +303,20 @@ export default function AboutPanel({ open, mode, onClose }: AboutPanelProps) {
         aria-hidden={!open}
         aria-label="About"
       >
-        {/* Carries the accent fill so the panel itself can stay transparent and
-            hold the floating gutter as padding.
+        {/* Fill + frost live on `__surface` so the panel can stay transparent
+            and hold the floating gutter as padding. Scroll is the inner
+            `__scroll` — overflow on the frost node makes a backdrop root.
 
             `data-lenis-prevent`: the inner scroller is the panel's overflow
             container, and Lenis preventDefaults wheel/touch on the whole
             document — so without opting out, its own overflow never moves and
             the content below the fold is unreachable. Page scroll is already
             stopped while the panel is open, so nothing here fights the page. */}
+            `data-lenis-prevent`: the inner scroller is the panel's overflow,
+            and Lenis preventDefaults wheel/touch on the whole document — so
+            without opting out, its own overflow never moves and the content
+            below the fold is unreachable. Page scroll is already stopped while
+            the panel is open, so nothing here fights the page. */}
         <div className="about-panel__surface" ref={surfaceRef}>
           <div className="about-panel__scroll" data-lenis-prevent>
             <div className="about-panel__inner container gap-0">

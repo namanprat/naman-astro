@@ -19,7 +19,7 @@ import {
   installAboutInterceptors,
 } from "../../lib/site/aboutPanel";
 import { getSiteLenis, subscribeSiteLenis } from "../../lib/site/lenisBridge";
-import { bootHomeIntro } from "../../lib/site/heroIntro";
+import { bootHomeIntro, replayHomeIntro } from "../../lib/site/heroIntro";
 import { useCopyEmail } from "../../lib/site/copyEmail";
 import {
   addGooeyReveal,
@@ -766,6 +766,7 @@ export default function Menu({ initialPathname = "/" }: MenuProps) {
         void go("/", options);
         return;
       }
+      replayHomeIntro();
       scrollToSection(lenis, "hero");
       return;
     }

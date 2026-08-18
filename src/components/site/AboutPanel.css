@@ -70,13 +70,18 @@ html.theme-light .about-panel {
   background-color: var(--surface-accent);
   backdrop-filter: blur(var(--surface-frost-blur));
   -webkit-backdrop-filter: blur(var(--surface-frost-blur));
+  backdrop-filter: blur(var(--surface-frost-blur)) saturate(var(--surface-frost-saturate, 1))
+    contrast(var(--surface-frost-contrast, 1));
+  -webkit-backdrop-filter: blur(var(--surface-frost-blur)) saturate(var(--surface-frost-saturate, 1))
+    contrast(var(--surface-frost-contrast, 1));
   width: 100%;
   max-height: calc(85vh - var(--site--gutter) * 2);
   overflow: visible;
   box-sizing: border-box;
   /* No CSS transform — GSAP parks/slides via yPercent. A stylesheet
      translateY(-100%) gets baked into GSAP as pixel `y` and stays put after
-     yPercent animates to 0, so the card never finishes opening. */
+     yPercent animates to 0, so the card never finishes opening.
+     No will-change: it used to promote an empty layer the frost then sampled. */
 }
 
 /* Dark mode: fully opaque orange; blur is not needed. */
@@ -252,6 +257,10 @@ html.theme-light .about-panel--in-menu {
   .about-panel:not(.about-panel--in-menu) .about-panel__surface {
     width: calc(var(--site--grid-width) + var(--site--gutter) * 2);
     margin-inline: auto;
+    max-height: 85vh;
+  }
+
+  .about-panel:not(.about-panel--in-menu) .about-panel__scroll {
     max-height: 85vh;
   }
 
@@ -561,7 +570,8 @@ html.theme-light .about-panel--in-menu {
 
 /* Stack on 6/4-col (standalone padded About + in-menu on small screens) */
 @media (width < 48rem) {
-  .about-panel:not(.about-panel--in-menu) .about-panel__surface {
+  .about-panel:not(.about-panel--in-menu) .about-panel__surface,
+  .about-panel:not(.about-panel--in-menu) .about-panel__scroll {
     max-height: calc(90vh - var(--site--gutter) * 2);
   }
 

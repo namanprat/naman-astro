@@ -4,6 +4,7 @@ import gsap from "gsap";
 import ScrollTrigger from "gsap/ScrollTrigger";
 import { useGSAP } from "@gsap/react";
 import { go } from "../../lib/site/navigate";
+import { replayHomeIntro } from "../../lib/site/heroIntro";
 import { hashId, scrollToSection } from "../../lib/site/scrollToSection";
 import { toggleAboutPanel } from "../../lib/site/aboutPanel";
 import {
@@ -56,6 +57,7 @@ export default function Footer() {
       return;
     }
     if (href === "/" || href === "/#hero") {
+      replayHomeIntro();
       scrollToSection(lenis, "hero");
       return;
     }
