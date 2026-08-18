@@ -1,16 +1,19 @@
 .footer {
   position: relative;
+  z-index: 2;
   width: 100%;
   /* Same identity as .about-panel: leftover after the orange is grid + 2*gutter. */
   --about--inset: calc(var(--site--margin) - var(--site--gutter));
   /* Outer float — gutter air on all four sides; child is width 100% inside. */
   padding: var(--site--gutter);
   padding-bottom: calc(var(--site--gutter) + var(--site--safe-area-bottom));
-  overflow: hidden;
+  /* Visible, not hidden: overflow other than visible makes this a backdrop
+     root, so frost on `.footer-child` would sample this padding (empty)
+     instead of the liquid behind the card. */
+  overflow: visible;
   display: flex;
   flex-direction: column;
   box-sizing: border-box;
-  /* Don't contain — backdrop-filter on .footer-child needs to sample the page. */
   background-color: transparent;
 }
 
@@ -26,11 +29,15 @@
   width: 100%;
   transform-origin: center bottom;
   background-color: var(--surface-accent);
+  backdrop-filter: blur(var(--surface-frost-blur)) saturate(var(--surface-frost-saturate, 1));
+  -webkit-backdrop-filter: blur(var(--surface-frost-blur)) saturate(var(--surface-frost-saturate, 1));
 }
 
-html.theme-light .footer-child {
-  backdrop-filter: blur(var(--surface-frost-blur));
-  -webkit-backdrop-filter: blur(var(--surface-frost-blur));
+/* Dark mode: fully opaque orange; disable blur for crisp edges. */
+html.theme-dark .footer-child {
+  background-color: var(--accent);
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
 }
 
 .footer-box {
