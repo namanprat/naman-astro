@@ -42,6 +42,13 @@ html.theme-dark .footer-child {
   -webkit-backdrop-filter: none;
 }
 
+/* Dark mode: fully opaque orange; disable blur for crisp edges. */
+html.theme-dark .footer-child {
+  background-color: var(--accent);
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+}
+
 .footer-box {
   position: relative;
   width: 100%;

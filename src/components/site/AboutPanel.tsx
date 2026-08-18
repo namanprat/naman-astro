@@ -202,6 +202,8 @@ export default function AboutPanel({ open, mode, onClose }: AboutPanelProps) {
         );
         /* yPercent on the surface (frosted card), not the padded shell.
            Overflow lives on the inner scroller so the slide isn't clipped
+           and frost can sample the page. Force y:0 so any previously parsed
+           pixel translate can't keep the card parked above. */
            and frost isn't on an overflow node. Force y:0 so any previously
            parsed pixel translate can't keep the card parked above. */
         tl.fromTo(
@@ -305,6 +307,11 @@ export default function AboutPanel({ open, mode, onClose }: AboutPanelProps) {
             and hold the floating gutter as padding. Scroll is the inner
             `__scroll` — overflow on the frost node makes a backdrop root.
 
+            `data-lenis-prevent`: the inner scroller is the panel's overflow
+            container, and Lenis preventDefaults wheel/touch on the whole
+            document — so without opting out, its own overflow never moves and
+            the content below the fold is unreachable. Page scroll is already
+            stopped while the panel is open, so nothing here fights the page. */}
             `data-lenis-prevent`: the inner scroller is the panel's overflow,
             and Lenis preventDefaults wheel/touch on the whole document — so
             without opting out, its own overflow never moves and the content

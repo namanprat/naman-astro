@@ -5,7 +5,7 @@
   margin: 0;
   padding: 0;
   border: 0;
-  background-color: color-mix(in srgb, var(--black) 50%, transparent);
+  background-color: color-mix(in srgb, var(--black) 20%, transparent);
   cursor: pointer;
   opacity: 0;
   visibility: hidden;
@@ -68,6 +68,8 @@ html.theme-light .about-panel {
 
 .about-panel__surface {
   background-color: var(--surface-accent);
+  backdrop-filter: blur(var(--surface-frost-blur));
+  -webkit-backdrop-filter: blur(var(--surface-frost-blur));
   backdrop-filter: blur(var(--surface-frost-blur)) saturate(var(--surface-frost-saturate, 1))
     contrast(var(--surface-frost-contrast, 1));
   -webkit-backdrop-filter: blur(var(--surface-frost-blur)) saturate(var(--surface-frost-saturate, 1))

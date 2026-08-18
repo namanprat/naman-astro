@@ -13,6 +13,10 @@
   background-color: var(--dark);
 }
 
+/* Homepage: viewport backdrop so manifesto / team / footer read the sim
+   instead of an empty plate once the first screen has scrolled away.
+   `main` is the stacking context so the wrap stays behind chrome (`--z--nav`)
+   and studio/footer (`z-index: 2`), same idea as `html.page-work main`. */
 /* Homepage: viewport backdrop so manifesto / team / footer / About frost
    sample the sim instead of an empty plate once the first screen has
    scrolled away. `main` is the stacking context so the wrap stays behind
