@@ -70,25 +70,16 @@
 }
 
 .theme-light {
-  /* Scrim over the frosted surfaces (About panel, footer). Keep enough ink
-     contrast for white type, but leave the liquid readable through the blur. */
-  --surface-accent: color-mix(in srgb, var(--text) 45%, transparent);
-  /* A heavy radius over the mostly-flat liquid sim just averages everything
-     into a uniform tint, so the "frost" reads as a plain fill with no visible
-     blur. A shallower radius keeps blob edges legible, and contrast pulls the
-     softened shapes back out once the blur (and the grey scrim) has flattened
-     them. */
+  /* Scrim over the frosted surfaces (About panel, footer): dark transparent
+     plus blur. */
+  --surface-accent: color-mix(in srgb, var(--black) 45%, transparent);
   --surface-frost-blur: 18px;
-  --surface-frost-saturate: 2.4;
-  --surface-frost-contrast: 1.35;
 }
 
 .theme-dark {
   /* Dark mode: the footer + About sheet are fully opaque orange. */
   --surface-accent: var(--brand-500);
   --surface-frost-blur: 0px;
-  --surface-frost-saturate: 1;
-  --surface-frost-contrast: 1;
 }
 
 @layer components {

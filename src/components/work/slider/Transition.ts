@@ -545,8 +545,10 @@ export default class Transition {
     /* The clear beat runs before `tl` exists, so a close during it lands here
        with nothing to reverse. Kill it first: it is still animating these
        tiles, and a bare `set` would be overwritten on the very next tick —
-       leaving the gallery empty with nothing left to restore it. */
-    gsap.killTweensOf(others);
+       leaving the gallery empty with nothing left to restore it.
+       Scope the kill to the exit props — a bare killTweensOf takes the grid
+       verticalLoop's yPercent children with it, and wheel/click die. */
+    gsap.killTweensOf(others, "scale,opacity,visibility");
     gsap.set(others, { scale: 1, autoAlpha: 1 });
 
     /* Same reasoning for the overlay's own content: an interrupted close would
