@@ -1,9 +1,18 @@
 import { useEffect } from "react";
 import { Canvas } from "@react-three/fiber";
 import ArchiveScene from "./ArchiveScene";
-import ArchiveViewSwitcher from "./ArchiveViewSwitcher";
-import { resetArchiveToOrbView } from "../../lib/archive/archiveView";
+import ViewSwitcher from "../ViewSwitcher";
+import {
+  resetArchiveToOrbView,
+  setArchiveView,
+  useArchiveView,
+} from "../../lib/archive/archiveView";
 import "./Archive.css";
+
+const ARCHIVE_VIEWS = [
+  { id: "orb" as const, label: "Orb" },
+  { id: "grid" as const, label: "Grid" },
+];
 
 /**
  * The archive's own canvas. Perspective camera (ArchiveCameras sets
@@ -13,6 +22,8 @@ import "./Archive.css";
  * pointer events straight off the canvas.
  */
 export default function ArchiveCanvas() {
+  const { view, isMorphing } = useArchiveView();
+
   useEffect(() => {
     document.documentElement.classList.add("page-archive");
     // rigState is module-level, so a second visit in the same session would
@@ -30,7 +41,14 @@ export default function ArchiveCanvas() {
       >
         <ArchiveScene />
       </Canvas>
-      <ArchiveViewSwitcher />
+      <ViewSwitcher
+        label="Archive view"
+        views={ARCHIVE_VIEWS}
+        view={view}
+        busy={isMorphing}
+        onSelect={setArchiveView}
+        locked
+      />
     </div>
   );
 }

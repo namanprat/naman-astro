@@ -5,13 +5,10 @@
  * ponytail: hard nav + sessionStorage FOUC flag, no ClientRouter.
  */
 import gsap from "gsap";
-import CustomEase from "gsap/CustomEase";
 import { getSiteLenis } from "./lenisBridge";
 import { markPageRevealed } from "./pageReveal";
 import { prefersReducedMotion } from "./prefersReducedMotion";
-
-gsap.registerPlugin(CustomEase);
-CustomEase.create("introHop", "0.9, 0, 0.1, 1");
+import "./eases";
 
 export const PT_COVER_KEY = "pt:cover";
 

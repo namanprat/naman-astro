@@ -41,7 +41,7 @@ import Preloader from "@/components/site/Preloader.astro";
         var prefersDark = window.matchMedia(
           "(prefers-color-scheme: dark)",
         ).matches;
-        root.classList.remove("theme-light", "theme-dark", "theme-brand");
+        root.classList.remove("theme-light", "theme-dark");
         root.classList.add(prefersDark ? "theme-dark" : "theme-light");
       }
     } catch (e) {}

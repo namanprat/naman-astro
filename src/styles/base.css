@@ -261,8 +261,7 @@
 
 :root,
 .theme-light,
-.theme-dark .theme-invert,
-.theme-brand .theme-invert {
+.theme-dark .theme-invert {
   color-scheme: light;
 
   --background: var(--light-200);
@@ -329,47 +328,12 @@
   --link-border-hover: var(--text);
 }
 
-.theme-brand {
-  color-scheme: dark;
-
-  --background: var(--brand-500);
-  --background-2: var(--brand-500);
-  --background-skeleton: color-mix(in lab, currentcolor 10%, transparent);
-  --text: var(--brand-text);
-  --border: color-mix(in lab, var(--text) 20%, transparent);
-  --heading-accent: color-mix(in srgb, var(--text), white 20%);
-
-  --selection-background: var(--text);
-  --selection-text: var(--background);
-
-  --button-background: var(--brand-text);
-  --button-border: var(--button-background);
-  --button-text: var(--background);
-  --button-background-hover: var(--light-100);
-  --button-border-hover: var(--button-background-hover);
-  --button-text-hover: var(--dark-900);
-
-  --button-2-background: transparent;
-  --button-2-border: var(--border);
-  --button-2-text: var(--text);
-  --button-2-background-hover: var(--light-100);
-  --button-2-border-hover: var(--button-2-background-hover);
-  --button-2-text-hover: var(--dark-900);
-
-  --link-text: var(--text);
-  --link-border: var(--border);
-  --link-text-hover: var(--text);
-  /* The brand color is the background here, so the line uses the text color. */
-  --link-border-hover: var(--text);
-}
-
 /* Named, not `[class*="theme-"]` — that substring also caught
    `nav-theme-toggle` and `nav-theme-toggle__svg`, repainting the switch in
    `--text` wherever it sits on a surface that isn't the page background. */
 :root,
 .theme-dark,
 .theme-light,
-.theme-brand,
 .theme-invert {
   background-color: var(--background);
   color: var(--text);

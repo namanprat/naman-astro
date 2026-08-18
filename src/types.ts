@@ -6,15 +6,4 @@ export interface SeoProps {
   description?: string;
   /** Social share image. Defaults to `/main-assets/og-image.jpg`. Relative paths resolve against `site` in `astro.config.mjs`. */
   image?: string;
-  /** Open Graph type. Defaults to `website`; use `article` for posts and news pages. */
-  type?: "website" | "article";
-  /**
-   * Force `robots: noindex, nofollow` on or off for this page.
-   *
-   * Leave unset to inherit from `NOINDEX_ROUTES`, which also drives sitemap
-   * exclusion and robots.txt `Disallow`. Setting it here only affects the
-   * robots tag — a page kept out of search results should be listed in
-   * `NOINDEX_ROUTES` so it leaves the sitemap and robots.txt too.
-   */
-  noindex?: boolean;
 }

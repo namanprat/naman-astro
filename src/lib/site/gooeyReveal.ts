@@ -33,8 +33,7 @@
  * the threshold and keeps the blur-to-sharp entrance. It exists for faces too
  * thin to survive the cut, as the automatic fallback when `#blur-matrix` is
  * missing, and as the site-wide escape hatch if a browser turns out not to
- * manage the threshold at all. It is deliberately *not* armed by UA detection
- * any more; see `isSafariGooeyUnsafe`.
+ * manage the threshold at all. It is not armed by UA detection.
  */
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
@@ -88,25 +87,6 @@ const POLL_MS = 50;
 
 const ARMING = "is-gooey-arming";
 const SOFT = "is-gooey-soft";
-
-/**
- * Apple WebKit without Chromium/Firefox — Safari and iOS WebViews.
- *
- * Deliberately not wired into `usesSoftGooey` any more. It was, back when the
- * threshold was assumed impossible on WebKit; the two reasons it actually failed
- * are fixed (see the module note and `GooeyFilter.astro`), so Safari now gets
- * the melt like everyone else and `/gooey-lab` is what confirms it.
- *
- * Kept because re-arming it is the one-line retreat if that turns out wrong:
- * call it from `usesSoftGooey` and the whole site drops back to blur-only.
- */
-export function isSafariGooeyUnsafe(): boolean {
-  if (typeof navigator === "undefined") return false;
-  const ua = navigator.userAgent;
-  if (!/AppleWebKit/i.test(ua)) return false;
-  // Chrome, Edge, Firefox iOS, Opera all include AppleWebKit in their UA.
-  return !/Chrome|CriOS|Chromium|Edg|Firefox|FxiOS|Opera|OPR/i.test(ua);
-}
 
 /**
  * Soft mode: blur-to-sharp only, no SVG threshold. Set by `BaseLayout`'s

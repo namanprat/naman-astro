@@ -9,11 +9,9 @@ const {
   title,
   description = SITE_DESCRIPTION,
   image = "/main-assets/og-image.jpg",
-  type = "website",
-  noindex,
 } = Astro.props;
 
-const isNoindex = noindex ?? isNoindexRoute(Astro.url.pathname);
+const isNoindex = isNoindexRoute(Astro.url.pathname);
 
 const pageTitle = title ? `${title} | ${SITE_NAME}` : SITE_NAME;
 const canonical = new URL(Astro.url.pathname, Astro.site);
@@ -44,13 +42,12 @@ const socialImage = new URL(image, Astro.site);
   name="viewport"
   content="width=device-width, initial-scale=1, viewport-fit=cover"
 />
-<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
 <title>{pageTitle}</title>
 <meta name="description" content={description} />
 <link rel="canonical" href={canonical} />
 {isNoindex && <meta name="robots" content="noindex, nofollow" />}
 
-<meta property="og:type" content={type} />
+<meta property="og:type" content="website" />
 <meta property="og:site_name" content={SITE_NAME} />
 <meta property="og:title" content={pageTitle} />
 <meta property="og:description" content={description} />
