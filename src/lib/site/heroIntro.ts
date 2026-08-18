@@ -5,6 +5,9 @@
  * Plays at the moment the page becomes visible, which pageTransition decides:
  * straight away on a plain load, after ENTER when the preloader is up, and
  * after the cover panel finishes clearing when arriving from another page.
+ *
+ * Also replays from `0.450em` on every in-page trip back to Home — chrome lives
+ * in BaseLayout, so clicking Home while already on `/` does not remount it.
  */
 import gsap from "gsap";
 import CustomEase from "gsap/CustomEase";
@@ -12,6 +15,7 @@ import { prefersReducedMotion } from "./prefersReducedMotion";
 import { PAGE_REVEALED_EVENT, isPageRevealed } from "./pageReveal";
 import {
   GOOEY_BLUR_VAR,
+  blurPx,
   clearGooeyBlur,
   setGooeyBlur,
   usesSoftGooey,
@@ -38,26 +42,31 @@ const NAV_S = 0.9;
 const NAV_STAGGER = 0.06;
 
 /**
- * Blur as a fraction of the wordmark's height. codegrid parks at `0.35em`,
- * which works there because the blur sits on real type and scales with it; the
- * lockup is a masked shape with no font-size, so this scales off the mark.
- * Much above this and the threshold eats the thin strokes entirely.
+ * Start radius, in em of the lockup. `.name-hero__gooey` sets `font-size` to
+ * the mark's height so this is a real CSS em, not a fraction of a bbox that
+ * can still be 0 when the island hydrates.
  */
-const GOOEY_BLUR_RATIO = 0.45;
+const GOOEY_BLUR_EM = 0.45;
 
 /**
  * Below the desktop nav breakpoint the mark is too small for the *threshold* to
- * read: `startBlur` floors at 4px, which on a small lockup is a large fraction
- * of stroke width, so the alpha threshold eats the strokes. Skip the melt; keep
- * the lockup painted.
+ * read: a 0.450em blur on a small lockup is a large fraction of stroke width,
+ * so the alpha threshold eats the strokes. Skip the melt; keep the lockup
+ * painted.
  *
  * A design constraint, not a WebKit workaround — the separate hazard of a
  * `url()` pointing at a missing filter is handled by the `getElementById` check
- * below. Lowering the floor is what would let this media query go; the two knobs
- * are independent. Soft mode is exempt: it is blur-only, so it neither blanks
- * nor eats the mark at any size.
+ * below. Soft mode is exempt: it is blur-only, so it neither blanks nor eats
+ * the mark at any size.
  */
 const GOOEY_MIN_MQ = "(width >= 64rem)";
+
+type HomeIntroSession = {
+  replay: () => void;
+  dispose: () => void;
+};
+
+let session: HomeIntroSession | null = null;
 
 /**
  * The mark carries the filter chain on itself rather than on a child, unlike
@@ -73,69 +82,81 @@ function canRunGooey(el: HTMLElement | null): el is HTMLElement {
   return window.matchMedia(GOOEY_MIN_MQ).matches;
 }
 
-export function bootHomeIntro(): () => void {
+function startBlur(gooey: HTMLElement): string {
+  return blurPx(gooey, GOOEY_BLUR_EM);
+}
+
+function createSession(): HomeIntroSession {
   const gooeyEl = document.querySelector<HTMLElement>(GOOEY);
   const lines = Array.from(document.querySelectorAll<HTMLElement>(NAV_LINES));
-  if (!gooeyEl && !lines.length) return () => {};
-
   const gooey = canRunGooey(gooeyEl) ? gooeyEl : null;
-  const startBlur = gooey
-    ? Math.max(4, gooey.getBoundingClientRect().height * GOOEY_BLUR_RATIO)
-    : 0;
+
+  let tl: gsap.core.Timeline | null = null;
+  let waiting = false;
 
   /** Final state: no filter at all, so the mark ends pixel-crisp. */
   const settle = () => {
+    tl?.kill();
+    tl = null;
     if (gooeyEl) {
+      gsap.killTweensOf(gooeyEl);
       clearGooeyBlur(gooeyEl);
       gooeyEl.classList.remove(GOOEY_ARMED);
-      // Sweeps any inline filter left by an older build of this module.
       gooeyEl.style.filter = "";
       gooeyEl.classList.add(GOOEY_PARKED);
     }
-    if (lines.length) gsap.set(lines, { yPercent: 0 });
+    if (lines.length) {
+      gsap.killTweensOf(lines);
+      gsap.set(lines, { yPercent: 0 });
+    }
   };
 
-  if (prefersReducedMotion()) {
-    settle();
-    return () => {};
-  }
+  const park = () => {
+    tl?.kill();
+    tl = null;
+    if (lines.length) {
+      gsap.killTweensOf(lines);
+      gsap.set(lines, { yPercent: 110 });
+    }
+    if (!gooeyEl) return;
 
-  if (lines.length) gsap.set(lines, { yPercent: 110 });
+    // Hidden until parked+armed with the start blur set, so a leftover sharp
+    // frame (cleared custom property, killed timeline) cannot paint.
+    gooeyEl.classList.remove(GOOEY_ARMED, GOOEY_PARKED);
+    gsap.killTweensOf(gooeyEl);
+    clearGooeyBlur(gooeyEl);
+    gooeyEl.style.filter = "";
 
-  // Park the melt immediately so the sharp lockup never paints. A leftover
-  // url() filter on WebKit (killed timeline, missing #blur-matrix) leaves the
-  // mark invisible — only arm when canRunGooey is true, and always disarm in
-  // settle / onComplete. In soft mode the armed class resolves to a blur-only
-  // chain, so there is no url() to leave behind.
-  if (gooey) {
-    // Hard reset: remove any stale parked/armed state first so the lockup
-    // cannot briefly render sharp (custom property cleared => 0px blur).
-    // `.name-hero__gooey:not(.is-gooey-parked)` is already `visibility:hidden`,
-    // so this guarantees no un-gooey frame can paint.
-    gooey.classList.remove(GOOEY_ARMED, GOOEY_PARKED);
-    clearGooeyBlur(gooey);
-    gooey.style.filter = "";
-    setGooeyBlur(gooey, startBlur);
-    gooey.classList.add(GOOEY_ARMED, GOOEY_PARKED);
-  }
-
-  let tl: gsap.core.Timeline | null = null;
+    if (gooey) {
+      setGooeyBlur(gooey, startBlur(gooey));
+      gooey.classList.add(GOOEY_ARMED, GOOEY_PARKED);
+      return;
+    }
+    gooeyEl.classList.add(GOOEY_PARKED);
+  };
 
   const play = () => {
+    waiting = false;
+    tl?.kill();
     tl = gsap.timeline();
     if (gooey) {
-      // Tweening the custom property rather than rewriting the whole filter
-      // string per frame: the old form forced a filter-list re-parse on every
-      // update and, on WebKit, could rebuild the filter chain with it.
-      tl.to(gooey, {
-        [GOOEY_BLUR_VAR]: "0px",
-        duration: GOOEY_S,
-        ease: "power3.out",
-        onComplete: () => {
-          clearGooeyBlur(gooey);
-          gooey.classList.remove(GOOEY_ARMED);
+      const from = startBlur(gooey);
+      setGooeyBlur(gooey, from);
+      gooey.classList.add(GOOEY_ARMED, GOOEY_PARKED);
+      // fromTo so a replay cannot inherit a mid-tween 0px as the start.
+      tl.fromTo(
+        gooey,
+        { [GOOEY_BLUR_VAR]: from },
+        {
+          [GOOEY_BLUR_VAR]: "0px",
+          duration: GOOEY_S,
+          ease: "power3.out",
+          onComplete: () => {
+            clearGooeyBlur(gooey);
+            gooey.classList.remove(GOOEY_ARMED);
+          },
         },
-      });
+      );
     } else if (gooeyEl) {
       gooeyEl.classList.add(GOOEY_PARKED);
     }
@@ -148,25 +169,70 @@ export function bootHomeIntro(): () => void {
           ease: "introHop",
           stagger: NAV_STAGGER,
         },
-        // Overlap the nav under the melt so it reads as one arrival.
         gooey ? 0.15 : 0,
       );
     }
   };
 
+  const onReveal = () => {
+    play();
+  };
+
+  const armWait = () => {
+    if (waiting) return;
+    waiting = true;
+    window.addEventListener(PAGE_REVEALED_EVENT, onReveal, { once: true });
+  };
+
+  const replay = () => {
+    if (prefersReducedMotion()) {
+      settle();
+      return;
+    }
+    window.removeEventListener(PAGE_REVEALED_EVENT, onReveal);
+    waiting = false;
+    park();
+    if (isPageRevealed()) {
+      play();
+      return;
+    }
+    armWait();
+  };
+
   const dispose = () => {
-    window.removeEventListener(PAGE_REVEALED_EVENT, play);
-    tl?.kill();
+    window.removeEventListener(PAGE_REVEALED_EVENT, onReveal);
+    waiting = false;
     settle();
   };
 
-  // The reveal can be marked before this island hydrates, so check the flag
-  // as well as listening for the event.
-  if (isPageRevealed()) {
-    play();
-    return dispose;
+  if (prefersReducedMotion()) {
+    settle();
+    return { replay: settle, dispose };
   }
 
-  window.addEventListener(PAGE_REVEALED_EVENT, play, { once: true });
-  return dispose;
+  park();
+  if (isPageRevealed()) play();
+  else armWait();
+
+  return { replay, dispose };
+}
+
+/** Parks the melt at `0.450em` and plays once the page is visible. */
+export function bootHomeIntro(): () => void {
+  session?.dispose();
+  session = createSession();
+  return () => {
+    if (session) {
+      session.dispose();
+      session = null;
+    }
+  };
+}
+
+/**
+ * Restart the homepage entrance from `0.450em`. Safe to call when already on
+ * `/` (chrome does not remount) and a no-op if intro has not booted yet.
+ */
+export function replayHomeIntro(): void {
+  session?.replay();
 }

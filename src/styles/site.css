@@ -73,7 +73,17 @@
   /* Scrim over the frosted surfaces (About panel, footer). 65%, not 50% — the
      panels read 30% darker so the ink holds against a bright page behind. */
   --surface-accent: color-mix(in srgb, var(--text) 65%, transparent);
-  --surface-frost-blur: 20px;
+  /* Radius stays independent of fill opacity. 20–28px was invisible against
+     the dimmed liquid; saturate pulls chroma through the 65% grey scrim. */
+  --surface-frost-blur: 56px;
+  --surface-frost-saturate: 1.8;
+}
+
+.theme-dark {
+  /* Dark mode: the footer + About sheet are fully opaque orange. */
+  --surface-accent: var(--brand-500);
+  --surface-frost-blur: 0px;
+  --surface-frost-saturate: 1;
 }
 
 @layer components {
@@ -116,16 +126,18 @@
     --_cols-lg: 12;
   }
 
-  /* Home scroll composition — one viewport of fluid, then the studio stack. */
+  /* Home scroll composition — one viewport of fluid, then the studio stack.
+     The wrap is `position: fixed` on home, so `.hero` takes back the first
+     viewport (and the chrome pull-up) the wrap used to occupy in flow. */
 
   .hero {
-    /* The in-flow fluid-wrap is the first viewport; this stays as a marker
-       for html:has(.hero) and the dim observer, without adding a second 100svh. */
     position: relative;
     z-index: 1;
     width: 100%;
-    height: 0;
+    height: 100svh;
+    height: 100dvh;
     margin: 0;
+    margin-top: calc(-1 * (var(--hero-chrome-pad, 0px) + var(--hero-chrome-content, 0px)));
     padding-block: 0;
     background-color: transparent;
     color: var(--ink);

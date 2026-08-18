@@ -123,9 +123,9 @@ export function usesSoftGooey(): boolean {
  * on why nothing on the wire is in `em`. Falls back to a 16px root if the
  * element has no usable computed size yet.
  */
-function blurPx(el: Element, em: number): string {
+export function blurPx(el: Element, em: number): string {
   const fontSize = parseFloat(getComputedStyle(el).fontSize);
-  return `${(Number.isFinite(fontSize) ? fontSize : 16) * em}px`;
+  return `${(Number.isFinite(fontSize) && fontSize > 0 ? fontSize : 16) * em}px`;
 }
 
 /**
@@ -135,10 +135,13 @@ function blurPx(el: Element, em: number): string {
  */
 const BLUR_START = (_i: number, el: Element) => blurPx(el, BLUR_START_EM);
 
-/** Park a blur radius directly. For `heroIntro`, which sizes off a bounding box
- *  rather than a font-size and so has its px in hand already. */
-export function setGooeyBlur(el: HTMLElement, px: number): void {
-  el.style.setProperty(GOOEY_BLUR_VAR, `${px}px`);
+/** Park a blur radius. `heroIntro` resolves `0.450em` to px first so GSAP
+ *  never has to interpolate an `em` string on engines without `@property`. */
+export function setGooeyBlur(el: HTMLElement, value: number | string): void {
+  el.style.setProperty(
+    GOOEY_BLUR_VAR,
+    typeof value === "number" ? `${value}px` : value,
+  );
 }
 
 export function clearGooeyBlur(el: HTMLElement): void {

@@ -48,6 +48,10 @@ html.menu-open {
 .name-hero__gooey {
   grid-column: 1 / -1;
   min-width: 0;
+  /* em box for the melt: the lockup's height (grid width × 70/446). heroIntro
+     parks at 0.450em of this, so the start radius tracks the mark, not a bbox
+     that can still be 0 when the island hydrates. */
+  font-size: calc(var(--site--grid-width) * 70 / 446);
 }
 
 .name-hero__gooey:not(.is-gooey-parked) {
