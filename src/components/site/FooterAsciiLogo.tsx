@@ -1,9 +1,10 @@
 import { useEffect, useRef, type RefObject } from "react";
 import "./FooterAsciiLogo.css";
 
-const CELL_SIZE = 8;
+const CELL_SIZE = 7;
 const CELL_GAP = 3;
 const CELL_STEP = CELL_SIZE + CELL_GAP;
+const FONT_SIZE = 11;
 const ASCII_CHARS = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
 const BRIGHTNESS_THRESHOLD = 0.5;
 const HOVER_RADIUS = 10;
@@ -17,10 +18,30 @@ const RESET_EASE = 0.05;
 const STAGGER_FRAMES = 18;
 const DESKTOP_MQ = "(min-width: 64rem)";
 const REDUCE_MQ = "(prefers-reduced-motion: reduce)";
+const FINE_HOVER_MQ = "(hover: hover) and (pointer: fine)";
 /** Fallback only — live ink is read off the wrapper's `color`. */
 const CHAR_COLOR_FALLBACK = "#f14827";
+const MONO_FONT =
+  '"Duforn Mono", ui-monospace, SFMono-Regular, Menlo, monospace';
 
 type Phase = "logo" | "scattered" | "fallen" | "returning";
+
+function phaseLabel(phase: Phase): string {
+  switch (phase) {
+    case "logo":
+      return "SCATTER";
+    case "scattered":
+      return "DROP";
+    case "fallen":
+      return "RESET";
+    case "returning":
+      return "WAIT";
+    default: {
+      const _exhaustive: never = phase;
+      return _exhaustive;
+    }
+  }
+}
 
 type Cell = {
   col: number;
@@ -70,12 +91,16 @@ export default function FooterAsciiLogo({
 }) {
   const wrapRef = useRef<HTMLDivElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
+  const cursorRef = useRef<HTMLDivElement>(null);
+  const cursorLabelRef = useRef<HTMLSpanElement>(null);
 
   useEffect(() => {
     const wrap = wrapRef.current;
     const canvas = canvasRef.current;
+    const cursorEl = cursorRef.current;
+    const cursorLabel = cursorLabelRef.current;
     const logoImg = sourceRef.current;
-    if (!wrap || !canvas || !logoImg) return;
+    if (!wrap || !canvas || !cursorEl || !cursorLabel || !logoImg) return;
 
     const box = wrap.parentElement;
     if (!box) return;
@@ -85,7 +110,9 @@ export default function FooterAsciiLogo({
 
     const desktopMq = window.matchMedia(DESKTOP_MQ);
     const reduceMq = window.matchMedia(REDUCE_MQ);
+    const fineHoverMq = window.matchMedia(FINE_HOVER_MQ);
     const enabled = () => desktopMq.matches && !reduceMq.matches;
+    const cursorOn = () => enabled() && fineHoverMq.matches;
 
     let phase: Phase = "logo";
     let gridCols = 0;
@@ -100,6 +127,19 @@ export default function FooterAsciiLogo({
 
     const readCharColor = () => {
       charColor = getComputedStyle(box).color || CHAR_COLOR_FALLBACK;
+    };
+
+    const syncCursorLabel = () => {
+      cursorLabel.textContent = phaseLabel(phase);
+    };
+
+    const setCursorVisible = (visible: boolean) => {
+      cursorEl.classList.toggle("is-visible", visible);
+    };
+
+    const syncCursorMode = () => {
+      box.classList.toggle("is-ascii-hover", cursorOn());
+      if (!cursorOn()) setCursorVisible(false);
     };
 
     const setupCanvas = () => {
@@ -177,6 +217,7 @@ export default function FooterAsciiLogo({
         });
       }
       phase = "logo";
+      syncCursorLabel();
     };
 
     const staggerCells = () => {
@@ -239,7 +280,10 @@ export default function FooterAsciiLogo({
         }
       }
 
-      if (everyoneHome) phase = "logo";
+      if (everyoneHome) {
+        phase = "logo";
+        syncCursorLabel();
+      }
     };
 
     const drawAscii = () => {
@@ -247,7 +291,7 @@ export default function FooterAsciiLogo({
       const h = wrap.clientHeight;
       ctx.clearRect(0, 0, w, h);
       if (cells.length === 0) return;
-      ctx.font = `${CELL_SIZE + 2}px "Duforn Mono"`;
+      ctx.font = `${FONT_SIZE}px ${MONO_FONT}`;
       ctx.textBaseline = "top";
       ctx.textAlign = "center";
       ctx.fillStyle = charColor;
@@ -281,6 +325,7 @@ export default function FooterAsciiLogo({
 
     const syncEnabled = () => {
       if (disposed) return;
+      syncCursorMode();
       if (enabled()) {
         buildAsciiFromLogo();
         startLoop();
@@ -288,20 +333,34 @@ export default function FooterAsciiLogo({
         stopLoop();
         cells = [];
         ctx.clearRect(0, 0, wrap.clientWidth, wrap.clientHeight);
+        setCursorVisible(false);
       }
     };
+
+    const pointerOverUi = (target: EventTarget | null) =>
+      target instanceof Element && Boolean(target.closest("a, button"));
 
     const onPointerMove = (event: PointerEvent) => {
       const wrapRect = wrap.getBoundingClientRect();
       const { scaleX, scaleY } = localScale(wrap, wrapRect);
       cursor.col = (event.clientX - wrapRect.left) / scaleX / CELL_STEP;
       cursor.row = (event.clientY - wrapRect.top) / scaleY / CELL_STEP;
+
+      if (cursorOn()) {
+        const x = (event.clientX - wrapRect.left) / scaleX;
+        const y = (event.clientY - wrapRect.top) / scaleY;
+        cursorEl.style.transform = `translate3d(${x}px, ${y}px, 0) translate(-50%, -50%)`;
+        setCursorVisible(!pointerOverUi(event.target));
+      }
+    };
+
+    const onPointerLeave = () => {
+      setCursorVisible(false);
     };
 
     const onClick = (event: MouseEvent) => {
       if (!enabled() || cells.length === 0) return;
-      const target = event.target;
-      if (target instanceof Element && target.closest("a, button")) return;
+      if (pointerOverUi(event.target)) return;
 
       switch (phase) {
         case "logo":
@@ -323,20 +382,22 @@ export default function FooterAsciiLogo({
           void _exhaustive;
         }
       }
+      syncCursorLabel();
     };
 
     const fontsReady =
-      document.fonts?.load(`${CELL_SIZE + 2}px "Duforn Mono"`) ??
-      Promise.resolve();
+      document.fonts?.load(`${FONT_SIZE}px "Duforn Mono"`) ?? Promise.resolve();
 
     const startWhenReady = () => {
       void fontsReady.then(syncEnabled);
     };
 
     box.addEventListener("pointermove", onPointerMove, { passive: true });
+    box.addEventListener("pointerleave", onPointerLeave);
     box.addEventListener("click", onClick);
     desktopMq.addEventListener("change", syncEnabled);
     reduceMq.addEventListener("change", syncEnabled);
+    fineHoverMq.addEventListener("change", syncCursorMode);
 
     const themeObserver = new MutationObserver(readCharColor);
     themeObserver.observe(document.documentElement, {
@@ -360,17 +421,27 @@ export default function FooterAsciiLogo({
       disposed = true;
       stopLoop();
       box.removeEventListener("pointermove", onPointerMove);
+      box.removeEventListener("pointerleave", onPointerLeave);
       box.removeEventListener("click", onClick);
       desktopMq.removeEventListener("change", syncEnabled);
       reduceMq.removeEventListener("change", syncEnabled);
+      fineHoverMq.removeEventListener("change", syncCursorMode);
+      box.classList.remove("is-ascii-hover");
       themeObserver.disconnect();
       ro.disconnect();
     };
   }, [sourceRef]);
 
   return (
-    <div className="footer-ascii" ref={wrapRef} aria-hidden="true">
-      <canvas className="footer-ascii__canvas" ref={canvasRef} />
-    </div>
+    <>
+      <div className="footer-ascii" ref={wrapRef} aria-hidden="true">
+        <canvas className="footer-ascii__canvas" ref={canvasRef} />
+      </div>
+      <div className="footer-ascii__cursor" ref={cursorRef} aria-hidden="true">
+        <span className="footer-ascii__cursor-label" ref={cursorLabelRef}>
+          SCATTER
+        </span>
+      </div>
+    </>
   );
 }
