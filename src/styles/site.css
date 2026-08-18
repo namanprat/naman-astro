@@ -73,14 +73,16 @@
   /* Scrim over the frosted surfaces (About panel, footer). 65%, not 50% — the
      panels read 30% darker so the ink holds against a bright page behind. */
   --surface-accent: color-mix(in srgb, var(--text) 65%, transparent);
-  --surface-frost-blur: 20px;
+  /* Light mode needs a larger blur to be clearly visible against the
+     (already relatively low-opacity) liquid. Background opacity stays the
+     same via `--surface-accent`. */
+  --surface-frost-blur: 28px;
 }
 
 .theme-dark {
-  /* Same glass as light: translucent fill so backdrop-filter can sample the
-     liquid (or the page) instead of a solid orange plate. */
-  --surface-accent: color-mix(in srgb, var(--brand-500) 72%, transparent);
-  --surface-frost-blur: 20px;
+  /* Dark mode: the footer + About sheet are fully opaque orange. */
+  --surface-accent: var(--brand-500);
+  --surface-frost-blur: 0px;
 }
 
 @layer components {

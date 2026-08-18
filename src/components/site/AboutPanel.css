@@ -79,6 +79,13 @@ html.theme-light .about-panel {
      yPercent animates to 0, so the card never finishes opening. */
 }
 
+/* Dark mode: fully opaque orange; blur is not needed. */
+html.theme-dark .about-panel__surface {
+  background-color: var(--accent);
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+}
+
 /* Scroll lives here, not on the frost node: overflow on the same box as
    backdrop-filter is a common Safari miss, and `will-change: transform`
    used to promote an empty layer the filter then sampled. */
