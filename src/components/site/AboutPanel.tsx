@@ -200,9 +200,10 @@ export default function AboutPanel({ open, mode, onClose }: AboutPanelProps) {
           { autoAlpha: 1, duration: 0.45, ease: "power2.out" },
           0,
         );
-        /* yPercent on the surface (frosted card), not the padded shell — overflow
-           lives on the surface so the slide isn't clipped. Force y:0 so any
-           previously parsed pixel translate can't keep the card parked above. */
+        /* yPercent on the surface (frosted card), not the padded shell.
+           Overflow lives on the inner scroller so the slide isn't clipped
+           and frost can sample the page. Force y:0 so any previously parsed
+           pixel translate can't keep the card parked above. */
         tl.fromTo(
           surface,
           { yPercent: -100, y: 0 },
@@ -303,93 +304,94 @@ export default function AboutPanel({ open, mode, onClose }: AboutPanelProps) {
         {/* Carries the accent fill so the panel itself can stay transparent and
             hold the floating gutter as padding.
 
-            `data-lenis-prevent`: the surface is the panel's scroll container,
-            and Lenis preventDefaults wheel/touch on the whole document — so
-            without opting out, its own overflow never moves and the content
-            below the fold is unreachable. Page scroll is already stopped while
-            the panel is open, so nothing here fights the page. */}
-        <div
-          className="about-panel__surface"
-          ref={surfaceRef}
-          data-lenis-prevent
-        >
-          <div className="about-panel__inner container gap-0">
-            <div className="about-panel__grid grid is-12">
-              <div
-                ref={mediaRef}
-                className="about-panel__reveal about-panel__media"
-                aria-hidden="true"
-              >
-                <div className="about-panel__reveal-inner">
-                  {mountCanvas && (
-                    <Suspense fallback={null}>
-                      <AboutDitherCanvas
-                        eventSource={mediaRef}
-                        onReady={onBustReady}
-                      />
-                    </Suspense>
-                  )}
-                </div>
-              </div>
-
-              <div className="about-panel__reveal about-panel__intro">
-                <div className="about-panel__reveal-inner">
-                  <h3 className="about-panel__lead text-style-h3">
-                    I&apos;m a digital designer who makes things look good and
-                    work better. Good design isn&apos;t about adding
-                    more—it&apos;s about knowing what to leave out.
-                  </h3>
-                  <span className="about-panel__cv-clip">
-                    <a
-                      className="about-panel__cv text-style-main"
-                      href="/main-assets/cv.pdf"
-                      download
-                    >
-                      <span className="about-panel__cv-label">
-                        <RollingText>Download CV</RollingText>
-                      </span>
-                      <span className="about-panel__cv-icon" aria-hidden="true">
-                        ↗
-                      </span>
-                    </a>
-                  </span>
-                </div>
-              </div>
-
-              <div className="about-panel__lists">
-                <div className="about-panel__reveal about-panel__col about-panel__col--services">
+            `data-lenis-prevent`: the inner scroller is the panel's overflow
+            container, and Lenis preventDefaults wheel/touch on the whole
+            document — so without opting out, its own overflow never moves and
+            the content below the fold is unreachable. Page scroll is already
+            stopped while the panel is open, so nothing here fights the page. */}
+        <div className="about-panel__surface" ref={surfaceRef}>
+          <div className="about-panel__scroll" data-lenis-prevent>
+            <div className="about-panel__inner container gap-0">
+              <div className="about-panel__grid grid is-12">
+                <div
+                  ref={mediaRef}
+                  className="about-panel__reveal about-panel__media"
+                  aria-hidden="true"
+                >
                   <div className="about-panel__reveal-inner">
-                    <h5 className="about-panel__col-label text-style-main">
-                      Services
-                    </h5>
-                    <div className="about-panel__col-list">
-                      {SERVICES.map((item) => (
-                        <h5 key={item} className="text-style-main">
-                          {item}
-                        </h5>
-                      ))}
-                    </div>
+                    {mountCanvas && (
+                      <Suspense fallback={null}>
+                        <AboutDitherCanvas
+                          eventSource={mediaRef}
+                          onReady={onBustReady}
+                        />
+                      </Suspense>
+                    )}
                   </div>
                 </div>
 
-                <div className="about-panel__reveal about-panel__col about-panel__col--clients">
+                <div className="about-panel__reveal about-panel__intro">
                   <div className="about-panel__reveal-inner">
-                    <h5 className="about-panel__col-label text-style-main">
-                      Clients
-                    </h5>
-                    <div className="about-panel__clients-cols">
-                      {clientColumns.map((column, index) => (
-                        <div
-                          key={`clients-col-${index}`}
-                          className="about-panel__col-list"
+                    <h3 className="about-panel__lead text-style-h3">
+                      I&apos;m a digital designer who makes things look good and
+                      work better. Good design isn&apos;t about adding
+                      more—it&apos;s about knowing what to leave out.
+                    </h3>
+                    <span className="about-panel__cv-clip">
+                      <a
+                        className="about-panel__cv text-style-main"
+                        href="/main-assets/cv.pdf"
+                        download
+                      >
+                        <span className="about-panel__cv-label">
+                          <RollingText>Download CV</RollingText>
+                        </span>
+                        <span
+                          className="about-panel__cv-icon"
+                          aria-hidden="true"
                         >
-                          {column.map((item) => (
-                            <h5 key={item} className="text-style-main">
-                              {item}
-                            </h5>
-                          ))}
-                        </div>
-                      ))}
+                          ↗
+                        </span>
+                      </a>
+                    </span>
+                  </div>
+                </div>
+
+                <div className="about-panel__lists">
+                  <div className="about-panel__reveal about-panel__col about-panel__col--services">
+                    <div className="about-panel__reveal-inner">
+                      <h5 className="about-panel__col-label text-style-main">
+                        Services
+                      </h5>
+                      <div className="about-panel__col-list">
+                        {SERVICES.map((item) => (
+                          <h5 key={item} className="text-style-main">
+                            {item}
+                          </h5>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="about-panel__reveal about-panel__col about-panel__col--clients">
+                    <div className="about-panel__reveal-inner">
+                      <h5 className="about-panel__col-label text-style-main">
+                        Clients
+                      </h5>
+                      <div className="about-panel__clients-cols">
+                        {clientColumns.map((column, index) => (
+                          <div
+                            key={`clients-col-${index}`}
+                            className="about-panel__col-list"
+                          >
+                            {column.map((item) => (
+                              <h5 key={item} className="text-style-main">
+                                {item}
+                              </h5>
+                            ))}
+                          </div>
+                        ))}
+                      </div>
                     </div>
                   </div>
                 </div>

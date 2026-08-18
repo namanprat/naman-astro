@@ -16,9 +16,9 @@ export default function FluidCanvas() {
   }, []);
 
   useEffect(() => {
-    const wrap = wrapRef.current;
+    const hero = document.querySelector(".hero");
     const root = document.documentElement;
-    if (!wrap || !document.querySelector(".hero")) {
+    if (!hero) {
       root.classList.remove(HERO_DIM);
       return;
     }
@@ -33,8 +33,8 @@ export default function FluidCanvas() {
       },
       { threshold: 0 },
     );
-    observer.observe(wrap);
-    sync(wrap.getBoundingClientRect().bottom > 0);
+    observer.observe(hero);
+    sync(hero.getBoundingClientRect().bottom > 0);
 
     return () => {
       observer.disconnect();

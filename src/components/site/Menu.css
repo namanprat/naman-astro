@@ -617,6 +617,8 @@ img.logo-img {
   height: 100dvh;
   overflow: hidden;
   background-color: var(--surface-accent);
+  backdrop-filter: blur(var(--surface-frost-blur));
+  -webkit-backdrop-filter: blur(var(--surface-frost-blur));
   transform: translateY(100%);
   will-change: transform;
   pointer-events: none;
@@ -625,11 +627,6 @@ img.logo-img {
   flex-direction: column;
   align-items: center;
   justify-content: center;
-}
-
-html.theme-light .menu-overlay {
-  backdrop-filter: blur(var(--surface-frost-blur));
-  -webkit-backdrop-filter: blur(var(--surface-frost-blur));
 }
 
 .menu-overlay a,

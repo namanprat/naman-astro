@@ -4,15 +4,23 @@
   height: 100svh;
   height: 100dvh;
   /* Sit under the in-flow chrome, same pull-up .hero used when the sim was fixed. */
-  margin-top: calc(
-    -1 * (var(--hero-chrome-pad, 0px) + var(--hero-chrome-content, 0px))
-  );
+  margin-top: calc(-1 * (var(--hero-chrome-pad, 0px) + var(--hero-chrome-content, 0px)));
   pointer-events: none;
   z-index: 0;
   overflow: hidden;
   flex-shrink: 0;
   /* Under the sim — matches theme toggle; never paints over the logo. */
   background-color: var(--dark);
+}
+
+/* Homepage: viewport backdrop so manifesto / team / footer read the sim
+   instead of an empty plate once the first screen has scrolled away. */
+html:has(.hero) .fluid-wrap {
+  position: fixed;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  margin-top: 0;
 }
 
 .fluid-wrap canvas {
