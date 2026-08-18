@@ -186,9 +186,14 @@ html.theme-light .about-panel--in-menu {
   gap: var(--space-3);
 }
 
+.about-panel--in-menu .about-panel__media {
+  background-color: transparent;
+}
+
 .about-panel--in-menu .about-panel__media .about-panel__reveal-inner {
   width: 100%;
   height: 100%;
+  background-color: var(--black);
 }
 
 .about-panel.is-open {
@@ -291,7 +296,9 @@ html.theme-light .about-panel--in-menu {
   aspect-ratio: 1;
   height: auto;
   overflow: hidden;
-  /* Panel media ground — always --black (both themes) for the dither clear. */
+  /* Ride-mode ground — always --black (both themes) for the dither clear.
+     inMenu parks this on the dissolve inner so the plate isn't visible
+     before the headers unreveal. */
   background-color: var(--black);
   pointer-events: auto;
 }

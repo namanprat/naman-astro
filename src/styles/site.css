@@ -79,16 +79,12 @@
      softened shapes back out once the blur (and the grey scrim) has flattened
      them. */
   --surface-frost-blur: 18px;
-  --surface-frost-saturate: 2.4;
-  --surface-frost-contrast: 1.35;
 }
 
 .theme-dark {
   /* Dark mode: the footer + About sheet are fully opaque orange. */
   --surface-accent: var(--brand-500);
   --surface-frost-blur: 0px;
-  --surface-frost-saturate: 1;
-  --surface-frost-contrast: 1;
 }
 
 @layer components {
