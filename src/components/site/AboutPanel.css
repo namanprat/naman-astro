@@ -69,8 +69,10 @@ html.theme-light .about-panel {
 .about-panel__surface {
   position: relative;
   background-color: var(--surface-accent);
-  backdrop-filter: blur(var(--surface-frost-blur));
-  -webkit-backdrop-filter: blur(var(--surface-frost-blur));
+  backdrop-filter: blur(var(--surface-frost-blur)) saturate(var(--surface-frost-saturate, 1))
+    contrast(var(--surface-frost-contrast, 1));
+  -webkit-backdrop-filter: blur(var(--surface-frost-blur)) saturate(var(--surface-frost-saturate, 1))
+    contrast(var(--surface-frost-contrast, 1));
   width: 100%;
   max-height: calc(85vh - var(--site--gutter) * 2);
   overflow: visible;
