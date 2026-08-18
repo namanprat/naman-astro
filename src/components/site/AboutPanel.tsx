@@ -9,7 +9,6 @@ import {
   useState,
 } from "react";
 import gsap from "gsap";
-import CustomEase from "gsap/CustomEase";
 import { shouldMountAboutBust } from "../../lib/site/aboutBust";
 import { prefersReducedMotion } from "../../lib/site/prefersReducedMotion";
 import {
@@ -18,9 +17,7 @@ import {
   prepareGooey,
 } from "../../lib/site/gooeyReveal";
 import RollingText from "./RollingText";
-
-gsap.registerPlugin(CustomEase);
-CustomEase.create("introHop", "0.9, 0, 0.1, 1");
+import "../../lib/site/eases";
 
 const AboutDitherCanvas = lazy(() => import("./about/AboutDitherCanvas"));
 
@@ -200,8 +197,10 @@ export default function AboutPanel({ open, mode, onClose }: AboutPanelProps) {
           { autoAlpha: 1, duration: 0.45, ease: "power2.out" },
           0,
         );
-        /* `top`, not yPercent: transform on the frost node makes
-           backdrop-filter sample the empty panel instead of the page. */
+        /* yPercent on the surface (frosted card), not the padded shell.
+           Overflow lives on the inner scroller so the slide isn't clipped
+           and frost can sample the page. Force y:0 so any previously parsed
+           pixel translate can't keep the card parked above. */
         tl.fromTo(
           surface,
           { top: "-100vh" },

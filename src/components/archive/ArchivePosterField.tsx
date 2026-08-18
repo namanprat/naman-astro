@@ -71,7 +71,7 @@ export default function ArchivePosterField() {
         />
       </Text>
       {tiles.map((t) => (
-        <PosterTile key={t.index} data={t} textures={textures} />
+        <PosterTile key={t.index} data={t} />
       ))}
     </>
   );

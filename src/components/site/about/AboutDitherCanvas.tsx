@@ -35,11 +35,7 @@ const DRACO_PATH = "/draco/gltf/";
 /** Longest-axis size after normalize; Center's `scale` then reads as world units. */
 const MODEL_UNIT = 1;
 
-const Dither = wrapEffect(DitheringEffect, {
-  gridSize: 4,
-  pixelSizeRatio: 1,
-  grayscaleOnly: true,
-});
+const Dither = wrapEffect(DitheringEffect);
 
 const Distortion = wrapEffect(AboutDistortionEffect);
 
@@ -91,7 +87,7 @@ function prepareModelScene(scene: THREE.Object3D): {
 
 /**
  * Drop any .glb at BUST_URL — no gltfjsx node/material names required.
- * Clones the scene, unit-normalizes it; Center + leva controls handle framing.
+ * Clones the scene, unit-normalizes it; Center handles framing.
  */
 function Model() {
   const { scene } = useGLTF(BUST_URL, DRACO_PATH);
@@ -447,14 +443,7 @@ function AboutDitherScene({ onReady }: { onReady?: () => void }) {
         stencilBuffer={false}
       >
         <Distortion />
-        {/* Values as props, never a ref: wrapEffect JSON.stringify's its props to
-            key the effect, and a ref to a three object is a cyclic graph. */}
-        <Dither
-          gridSize={c.gridSize}
-          pixelSizeRatio={c.pixelSizeRatio}
-          grayscaleOnly={c.grayscaleOnly}
-          invertColor={c.invertColor}
-        />
+        <Dither />
       </EffectComposer>
       <BustReadyGate onReady={onReady} />
     </>

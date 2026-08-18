@@ -30,12 +30,3 @@ export const ARCHIVE_ITEMS: ArchiveItem[] = [
 export const ARCHIVE_MEDIA_URLS: string[] = ARCHIVE_ITEMS.map(
   (item) => item.src,
 );
-
-export function archiveAlt(url: string): string {
-  const name = decodeURIComponent(url.split("/").pop() ?? "Archive");
-  return name.replace(/\.[^.]+$/, "");
-}
-
-export function isArchiveVideo(url: string): boolean {
-  return /\.(webm|mp4)(\?|#|$)/i.test(url);
-}

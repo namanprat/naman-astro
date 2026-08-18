@@ -310,11 +310,9 @@
      threshold, and the automatic fallback when `#blur-matrix` is missing: same
      blur-to-sharp entrance, no fusing.
 
-     `html.is-gooey-soft` is the same thing site-wide from one class. It is no
-     longer set by UA detection — the threshold is meant to work on WebKit now —
-     but the switch is kept so soft mode can be forced from `BaseLayout`'s
-     pre-paint script, and so `isSafariGooeyUnsafe()` in `gooeyReveal.ts` is one
-     line away from re-arming it if Safari turns out to still not manage.
+     `html.is-gooey-soft` is the same thing site-wide from one class. It is not
+     set by UA detection — force it from `BaseLayout`'s pre-paint script
+     (`?gooey=soft`).
 
      Blur-only rather than `filter: none`: the entrance still has to run, it just
      must not name a `url()`. */
