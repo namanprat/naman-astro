@@ -29,10 +29,11 @@
   width: 100%;
   transform-origin: center bottom;
   background-color: var(--surface-accent);
-  backdrop-filter: blur(var(--surface-frost-blur)) saturate(var(--surface-frost-saturate, 1))
-    contrast(var(--surface-frost-contrast, 1));
-  -webkit-backdrop-filter: blur(var(--surface-frost-blur)) saturate(var(--surface-frost-saturate, 1))
-    contrast(var(--surface-frost-contrast, 1));
+  /* Literal fallback, not a bare var(): an unresolved token takes the whole
+     `backdrop-filter` declaration down to `none`, so the fallback has to be
+     the real frost rather than something that reads as "no frost". */
+  backdrop-filter: var(--surface-frost, blur(18px) saturate(2.4) contrast(1.35));
+  -webkit-backdrop-filter: var(--surface-frost, blur(18px) saturate(2.4) contrast(1.35));
 }
 
 /* Dark mode: fully opaque orange; disable blur for crisp edges. */

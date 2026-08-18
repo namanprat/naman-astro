@@ -247,6 +247,14 @@ export function prepareGooey(el: HTMLElement): GooeyTarget | null {
   // entrance still runs rather than being cancelled.
   if (!canPrepareGooey()) return null;
 
+  /* SplitText measures to decide where lines break, and the result is cached
+     here for the element's lifetime. Measured inside a `visibility: hidden`
+     ancestor the width resolves to ~0 on WebKit, which breaks every word onto
+     its own line — and caching that would keep the heading broken for the rest
+     of the session. Bail instead: the caller skips the melt and the copy shows
+     sharp, and the next call splits properly once the panel is on screen. */
+  if (!el.getBoundingClientRect().width) return null;
+
   el.dataset.gooey = "";
   const split = SplitText.create(el, {
     type: "lines",

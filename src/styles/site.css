@@ -79,16 +79,21 @@
      softened shapes back out once the blur (and the grey scrim) has flattened
      them. */
   --surface-frost-blur: 18px;
-  --surface-frost-saturate: 2.4;
-  --surface-frost-contrast: 1.35;
+  /* The whole filter list as one token, not three. `backdrop-filter` is
+     invalid-at-computed-value-time if any single `var()` in it fails to
+     resolve — and the failure mode is the entire declaration dropping to
+     `none`, not just the one function being skipped. Three substitutions in
+     one chain meant three ways to lose the frost outright; one token with a
+     literal fallback at the use site means it degrades to the real value
+     instead of to nothing. */
+  --surface-frost: blur(18px) saturate(2.4) contrast(1.35);
 }
 
 .theme-dark {
   /* Dark mode: the footer + About sheet are fully opaque orange. */
   --surface-accent: var(--brand-500);
   --surface-frost-blur: 0px;
-  --surface-frost-saturate: 1;
-  --surface-frost-contrast: 1;
+  --surface-frost: none;
 }
 
 @layer components {
