@@ -6,7 +6,6 @@ const HERO_DIM = "is-hero-fluid-dim";
 
 export default function FluidCanvas() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
-  const wrapRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -60,7 +59,7 @@ export default function FluidCanvas() {
   }, []);
 
   return (
-    <div ref={wrapRef} className="fluid-wrap" data-fluid aria-hidden="true">
+    <div className="fluid-wrap" data-fluid aria-hidden="true">
       <canvas ref={canvasRef} />
     </div>
   );

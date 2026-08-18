@@ -20,8 +20,13 @@ import Reveal from "./slider/Reveal";
 import Slider, { isWorkGridMobile, WORK_GRID_MOBILE_MQ } from "./slider/Slider";
 import WheelView from "./slider/WheelView";
 import Transition from "./slider/Transition";
-import WorkViewSwitcher from "./WorkViewSwitcher";
+import ViewSwitcher from "../ViewSwitcher";
 import "./Work.css";
+
+const WORK_VIEWS = [
+  { id: "slider" as const, label: "Slider" },
+  { id: "grid" as const, label: "Grid" },
+];
 
 /** Settled hover before a morph fires, so sweeping across tiles doesn't melt
  *  the label once per tile the cursor crosses. */
@@ -564,7 +569,9 @@ export default function WorkGallery() {
         ))}
       </div>
 
-      <WorkViewSwitcher
+      <ViewSwitcher
+        label="Work view"
+        views={WORK_VIEWS}
         view={view}
         busy={switching || !ready}
         onSelect={(next) => switchViewRef.current(next)}

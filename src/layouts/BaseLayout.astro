@@ -4,14 +4,14 @@ import "@/styles/global.css";
 import "@/styles/site.css";
 import BaseHead from "@/components/BaseHead.astro";
 import SkipLink from "@/components/SkipLink.astro";
-import SiteChrome from "@/components/site/SiteChrome";
+import Menu from "@/components/site/Menu";
 import GooeyFilter from "@/components/site/GooeyFilter.astro";
 import FluidCanvas from "@/components/site/FluidCanvas.astro";
 import type { SeoProps } from "@/types.ts";
 
 type Props = SeoProps & {
   /** Theme for the whole page. `inherit` leaves the root defaults in place. */
-  theme?: "inherit" | "light" | "dark" | "brand";
+  theme?: "inherit" | "light" | "dark";
 };
 
 const { theme = "inherit", ...seo } = Astro.props;
@@ -56,7 +56,7 @@ const isArchive = Astro.url.pathname === "/archive";
           var t = localStorage.getItem("site-theme");
           if (t !== "light" && t !== "dark") return;
           var root = document.documentElement;
-          root.classList.remove("theme-light", "theme-dark", "theme-brand");
+          root.classList.remove("theme-light", "theme-dark");
           root.classList.add("theme-" + t);
         } catch (e) {}
       })();
@@ -72,7 +72,7 @@ const isArchive = Astro.url.pathname === "/archive";
     <GooeyFilter />
     <div class="site-grain" aria-hidden="true"></div>
     <div class="transition-panel" aria-hidden="true"></div>
-    <SiteChrome client:load pathname={Astro.url.pathname} />
+    <Menu client:load initialPathname={Astro.url.pathname} />
     <div class="site-backdrop">
       <slot name="backdrop" />
     </div>

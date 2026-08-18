@@ -59,7 +59,6 @@ export default defineConfig({
         "@gsap/react",
         "lenis",
         "lenis/react",
-        "zustand",
       ],
     },
   },

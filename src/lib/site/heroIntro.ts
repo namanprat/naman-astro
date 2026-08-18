@@ -10,7 +10,6 @@
  * in BaseLayout, so clicking Home while already on `/` does not remount it.
  */
 import gsap from "gsap";
-import CustomEase from "gsap/CustomEase";
 import { prefersReducedMotion } from "./prefersReducedMotion";
 import { PAGE_REVEALED_EVENT, isPageRevealed } from "./pageReveal";
 import {
@@ -20,9 +19,7 @@ import {
   setGooeyBlur,
   usesSoftGooey,
 } from "./gooeyReveal";
-
-gsap.registerPlugin(CustomEase);
-CustomEase.create("introHop", "0.9, 0, 0.1, 1");
+import "./eases";
 
 const GOOEY = ".name-hero__gooey";
 const GOOEY_PARKED = "is-gooey-parked";

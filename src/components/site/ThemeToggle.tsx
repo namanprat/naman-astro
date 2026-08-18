@@ -1,9 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import gsap from "gsap";
-import CustomEase from "gsap/CustomEase";
-
-gsap.registerPlugin(CustomEase);
-CustomEase.create("hop", ".15, 1, .25, 1");
+import "../../lib/site/eases";
 
 /** theme-switch.svg circle centers — both rings, filled-left was the old disc. */
 const THEME_CX = { left: 36.3018, right: 87.4512 } as const;
@@ -67,7 +64,7 @@ export default function ThemeToggle() {
   const onToggle = () => {
     const next = !isLight;
     const root = document.documentElement;
-    root.classList.remove("theme-dark", "theme-light", "theme-brand");
+    root.classList.remove("theme-dark", "theme-light");
     root.classList.add(next ? "theme-light" : "theme-dark");
     try {
       localStorage.setItem(SITE_THEME_KEY, next ? "light" : "dark");

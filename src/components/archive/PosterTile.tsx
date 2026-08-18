@@ -33,7 +33,6 @@ const smooth = (t: number) => t * t * (3 - 2 * t);
 
 type PosterTileProps = {
   data: TileData;
-  textures: THREE.Texture[];
 };
 
 export default function PosterTile({ data }: PosterTileProps) {

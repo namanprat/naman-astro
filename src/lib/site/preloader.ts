@@ -3,18 +3,13 @@
  * no React, so the overlay paints before any island hydrates.
  */
 import gsap from "gsap";
-import CustomEase from "gsap/CustomEase";
 import { getSiteLenis, subscribeSiteLenis } from "./lenisBridge";
 import { prefersReducedMotion } from "./prefersReducedMotion";
 import { startPreload } from "./preloadAssets";
 import { segmentCount, subscribe } from "./preloadProgress";
 import { initRollingText } from "./rollingText";
 import "../../components/site/RollingText.css";
-
-gsap.registerPlugin(CustomEase);
-CustomEase.create("introHop", "0.9, 0, 0.1, 1");
-
-export const PRELOAD_ENTERED_EVENT = "site:preload-entered";
+import "./eases";
 
 /**
  * Seconds the counter spends per percentage point. Linear, so at 60fps every
@@ -143,7 +138,6 @@ export function bootPreloader(): void {
       document.documentElement.classList.remove("is-preloading");
       unsubscribeLenis();
       getSiteLenis()?.start();
-      window.dispatchEvent(new CustomEvent(PRELOAD_ENTERED_EVENT));
     };
 
     if (prefersReducedMotion()) return finish();
