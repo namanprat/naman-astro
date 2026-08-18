@@ -136,11 +136,14 @@ export default function AboutPanel({ open, mode, onClose }: AboutPanelProps) {
     const panel = panelRef.current;
     if (!panel) return;
 
-    if (!prevOpenRef.current) {
-      const lead = panel.querySelector<HTMLElement>(".about-panel__lead");
-      const leadGooey = lead ? prepareGooey(lead) : null;
-      if (leadGooey) parkGooey(leadGooey);
-    }
+    /* Splitting `.about-panel__lead` used to happen here too, pre-paint. But
+       this effect fires before `is-open` goes on for card/ride mode (that
+       toggle is below, inMenu-only), so SplitText measured the heading while
+       its panel was still `visibility: hidden` — Safari resolves that width
+       as ~0 and wraps every word onto its own line. `prepareGooey` caches by
+       element, so whichever caller splits first wins for the panel's whole
+       life; the effect below already orders is-open before the split, so
+       leave prepareGooey to it. */
 
     if (mode !== "inMenu") return;
     panel.classList.add("is-open");
