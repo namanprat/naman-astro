@@ -43,7 +43,7 @@ const NAV_STAGGER = 0.06;
  * lockup is a masked shape with no font-size, so this scales off the mark.
  * Much above this and the threshold eats the thin strokes entirely.
  */
-const GOOEY_BLUR_RATIO = 0.1125;
+const GOOEY_BLUR_RATIO = 0.45;
 
 /**
  * Below the desktop nav breakpoint the mark is too small for the *threshold* to
@@ -108,6 +108,13 @@ export function bootHomeIntro(): () => void {
   // settle / onComplete. In soft mode the armed class resolves to a blur-only
   // chain, so there is no url() to leave behind.
   if (gooey) {
+    // Hard reset: remove any stale parked/armed state first so the lockup
+    // cannot briefly render sharp (custom property cleared => 0px blur).
+    // `.name-hero__gooey:not(.is-gooey-parked)` is already `visibility:hidden`,
+    // so this guarantees no un-gooey frame can paint.
+    gooey.classList.remove(GOOEY_ARMED, GOOEY_PARKED);
+    clearGooeyBlur(gooey);
+    gooey.style.filter = "";
     setGooeyBlur(gooey, startBlur);
     gooey.classList.add(GOOEY_ARMED, GOOEY_PARKED);
   }
