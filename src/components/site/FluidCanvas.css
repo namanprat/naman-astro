@@ -14,7 +14,14 @@
 }
 
 /* Homepage: viewport backdrop so manifesto / team / footer read the sim
-   instead of an empty plate once the first screen has scrolled away. */
+   instead of an empty plate once the first screen has scrolled away.
+   `main` is the stacking context so the wrap stays behind chrome (`--z--nav`)
+   and studio/footer (`z-index: 2`), same idea as `html.page-work main`. */
+html:has(.hero) main {
+  position: relative;
+  z-index: 0;
+}
+
 html:has(.hero) .fluid-wrap {
   position: fixed;
   inset: 0;
@@ -31,19 +38,12 @@ html:has(.hero) .fluid-wrap {
   transition: opacity 0.45s ease;
 }
 
-/* Home first paint: hero is in view, so the sim starts at full strength. */
-html:has(.hero) .fluid-wrap canvas,
-html.is-preloading .fluid-wrap canvas {
-  opacity: 1;
-}
-
 html.is-hero-fluid-dim .fluid-wrap canvas {
-  opacity: 0.4;
+  opacity: 0.18;
 }
 
-/* Preloader: `.hero` may not have hydrated yet, and the dim observer can
-   fire while the wrap is still laying out. Keep the sim at full strength
-   behind the overlay. After the dim rule so it wins that collision. */
+/* Preloader: keep the sim at full strength behind the overlay. After the dim
+   rule so it wins that collision. */
 html.is-preloading .fluid-wrap canvas {
   opacity: 1;
 }
