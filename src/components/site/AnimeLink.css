@@ -27,7 +27,3 @@
   z-index: 1;
   color: var(--white);
 }
-
-.anime-link.anime-link-dark .anime-link-icon {
-  background-color: var(--dark);
-}

@@ -4,7 +4,6 @@ import { flushSync } from "react-dom";
 import { useLenis } from "lenis/react";
 import type Lenis from "lenis";
 import gsap from "gsap";
-import CustomEase from "gsap/CustomEase";
 import { SplitText } from "gsap/SplitText";
 import { useGSAP } from "@gsap/react";
 import { go, type GoOptions } from "../../lib/site/navigate";
@@ -34,10 +33,9 @@ import {
 import AboutPanel, { type AboutPanelMode } from "./AboutPanel";
 import RollingText from "./RollingText";
 import ThemeToggle from "./ThemeToggle";
+import "../../lib/site/eases";
 
-gsap.registerPlugin(CustomEase, SplitText);
-CustomEase.create("hop", ".15, 1, .25, 1");
-CustomEase.create("introHop", "0.9, 0, 0.1, 1");
+gsap.registerPlugin(SplitText);
 
 const PANEL_DURATION = 0.9;
 
@@ -772,7 +770,7 @@ export default function Menu({ initialPathname = "/" }: MenuProps) {
     }
 
     if (id === "about") {
-      // Panel lives in SiteChrome on every page — never route to /#about.
+      // Panel lives in Menu on every page — never route to /#about.
       toggleAboutPanel();
       return;
     }

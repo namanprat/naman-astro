@@ -1,27 +1,32 @@
-import { create } from "zustand";
+import { useSyncExternalStore } from "react";
 import { requestArchiveMorph } from "./rigMorph";
 import { rigState } from "./rigState";
 
 export type ArchiveView = "orb" | "grid";
 
-interface ArchiveViewState {
-  view: ArchiveView;
-  isMorphing: boolean;
-  setView: (view: ArchiveView) => void;
-  setMorphing: (v: boolean) => void;
+type Snapshot = { view: ArchiveView; isMorphing: boolean };
+
+let snapshot: Snapshot = { view: "orb", isMorphing: false };
+const listeners = new Set<() => void>();
+
+function emit(next: Snapshot) {
+  snapshot = next;
+  listeners.forEach((listener) => listener());
 }
 
-export const useArchiveViewStore = create<ArchiveViewState>((set, get) => ({
-  view: "orb",
-  isMorphing: false,
-  setMorphing: (isMorphing) => set({ isMorphing }),
-  setView: (view) => {
-    if (get().isMorphing || get().view === view) return;
-    rigState.morphTarget = view === "grid" ? 1 : 0;
-    set({ view, isMorphing: true });
-    requestArchiveMorph(() => set({ isMorphing: false }));
-  },
-}));
+function subscribe(listener: () => void) {
+  listeners.add(listener);
+  return () => {
+    listeners.delete(listener);
+  };
+}
+
+export function setArchiveView(view: ArchiveView) {
+  if (snapshot.isMorphing || snapshot.view === view) return;
+  rigState.morphTarget = view === "grid" ? 1 : 0;
+  emit({ view, isMorphing: true });
+  requestArchiveMorph(() => emit({ view, isMorphing: false }));
+}
 
 /** Default orb view — call on archive enter / mount. */
 export function resetArchiveToOrbView(): void {
@@ -33,5 +38,13 @@ export function resetArchiveToOrbView(): void {
   rigState.gridPanTarget.x = 0;
   rigState.gridPanTarget.y = 0;
   rigState.isGridPanning = false;
-  useArchiveViewStore.setState({ view: "orb", isMorphing: false });
+  emit({ view: "orb", isMorphing: false });
+}
+
+export function useArchiveView(): Snapshot {
+  return useSyncExternalStore(
+    subscribe,
+    () => snapshot,
+    () => snapshot,
+  );
 }

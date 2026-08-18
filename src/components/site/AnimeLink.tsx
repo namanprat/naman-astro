@@ -6,62 +6,43 @@ import "./AnimeLink.css";
 type AnimeLinkProps = {
   children: ReactNode;
   className?: string;
-  variant?: "accent" | "dark";
-} & (
-  | { href: string; type?: never }
-  | { href?: undefined; type?: "button" | "submit" }
-);
+  href: string;
+};
 
 export default function AnimeLink({
   children,
   className = "",
-  variant = "accent",
   href,
-  type = "submit",
 }: AnimeLinkProps) {
-  const inner = (
-    <div
-      className={`anime-link${variant === "dark" ? " anime-link-dark" : ""}`}
-    >
-      <div className="anime-link-label">
-        <h5 className="text-style-h5">
-          <RollingText>{children}</RollingText>
-        </h5>
-      </div>
-      <div className="anime-link-icon">
-        {/* Ionicons md-arrow-forward, inlined. One glyph is not worth the
-            react-icons dependency. */}
-        <svg
-          viewBox="0 0 512 512"
-          width="1em"
-          height="1em"
-          fill="currentColor"
-          aria-hidden="true"
-        >
-          <path d="M85 277.375h259.704L225.002 397.077 256 427l171-171L256 85l-29.922 29.924 118.626 119.701H85v42.75z" />
-        </svg>
-      </div>
-    </div>
-  );
-
-  if (href != null) {
-    return (
-      <a
-        href={href}
-        className={className || undefined}
-        onClick={(e) => {
-          e.preventDefault();
-          void go(href);
-        }}
-      >
-        {inner}
-      </a>
-    );
-  }
-
   return (
-    <button type={type} className={className || undefined}>
-      {inner}
-    </button>
+    <a
+      href={href}
+      className={className || undefined}
+      onClick={(e) => {
+        e.preventDefault();
+        void go(href);
+      }}
+    >
+      <div className="anime-link">
+        <div className="anime-link-label">
+          <h5 className="text-style-h5">
+            <RollingText>{children}</RollingText>
+          </h5>
+        </div>
+        <div className="anime-link-icon">
+          {/* Ionicons md-arrow-forward, inlined. One glyph is not worth the
+              react-icons dependency. */}
+          <svg
+            viewBox="0 0 512 512"
+            width="1em"
+            height="1em"
+            fill="currentColor"
+            aria-hidden="true"
+          >
+            <path d="M85 277.375h259.704L225.002 397.077 256 427l171-171L256 85l-29.922 29.924 118.626 119.701H85v42.75z" />
+          </svg>
+        </div>
+      </div>
+    </a>
   );
 }

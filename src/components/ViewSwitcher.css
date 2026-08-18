@@ -1,0 +1,58 @@
+.view-switcher {
+  --view-switcher-ink: var(--ink);
+  --view-switcher-ground: var(--dark);
+  position: fixed;
+  bottom: 2vh;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: calc(var(--z--nav) - 1);
+  display: flex;
+  gap: 0.25rem;
+  padding: 0.3rem;
+  border-radius: 999px;
+  background-color: color-mix(in srgb, var(--view-switcher-ground) 40%, transparent);
+  border: 1px solid color-mix(in srgb, var(--view-switcher-ink) 20%, transparent);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  pointer-events: auto;
+  transition: opacity 0.3s ease;
+}
+
+.view-switcher--locked {
+  --view-switcher-ink: var(--white);
+  --view-switcher-ground: var(--black);
+}
+
+.view-switcher[data-busy] {
+  opacity: 0.55;
+}
+
+.view-switcher__tab {
+  border: 0;
+  border-radius: 999px;
+  padding: 0.6em 1.6em;
+  color: color-mix(in srgb, var(--view-switcher-ink) 70%, transparent);
+  background-color: transparent;
+  transition:
+    background-color 0.3s ease,
+    color 0.3s ease;
+}
+
+.view-switcher__tab:hover:not(:disabled),
+.view-switcher__tab:focus-visible {
+  color: var(--view-switcher-ink);
+}
+
+.view-switcher__tab:focus-visible {
+  outline: 1px solid var(--view-switcher-ink);
+  outline-offset: 2px;
+}
+
+.view-switcher__tab[aria-selected="true"] {
+  background-color: var(--view-switcher-ink);
+  color: var(--view-switcher-ground);
+}
+
+.view-switcher__tab:disabled {
+  cursor: wait;
+}

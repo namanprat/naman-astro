@@ -243,62 +243,9 @@ html.work-returning .work-page[data-work-view="slider"] .gallery::after {
    every thumbnail was 36px wide. At full size the ring can only carry six, which
    `WheelView.syncCopies` works out from the circumference on its own. */
 
-/* ── View switcher ──────────────────────────────────────────────────────
-   Same pill as `.archive-view-switcher` (archive locks the colors to dark). */
-.work-view-switcher {
-  position: fixed;
-  bottom: 2vh;
-  left: 50%;
-  transform: translateX(-50%);
-  z-index: calc(var(--z--nav) - 1);
-  display: flex;
-  gap: 0.25rem;
-  padding: 0.3rem;
-  border-radius: 999px;
-  background-color: color-mix(in srgb, var(--dark) 40%, transparent);
-  border: 1px solid color-mix(in srgb, var(--ink) 20%, transparent);
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
-  transition: opacity 0.3s ease;
-}
-
-.work-view-switcher[data-busy] {
-  opacity: 0.55;
-}
-
-.work-view-switcher__tab {
-  border: 0;
-  border-radius: 999px;
-  padding: 0.6em 1.6em;
-  color: color-mix(in srgb, var(--ink) 70%, transparent);
-  background-color: transparent;
-  transition:
-    background-color 0.3s ease,
-    color 0.3s ease;
-}
-
-.work-view-switcher__tab:hover:not(:disabled),
-.work-view-switcher__tab:focus-visible {
-  color: var(--ink);
-}
-
-.work-view-switcher__tab:focus-visible {
-  outline: 1px solid var(--ink);
-  outline-offset: 2px;
-}
-
-.work-view-switcher__tab[aria-selected="true"] {
-  background-color: var(--ink);
-  color: var(--dark);
-}
-
-.work-view-switcher__tab:disabled {
-  cursor: wait;
-}
-
 /* The overlay is the project view — the switcher has nothing to act on. */
-html.work-project-open .work-view-switcher,
-html.work-returning .work-view-switcher {
+html.work-project-open .view-switcher,
+html.work-returning .view-switcher {
   opacity: 0;
   pointer-events: none;
 }

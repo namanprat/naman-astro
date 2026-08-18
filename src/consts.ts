@@ -13,6 +13,4 @@ export const SITE_URL = "https://namanprat.com";
  * Surrounding slashes are optional: `"/thanks"`, `"thanks"` and `"/thanks/"`
  * all match the same route.
  */
-/** `/gooey-lab` is temporary — drop it and the page once Safari has picked a
- *  filter variant. */
-export const NOINDEX_ROUTES: string[] = ["/404", "/about", "/gooey-lab"];
+export const NOINDEX_ROUTES: string[] = ["/404", "/about"];
