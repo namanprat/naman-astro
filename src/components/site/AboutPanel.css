@@ -67,9 +67,8 @@ html.theme-light .about-panel {
 }
 
 .about-panel__surface {
+  position: relative;
   background-color: var(--surface-accent);
-  backdrop-filter: blur(var(--surface-frost-blur));
-  -webkit-backdrop-filter: blur(var(--surface-frost-blur));
   backdrop-filter: blur(var(--surface-frost-blur)) saturate(var(--surface-frost-saturate, 1))
     contrast(var(--surface-frost-contrast, 1));
   -webkit-backdrop-filter: blur(var(--surface-frost-blur)) saturate(var(--surface-frost-saturate, 1))
@@ -78,10 +77,8 @@ html.theme-light .about-panel {
   max-height: calc(85vh - var(--site--gutter) * 2);
   overflow: visible;
   box-sizing: border-box;
-  /* No CSS transform — GSAP parks/slides via yPercent. A stylesheet
-     translateY(-100%) gets baked into GSAP as pixel `y` and stays put after
-     yPercent animates to 0, so the card never finishes opening.
-     No will-change: it used to promote an empty layer the frost then sampled. */
+  /* Slide with `top`, not transform: a GSAP translate makes this a backdrop
+     root and the frost samples the empty panel instead of the page. */
 }
 
 /* Dark mode: fully opaque orange; blur is not needed. */
@@ -195,8 +192,11 @@ html.theme-light .about-panel--in-menu {
 }
 
 .about-panel.is-open {
-  pointer-events: all;
   visibility: visible;
+}
+
+.about-panel.is-open .about-panel__surface {
+  pointer-events: auto;
 }
 
 .about-panel:focus {

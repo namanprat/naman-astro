@@ -87,9 +87,9 @@ function hideChrome(
   /* inMenu lives on the already-visible overlay — don't park the surface
      off-screen or the next open flashes a card slide. */
   if (!panel.classList.contains("about-panel--in-menu")) {
-    gsap.set(surface, { yPercent: -100, y: 0 });
+    gsap.set(surface, { top: "-100vh" });
   } else {
-    gsap.set(surface, { yPercent: 0, y: 0, clearProps: "transform" });
+    gsap.set(surface, { clearProps: "transform,top" });
   }
   gsap.set(backdrop, { autoAlpha: 0 });
 }
@@ -172,7 +172,7 @@ export default function AboutPanel({ open, mode, onClose }: AboutPanelProps) {
            Copy reveal is owned by Menu (unreveal links → reveal About). */
         backdrop.classList.remove("is-open");
         gsap.set(backdrop, { autoAlpha: 0 });
-        gsap.set(surface, { yPercent: 0, y: 0, clearProps: "transform" });
+        gsap.set(surface, { clearProps: "transform,top" });
         if (!wasOpen) {
           tlRef.current?.kill();
           tlRef.current = null;
@@ -183,7 +183,7 @@ export default function AboutPanel({ open, mode, onClose }: AboutPanelProps) {
       backdrop.classList.add("is-open");
 
       /* Entrance only on closed → open. Mode changes while open (resize) must
-         not teleport the card to yPercent -100 and slide it in again. */
+         not teleport the card off-screen and slide it in again. */
       if (!wasOpen) {
         tlRef.current?.kill();
         const tl = gsap.timeline({
@@ -203,8 +203,8 @@ export default function AboutPanel({ open, mode, onClose }: AboutPanelProps) {
            pixel translate can't keep the card parked above. */
         tl.fromTo(
           surface,
-          { yPercent: -100, y: 0 },
-          { yPercent: 0, y: 0, duration: 0.6, ease: "introHop" },
+          { top: "-100vh" },
+          { top: "0", duration: 0.6, ease: "introHop", force3D: false },
           0,
         );
         /* Its own timeline, deliberately: `tl` gets reversed on close, and a
