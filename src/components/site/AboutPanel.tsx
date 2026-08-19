@@ -164,7 +164,14 @@ export default function AboutPanel({ open, mode, onClose }: AboutPanelProps) {
     if (open) {
       panel.classList.add("is-open");
 
-      const lead = panel.querySelector<HTMLElement>(".about-panel__lead");
+      /* Closed → open edge only, same as the reveal below. `mode` is a
+         dependency and Menu flips it while the panel is open — the viewport
+         crossing 64rem, or the menu promoting `padded` to `inMenu` — so parking
+         on every run re-blurred a lead that had already settled, with the
+         edge-guarded reveal no longer there to clear it. */
+      const lead = wasOpen
+        ? null
+        : panel.querySelector<HTMLElement>(".about-panel__lead");
       const leadGooey = lead ? prepareGooey(lead) : null;
       if (leadGooey) parkGooey(leadGooey);
 
