@@ -94,32 +94,35 @@ export async function expectRevealed(page: Page) {
 }
 
 /**
- * No nav line is still parked below its mask.
+ * Nothing `heroIntro` parks is still parked.
  *
- * `heroIntro` hides the nav by pushing each line to `yPercent: 110` inside an
- * `overflow: hidden` parent, so a parked nav is not off-screen and not
- * transparent — it is simply clipped out of a box that is still exactly where
- * it belongs. Comparing against the viewport would pass either way; the line
- * has to be checked against the box that clips it.
+ * It hides two different things, and which one is on screen depends entirely on
+ * the width — so checking either alone passes vacuously on the other half of
+ * the matrix:
  *
- * Widths below the 64rem nav breakpoint hide the link stack entirely and leave
- * only the wordmark, so unrendered lines are skipped rather than failed — but
- * at least one line has to be there, or the check is vacuous.
+ * - The nav lines, pushed to `yPercent: 110` inside an `overflow: hidden`
+ *   parent. A parked line is neither off-screen nor transparent, just clipped
+ *   out of a box that is still exactly where it belongs, so it has to be
+ *   compared against the box that clips it rather than against the viewport.
+ * - The hero lockup, held at `visibility: hidden` by
+ *   `.name-hero__gooey:not(.is-gooey-parked)` until the melt is armed.
+ *
+ * Below the 64rem nav breakpoint the homepage renders *no* nav text at all —
+ * the link stack is hidden and the wordmark lives in the hero lockup — so
+ * unrendered lines are skipped rather than failed, and the lockup carries the
+ * assertion instead. Requiring at least one of the two signals is what stops
+ * the check passing on a page where neither exists.
  */
 export async function expectNavVisible(page: Page) {
   await expect
     .poll(
       () =>
         page.evaluate(() => {
-          const lines = [
+          const rendered = [
             ...document.querySelectorAll<HTMLElement>(
               ".nav_grid .nav-stack > .nav-link h5, .nav_grid .nav-logo-wordmark h5",
             ),
-          ];
-          const rendered = lines.filter(
-            (line) => line.getBoundingClientRect().height > 0,
-          );
-          if (!rendered.length) return "no nav line is rendered";
+          ].filter((line) => line.getBoundingClientRect().height > 0);
 
           const parked = rendered.filter((line) => {
             const mask = line.parentElement;
@@ -129,7 +132,21 @@ export async function expectNavVisible(page: Page) {
             // A 1px slack keeps sub-pixel layout from reading as parked.
             return box.top >= clip.bottom - 1;
           });
-          return parked.length ? `${parked.length} nav line(s) parked` : "ok";
+          if (parked.length) return `${parked.length} nav line(s) parked`;
+
+          const lockup =
+            document.querySelector<HTMLElement>(".name-hero__gooey");
+          const lockupPainted =
+            !!lockup &&
+            lockup.getBoundingClientRect().height > 0 &&
+            getComputedStyle(lockup).visibility !== "hidden";
+
+          if (!rendered.length && !lockupPainted) {
+            return lockup
+              ? "the hero lockup is still hidden and no nav line is rendered"
+              : "no nav line is rendered";
+          }
+          return "ok";
         }),
       { timeout: 30_000 },
     )
@@ -144,6 +161,18 @@ export const tilePositions = (page: Page) =>
       return `${Math.round(box.x)},${Math.round(box.y)}`;
     }),
   );
+
+/** A downward scroll gesture in whatever form this device actually sends. */
+export async function scrollDown(page: Page, cdp: CDPSession, touch: boolean) {
+  if (touch) {
+    await touchDrag(cdp, page);
+  } else {
+    const { width, height } = page.viewportSize()!;
+    await page.mouse.move(width / 2, height / 2);
+    await page.mouse.wheel(0, 700);
+  }
+  await page.waitForTimeout(1200);
+}
 
 async function touchDrag(cdp: CDPSession, page: Page) {
   const { width, height } = page.viewportSize()!;
@@ -183,14 +212,7 @@ export async function galleryMoves(
   touch: boolean,
 ): Promise<boolean> {
   const before = await tilePositions(page);
-  if (touch) {
-    await touchDrag(cdp, page);
-  } else {
-    const { width, height } = page.viewportSize()!;
-    await page.mouse.move(width / 2, height / 2);
-    await page.mouse.wheel(0, 700);
-  }
-  await page.waitForTimeout(1200);
+  await scrollDown(page, cdp, touch);
   const after = await tilePositions(page);
   return before.join("|") !== after.join("|");
 }

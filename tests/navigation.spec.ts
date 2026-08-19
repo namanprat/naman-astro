@@ -3,7 +3,9 @@ import {
   expectNavVisible,
   expectRevealed,
   isNarrowNav,
+  isTouch,
   rootClasses,
+  scrollDown,
   skipPreloader,
   stubWebGL,
 } from "./helpers";
@@ -14,57 +16,49 @@ test.beforeEach(async ({ page }) => {
   await skipPreloader(page);
 });
 
-test("the homepage scrolls", async ({ page }) => {
+test("the homepage scrolls", async ({ page, context }) => {
+  const cdp = await context.newCDPSession(page);
+
   await page.goto("/");
   await expectRevealed(page);
 
-  await page.mouse.move(400, 400);
-  await page.mouse.wheel(0, 900);
+  // A real finger drag on the touch projects: the homepage runs Lenis over the
+  // document scroller, and wheel and touch reach it by different routes.
+  await scrollDown(page, cdp, isTouch());
   await expect
-    .poll(() => page.evaluate(() => window.scrollY))
+    .poll(() => page.evaluate(() => window.scrollY), { timeout: 30_000 })
     .toBeGreaterThan(0);
 });
 
 /**
- * Getting back to the top of the homepage, through whichever surface the width
- * actually offers.
+ * Scroll the homepage with this device's own input, then get back to the top
+ * through whichever surface the width actually offers.
  *
- * The nav stack and the overlay menu swap at exactly the 64rem breakpoint, so
- * neither path is testable on its own: above it the menu toggle is hidden and
- * the section links live in `.nav_grid`; below it the reverse. Both end in
- * `goTo("/")`, which does not navigate when already on `/` — it replays the
- * hero entrance and scrolls to the top.
+ * The nav stack and the overlay menu swap at exactly the 64rem breakpoint —
+ * above it the menu toggle is hidden and the links live in `.nav_grid`, below
+ * it the reverse — so Home has to be reached differently on each side. Both
+ * ends land in `goTo("/")`, which does not navigate when already on `/`: it
+ * replays the hero entrance and scrolls to the top, which is the path that
+ * regressed.
  */
 test("returning Home scrolls to the top and keeps the nav up", async ({
   page,
+  context,
 }) => {
+  const cdp = await context.newCDPSession(page);
+  const narrow = isNarrowNav();
+
   await page.goto("/");
   await expectRevealed(page);
 
-  const openMenu = async () => {
-    await page.locator(".nav-menu-toggle").first().click();
-    await expect.poll(() => rootClasses(page)).toContain("menu-open");
-  };
-
-  if (isNarrowNav()) {
-    // Contact is the only menu entry that scrolls: Home goes to the top, Work
-    // and Archive are routes, and About opens the panel instead.
-    await openMenu();
-    await page.locator('.menu a[href="/#contact"]').first().click();
-  } else {
-    await page.mouse.move(400, 400);
-    await page.mouse.wheel(0, 2000);
-  }
-
+  await scrollDown(page, cdp, isTouch());
   await expect
     .poll(() => page.evaluate(() => window.scrollY), { timeout: 30_000 })
     .toBeGreaterThan(0);
 
-  if (isNarrowNav()) {
-    await expect
-      .poll(() => rootClasses(page), { timeout: 30_000 })
-      .not.toContain("menu-open");
-    await openMenu();
+  if (narrow) {
+    await page.locator(".nav-menu-toggle").first().click();
+    await expect.poll(() => rootClasses(page)).toContain("menu-open");
     await page.locator('.menu a[href="/"]').first().click();
   } else {
     await page.locator('.nav-stack a[href="/"]').first().click();
