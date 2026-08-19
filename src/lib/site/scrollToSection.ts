@@ -4,7 +4,7 @@ import type Lenis from "lenis";
 
 gsap.registerPlugin(ScrollTrigger);
 
-export function syncNavForSection(id: string) {
+function syncNavForSection(id: string) {
   const navBar = document.querySelector(".nav_grid");
   const wordmark = document.querySelector(".nav-logo-wordmark");
   const footerActive = id === "contact";

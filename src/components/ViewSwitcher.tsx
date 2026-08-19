@@ -1,6 +1,6 @@
 import "./ViewSwitcher.css";
 
-export type ViewSwitcherItem<T extends string> = { id: T; label: string };
+type ViewSwitcherItem<T extends string> = { id: T; label: string };
 
 type ViewSwitcherProps<T extends string> = {
   views: readonly ViewSwitcherItem<T>[];

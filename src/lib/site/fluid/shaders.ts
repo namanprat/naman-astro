@@ -9,7 +9,7 @@ void main() {
 const highp = `precision highp float;`;
 const sampler = `precision mediump sampler2D;`;
 
-export type ShaderPair = readonly [vertex: string, fragment: string];
+type ShaderPair = readonly [vertex: string, fragment: string];
 
 const shaders = {
   splat: [

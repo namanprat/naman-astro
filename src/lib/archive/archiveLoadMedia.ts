@@ -14,7 +14,7 @@ const VIDEO_MIME: Record<string, string> = {
   mp4: 'video/mp4; codecs="avc1.4d401e"',
 };
 
-export function configureArchiveTexture(texture: THREE.Texture) {
+function configureArchiveTexture(texture: THREE.Texture) {
   texture.colorSpace = THREE.SRGBColorSpace;
   texture.minFilter = THREE.LinearFilter;
   texture.magFilter = THREE.LinearFilter;

@@ -56,7 +56,7 @@ export function animateIn(): Promise<void> {
   });
 }
 
-export function animateOut(): Promise<void> {
+function animateOut(): Promise<void> {
   const panel = panelEl();
   const clear = () => {
     unlockScroll();

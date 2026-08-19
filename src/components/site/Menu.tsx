@@ -67,7 +67,7 @@ export const SOCIAL_LINKS = [
   },
 ];
 
-export const OVERLAY_LINKS = [
+const OVERLAY_LINKS = [
   { label: "Home", path: "/" },
   { label: "About", path: "/#about" },
   { label: "Work", path: "/work" },

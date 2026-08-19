@@ -10,7 +10,7 @@
 const KEY = "work:return";
 
 /** Slug from a `/work/[slug]` pathname, or null for anything else. */
-export function slugFromWorkPath(pathname: string): string | null {
+function slugFromWorkPath(pathname: string): string | null {
   return pathname.match(/^\/work\/([^/]+)\/?$/)?.[1] ?? null;
 }
 
