@@ -113,9 +113,12 @@ function loadVideoTexture(
   });
 }
 
-async function loadVideoSource(
-  urls: string[],
-): Promise<{ url: string; texture: THREE.Texture; width: number; height: number }> {
+async function loadVideoSource(urls: string[]): Promise<{
+  url: string;
+  texture: THREE.Texture;
+  width: number;
+  height: number;
+}> {
   let last: unknown;
   for (const url of orderVideoCandidates(urls)) {
     try {

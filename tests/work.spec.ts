@@ -6,9 +6,12 @@ import {
   isTouch,
   openNearestProject,
   rootClasses,
+  gestureDirection,
   seedSession,
   skipPreloader,
   stubWebGL,
+  swipe,
+  wheelBy,
 } from "./helpers";
 
 /**
@@ -41,6 +44,46 @@ for (const view of ["slider", "grid"] as const) {
     }) => {
       const cdp = await context.newCDPSession(page);
       expect(await galleryMoves(page, cdp, isTouch())).toBe(true);
+    });
+
+    /**
+     * Regression: a swipe used to drive the gallery backwards.
+     *
+     * Observer reports a wheel's `deltaY` as scroll intent and a drag's as finger
+     * travel, which are opposite for the same request. Both engines read the raw
+     * delta, so touch ran inverted while the wheel was right — and `galleryMoves`
+     * could not see it, because it only asks whether anything moved.
+     *
+     * Asserted as agreement between the two devices rather than against a fixed
+     * direction: which way "forward" looks is the engine's business, but a wheel
+     * down and a swipe up are the same request and have to land the same way.
+     */
+    test("a swipe up drives the gallery the same way a wheel down does", async ({
+      page,
+      context,
+    }) => {
+      // Needs both devices in one run to compare them, so it wants a project
+      // with `hasTouch` — a mouse-only context drops dispatched touch events.
+      test.skip(!isTouch(), "no touch input on this device");
+
+      const cdp = await context.newCDPSession(page);
+      const distance = Math.round(page.viewportSize()!.height * 0.35);
+
+      const byWheel = await gestureDirection(page, view, () =>
+        wheelBy(page, distance),
+      );
+      expect(byWheel, "the wheel did not move the gallery").not.toBe(0);
+
+      // Fresh gallery: the ring and the loop both carry state across a gesture.
+      await page.reload();
+      await expect(page.locator(".work-page")).not.toHaveClass(/is-loading/);
+
+      const bySwipe = await gestureDirection(page, view, () =>
+        swipe(page, cdp, -distance),
+      );
+      expect(bySwipe, "the swipe did not move the gallery").not.toBe(0);
+
+      expect(bySwipe).toBe(byWheel);
     });
 
     test("closing a project restores the URL and the scroll", async ({

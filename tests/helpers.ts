@@ -162,32 +162,50 @@ export const tilePositions = (page: Page) =>
     }),
   );
 
+/** Settle time for the gallery's `power3.out` scrub, plus slack. */
+const SETTLE_MS = 1200;
+
 /** A downward scroll gesture in whatever form this device actually sends. */
 export async function scrollDown(page: Page, cdp: CDPSession, touch: boolean) {
   if (touch) {
-    await touchDrag(cdp, page);
+    const { height } = page.viewportSize()!;
+    await swipe(page, cdp, -Math.round(height * 0.5));
   } else {
-    const { width, height } = page.viewportSize()!;
-    await page.mouse.move(width / 2, height / 2);
-    await page.mouse.wheel(0, 700);
+    await wheelBy(page, 700);
   }
-  await page.waitForTimeout(1200);
+  await page.waitForTimeout(SETTLE_MS);
 }
 
-async function touchDrag(cdp: CDPSession, page: Page) {
+/** Wheel `dy` px at the viewport centre. Positive is a scroll down. */
+export async function wheelBy(page: Page, dy: number) {
+  const { width, height } = page.viewportSize()!;
+  await page.mouse.move(width / 2, height / 2);
+  await page.mouse.wheel(0, dy);
+}
+
+/**
+ * Drag a finger `dy` px from the viewport centre — negative for a swipe up,
+ * which is the gesture that asks for a scroll *down*.
+ *
+ * Stepped rather than sent as one jump: Observer accumulates per move event and
+ * debounces to a frame, so a single large move reads as one delta and misses the
+ * momentum path entirely.
+ */
+export async function swipe(page: Page, cdp: CDPSession, dy: number) {
   const { width, height } = page.viewportSize()!;
   const x = Math.round(width / 2);
-  const from = Math.round(height * 0.8);
-  const distance = Math.round(height * 0.5);
+  // Start off-centre in the direction travelled from, so the whole gesture fits.
+  const from = Math.round(dy < 0 ? height * 0.8 : height * 0.2);
+  const steps = 12;
 
   await cdp.send("Input.dispatchTouchEvent", {
     type: "touchStart",
     touchPoints: [{ x, y: from }],
   });
-  for (let step = 1; step <= 12; step++) {
+  for (let step = 1; step <= steps; step++) {
     await cdp.send("Input.dispatchTouchEvent", {
       type: "touchMove",
-      touchPoints: [{ x, y: from - (distance * step) / 12 }],
+      touchPoints: [{ x, y: Math.round(from + (dy * step) / steps) }],
     });
     await page.waitForTimeout(16);
   }
@@ -195,6 +213,103 @@ async function touchDrag(cdp: CDPSession, page: Page) {
     type: "touchEnd",
     touchPoints: [],
   });
+}
+
+/** Gestures to spend looking for movement before giving up. */
+const SHIFT_ATTEMPTS = 5;
+
+/**
+ * Wait until the tiles stop moving, rather than for a fixed settle.
+ *
+ * The scrub is a 0.75s `power3.out`, but on a machine with no GPU the whole rAF
+ * loop runs slowly enough that a wall-clock wait can land mid-tween — which is
+ * exactly why the suite runs at half occupancy. Two identical reads in a row is
+ * the same signal without the guesswork.
+ */
+async function waitForGallerySettled(page: Page) {
+  let previous = "";
+  await expect
+    .poll(
+      async () => {
+        const current = (await tilePositions(page)).join("|");
+        const stable = current === previous;
+        previous = current;
+        return stable;
+      },
+      { intervals: [120], timeout: 15_000 },
+    )
+    .toBe(true);
+}
+
+/**
+ * Where the first tile sits, in the coordinate its engine actually drives it in.
+ *
+ * The grid translates tiles down a vertical loop, so y is the whole story. The
+ * ring orbits them about a centre, where y is not monotonic — it reverses twice a
+ * revolution — so the ring reports the tile's angle about the ring instead. Both
+ * come back as one signed number that advances with the engine.
+ *
+ * `.gallery__slide` includes the ring's clones, but only as extra samples for the
+ * ring centre; the tracked tile is always the first one.
+ */
+const tileProgress = (page: Page, view: "slider" | "grid") =>
+  page.evaluate((mode) => {
+    const boxes = [
+      ...document.querySelectorAll<HTMLElement>(".gallery__slide"),
+    ].map((el) => {
+      const box = el.getBoundingClientRect();
+      return { x: box.x + box.width / 2, y: box.y + box.height / 2 };
+    });
+    const first = boxes[0];
+    if (!first) return null;
+    if (mode === "grid") return first.y;
+
+    const cx = boxes.reduce((sum, b) => sum + b.x, 0) / boxes.length;
+    const cy = boxes.reduce((sum, b) => sum + b.y, 0) / boxes.length;
+    return (Math.atan2(first.y - cy, first.x - cx) * 180) / Math.PI;
+  }, view);
+
+/** Signed difference, with the ring's degrees folded onto the short way round. */
+function progressDelta(
+  before: number,
+  after: number,
+  view: "slider" | "grid",
+): number {
+  const raw = after - before;
+  if (view === "grid") return raw;
+  return ((((raw + 180) % 360) + 360) % 360) - 180;
+}
+
+/**
+ * Which way `gesture` drove the gallery, as a signed number.
+ *
+ * Repeated until something moves rather than sized to a distance that happens to
+ * work: one gesture turns the ring several tiles and the grid a fraction of one,
+ * and that ratio moves with the viewport. Stopping at the first movement also
+ * keeps a ring reading well short of half a revolution, where its sign would stop
+ * being meaningful.
+ */
+export async function gestureDirection(
+  page: Page,
+  view: "slider" | "grid",
+  gesture: () => Promise<void>,
+): Promise<number> {
+  await waitForGallerySettled(page);
+  const before = await tileProgress(page, view);
+  if (before === null) return 0;
+
+  for (let attempt = 0; attempt < SHIFT_ATTEMPTS; attempt++) {
+    await gesture();
+    await waitForGallerySettled(page);
+    const after = await tileProgress(page, view);
+    if (after === null) return 0;
+
+    const delta = progressDelta(before, after, view);
+    // Sub-pixel and sub-degree settle noise is not a direction.
+    if (Math.abs(delta) > 1) return Math.sign(delta);
+  }
+
+  return 0;
 }
 
 /**
