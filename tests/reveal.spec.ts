@@ -22,9 +22,24 @@ test.beforeEach(async ({ page }) => {
   await stubWebGL(page);
 });
 
+/**
+ * The slowest test here by a wide margin, and none of it is the site's doing.
+ *
+ * It is the only one that cannot skip the preloader, so it waits on the real
+ * asset load, and then on a 0.9s exit that is frame-*count* bound rather than
+ * time bound: GSAP's default lag smoothing advances a tween by at most 33ms per
+ * tick, so the exit needs ~27 frames however long each one takes. Headless
+ * Chromium here throttles rAF hard unless something is already driving frames —
+ * measured, the same exit runs in 1.0s at 59fps with a rAF loop present and
+ * ~15s without one. On a real browser with a compositor it is 0.9s.
+ *
+ * So the budget is sized for the environment, not for the animation.
+ */
 test("cold session: the preloader hands over and the nav appears", async ({
   page,
 }) => {
+  test.setTimeout(240_000);
+
   // No seeding: this is the once-per-session path, keyed on `preload:seen`.
   await page.goto("/");
 
@@ -32,6 +47,7 @@ test("cold session: the preloader hands over and the nav appears", async ({
   await expect(cta).toHaveAttribute("data-ready", "1", { timeout: 60_000 });
   await cta.click();
 
+  await expect(page.locator(".preloader")).toHaveCount(0, { timeout: 90_000 });
   await expectRevealed(page);
   await expectNavVisible(page);
 });
