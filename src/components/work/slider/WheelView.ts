@@ -1,5 +1,6 @@
 import { gsap } from "gsap";
 import { Observer } from "gsap/Observer";
+import { scrollDelta } from "./scrollInput";
 
 gsap.registerPlugin(Observer);
 
@@ -328,10 +329,8 @@ export default class WheelView {
     });
   }
 
-  scroll({ deltaX, deltaY }: { deltaX: number; deltaY: number }) {
+  scroll(self: Observer) {
     if (!this.enabled()) return;
-
-    const delta = Math.abs(deltaX) > Math.abs(deltaY) ? deltaX : deltaY;
 
     // A new scroll overrides a settle in progress, or the two fight over `rot`.
     this.killSnap();
@@ -339,7 +338,7 @@ export default class WheelView {
     // Negative so the ring turns with the scroll rather than against it.
     const degPerPx = -(360 / this.tiles.length) / PX_PER_STEP;
 
-    this.scrub.vars.value += delta * degPerPx;
+    this.scrub.vars.value += scrollDelta(self) * degPerPx;
     this.scrub.invalidate().restart();
   }
 

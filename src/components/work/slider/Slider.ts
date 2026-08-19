@@ -1,6 +1,7 @@
 import { gsap } from "gsap";
 import { Observer } from "gsap/Observer";
 import verticalLoop from "./verticalLoop";
+import { scrollDelta } from "./scrollInput";
 import type { RevealChange } from "./Reveal";
 
 gsap.registerPlugin(Observer);
@@ -247,12 +248,10 @@ export default class Slider {
     this.mobileMq.addEventListener("change", this.onMobileMq);
   }
 
-  scroll({ deltaX, deltaY }: { deltaX: number; deltaY: number }) {
+  scroll(self: Observer) {
     if (!this.enabled()) return;
 
-    const delta = Math.abs(deltaX) > Math.abs(deltaY) ? deltaX : deltaY;
-
-    this.scrub.vars.time += delta / 100;
+    this.scrub.vars.time += scrollDelta(self) / 100;
     this.scrub.invalidate().restart();
   }
 
