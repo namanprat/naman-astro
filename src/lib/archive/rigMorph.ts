@@ -34,7 +34,7 @@ export function requestArchiveMorph(onComplete?: () => void) {
 
   // Snap zoom back to default on every transition so grid images don't inherit
   // the orb's zoom (camera damps to this during the morph).
-  rigState.zoom = ARCHIVE_CONFIG.globeZoom;
+  rigState.zoom = rigState.restZoom;
 
   if (rigState.morphTarget >= 1) {
     // Freeze the orb where it is — the unwrap interpolates from exactly what's on

@@ -6,6 +6,9 @@ export const rigState = {
   /* Widened: ARCHIVE_CONFIG is `as const`, so this would otherwise infer the
      literal 10 and the wheel handler couldn't write a zoom back into it. */
   zoom: ARCHIVE_CONFIG.globeZoom as number,
+  /** Distance that frames the whole orb at the current aspect — `ArchiveRig`
+   *  keeps this in step with the canvas. Portrait needs more than landscape. */
+  restZoom: ARCHIVE_CONFIG.globeZoom as number,
   /** Arcball orbit orientation — current (damped) and drag/idle target. */
   orientation: new THREE.Quaternion(),
   orientationTarget: new THREE.Quaternion(),
@@ -27,7 +30,7 @@ export const rigState = {
 };
 
 export function resetRigToOrb() {
-  rigState.zoom = ARCHIVE_CONFIG.globeZoom;
+  rigState.zoom = rigState.restZoom;
   rigState.gridPan.x = 0;
   rigState.gridPan.y = 0;
   rigState.gridPanTarget.x = 0;

@@ -1,7 +1,10 @@
 import { useEffect } from "react";
 import * as THREE from "three";
 import { useFrame, useThree } from "@react-three/fiber";
-import { ARCHIVE_CONFIG } from "../../lib/archive/archiveConfig";
+import {
+  ARCHIVE_CONFIG,
+  archiveOrbZoom,
+} from "../../lib/archive/archiveConfig";
 import { rigState } from "../../lib/archive/rigState";
 
 const damp = THREE.MathUtils.damp;
@@ -14,6 +17,13 @@ const Y_AXIS = new THREE.Vector3(0, 1, 0);
 const _qDelta = new THREE.Quaternion();
 const _qTmp = new THREE.Quaternion();
 const _qSpin = new THREE.Quaternion();
+
+/**
+ * Zoom-out headroom above the resting distance. Held as a range rather than the
+ * authored absolute ceiling of 14: portrait rests further back to frame the orb,
+ * and a fixed ceiling would leave it almost nothing to pull out to.
+ */
+const ZOOM_HEADROOM = ARCHIVE_CONFIG.globeZoomMax - ARCHIVE_CONFIG.globeZoom;
 
 export default function ArchiveRig() {
   const { camera, gl } = useThree();
@@ -118,7 +128,7 @@ export default function ArchiveRig() {
       rigState.zoom = clamp(
         rigState.zoom + e.deltaY * ARCHIVE_CONFIG.globeWheelSpeed,
         ARCHIVE_CONFIG.globeZoomMin,
-        ARCHIVE_CONFIG.globeZoomMax,
+        rigState.restZoom + ZOOM_HEADROOM,
       );
     };
 
@@ -139,6 +149,20 @@ export default function ArchiveRig() {
   }, [gl, camera]);
 
   useFrame((_, delta) => {
+    /* Aspect owns the resting distance, and it moves on rotate and whenever
+       mobile browser chrome collapses. Carry the user's own zoom offset across
+       the change rather than yanking them back to rest. */
+    const nextRest = archiveOrbZoom((camera as THREE.PerspectiveCamera).aspect);
+    if (Math.abs(nextRest - rigState.restZoom) > 1e-3) {
+      const offset = rigState.zoom - rigState.restZoom;
+      rigState.restZoom = nextRest;
+      rigState.zoom = clamp(
+        nextRest + offset,
+        ARCHIVE_CONFIG.globeZoomMin,
+        nextRest + ZOOM_HEADROOM,
+      );
+    }
+
     if (rigState.morph < 0.05 && !rigState.isDragging && !rigState.isMorphing) {
       // Gentle idle drift around the screen-vertical axis (horizontal globe spin).
       _qSpin.setFromAxisAngle(Y_AXIS, ARCHIVE_CONFIG.globeSpin * delta);

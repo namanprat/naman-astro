@@ -75,3 +75,28 @@ export const ARCHIVE_GRID_ROWS = Math.ceil(
 /** Unwrap spread scaled to grid cells (legacy fallback; morph uses symmetric cells). */
 export const ARCHIVE_UNWRAP_SCALE =
   ARCHIVE_GRID_CELL_SIZE * (ARCHIVE_CONFIG.unwrapScale / 1.15);
+
+/** Vertical field of view. The camera rests here and the fit math reads it. */
+export const ARCHIVE_FOV = 75;
+
+/** Half the orb's on-screen extent: the sphere, plus the tile straddling its edge. */
+const ORB_HALF_EXTENT =
+  ARCHIVE_CONFIG.sphereRadius + ARCHIVE_GLOBE_HEIGHT * 0.5;
+
+/**
+ * Resting camera distance for a viewport of `aspect` (width / height).
+ *
+ * three's `fov` is vertical, so horizontal room is whatever the aspect gives
+ * back — and a portrait phone gives back very little. At 390×844 the fixed
+ * distance of 10 left about 3.5 world units of half-width against an orb
+ * needing 5.5, so the sides of the sphere were cropped off screen.
+ *
+ * Landscape keeps the authored distance; only viewports too narrow to frame the
+ * orb back away, and only by as much as they need.
+ */
+export function archiveOrbZoom(aspect: number): number {
+  const halfFov = (ARCHIVE_FOV * Math.PI) / 360;
+  const safeAspect = Math.max(aspect, 0.1);
+  const fit = ORB_HALF_EXTENT / (Math.tan(halfFov) * safeAspect);
+  return Math.max(ARCHIVE_CONFIG.globeZoom, fit);
+}
