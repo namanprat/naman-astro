@@ -52,7 +52,10 @@
   }
 }
 
-@media (width < 64rem), (prefers-reduced-motion: reduce) {
+/* Reduced motion is the only case that falls back to the plain SVG. The canvas
+   paints on every other viewport — the scatter and the pointer push are gated
+   separately, in the component, so narrow screens still get the lockup. */
+@media (prefers-reduced-motion: reduce) {
   .footer-ascii {
     display: none;
   }

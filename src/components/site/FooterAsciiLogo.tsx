@@ -5,6 +5,18 @@ const CELL_SIZE = 7;
 const CELL_GAP = 3;
 const CELL_STEP = CELL_SIZE + CELL_GAP;
 const FONT_SIZE = 11;
+/**
+ * Columns the card is scaled to fit. The authored 7/3/11 metrics assume a
+ * desktop-width card; held fixed, a 390px phone card fits only ~35 columns
+ * across the lockup, which reads as noise rather than as the wordmark.
+ *
+ * Chosen so a card of 960px or wider — every viewport at or above the 64rem
+ * desktop breakpoint — divides to 10 or more and lands on the clamp, leaving
+ * desktop rendering exactly as it was.
+ */
+const REFERENCE_COLS = 96;
+/** Below roughly a 4px step the glyphs stop resolving at phone pixel ratios. */
+const MIN_CELL_STEP = 4;
 const ASCII_CHARS = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
 const BRIGHTNESS_THRESHOLD = 0.5;
 const HOVER_RADIUS = 10;
@@ -69,6 +81,22 @@ function easeToward(
   cell.offsetY += (targetY - cell.offsetY) * ease;
 }
 
+type CellMetrics = { size: number; step: number; fontSize: number };
+
+/** Grid metrics for a card of `width`, scaled off the authored desktop set. */
+function metricsFor(width: number): CellMetrics {
+  const step = Math.min(
+    CELL_STEP,
+    Math.max(MIN_CELL_STEP, Math.round(width / REFERENCE_COLS)),
+  );
+  const ratio = step / CELL_STEP;
+  return {
+    size: CELL_SIZE * ratio,
+    step,
+    fontSize: FONT_SIZE * ratio,
+  };
+}
+
 function localScale(wrap: HTMLElement, wrapRect: DOMRect) {
   const w = Math.max(1, wrap.clientWidth);
   const h = Math.max(1, wrap.clientHeight);
@@ -111,10 +139,17 @@ export default function FooterAsciiLogo({
     const desktopMq = window.matchMedia(DESKTOP_MQ);
     const reduceMq = window.matchMedia(REDUCE_MQ);
     const fineHoverMq = window.matchMedia(FINE_HOVER_MQ);
-    const enabled = () => desktopMq.matches && !reduceMq.matches;
-    const cursorOn = () => enabled() && fineHoverMq.matches;
+    /* Painting the wordmark and driving it from the pointer are separate
+       concerns. The canvas is the footer lockup on every viewport; the push,
+       the scatter and the custom cursor need a real pointer, so they stay on
+       `cursorOn`. Folding the two together is what left mobile with no ASCII
+       at all. */
+    const enabled = () => !reduceMq.matches;
+    const cursorOn = () =>
+      enabled() && desktopMq.matches && fineHoverMq.matches;
 
     let phase: Phase = "logo";
+    let metrics = metricsFor(Math.max(1, wrap.clientWidth));
     let gridCols = 0;
     let gridRows = 0;
     let cells: Cell[] = [];
@@ -164,8 +199,9 @@ export default function FooterAsciiLogo({
       readCharColor();
       const wrapRect = wrap.getBoundingClientRect();
       const { w, h, scaleX, scaleY } = localScale(wrap, wrapRect);
-      gridCols = Math.max(1, Math.floor(w / CELL_STEP));
-      gridRows = Math.max(1, Math.floor(h / CELL_STEP));
+      metrics = metricsFor(w);
+      gridCols = Math.max(1, Math.floor(w / metrics.step));
+      gridRows = Math.max(1, Math.floor(h / metrics.step));
 
       const logoRect = logoImg.getBoundingClientRect();
       const sampler = document.createElement("canvas");
@@ -176,10 +212,10 @@ export default function FooterAsciiLogo({
 
       samplerContext.drawImage(
         logoImg,
-        (logoRect.left - wrapRect.left) / scaleX / CELL_STEP,
-        (logoRect.top - wrapRect.top) / scaleY / CELL_STEP,
-        logoRect.width / scaleX / CELL_STEP,
-        logoRect.height / scaleY / CELL_STEP,
+        (logoRect.left - wrapRect.left) / scaleX / metrics.step,
+        (logoRect.top - wrapRect.top) / scaleY / metrics.step,
+        logoRect.width / scaleX / metrics.step,
+        logoRect.height / scaleY / metrics.step,
       );
       const { data } = samplerContext.getImageData(0, 0, gridCols, gridRows);
 
@@ -291,13 +327,13 @@ export default function FooterAsciiLogo({
       const h = wrap.clientHeight;
       ctx.clearRect(0, 0, w, h);
       if (cells.length === 0) return;
-      ctx.font = `${FONT_SIZE}px ${MONO_FONT}`;
+      ctx.font = `${metrics.fontSize}px ${MONO_FONT}`;
       ctx.textBaseline = "top";
       ctx.textAlign = "center";
       ctx.fillStyle = charColor;
       for (const { col, row, char, offsetX, offsetY } of cells) {
-        const x = (col + offsetX) * CELL_STEP + CELL_SIZE / 2;
-        const y = (row + offsetY) * CELL_STEP;
+        const x = (col + offsetX) * metrics.step + metrics.size / 2;
+        const y = (row + offsetY) * metrics.step;
         ctx.fillText(char, x, y);
       }
     };
@@ -323,35 +359,46 @@ export default function FooterAsciiLogo({
       raf = 0;
     };
 
+    /* Without a pointer nothing pushes, scatters or falls, so the wordmark is
+       static and a rAF loop would repaint an unchanging canvas forever. Paint
+       once on those viewports and leave the frame budget alone. */
+    const rebuild = () => {
+      buildAsciiFromLogo();
+      if (!cursorOn()) drawAscii();
+    };
+
     const syncEnabled = () => {
       if (disposed) return;
       syncCursorMode();
-      if (enabled()) {
-        buildAsciiFromLogo();
-        startLoop();
-      } else {
+      if (!enabled()) {
         stopLoop();
         cells = [];
         ctx.clearRect(0, 0, wrap.clientWidth, wrap.clientHeight);
         setCursorVisible(false);
+        return;
       }
+      rebuild();
+      if (cursorOn()) startLoop();
+      else stopLoop();
     };
 
     const pointerOverUi = (target: EventTarget | null) =>
       target instanceof Element && Boolean(target.closest("a, button"));
 
     const onPointerMove = (event: PointerEvent) => {
+      // Bail before touching `cursor`, or a tap on a touch device would park a
+      // hover push in the middle of an otherwise static wordmark.
+      if (!cursorOn()) return;
+
       const wrapRect = wrap.getBoundingClientRect();
       const { scaleX, scaleY } = localScale(wrap, wrapRect);
-      cursor.col = (event.clientX - wrapRect.left) / scaleX / CELL_STEP;
-      cursor.row = (event.clientY - wrapRect.top) / scaleY / CELL_STEP;
+      cursor.col = (event.clientX - wrapRect.left) / scaleX / metrics.step;
+      cursor.row = (event.clientY - wrapRect.top) / scaleY / metrics.step;
 
-      if (cursorOn()) {
-        const x = (event.clientX - wrapRect.left) / scaleX;
-        const y = (event.clientY - wrapRect.top) / scaleY;
-        cursorEl.style.transform = `translate3d(${x}px, ${y}px, 0) translate(-50%, -50%)`;
-        setCursorVisible(!pointerOverUi(event.target));
-      }
+      const x = (event.clientX - wrapRect.left) / scaleX;
+      const y = (event.clientY - wrapRect.top) / scaleY;
+      cursorEl.style.transform = `translate3d(${x}px, ${y}px, 0) translate(-50%, -50%)`;
+      setCursorVisible(!pointerOverUi(event.target));
     };
 
     const onPointerLeave = () => {
@@ -359,7 +406,10 @@ export default function FooterAsciiLogo({
     };
 
     const onClick = (event: MouseEvent) => {
-      if (!enabled() || cells.length === 0) return;
+      // `cursorOn`, not `enabled`: the scatter is a pointer affordance, and a
+      // tap that dismantles the footer lockup with no cursor label explaining
+      // it is not one.
+      if (!cursorOn() || cells.length === 0) return;
       if (pointerOverUi(event.target)) return;
 
       switch (phase) {
@@ -412,7 +462,7 @@ export default function FooterAsciiLogo({
     }
 
     const ro = new ResizeObserver(() => {
-      if (enabled()) buildAsciiFromLogo();
+      if (enabled()) rebuild();
     });
     ro.observe(wrap);
     ro.observe(logoImg);

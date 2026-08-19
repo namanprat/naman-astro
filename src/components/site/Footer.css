@@ -207,7 +207,9 @@ html.theme-light .footer-box {
   visibility: hidden;
 }
 
-@media (width < 64rem), (prefers-reduced-motion: reduce) {
+/* Only the reduced-motion fallback shows the SVG itself — the ASCII canvas now
+   paints at every width, and both visible at once would double the wordmark. */
+@media (prefers-reduced-motion: reduce) {
   .footer-logo__source {
     visibility: visible;
   }
