@@ -134,6 +134,20 @@ export default function AboutPanel({ open, mode, onClose }: AboutPanelProps) {
     const panel = panelRef.current;
     if (!panel) return;
 
+    /* `is-open` has to go on before SplitText measures. The panel is
+       `visibility: hidden` without it, and Safari resolves that width as ~0,
+       wrapping every word onto its own line. `prepareGooey` caches by element,
+       so a hidden split would keep the lead broken for the panel's life.
+
+       Park the card off-screen first in the slide modes, otherwise the same
+       paint that makes the panel visible would flash it at rest before the
+       open tween snaps `top` to `-100vh`. */
+    if (mode !== "inMenu" && !prevOpenRef.current) {
+      const surface = surfaceRef.current;
+      if (surface) gsap.set(surface, { top: "-100vh" });
+    }
+    panel.classList.add("is-open");
+
     if (!prevOpenRef.current) {
       const lead = panel.querySelector<HTMLElement>(".about-panel__lead");
       const leadGooey = lead ? prepareGooey(lead) : null;
@@ -141,7 +155,6 @@ export default function AboutPanel({ open, mode, onClose }: AboutPanelProps) {
     }
 
     if (mode !== "inMenu") return;
-    panel.classList.add("is-open");
     /* Media only. The copy blocks no longer slide as wholes — Menu splits them
        into lines and parks those, so translating the block too would carry the
        already-parked lines a second screen down. The canvas dissolves rather
@@ -164,7 +177,14 @@ export default function AboutPanel({ open, mode, onClose }: AboutPanelProps) {
     if (open) {
       panel.classList.add("is-open");
 
-      const lead = panel.querySelector<HTMLElement>(".about-panel__lead");
+      /* Closed → open edge only, same as the reveal below. `mode` is a
+         dependency and Menu flips it while the panel is open — the viewport
+         crossing 64rem, or the menu promoting `padded` to `inMenu` — so parking
+         on every run re-blurred a lead that had already settled, with the
+         edge-guarded reveal no longer there to clear it. */
+      const lead = wasOpen
+        ? null
+        : panel.querySelector<HTMLElement>(".about-panel__lead");
       const leadGooey = lead ? prepareGooey(lead) : null;
       if (leadGooey) parkGooey(leadGooey);
 

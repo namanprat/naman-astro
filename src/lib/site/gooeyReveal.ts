@@ -30,10 +30,12 @@
  * font-size to hang an `em` off.
  *
  * Soft mode — `html.is-gooey-soft`, or `data-reveal="soft"` per element — drops
- * the threshold and keeps the blur-to-sharp entrance. It exists for faces too
- * thin to survive the cut, as the automatic fallback when `#blur-matrix` is
- * missing, and as the site-wide escape hatch if a browser turns out not to
- * manage the threshold at all. It is not armed by UA detection.
+ * the threshold and keeps the blur-to-sharp entrance. It is the default below
+ * the desktop breakpoint, where the threshold eats phone-sized strokes and its
+ * CPU rasterisation is the bulk of the frame cost. It also covers faces too thin
+ * to survive the cut, stands in automatically when `#blur-matrix` is missing, and
+ * is the site-wide escape hatch if a browser turns out not to manage the
+ * threshold at all. It is never armed by UA detection.
  */
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
@@ -90,12 +92,30 @@ const SOFT = "is-gooey-soft";
 
 /**
  * Soft mode: blur-to-sharp only, no SVG threshold. Set by `BaseLayout`'s
- * pre-paint script as an explicit opt-out, and by `markGooeySupport` when the
- * filter node is missing so we never point `url()` at nothing.
+ * pre-paint script — as the default below the desktop breakpoint, and as an
+ * explicit opt-in above it — and by `markGooeySupport` when the filter node is
+ * missing so we never point `url()` at nothing.
  */
 export function usesSoftGooey(): boolean {
   if (typeof document === "undefined") return false;
   return document.documentElement.classList.contains(SOFT);
+}
+
+/**
+ * How much of the authored radius a small screen actually uses.
+ *
+ * Blur cost scales with radius, and 0.35em of a phone-sized display face is a
+ * lot of pixels to re-rasterise every frame. Only applied on the soft path: the
+ * threshold needs the full radius to fuse at all, so a forced `?gooey=melt`
+ * keeps it.
+ */
+const MOBILE_BLUR_SCALE = 0.6;
+const DESKTOP_MQ = "(width >= 64rem)";
+
+function blurScale(): number {
+  if (typeof window === "undefined") return 1;
+  if (!usesSoftGooey()) return 1;
+  return window.matchMedia(DESKTOP_MQ).matches ? 1 : MOBILE_BLUR_SCALE;
 }
 
 /**
@@ -105,7 +125,8 @@ export function usesSoftGooey(): boolean {
  */
 export function blurPx(el: Element, em: number): string {
   const fontSize = parseFloat(getComputedStyle(el).fontSize);
-  return `${(Number.isFinite(fontSize) && fontSize > 0 ? fontSize : 16) * em}px`;
+  const base = Number.isFinite(fontSize) && fontSize > 0 ? fontSize : 16;
+  return `${base * em * blurScale()}px`;
 }
 
 /**
@@ -141,10 +162,9 @@ function hasThreshold(): boolean {
  * Route the whole document to the soft chain when `#blur-matrix` is missing.
  *
  * The per-target fallback in `gooeyClass` only covers targets that go through
- * park/arm. `.gallery-label` carries `.gooey-reveal` statically in JSX, so
- * without this its filter list would still name a `url()` that resolves to
- * nothing — which on WebKit blanks the element rather than degrading. One class
- * on the root closes that off for every consumer at once.
+ * park/arm. Anything that names `url(#blur-matrix)` from a static class would
+ * still blank on WebKit if the filter node is missing. One class on the root
+ * closes that off for every consumer at once.
  */
 function markGooeySupport(): void {
   if (!hasThreshold()) document.documentElement.classList.add(SOFT);
@@ -227,6 +247,14 @@ export function prepareGooey(el: HTMLElement): GooeyTarget | null {
   // entrance still runs rather than being cancelled.
   if (!canPrepareGooey()) return null;
 
+  /* SplitText measures to decide where lines break, and the result is cached
+     here for the element's lifetime. Measured inside a `visibility: hidden`
+     ancestor the width resolves to ~0 on WebKit, which breaks every word onto
+     its own line — and caching that would keep the heading broken for the rest
+     of the session. Bail instead: the caller skips the melt and the copy shows
+     sharp, and the next call splits properly once the panel is on screen. */
+  if (!el.getBoundingClientRect().width) return null;
+
   el.dataset.gooey = "";
   const split = SplitText.create(el, {
     type: "lines",
@@ -273,6 +301,13 @@ export function addGooeyReveal(
       onComplete: () => {
         settleGooey(list);
       },
+      /* A killed reveal has to land sharp too. `Menu.killOverlayTl` drops the
+         overlay timeline whenever a navigation or a second toggle overtakes it,
+         which used to strand these inners at whatever radius they had reached.
+         Reversing is not an interrupt, so the melt-on-exit path is unaffected. */
+      onInterrupt: () => {
+        settleGooey(list);
+      },
     },
     position,
   );
@@ -297,6 +332,12 @@ export function addGooeyUnreveal(
       duration: 0.7,
       ease: "power3.in",
       stagger: { each: REVEAL_STAGGER, from: "end" },
+      /* Completing at max blur is the point — the copy is leaving. Being killed
+         part-way is not: that leaves half-melted text on screen with nothing
+         scheduled to finish the job, so bail out sharp instead. */
+      onInterrupt: () => {
+        settleGooey(list);
+      },
     },
     position,
   );
@@ -371,14 +412,20 @@ export async function bootGooeyHeadings(): Promise<void> {
  * threshold has fused the glyphs into blobs and the old string is unreadable —
  * then blur back down onto the new one.
  *
+ * `settled` runs once the blur is back at zero, so a caller that arms the filter
+ * chain for the swap has somewhere to take it off again. It does not run when
+ * the morph is killed to retarget — the replacement owns the chain from there.
+ *
  * Returns the timeline so the caller can kill an in-flight morph and retarget.
  */
 export function gooeyMorph(
   inner: HTMLElement,
   swap: () => void,
+  settled?: () => void,
 ): gsap.core.Timeline | null {
   if (prefersReducedMotion() || !canPrepareGooey()) {
     swap();
+    settled?.();
     return null;
   }
 
@@ -388,7 +435,7 @@ export function gooeyMorph(
   const peak = blurPx(inner, MORPH_BLUR_EM);
 
   return gsap
-    .timeline()
+    .timeline({ onComplete: settled })
     .to(inner, {
       [GOOEY_BLUR_VAR]: peak,
       duration: MORPH_S,

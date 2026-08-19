@@ -33,20 +33,34 @@ const isArchive = Astro.url.pathname === "/archive";
           }
         } catch (e) {}
       })();
-      /* Soft gooey: blur-only entrance, no alpha threshold. Opt-in rather than
-         UA-detected — this used to force itself on for every WebKit build, back
-         when the threshold was assumed impossible there. It has to run pre-paint
-         because it decides the filter chain before any island paints a url().
+      /* Soft gooey: blur-only entrance, no alpha threshold. Never UA-detected —
+         this used to force itself on for every WebKit build, back when the
+         threshold was assumed impossible there. It has to run pre-paint because
+         it decides the filter chain before any island paints a url().
 
-         `?gooey=soft` flips one page load and sticks, `?gooey=melt` clears it. */
+         Below the desktop breakpoint soft is the default, which extends the
+         reasoning heroIntro.ts already applies to the wordmark: a 0.35em blur on
+         phone-sized type is a large fraction of stroke width, so the threshold
+         eats the strokes and the melt lands as mush rather than as a fuse. It is
+         also the expensive half — WebKit rasterises a `url()` filter on the CPU,
+         per line, per frame — so dropping it is what makes the entrance cheap
+         enough for a phone.
+
+         Not re-evaluated on resize: the gooey arms once per load and the site
+         uses hard navigation, so there is no route change to re-arm on.
+
+         `?gooey=soft` and `?gooey=melt` both stick, and an explicit choice wins
+         over the breakpoint either way. */
       (function () {
         try {
           var q = new URLSearchParams(location.search).get("gooey");
-          if (q === "soft") localStorage.setItem("gooey", "soft");
+          if (q === "soft" || q === "melt") localStorage.setItem("gooey", q);
           else if (q) localStorage.removeItem("gooey");
-          if (localStorage.getItem("gooey") === "soft") {
-            document.documentElement.classList.add("is-gooey-soft");
-          }
+          var pref = localStorage.getItem("gooey");
+          var soft =
+            pref === "soft" ||
+            (pref !== "melt" && !window.matchMedia("(width >= 64rem)").matches);
+          if (soft) document.documentElement.classList.add("is-gooey-soft");
         } catch (e) {}
       })();
     </script>

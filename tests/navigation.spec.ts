@@ -90,3 +90,55 @@ test("About opens and closes without stranding its state", async ({ page }) => {
     .poll(() => rootClasses(page), { timeout: 30_000 })
     .not.toContain("about-open");
 });
+
+/**
+ * Regression: the lead's gooey was parked on every run of the open effect but
+ * revealed only on the closed-to-open edge. `Menu` changes the panel's mode
+ * while it is open whenever the viewport crosses 64rem, so a resize re-blurred
+ * copy that had already settled with nothing left to clear it — and the lead
+ * stayed blurred until the panel was closed and reopened.
+ */
+test("About lead does not re-blur when a resize changes the panel mode", async ({
+  page,
+}) => {
+  await page.goto("/");
+  await expectRevealed(page);
+
+  await page.evaluate(() => {
+    window.location.hash = "#about";
+  });
+  await expect
+    .poll(() => rootClasses(page), { timeout: 30_000 })
+    .toContain("about-open");
+
+  const lead = page.locator(".about-panel__lead");
+  await expect(lead).toBeVisible();
+
+  const blur = () =>
+    lead.evaluate((el) =>
+      [...el.querySelectorAll<HTMLElement>(".gooey-reveal__inner")].map(
+        (inner) => inner.style.getPropertyValue("--gooey-blur") || "0px",
+      ),
+    );
+
+  // Let the entrance land, so anything left over afterwards is a regression.
+  await expect
+    .poll(() => blur().then((v) => v.every((b) => parseFloat(b) === 0)), {
+      timeout: 30_000,
+    })
+    .toBe(true);
+
+  // Cross the nav breakpoint in both directions — `Menu` retargets the mode
+  // each way, and each retarget re-ran the effect that used to re-park.
+  const { width, height } = page.viewportSize()!;
+  const across = width >= 1024 ? 800 : 1280;
+  await page.setViewportSize({ width: across, height });
+  await page.waitForTimeout(600);
+  await page.setViewportSize({ width, height });
+  await page.waitForTimeout(600);
+
+  expect(
+    (await blur()).every((b) => parseFloat(b) === 0),
+    "the About lead is still carrying a parked blur",
+  ).toBe(true);
+});
