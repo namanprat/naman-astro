@@ -315,9 +315,11 @@
      threshold, and the automatic fallback when `#blur-matrix` is missing: same
      blur-to-sharp entrance, no fusing.
 
-     `html.is-gooey-soft` is the same thing site-wide from one class. It is not
-     set by UA detection — force it from `BaseLayout`'s pre-paint script
-     (`?gooey=soft`).
+     `html.is-gooey-soft` is the same thing site-wide from one class. Never set
+     by UA detection: `BaseLayout`'s pre-paint script defaults it on below the
+     desktop breakpoint, where the threshold eats phone-sized strokes and its
+     CPU rasterisation costs the most, and `?gooey=soft` / `?gooey=melt` override
+     that in either direction.
 
      Blur-only rather than `filter: none`: the entrance still has to run, it just
      must not name a `url()`. */

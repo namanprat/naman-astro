@@ -3,7 +3,12 @@ import { gsap } from "gsap";
 import Lenis from "lenis";
 import { workItems } from "../../content/work";
 import { ABOUT_OPEN_CLASS } from "../../lib/site/aboutPanel";
-import { gooeyMorph } from "../../lib/site/gooeyReveal";
+import {
+  armGooey,
+  gooeyMorph,
+  settleGooey,
+  type GooeyTarget,
+} from "../../lib/site/gooeyReveal";
 import { setSiteLenis } from "../../lib/site/lenisBridge";
 import {
   SCROLL_SETTINGS,
@@ -59,6 +64,7 @@ export default function WorkGallery() {
      `shownTitle` is what the label actually renders. */
   const [hoverTitle, setHoverTitle] = useState<string | null>(null);
   const [shownTitle, setShownTitle] = useState<string | null>(null);
+  const labelRef = useRef<HTMLParagraphElement>(null);
   const labelInnerRef = useRef<HTMLSpanElement>(null);
   const morphTlRef = useRef<gsap.core.Timeline | null>(null);
   /* A ref, not `shownTitle`, so this effect can depend on `hoverTitle` alone.
@@ -75,17 +81,29 @@ export default function WorkGallery() {
 
   useEffect(() => {
     if (hoverTitle === shownRef.current) return;
+    const label = labelRef.current;
     const inner = labelInnerRef.current;
-    if (!inner) return;
+    if (!label || !inner) return;
+
+    const target: GooeyTarget = { el: label, inners: [inner] };
 
     const timer = window.setTimeout(() => {
       // Retarget rather than queue: a new name starts from wherever the last
       // morph got to, so the label never lags behind the cursor.
       morphTlRef.current?.kill();
-      morphTlRef.current = gooeyMorph(inner, () => {
-        shownRef.current = hoverTitle;
-        setShownTitle(hoverTitle);
-      });
+      /* The filter chain goes on for the swap and comes off again after. Held
+         permanently, the label sat behind `url(#blur-matrix)` and its trailing
+         0.4px softener at all times: a standing rasterisation cost on the one
+         element that is always on screen, and visible softness at rest. */
+      armGooey(target);
+      morphTlRef.current = gooeyMorph(
+        inner,
+        () => {
+          shownRef.current = hoverTitle;
+          setShownTitle(hoverTitle);
+        },
+        () => settleGooey(target),
+      );
     }, MORPH_DELAY_MS);
 
     return () => window.clearTimeout(timer);
@@ -577,14 +595,17 @@ export default function WorkGallery() {
       className={`work-page${ready ? "" : " is-loading"}`}
       data-work-view={view}
     >
-      {/* Permanently armed, unlike the one-shot heading entrance: the label
-          morphs repeatedly and at blur 0 the threshold is a near no-op, so
-          `.gooey-reveal` is static here rather than being toggled by
-          park/settle. The inner carries the filter chain, same as everywhere
-          else — keeping it off the `<p>` also keeps the filter away from a
-          `position: fixed` + `transform` box, which WebKit handles badly. */}
+      {/* Armed per swap, not statically. At blur 0 the threshold is close to a
+          no-op, but `url(#blur-matrix)` still rasterises and its trailing 0.4px
+          softener still lands — a standing cost, and visible softness at rest,
+          on the one element that is always on screen. `armGooey` also picks the
+          soft chain where the static class could not. The inner carries the
+          chain, same as everywhere else: keeping it off the `<p>` keeps the
+          filter away from a `position: fixed` + `transform` box, which WebKit
+          handles badly. */}
       <p
-        className="gallery-label gooey-reveal text-style-display"
+        ref={labelRef}
+        className="gallery-label text-style-display"
         aria-live="polite"
       >
         <span ref={labelInnerRef} className="gooey-reveal__inner">

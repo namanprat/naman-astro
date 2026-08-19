@@ -93,11 +93,9 @@ html.page-work-project main {
   text-align: center;
   color: var(--ink);
   transition: opacity 0.35s ease;
-  /* No filter here: the `.gooey-reveal` class in the markup puts the chain on
-     the inner instead, so the soft-mode rule in site.css already covers this
-     label and it needs no `html.is-gooey-soft` override of its own.
-     `text-style-display` is heavy enough to survive the threshold sitting on
-     permanently. */
+  /* No filter here: `armGooey` puts the chain on the inner for the duration of a
+     swap and takes it off again, so the rules in site.css cover this label and it
+     needs no override of its own. */
 }
 
 .work-page .gallery-label__count {
