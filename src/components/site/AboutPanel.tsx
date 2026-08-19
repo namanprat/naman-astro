@@ -10,6 +10,7 @@ import {
 } from "react";
 import gsap from "gsap";
 import { shouldMountAboutBust } from "../../lib/site/aboutBust";
+import { ABOUT_OPEN_CLASS } from "../../lib/site/aboutPanel";
 import { prefersReducedMotion } from "../../lib/site/prefersReducedMotion";
 import {
   addGooeyReveal,
@@ -228,6 +229,15 @@ export default function AboutPanel({ open, mode, onClose }: AboutPanelProps) {
       hideChrome(panel, surface, backdrop);
     }
   }, [open, mode]);
+
+  /* Follows the prop, so the cleanup runs even when the exit animation does
+     not complete. See ABOUT_OPEN_CLASS. */
+  useEffect(() => {
+    if (!open) return;
+    const root = document.documentElement;
+    root.classList.add(ABOUT_OPEN_CLASS);
+    return () => root.classList.remove(ABOUT_OPEN_CLASS);
+  }, [open]);
 
   useEffect(() => {
     if (!open) {

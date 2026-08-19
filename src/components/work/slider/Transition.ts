@@ -45,9 +45,24 @@ const CLOSE_MORPH_DELAY = 0.08;
    enough that a stalled decode is never felt. */
 const DECODE_TIMEOUT = 120;
 
+/**
+ * Why the overlay is closing. `fromPopstate` means the browser has already
+ * moved the URL, so the listener must reconcile it in place rather than push a
+ * new entry — pushing would fight the Back button that triggered the close.
+ *
+ * It rides with the close rather than living as a flag beside it: as a flag it
+ * could be set by a popstate that `close()` then ignored (a close was already
+ * in flight), and the *next* close would consume it and skip its own URL sync,
+ * leaving `/work` on screen with a `/work/[slug]` address. From there the nav's
+ * WORK link no longer reads as an in-page close and hard-reloads the page.
+ */
+export type CloseReason = { fromPopstate: boolean };
+
+export type CloseOptions = Partial<CloseReason>;
+
 type TransitionOptions = {
   root?: ParentNode;
-  onClose?: () => void;
+  onClose?: (reason: CloseReason) => void;
   onOpenComplete?: (slug: string) => void;
   /** Optional prep before Flip close (e.g. reset overlay scroll). */
   onBeforeClose?: () => Promise<void>;
@@ -55,7 +70,7 @@ type TransitionOptions = {
 
 /** Image-to-content Flip transition */
 export default class Transition {
-  onClose?: () => void;
+  onClose?: (reason: CloseReason) => void;
   onOpenComplete?: (slug: string) => void;
   onBeforeClose?: () => Promise<void>;
   root: ParentNode;
@@ -68,6 +83,12 @@ export default class Transition {
   tl: gsap.core.Timeline | null = null;
   splitBody: SplitText | null = null;
   state: TransitionState = "closed";
+  /**
+   * Sticky for the length of one close cycle, cleared by `reset()`. A popstate
+   * landing on an already-closing overlay still means the browser moved the
+   * URL, so the reason has to survive the `close()` call that ignores it.
+   */
+  private closeReason: CloseReason = { fromPopstate: false };
 
   constructor({
     root = document,
@@ -138,6 +159,7 @@ export default class Transition {
     // same frame. See the `work-morphing` rule in Work.css.
     document.documentElement.classList.add("work-morphing");
     gsap.killTweensOf(wrapper);
+    this.captureWrapperAlpha(wrapper);
     gsap.set(wrapper, { autoAlpha: 0 });
     gsap.set(preview, { autoAlpha: 1 });
     gsap.set(previewImg, { scale: 1.2 });
@@ -165,9 +187,15 @@ export default class Transition {
     this.tl = gsap
       .timeline({
         onComplete: () => {
-          this.state = "open";
           this.unlockCoverRow();
           document.documentElement.classList.remove("work-transitioning");
+          // A close that arrived mid-open already owns the state machine, and
+          // `onOpenComplete` is what pushes `/work/[slug]`. Publishing the
+          // project URL for an overlay that is on its way out is what left the
+          // address pointing at a project the gallery had already come back
+          // from.
+          if (this.state !== "opening") return;
+          this.state = "open";
           if (this.activeSlug) this.onOpenComplete?.(this.activeSlug);
         },
         onReverseComplete: () => this.reset(),
@@ -251,6 +279,7 @@ export default class Transition {
     gsap.set(this.content, { display: "block" });
     this.content.setAttribute("aria-hidden", "false");
     gsap.killTweensOf(wrapper);
+    this.captureWrapperAlpha(wrapper);
     gsap.set(wrapper, { autoAlpha: 0 });
     // Parked where a real open's clear beat would have left them, so the close
     // below has the same distance to bring them back.
@@ -276,7 +305,11 @@ export default class Transition {
     this.state = "open";
   }
 
-  async close() {
+  async close(options?: CloseOptions) {
+    // OR-ed rather than assigned: once anything in this cycle knows the browser
+    // moved the URL, every later step has to.
+    this.closeReason.fromPopstate ||= options?.fromPopstate ?? false;
+
     if (this.state === "opening") {
       this.state = "closing";
 
@@ -423,6 +456,35 @@ export default class Transition {
   }
 
   /**
+   * The tile's own visibility, as its engine left it.
+   *
+   * The morph hides the wrapper for the length of the transition, and the
+   * wrapper's visibility is not `Transition`'s to decide: in grid view `Reveal`
+   * owns it per tile, and the wheel view sets every wrapper visible once at
+   * build. Clearing it outright — as `clearProps: "all"` did — handed the tile
+   * back at whatever CSS says rather than at what its engine believes, so a
+   * reopened grid tile could come back visible while `Reveal` still had it
+   * recorded as hidden. Snapshot the inline values instead and put them back.
+   */
+  private wrapperAlpha: { opacity: string; visibility: string } | null = null;
+
+  private captureWrapperAlpha(wrapper: HTMLElement) {
+    this.wrapperAlpha = {
+      opacity: wrapper.style.opacity,
+      visibility: wrapper.style.visibility,
+    };
+  }
+
+  private restoreWrapperAlpha(wrapper: HTMLElement) {
+    const saved = this.wrapperAlpha;
+    this.wrapperAlpha = null;
+    gsap.set(wrapper, { clearProps: "opacity,visibility" });
+    if (!saved) return;
+    wrapper.style.opacity = saved.opacity;
+    wrapper.style.visibility = saved.visibility;
+  }
+
+  /**
    * Flip's `absolute: true` takes the cover out of flow for the length of the
    * morph. The cover is the only thing giving its grid row height, so the row
    * collapses to zero and every block below it jumps ~730px up the page — the
@@ -530,11 +592,16 @@ export default class Transition {
     document.documentElement.classList.remove("work-transitioning");
     document.documentElement.classList.remove("work-morphing");
 
+    // Read and clear together, so the next cycle starts from a clean reason
+    // however this one ended.
+    const reason: CloseReason = { ...this.closeReason };
+    this.closeReason = { fromPopstate: false };
+
     if (!this.activeSlide) {
       this.state = "closed";
       this.activeSlug = null;
       this.content.setAttribute("aria-hidden", "true");
-      this.onClose?.();
+      this.onClose?.(reason);
       return;
     }
 
@@ -573,7 +640,8 @@ export default class Transition {
     if (this.preview) gsap.set(this.preview, { clearProps: "all" });
     if (this.previewImg) gsap.set(this.previewImg, { clearProps: "all" });
     if (this.preview) delete this.preview.dataset.flipId;
-    gsap.set(wrapper, { clearProps: "all" });
+    gsap.set(wrapper, { clearProps: "transform,transformOrigin" });
+    this.restoreWrapperAlpha(wrapper);
 
     this.activeSlide = null;
     this.activeSlug = null;
@@ -582,6 +650,23 @@ export default class Transition {
     this.tl = null;
     this.state = "closed";
 
-    this.onClose?.();
+    this.onClose?.(reason);
+  }
+
+  /**
+   * Full teardown. Routed through `reset()` rather than just killing the
+   * timeline: the morph leaves `flipId` on the tile, a pinned row height on the
+   * cover's grid cell, a live `SplitText` over the body copy and
+   * `html.work-transitioning` — which is `cursor: progress !important` on every
+   * element. Killing `tl` alone left all of that behind.
+   */
+  destroy() {
+    this.tl?.kill();
+    this.tl = null;
+    if (this.state !== "closed") this.reset();
+    document.documentElement.classList.remove("work-transitioning");
+    this.onClose = undefined;
+    this.onOpenComplete = undefined;
+    this.onBeforeClose = undefined;
   }
 }

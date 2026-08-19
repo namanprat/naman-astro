@@ -4,6 +4,11 @@
  */
 import gsap from "gsap";
 import { getSiteLenis, subscribeSiteLenis } from "./lenisBridge";
+import {
+  isPreloading,
+  PRELOAD_ENTERED_EVENT,
+  PRELOADING_CLASS,
+} from "./pageReveal";
 import { prefersReducedMotion } from "./prefersReducedMotion";
 import { startPreload } from "./preloadAssets";
 import { segmentCount, subscribe } from "./preloadProgress";
@@ -57,7 +62,7 @@ export function bootPreloader(): void {
 
   // Already seen this session — the head script left `is-preloading` off, so
   // drop the markup and let the page behave as any other navigation.
-  if (!document.documentElement.classList.contains("is-preloading")) {
+  if (!isPreloading()) {
     root.remove();
     return;
   }
@@ -135,9 +140,10 @@ export function bootPreloader(): void {
 
     const finish = () => {
       root!.remove();
-      document.documentElement.classList.remove("is-preloading");
+      document.documentElement.classList.remove(PRELOADING_CLASS);
       unsubscribeLenis();
       getSiteLenis()?.start();
+      window.dispatchEvent(new CustomEvent(PRELOAD_ENTERED_EVENT));
     };
 
     if (prefersReducedMotion()) return finish();
