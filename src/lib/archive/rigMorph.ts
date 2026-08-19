@@ -15,7 +15,6 @@ function prepareGridMorph() {
   const anchorIdx = findFrontCenterTileIndex(positions, rigState.orientation);
 
   rigState.gridAnchorIndex = anchorIdx;
-  rigState.gridAnchorTextureIndex = rigState.tileTextureIndices[anchorIdx] ?? 0;
   rigState.tileGridCells = assignWrappedGridCells(
     positions.length,
     anchorIdx,

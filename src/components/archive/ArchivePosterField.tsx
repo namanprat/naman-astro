@@ -8,39 +8,35 @@ import {
   ARCHIVE_CONFIG,
   ARCHIVE_PRIMARY_FONT,
 } from "../../lib/archive/archiveConfig";
-import { ARCHIVE_ITEMS } from "../../content/archive";
 import { fibonacciSpherePoints } from "../../lib/archive/archiveLayout";
 import { rigState } from "../../lib/archive/rigState";
-import { useArchiveTextures } from "../../lib/archive/useArchiveTextures";
+import { useArchiveMedia } from "../../lib/archive/useArchiveMedia";
 
 export default function ArchivePosterField() {
-  const textures = useArchiveTextures();
+  const sources = useArchiveMedia();
   const textMat = useRef<{ opacity: number } | null>(null);
 
   const tiles = useMemo<TileData[]>(() => {
-    if (!textures.length) return [];
+    if (!sources.length) return [];
 
     const pts = fibonacciSpherePoints(
       ARCHIVE_CONFIG.tileCount,
       ARCHIVE_CONFIG.sphereRadius,
     );
     const globePositions: typeof rigState.globePositions = [];
-    const tileTextureIndices: number[] = [];
     const built = pts.map((globePos, i) => {
-      const texIdx = Math.floor(Math.random() * textures.length);
-      const texture = textures[texIdx]!;
-      const img = texture.image as
-        { width: number; height: number } | undefined;
-      const aspect = img && img.height ? img.width / img.height : 1;
-      const span = ARCHIVE_ITEMS[texIdx]?.span ?? "height";
+      /* Aspect and span both ride on the source. Reading `span` out of
+         ARCHIVE_ITEMS by this index only held while the loaded array matched
+         the manifest one-for-one, which stopped being true the moment a failed
+         asset could be dropped. */
+      const source = sources[Math.floor(Math.random() * sources.length)]!;
+      const aspect = source.height ? source.width / source.height : 1;
       globePositions.push(globePos);
-      tileTextureIndices.push(texIdx);
-      return buildTileData(globePos, i, texture, aspect, span);
+      return buildTileData(globePos, i, source.texture, aspect, source.span);
     });
     rigState.globePositions = globePositions;
-    rigState.tileTextureIndices = tileTextureIndices;
     return built;
-  }, [textures]);
+  }, [sources]);
 
   useFrame(() => {
     if (textMat.current) {

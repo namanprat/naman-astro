@@ -21,10 +21,8 @@ export const rigState = {
 
   /** Populated when tiles build — used for anchor pick on grid morph. */
   globePositions: [] as Vec3[],
-  tileTextureIndices: [] as number[],
 
   gridAnchorIndex: -1,
-  gridAnchorTextureIndex: 0,
   tileGridCells: [] as CellId[],
 };
 
@@ -36,6 +34,5 @@ export function resetRigToOrb() {
   rigState.gridPanTarget.y = 0;
   rigState.isGridPanning = false;
   rigState.gridAnchorIndex = -1;
-  rigState.gridAnchorTextureIndex = 0;
   rigState.tileGridCells = [];
 }

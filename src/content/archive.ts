@@ -10,6 +10,12 @@ export type ArchiveSpan = "height" | "width";
 
 export type ArchiveItem = {
   src: string;
+  /**
+   * Alternate encodings of the same clip, tried when `src` won't decode. Safari
+   * ships no VP9 decoder, so the webm poster needs an H.264 sibling or it fails
+   * on every iOS device.
+   */
+  fallbacks?: string[];
   span?: ArchiveSpan;
 };
 
@@ -19,14 +25,10 @@ export const ARCHIVE_ITEMS: ArchiveItem[] = [
   { src: "/archive/Duforn%20Poster%202.webp" },
   { src: "/archive/first%20act.webp" },
   { src: "/archive/Frame%2012.webp" },
-  { src: "/archive/IMG_4294.webm" },
+  { src: "/archive/IMG_4294.webm", fallbacks: ["/archive/IMG_4294.mp4"] },
   { src: "/archive/ipod.webp" },
   { src: "/archive/Poster%206.webp" },
   { src: "/archive/Poster9%20File.webp" },
   { src: "/archive/Unstoppable.webp" },
   { src: "/archive/Vector-1.webp", span: "width" },
 ];
-
-export const ARCHIVE_MEDIA_URLS: string[] = ARCHIVE_ITEMS.map(
-  (item) => item.src,
-);
