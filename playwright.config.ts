@@ -1,3 +1,4 @@
+import { cpus } from "node:os";
 import { defineConfig, type Project } from "@playwright/test";
 
 /**
@@ -46,7 +47,18 @@ export default defineConfig({
   fullyParallel: true,
   forbidOnly: !!process.env.CI,
   retries: process.env.CI ? 1 : 0,
-  workers: process.env.CI ? 2 : undefined,
+  /**
+   * Half the cores, not all of them.
+   *
+   * `stubWebGL` only takes the fluid canvas out of the frame budget — the team
+   * carousel and the About dither are three.js too, and nulling their context
+   * takes the islands down with them. On a machine with no GPU those run
+   * through software rendering, so one worker per core leaves every browser
+   * fighting for the same CPU and rAF starves: entrance animations that finish
+   * in under a second normally stall long enough to time out. The suite was
+   * only ever flaky at full occupancy and is stable at half.
+   */
+  workers: Math.max(1, Math.floor(cpus().length / 2)),
   reporter: process.env.CI ? "line" : "list",
   timeout: 90_000,
   expect: { timeout: 20_000 },
