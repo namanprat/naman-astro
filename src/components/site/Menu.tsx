@@ -391,15 +391,20 @@ export default function Menu({ initialPathname = "/" }: MenuProps) {
     };
   }, [lenis]);
 
+  /* Only the run that stopped a Lenis may start it again.
+     `lenis` is a dependency, so swapping instances re-runs this effect — and
+     the old cleanup closure still held the old instance. On `/work` that meant
+     `setSiteLenis(null)` at the end of a project close immediately restarted
+     the overlay Lenis that the close had just stopped, every single time.
+     Returning a cleanup only from the locking branch keeps stop and start
+     paired to the same instance. */
   useEffect(() => {
-    const lockScroll = isOpen || aboutOpen;
-    if (lockScroll) {
-      lenis?.stop();
-      if (isOpen) document.documentElement.classList.add("menu-open");
-    } else {
-      lenis?.start();
+    if (!(isOpen || aboutOpen)) {
       document.documentElement.classList.remove("menu-open");
+      return;
     }
+    lenis?.stop();
+    if (isOpen) document.documentElement.classList.add("menu-open");
     return () => {
       document.documentElement.classList.remove("menu-open");
       lenis?.start();

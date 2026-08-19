@@ -2,6 +2,7 @@ import { useEffect, useRef, useState, type CSSProperties } from "react";
 import { gsap } from "gsap";
 import Lenis from "lenis";
 import { workItems } from "../../content/work";
+import { ABOUT_OPEN_CLASS } from "../../lib/site/aboutPanel";
 import { gooeyMorph } from "../../lib/site/gooeyReveal";
 import { setSiteLenis } from "../../lib/site/lenisBridge";
 import {
@@ -19,7 +20,7 @@ import ProjectDetail from "./ProjectDetail";
 import Reveal from "./slider/Reveal";
 import Slider, { isWorkGridMobile, WORK_GRID_MOBILE_MQ } from "./slider/Slider";
 import WheelView from "./slider/WheelView";
-import Transition from "./slider/Transition";
+import Transition, { type CloseReason } from "./slider/Transition";
 import ViewSwitcher from "../ViewSwitcher";
 import "./Work.css";
 
@@ -70,7 +71,6 @@ export default function WorkGallery() {
   const viewRef = useRef<WorkView>(view);
   const switchingRef = useRef(false);
   const engineRef = useRef<ViewEngine | null>(null);
-  const transitionRef = useRef<Transition | null>(null);
   const switchViewRef = useRef<(next: WorkView) => void>(() => {});
 
   useEffect(() => {
@@ -112,9 +112,16 @@ export default function WorkGallery() {
     let overlayLenis: Lenis | null = null;
     let stopDrivingLenis: (() => void) | null = null;
     let cancelled = false;
-    /* Set while a popstate is what triggered the close, so reset() doesn't
-       push a second entry on top of the one the browser just popped. */
-    let closingFromPopstate = false;
+    /* One controller for every listener this effect adds, so the cleanup cannot
+       drift from the list. Six delegated handlers on `root` used to be added
+       and never removed; a second run against the same node then left an
+       orphaned engine whose Observer kept swallowing wheel and touch. */
+    const listeners = new AbortController();
+    const on = <T extends EventTarget>(
+      target: T,
+      type: string,
+      handler: EventListenerOrEventListenerObject,
+    ) => target.addEventListener(type, handler, { signal: listeners.signal });
 
     const onCloseRequest = () => {
       if (!transition || transition.state === "closed") return;
@@ -122,9 +129,23 @@ export default function WorkGallery() {
     };
 
     const onPopState = () => {
-      if (!transition || transition.state === "closed") return;
-      closingFromPopstate = true;
-      void transition.close();
+      if (!transition) return;
+      if (transition.state !== "closed") {
+        // The browser has already moved the URL; the close must reconcile in
+        // place rather than push over the entry Back just landed on.
+        void transition.close({ fromPopstate: true });
+        return;
+      }
+      /* Back landed on a project entry with the gallery already showing —
+         every close pushes a `/work` entry, so the project entry stays in the
+         stack behind it. There is nothing to close, so the address is simply
+         wrong for what is on screen, and left that way the nav's WORK link
+         stops reading as an in-page close (`isInPageMenuNav` tests the
+         pathname) and hard-reloads the page, replaying the whole reverse Flip
+         for what should have been a no-op. Correct it in place. */
+      if (window.location.pathname !== "/work") {
+        history.replaceState({ workProject: null }, "", "/work");
+      }
     };
 
     /* The gallery is only ever `<img>`, so `complete` plus load/error events are
@@ -152,11 +173,15 @@ export default function WorkGallery() {
       ...root.querySelectorAll<HTMLElement>(".gallery__slide"),
     ];
 
+    /* `about-open` rather than `.about-panel.is-open`: that class carries the
+       panel's visibility and pointer-events, so it has to outlive the exit
+       animation and is removed from an `onReverseComplete`. An exit that never
+       completed would have muted the gallery for good. */
     const engineEnabled = () =>
-      transition!.state === "closed" &&
+      transition?.state === "closed" &&
       !switchingRef.current &&
       !document.documentElement.classList.contains("menu-open") &&
-      !document.querySelector(".about-panel.is-open");
+      !document.documentElement.classList.contains(ABOUT_OPEN_CLASS);
 
     /**
      * Build the engine for `next`. Grid keeps Reveal driving per-tile fades;
@@ -245,10 +270,15 @@ export default function WorkGallery() {
         engineRef.current = built;
       };
 
+      /* Runs on every exit, cancelled or not. `swap()` installs the new engine
+         stopped, so bailing here without it left the gallery with a disabled
+         Observer and `switchingRef` stuck true — wheel and touch were then
+         dropped by `engineEnabled()` with nothing on screen to explain it. */
       const done = () => {
+        switchingRef.current = false;
+        engineRef.current?.suspendResize(false);
         if (cancelled) return;
         engineRef.current?.start();
-        switchingRef.current = false;
         setSwitching(false);
       };
 
@@ -314,16 +344,23 @@ export default function WorkGallery() {
           // Rewind the overlay to the cover before the box travels home, so
           // Flip measures the cover rather than a scrolled-away frame.
           onBeforeClose: async () => {
-            overlayLenis?.scrollTo(0, { immediate: true });
+            overlayLenis?.scrollTo(0, { immediate: true, force: true });
           },
-          onClose: () => {
+          onClose: ({ fromPopstate }: CloseReason) => {
             if (cancelled) return;
             overlayLenis?.stop();
             setSiteLenis(null);
-            if (closingFromPopstate) {
-              closingFromPopstate = false;
-            } else if (window.location.pathname !== "/work") {
-              history.pushState({ workProject: null }, "", "/work");
+            /* The gallery is what is on screen, so the address has to say
+               `/work` either way. After a popstate that is a correction to the
+               entry the browser just landed on — `replaceState`, or a push
+               would immediately undo the Back that got us here. Skipping the
+               sync entirely, as this used to, is what left `/work` showing a
+               `/work/[slug]` URL, and from there the nav's WORK link stopped
+               reading as an in-page close and hard-reloaded the page. */
+            if (window.location.pathname !== "/work") {
+              const entry = { workProject: null };
+              if (fromPopstate) history.replaceState(entry, "", "/work");
+              else history.pushState(entry, "", "/work");
             }
             engineRef.current?.start();
             if (viewRef.current === "grid" && isWorkGridMobile()) {
@@ -337,15 +374,19 @@ export default function WorkGallery() {
               history.pushState({ workProject: slug }, "", `/work/${slug}`);
             }
             /* Measured only now: the wrapper was `display: none` for the whole
-               morph, so anything Lenis read before this is zero. */
+               morph, so anything Lenis read before this is zero.
+
+               `start()` comes before the rewind: Lenis drops a `scrollTo` while
+               it is stopped unless `force` is passed, so rewinding first was a
+               silent no-op and the overlay could open already scrolled.
+               `scrollToSection.ts` passes `force` for the same reason. */
             overlayLenis?.resize();
-            overlayLenis?.scrollTo(0, { immediate: true });
             overlayLenis?.start();
+            overlayLenis?.scrollTo(0, { immediate: true, force: true });
             // Menu and pageTransition stop/start whatever is in this slot.
             if (overlayLenis) setSiteLenis(overlayLenis);
           },
         });
-        transitionRef.current = transition;
 
         engineRef.current = makeEngine(viewRef.current);
         if (viewRef.current === "grid" && isWorkGridMobile()) {
@@ -379,16 +420,17 @@ export default function WorkGallery() {
             ? e.target.closest<HTMLElement>(".gallery__slide")
             : null;
 
-        root.addEventListener("click", (e) => {
+        on(root, "click", (e) => {
           const tile = tileOfEvent(e);
           if (tile) openTile(tile);
         });
 
-        root.addEventListener("keydown", (e) => {
-          if (e.key !== "Enter" && e.key !== " ") return;
-          const tile = tileOfEvent(e);
+        on(root, "keydown", (e) => {
+          const event = e as KeyboardEvent;
+          if (event.key !== "Enter" && event.key !== " ") return;
+          const tile = tileOfEvent(event);
           if (!tile) return;
-          e.preventDefault();
+          event.preventDefault();
           openTile(tile);
         });
 
@@ -416,20 +458,20 @@ export default function WorkGallery() {
           );
         };
 
-        root.addEventListener("mouseover", (e) => {
+        on(root, "mouseover", (e) => {
           const tile = tileOfEvent(e);
           if (tile) nameTile(tile);
         });
-        root.addEventListener("mouseout", clearName);
+        on(root, "mouseout", clearName);
 
-        root.addEventListener("focusin", (e) => {
+        on(root, "focusin", (e) => {
           const tile = tileOfEvent(e);
           if (tile) nameTile(tile);
         });
-        root.addEventListener("focusout", clearName);
+        on(root, "focusout", clearName);
 
-        window.addEventListener("work:close", onCloseRequest);
-        window.addEventListener("popstate", onPopState);
+        on(window, "work:close", onCloseRequest);
+        on(window, "popstate", onPopState);
 
         if (returnIndex < 0) {
           endReturn();
@@ -444,6 +486,10 @@ export default function WorkGallery() {
         engineRef.current.centerOn(returnIndex);
         const returnSlide = slides[returnIndex];
         if (!returnSlide) {
+          // Nothing to fly home to. The engine is already stopped, and only a
+          // completed close restarts it, so hand it back here or the gallery
+          // arrives permanently unscrollable.
+          engineRef.current.start();
           endReturn();
           return;
         }
@@ -451,12 +497,24 @@ export default function WorkGallery() {
 
         if (cancelled) return;
         endReturn();
-        void transition.close();
+        // `snapOpen` bails without opening if it was superseded or the project
+        // has no preview to morph; `close()` then has nothing to reverse and
+        // returns early, leaving the stop above in place.
+        if (transition.state === "closed") engineRef.current.start();
+        else void transition.close();
       } catch (err) {
         console.error("Work gallery failed to boot", err);
+        /* The clear beat fades the *slides*, not their wrappers — restoring
+           wrappers left the six tiles at `autoAlpha: 0, scale: 0.6` and the
+           Works view came back empty. */
+        gsap.set(root.querySelectorAll(".gallery__slide"), {
+          autoAlpha: 1,
+          scale: 1,
+        });
         gsap.set(root.querySelectorAll(".gallery__img-wrapper"), {
           autoAlpha: 1,
         });
+        engineRef.current?.start();
         endReturn();
       }
     };
@@ -487,7 +545,9 @@ export default function WorkGallery() {
         setHoverTitle(null);
       }
     };
-    mobileMq.addEventListener("change", onMobileMq);
+    mobileMq.addEventListener("change", onMobileMq, {
+      signal: listeners.signal,
+    });
 
     return () => {
       cancelled = true;
@@ -495,11 +555,14 @@ export default function WorkGallery() {
       document.documentElement.classList.remove("work-project-open");
       document.documentElement.classList.remove("work-morphing");
       endReturn();
-      mobileMq.removeEventListener("change", onMobileMq);
-      window.removeEventListener("work:close", onCloseRequest);
-      window.removeEventListener("popstate", onPopState);
+      listeners.abort();
       engineRef.current?.destroy();
-      transition?.tl?.kill();
+      engineRef.current = null;
+      // Not `tl.kill()`: that skipped `reset()` and left the morph's `flipId`,
+      // the pinned cover row, a live SplitText and `html.work-transitioning`
+      // (`cursor: progress` on everything) behind.
+      transition?.destroy();
+      transition = null;
       morphTlRef.current?.kill();
       gsap.killTweensOf(root.querySelector(".gallery"));
       stopDrivingLenis?.();

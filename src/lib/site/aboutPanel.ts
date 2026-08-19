@@ -4,6 +4,19 @@ type AboutSetter = (open: boolean | ((prev: boolean) => boolean)) => void;
 
 let setter: AboutSetter | null = null;
 
+/**
+ * On `<html>` for exactly as long as About is up, driven by the panel's `open`
+ * prop.
+ *
+ * Distinct from `.about-panel.is-open`, which carries `visibility` and
+ * `pointer-events` and so has to outlive the exit animation — it is removed
+ * from `onReverseComplete`. Anything asking "is About up?" needs the state, not
+ * the animation's lifetime: `WorkGallery` mutes the gallery's wheel and touch
+ * while About is open, and an exit that never completes would have muted it for
+ * good, with nothing on screen to explain why.
+ */
+export const ABOUT_OPEN_CLASS = "about-open";
+
 export function registerAboutPanel(fn: AboutSetter | null) {
   setter = fn;
 }
@@ -51,7 +64,8 @@ export function installAboutInterceptors(): () => void {
   const onClick = (event: MouseEvent) => {
     if (event.defaultPrevented) return;
     if (event.button !== 0) return;
-    if (event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
+    if (event.metaKey || event.ctrlKey || event.shiftKey || event.altKey)
+      return;
 
     const target = event.target;
     if (!(target instanceof Element)) return;

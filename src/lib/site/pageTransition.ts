@@ -6,7 +6,11 @@
  */
 import gsap from "gsap";
 import { getSiteLenis } from "./lenisBridge";
-import { markPageRevealed } from "./pageReveal";
+import {
+  isPreloading,
+  markPageRevealed,
+  PRELOAD_ENTERED_EVENT,
+} from "./pageReveal";
 import { prefersReducedMotion } from "./prefersReducedMotion";
 import "./eases";
 
@@ -81,6 +85,38 @@ export function animateOut(): Promise<void> {
 }
 
 /**
+ * Resolves when the home preloader hands the screen over.
+ *
+ * Two signals, either of which is enough. The event is the intended one; the
+ * class going away is the state itself, watched as well because this promise
+ * gates the entire page entrance — the hero nav, the heading gooey and the line
+ * reveal all wait behind it, and the two hold classes in `site.css` keep every
+ * heading and paragraph at `visibility: hidden` until the modules that clear
+ * them have booted. A dispatch that goes missing therefore hides the whole page
+ * for the session rather than merely skipping an animation, which is exactly
+ * what happened when the dispatch was deleted and the listener was left behind.
+ */
+function preloaderHandover(): Promise<void> {
+  return new Promise<void>((resolve) => {
+    const observer = new MutationObserver(() => {
+      if (!isPreloading()) done();
+    });
+
+    function done() {
+      observer.disconnect();
+      window.removeEventListener(PRELOAD_ENTERED_EVENT, done);
+      resolve();
+    }
+
+    window.addEventListener(PRELOAD_ENTERED_EVENT, done);
+    observer.observe(document.documentElement, {
+      attributes: true,
+      attributeFilter: ["class"],
+    });
+  });
+}
+
+/**
  * Call on every page load: uncover if we arrived mid-transition.
  *
  * When the home preloader is up it owns the screen instead, so resolve only
@@ -88,12 +124,8 @@ export function animateOut(): Promise<void> {
  * from playing behind the overlay.
  */
 export function bootIfCovered(): Promise<void> {
-  if (document.documentElement.classList.contains("is-preloading")) {
-    return new Promise<void>((resolve) =>
-      window.addEventListener("site:preload-entered", () => resolve(), {
-        once: true,
-      }),
-    ).then(markPageRevealed);
+  if (isPreloading()) {
+    return preloaderHandover().then(markPageRevealed);
   }
 
   let covered = false;
