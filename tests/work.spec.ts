@@ -1,6 +1,7 @@
 import { expect, test } from "@playwright/test";
 import {
   expectGalleryRestored,
+  galleryDrift,
   galleryMoves,
   isNarrowNav,
   isTouch,
@@ -41,6 +42,37 @@ for (const view of ["slider", "grid"] as const) {
     }) => {
       const cdp = await context.newCDPSession(page);
       expect(await galleryMoves(page, cdp, isTouch())).toBe(true);
+    });
+
+    /**
+     * A drag and a wheel have to drive the gallery the *same* way.
+     *
+     * `Observer` reports them on opposite sign conventions — a wheel's
+     * `deltaY` is positive scrolling down, a drag's is positive with the
+     * finger moving down — and both engines used to add that straight to
+     * their scrub. So the wheel was right and every touch ran backwards.
+     * `galleryMoves` could not see it: it only asks whether the tiles moved.
+     *
+     * `touchDrag` sweeps the finger *up*, which is the same intent as a
+     * wheel scrolling *down*, so the two readings must share a sign.
+     */
+    test("a drag and a wheel move the gallery the same way", async ({
+      page,
+      context,
+    }) => {
+      test.skip(
+        !isTouch(),
+        "compares a drag against a wheel, so it needs a touch-capable project",
+      );
+      const cdp = await context.newCDPSession(page);
+
+      const byDrag = await galleryDrift(page, cdp, true, view);
+      const byWheel = await galleryDrift(page, cdp, false, view);
+
+      // A gesture that moved nothing would make the sign check vacuous.
+      expect(Math.abs(byDrag)).toBeGreaterThan(0.01);
+      expect(Math.abs(byWheel)).toBeGreaterThan(0.01);
+      expect(Math.sign(byDrag)).toBe(Math.sign(byWheel));
     });
 
     test("closing a project restores the URL and the scroll", async ({
