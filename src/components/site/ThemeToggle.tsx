@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import gsap from "gsap";
+import { prefersReducedMotion } from "@/lib/site/prefersReducedMotion";
 import "@/lib/site/eases";
 
 /** theme-switch.svg circle centers — both rings, filled-left was the old disc. */
@@ -45,11 +46,8 @@ export default function ThemeToggle() {
     // Snap to the restored theme on first paint; only a real flip animates.
     const changed = drawnRef.current !== null && drawnRef.current !== isLight;
     drawnRef.current = isLight;
-    const reduce = window.matchMedia(
-      "(prefers-reduced-motion: reduce)",
-    ).matches;
 
-    if (!changed || reduce) {
+    if (!changed || prefersReducedMotion()) {
       gsap.set(filled, { attr: { cx: filledCx } });
       gsap.set(stroke, { attr: { cx: strokeCx } });
       return;

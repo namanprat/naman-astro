@@ -1,4 +1,6 @@
 import { useEffect, useRef, type RefObject } from "react";
+import { FINE_HOVER_QUERY } from "@/lib/site/hasFinePointerHover";
+import { REDUCED_MOTION_QUERY } from "@/lib/site/prefersReducedMotion";
 import "./FooterAsciiLogo.css";
 
 const CELL_SIZE = 7;
@@ -17,8 +19,6 @@ const BOUNCE = 0.25;
 const RESET_EASE = 0.05;
 const STAGGER_FRAMES = 18;
 const DESKTOP_MQ = "(min-width: 64rem)";
-const REDUCE_MQ = "(prefers-reduced-motion: reduce)";
-const FINE_HOVER_MQ = "(hover: hover) and (pointer: fine)";
 /** Fallback only — live ink is read off the wrapper's `color`. */
 const CHAR_COLOR_FALLBACK = "#f14827";
 const MONO_FONT =
@@ -108,9 +108,12 @@ export default function FooterAsciiLogo({
     const ctx = canvas.getContext("2d", { alpha: true });
     if (!ctx) return;
 
+    // Live MediaQueryLists, not one-shot reads: the canvas re-enables itself
+    // when the visitor changes any of these mid-session (see the `change`
+    // listeners below), so `prefersReducedMotion()` wouldn't do.
     const desktopMq = window.matchMedia(DESKTOP_MQ);
-    const reduceMq = window.matchMedia(REDUCE_MQ);
-    const fineHoverMq = window.matchMedia(FINE_HOVER_MQ);
+    const reduceMq = window.matchMedia(REDUCED_MOTION_QUERY);
+    const fineHoverMq = window.matchMedia(FINE_HOVER_QUERY);
     const enabled = () => desktopMq.matches && !reduceMq.matches;
     const cursorOn = () => enabled() && fineHoverMq.matches;
 

@@ -21,7 +21,6 @@ import {
 } from "react";
 import * as THREE from "three";
 import { DitheringEffect } from "./aboutDitherEffect";
-import { ABOUT_CANVAS as c } from "./aboutDitherControls";
 import {
   AboutDistortionEffect,
   aboutDistortionState,
@@ -30,6 +29,15 @@ import { SWATCH_LIGHT_NUM } from "@/lib/site/siteColors";
 import { getAboutCanvasMaxDpr, BUST_URL } from "@/lib/site/aboutBust";
 import { hasFinePointerHover } from "@/lib/site/hasFinePointerHover";
 import { prefersReducedMotion } from "@/lib/site/prefersReducedMotion";
+
+/** Render settings for the About model canvas. */
+const CANVAS = {
+  bustScale: 5,
+  bustY: 0,
+  spinSpeed: 0.35,
+  highlight: "#066aff",
+  envIntensity: 1.5,
+} as const;
 
 const DRACO_PATH = "/draco/gltf/";
 /** Longest-axis size after normalize; Center's `scale` then reads as world units. */
@@ -413,8 +421,8 @@ function AboutDitherScene({ onReady }: { onReady?: () => void }) {
   return (
     <>
       <group position={[0, -0.5, 0]}>
-        <SpinY speed={c.spinSpeed}>
-          <Center scale={c.bustScale} position={[0, c.bustY, 0]}>
+        <SpinY speed={CANVAS.spinSpeed}>
+          <Center scale={CANVAS.bustScale} position={[0, CANVAS.bustY, 0]}>
             <ModelErrorBoundary>
               <Model />
             </ModelErrorBoundary>
@@ -432,9 +440,9 @@ function AboutDitherScene({ onReady }: { onReady?: () => void }) {
       <Environment
         resolution={256}
         background={false}
-        environmentIntensity={c.envIntensity}
+        environmentIntensity={CANVAS.envIntensity}
       >
-        <Room highlight={c.highlight} />
+        <Room highlight={CANVAS.highlight} />
       </Environment>
       <AboutDistortionHover />
       <EffectComposer
