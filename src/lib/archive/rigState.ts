@@ -28,7 +28,7 @@ export const rigState = {
   tileGridCells: [] as CellId[],
 };
 
-export function resetRigToOrb() {
+export function resetRigToOrb(): void {
   rigState.zoom = ARCHIVE_CONFIG.globeZoom;
   rigState.gridPan.x = 0;
   rigState.gridPan.y = 0;

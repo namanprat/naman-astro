@@ -21,7 +21,7 @@ function subscribe(listener: () => void) {
   };
 }
 
-export function setArchiveView(view: ArchiveView) {
+export function setArchiveView(view: ArchiveView): void {
   if (snapshot.isMorphing || snapshot.view === view) return;
   rigState.morphTarget = view === "grid" ? 1 : 0;
   emit({ view, isMorphing: true });

@@ -42,8 +42,8 @@ export function findFrontCenterTileIndex(
   let bestDist = Infinity;
   let bestZ = -Infinity;
 
-  for (let i = 0; i < globePositions.length; i++) {
-    const r = rotateGlobePoint(globePositions[i]!, orientation);
+  for (const [i, pos] of globePositions.entries()) {
+    const r = rotateGlobePoint(pos, orientation);
     if (r.z <= 0) continue;
     const dist = Math.hypot(r.x, r.y);
     if (dist < bestDist || (dist === bestDist && r.z > bestZ)) {
@@ -77,10 +77,15 @@ export function assignWrappedGridCells(
   anchorIndex: number,
   globePositions: Vec3[],
 ): CellId[] {
-  const anchor = globePositions[anchorIndex]!;
+  const anchor = globePositions[anchorIndex];
+  // A caller-supplied index, so it can outrun the positions array. Centre
+  // every tile rather than throwing mid-render; same fallback the cell zip uses.
+  if (!anchor) return new Array<CellId>(tileCount).fill({ cx: 0, cy: 0 });
+
   const r2 = ARCHIVE_CONFIG.sphereRadius ** 2;
   const angularDist = (i: number) => {
-    const p = globePositions[i]!;
+    const p = globePositions[i];
+    if (!p) return Infinity;
     const dot = (anchor.x * p.x + anchor.y * p.y + anchor.z * p.z) / r2;
     return Math.acos(Math.min(1, Math.max(-1, dot)));
   };
@@ -102,8 +107,8 @@ export function assignWrappedGridCells(
   order.sort((a, b) => angularDist(a) - angularDist(b));
 
   const cells: CellId[] = new Array(tileCount);
-  for (let k = 0; k < order.length; k++) {
-    cells[order[k]!] = rect[k] ?? { cx: 0, cy: 0 };
+  for (const [k, tileIndex] of order.entries()) {
+    cells[tileIndex] = rect[k] ?? { cx: 0, cy: 0 };
   }
   return cells;
 }
@@ -139,7 +144,7 @@ export function wrappedCellWorld(
     { x: 0, y: -5, z: 0 },
   ]);
   console.assert(
-    wcells[2]!.cx === 0 && wcells[2]!.cy === 0,
+    wcells[2]?.cx === 0 && wcells[2]?.cy === 0,
     "assignWrappedGridCells anchor at origin",
   );
 

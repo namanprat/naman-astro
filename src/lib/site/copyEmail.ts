@@ -6,7 +6,13 @@ function emailFromMailto(href: string): string {
   return decodeURIComponent(href.replace(/^mailto:/i, "").split("?")[0] ?? "");
 }
 
-export function useCopyEmail(href: string) {
+type CopyEmailBinding = {
+  copied: boolean;
+  label: string;
+  onClick: (event: MouseEvent<HTMLAnchorElement>) => void;
+};
+
+export function useCopyEmail(href: string): CopyEmailBinding {
   const [copied, setCopied] = useState(false);
   const timeoutRef = useRef(0);
 

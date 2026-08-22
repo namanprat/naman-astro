@@ -1,17 +1,18 @@
 import { useEffect } from "react";
 import { Canvas } from "@react-three/fiber";
 import ArchiveScene from "./ArchiveScene";
-import ViewSwitcher from "../ViewSwitcher";
+import ViewSwitcher, { type ViewSwitcherItem } from "../ViewSwitcher";
 import {
   resetArchiveToOrbView,
   setArchiveView,
   useArchiveView,
+  type ArchiveView,
 } from "@/lib/archive/archiveView";
 import "./Archive.css";
 
-const ARCHIVE_VIEWS = [
-  { id: "orb" as const, label: "Orb" },
-  { id: "grid" as const, label: "Grid" },
+const ARCHIVE_VIEWS: readonly ViewSwitcherItem<ArchiveView>[] = [
+  { id: "orb", label: "Orb" },
+  { id: "grid", label: "Grid" },
 ];
 
 /**

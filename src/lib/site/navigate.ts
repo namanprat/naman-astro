@@ -6,7 +6,7 @@ export type GoOptions = {
 };
 
 /** Full-document navigation with block-reveal cover. */
-export async function go(href: string, options?: GoOptions) {
+export async function go(href: string, options?: GoOptions): Promise<void> {
   let url: URL;
   try {
     url = new URL(href, window.location.href);

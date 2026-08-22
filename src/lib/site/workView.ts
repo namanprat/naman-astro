@@ -18,7 +18,7 @@ export function readWorkView(): WorkView {
   }
 }
 
-export function writeWorkView(view: WorkView) {
+export function writeWorkView(view: WorkView): void {
   try {
     sessionStorage.setItem(KEY, view);
   } catch {

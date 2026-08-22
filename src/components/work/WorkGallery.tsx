@@ -5,10 +5,7 @@ import { workItems } from "@/content/work";
 import { ABOUT_OPEN_CLASS } from "@/lib/site/aboutPanel";
 import { gooeyMorph } from "@/lib/site/gooeyReveal";
 import { setSiteLenis } from "@/lib/site/lenisBridge";
-import {
-  SCROLL_SETTINGS,
-  driveLenisWithGsap,
-} from "@/lib/site/lenisScroll";
+import { SCROLL_SETTINGS, driveLenisWithGsap } from "@/lib/site/lenisScroll";
 import { prefersReducedMotion } from "@/lib/site/prefersReducedMotion";
 import { takeWorkReturn } from "@/lib/site/workReturn";
 import {
@@ -21,12 +18,12 @@ import Reveal from "./slider/Reveal";
 import Slider, { isWorkGridMobile, WORK_GRID_MOBILE_MQ } from "./slider/Slider";
 import WheelView from "./slider/WheelView";
 import Transition, { type CloseReason } from "./slider/Transition";
-import ViewSwitcher from "../ViewSwitcher";
+import ViewSwitcher, { type ViewSwitcherItem } from "../ViewSwitcher";
 import "./Work.css";
 
-const WORK_VIEWS = [
-  { id: "slider" as const, label: "Slider" },
-  { id: "grid" as const, label: "Grid" },
+const WORK_VIEWS: readonly ViewSwitcherItem<WorkView>[] = [
+  { id: "slider", label: "Slider" },
+  { id: "grid", label: "Grid" },
 ];
 
 /** Settled hover before a morph fires, so sweeping across tiles doesn't melt

@@ -33,7 +33,7 @@ function unlockScroll() {
 }
 
 /** Snap the panel to fully covering — used when the mobile menu is already the cover. */
-export function markCovered() {
+export function markCovered(): void {
   const panel = panelEl();
   lockScroll();
   if (!panel) return;
@@ -123,9 +123,11 @@ function preloaderHandover(): Promise<void> {
  * once the visitor hits ENTER — that keeps the caller's line-reveal entrance
  * from playing behind the overlay.
  */
-export function bootIfCovered(): Promise<void> {
+export async function bootIfCovered(): Promise<void> {
   if (isPreloading()) {
-    return preloaderHandover().then(markPageRevealed);
+    await preloaderHandover();
+    markPageRevealed();
+    return;
   }
 
   let covered = false;
@@ -137,9 +139,6 @@ export function bootIfCovered(): Promise<void> {
   }
 
   // Plain load: nothing is hiding the page, so it is already revealed.
-  if (!covered) {
-    markPageRevealed();
-    return Promise.resolve();
-  }
-  return animateOut().then(markPageRevealed);
+  if (covered) await animateOut();
+  markPageRevealed();
 }

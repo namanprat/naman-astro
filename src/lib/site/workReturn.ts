@@ -14,7 +14,7 @@ function slugFromWorkPath(pathname: string): string | null {
   return pathname.match(/^\/work\/([^/]+)\/?$/)?.[1] ?? null;
 }
 
-export function markWorkReturn(pathname = window.location.pathname) {
+export function markWorkReturn(pathname = window.location.pathname): void {
   const slug = slugFromWorkPath(pathname);
   if (!slug) return;
   try {

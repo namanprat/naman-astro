@@ -6,16 +6,16 @@ let current: Lenis | null = null;
 const listeners = new Set<Listener>();
 
 /** Register the home-page Lenis instance for chrome outside the ReactLenis tree. */
-export function setSiteLenis(lenis: Lenis | null) {
+export function setSiteLenis(lenis: Lenis | null): void {
   current = lenis;
   listeners.forEach((listener) => listener(lenis));
 }
 
-export function getSiteLenis() {
+export function getSiteLenis(): Lenis | null {
   return current;
 }
 
-export function subscribeSiteLenis(listener: Listener) {
+export function subscribeSiteLenis(listener: Listener): () => void {
   listeners.add(listener);
   listener(current);
   return () => {

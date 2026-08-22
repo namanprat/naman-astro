@@ -8,7 +8,7 @@ import {
 } from "./archiveLoadMedia";
 
 /** Per-mesh textures for the orb view. */
-export function useArchiveTextures() {
+export function useArchiveTextures(): THREE.Texture[] {
   const [textures, setTextures] = useState<THREE.Texture[]>([]);
 
   useEffect(() => {

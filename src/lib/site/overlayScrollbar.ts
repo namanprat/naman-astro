@@ -8,7 +8,8 @@ import { subscribeSiteLenis } from "./lenisBridge";
 const MIN_THUMB = 40;
 const EDGE = 10;
 
-export function bootOverlayScrollbar() {
+/** Returns a teardown, or nothing when there was no bar to boot. */
+export function bootOverlayScrollbar(): (() => void) | undefined {
   if (typeof document === "undefined") return;
   if (document.querySelector(".overlay-scrollbar")) return;
 

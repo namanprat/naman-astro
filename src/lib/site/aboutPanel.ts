@@ -17,15 +17,15 @@ let setter: AboutSetter | null = null;
  */
 export const ABOUT_OPEN_CLASS = "about-open";
 
-export function registerAboutPanel(fn: AboutSetter | null) {
+export function registerAboutPanel(fn: AboutSetter | null): void {
   setter = fn;
 }
 
-export function openAboutPanel() {
+export function openAboutPanel(): void {
   setter?.(true);
 }
 
-export function toggleAboutPanel(open?: boolean) {
+export function toggleAboutPanel(open?: boolean): void {
   if (!setter) return;
   if (typeof open === "boolean") {
     setter(open);
@@ -34,7 +34,7 @@ export function toggleAboutPanel(open?: boolean) {
   }
 }
 
-export function closeAboutPanel() {
+export function closeAboutPanel(): void {
   setter?.(false);
 }
 

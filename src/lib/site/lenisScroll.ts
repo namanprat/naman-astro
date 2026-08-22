@@ -24,7 +24,7 @@ export const SCROLL_SETTINGS = {
  * Drive a Lenis instance off the GSAP ticker so scroll and tweens share one
  * clock. Returns its teardown.
  */
-export function driveLenisWithGsap(lenis: Lenis) {
+export function driveLenisWithGsap(lenis: Lenis): () => void {
   const raf = (time: number) => lenis.raf(time * 1000);
 
   gsap.ticker.add(raf);
