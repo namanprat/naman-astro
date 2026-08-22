@@ -90,3 +90,55 @@ test("About opens and closes without stranding its state", async ({ page }) => {
     .poll(() => rootClasses(page), { timeout: 30_000 })
     .not.toContain("about-open");
 });
+
+/**
+ * The About lead has to fill its column, not shrink-to-fit it.
+ *
+ * `.about_panel_intro` is a column flex box with `align-items: flex-start` and
+ * a `display: contents` wrapper, so the heading is itself a flex item. Without
+ * an explicit width its size is intrinsic, and WebKit folds the
+ * `overflow-wrap: break-word` that `base.css` puts on every heading into its
+ * min-content calculation — collapsing the lead to one word per line. It then
+ * stays collapsed, because `prepareGooey` splits the heading with SplitText on
+ * open and bakes the wrap points into real `.gooey_reveal_line` divs.
+ *
+ * Blink resolves the same shrink-to-fit to the full column, so this cannot
+ * reproduce the Safari rendering. What it can do is lock the geometry the bug
+ * needs: an intrinsic width here would be a regression on WebKit whether or
+ * not Chromium shows it.
+ */
+test("the About lead fills its column rather than sizing to its text", async ({
+  page,
+}) => {
+  await page.goto("/");
+  await expectRevealed(page);
+
+  await page.evaluate(() => {
+    window.location.hash = "#about";
+  });
+  await expect.poll(() => rootClasses(page)).toContain("about-open");
+
+  const lead = page.locator(".about_panel_lead");
+  await expect(lead).toBeVisible();
+
+  const geometry = await page.evaluate(() => {
+    const el = document.querySelector<HTMLElement>(".about_panel_lead");
+    const column = el?.closest<HTMLElement>(".about_panel_intro");
+    if (!el || !column) return null;
+    return {
+      lead: el.getBoundingClientRect().width,
+      column: column.getBoundingClientRect().width,
+      words: (el.textContent ?? "").trim().split(/\s+/).length,
+      // Zero before the split runs; the reveal bakes one div per line.
+      lines: el.querySelectorAll(".gooey_reveal_line").length,
+    };
+  });
+
+  expect(geometry).not.toBeNull();
+  expect(geometry!.lead).toBeCloseTo(geometry!.column, 0);
+  // The collapse puts every word on its own line, so anything near the word
+  // count is the failure this guards.
+  if (geometry!.lines > 0) {
+    expect(geometry!.lines).toBeLessThan(geometry!.words / 2);
+  }
+});

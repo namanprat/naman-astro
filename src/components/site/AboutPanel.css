@@ -334,8 +334,37 @@ html.theme-light .about_panel.is-in-menu {
   --about--indent: calc(var(--about--indent-cols) * (100% + var(--site-gutter)) / var(--about--lead-cols));
 }
 
+/*
+  `width: 100%` is load-bearing, not tidying.
+
+  `.about_panel_intro` is a column flex box with `align-items: flex-start`, and
+  `.about_panel_reveal_inner` is `display: contents`, so this heading is itself
+  a flex item — which means its width would otherwise be shrink-to-fit. Blink
+  resolves that as `min(max-content, available)` and lands on the full column;
+  WebKit folds the `overflow-wrap: break-word` that `base.css` puts on every
+  heading into its min-content calculation and collapses the box to its
+  narrowest legal width, i.e. one word per line.
+
+  That is not a transient mis-measure either: `prepareGooey` splits this
+  heading with SplitText on open and bakes the wrap points into real
+  `.gooey_reveal_line` divs, so a collapsed first layout stays collapsed.
+
+  A definite width means no engine ever computes an intrinsic one. It resolves
+  against the flex container in all three modes (ride / padded / inMenu), so
+  the in-menu variant — same `align-items: flex-start` — is covered too.
+  `align-items` stays as it is: `.about_panel_cv_clip` hugs its text by it.
+*/
 .about_panel_lead {
   margin: 0;
+  width: 100%;
+  max-width: none;
+  color: var(--panel-ink);
+  line-height: 1.1;
+  display: block;
+  text-wrap: wrap;
+.about_panel_lead {
+  margin: 0;
+  width: 100%;
   max-width: none;
   color: var(--panel-ink);
   line-height: 1.1;
