@@ -22,7 +22,7 @@ import {
 } from "./gooeyReveal";
 import "./eases";
 
-const GOOEY = ".name-hero__gooey";
+const GOOEY = ".name_hero_gooey";
 const GOOEY_PARKED = "is-gooey-parked";
 /** Opts the mark into the shared filter chain defined in `site.css`. */
 const GOOEY_ARMED = "is-gooey-armed";
@@ -32,7 +32,7 @@ const GOOEY_ARMED = "is-gooey-armed";
  * node corrupts it. Their `<a>` / wordmark parent is the mask.
  */
 const NAV_LINES =
-  ".nav_grid .nav-stack > .nav-link h5, .nav_grid .nav-contact-toggle h5, .nav_grid .nav-archive h5, .nav_grid .nav-logo-wordmark h5";
+  ".nav_grid .nav_stack > .nav_link h5, .nav_grid .nav_contact_toggle h5, .nav_grid .nav_archive h5, .nav_grid .nav_logo_wordmark h5";
 
 /** codegrid's timing — the melt needs the full 1.5s to read as gooey. */
 const GOOEY_S = 1.5;
@@ -40,7 +40,7 @@ const NAV_S = 0.9;
 const NAV_STAGGER = 0.06;
 
 /**
- * Start radius, in em of the lockup. `.name-hero__gooey` sets `font-size` to
+ * Start radius, in em of the lockup. `.name_hero_gooey` sets `font-size` to
  * the mark's height so this is a real CSS em, not a fraction of a bbox that
  * can still be 0 when the island hydrates.
  */

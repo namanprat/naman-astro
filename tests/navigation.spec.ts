@@ -57,11 +57,11 @@ test("returning Home scrolls to the top and keeps the nav up", async ({
     .toBeGreaterThan(0);
 
   if (narrow) {
-    await page.locator(".nav-menu-toggle").first().click();
+    await page.locator(".nav_menu_toggle").first().click();
     await expect.poll(() => rootClasses(page)).toContain("menu-open");
-    await page.locator('.menu a[href="/"]').first().click();
+    await page.locator('.menu_wrap a[href="/"]').first().click();
   } else {
-    await page.locator('.nav-stack a[href="/"]').first().click();
+    await page.locator('.nav_stack a[href="/"]').first().click();
   }
 
   await expect

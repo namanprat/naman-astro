@@ -83,7 +83,10 @@ function buildAtlasFromImages(
   atlas.width = Math.max(1, Math.floor(totalWidthOriginal * scale));
   atlas.height = Math.max(1, Math.floor(TILE_H * scale));
   // Alpha so gap gutters stay see-through (section bg / page shows through).
-  const ctx = atlas.getContext("2d", { alpha: true, willReadFrequently: false });
+  const ctx = atlas.getContext("2d", {
+    alpha: true,
+    willReadFrequently: false,
+  });
   if (!ctx) throw new Error("2D canvas unavailable");
 
   ctx.clearRect(0, 0, atlas.width, atlas.height);
@@ -117,8 +120,7 @@ function getResponsiveDimensions(
 ) {
   const isMobile = width < 768;
   const isTablet = width >= 768 && width < 1024;
-  const radius =
-    radiusOverride ?? (isMobile ? 1.4 : isTablet ? 1.55 : 1.7);
+  const radius = radiusOverride ?? (isMobile ? 1.4 : isTablet ? 1.55 : 1.7);
   // Circumferential image width; cylinder height follows 5:4 landscape.
   const imageArc = ((2 * Math.PI * radius) / IMAGE_COUNT) * (1 - gapRatio);
   return {
@@ -147,7 +149,7 @@ export default function TeamCylinderCarousel() {
 
   useEffect(() => {
     const canvas = canvasRef.current;
-    const section = canvas?.closest(".team");
+    const section = canvas?.closest(".team_wrap");
     if (!canvas || !(section instanceof HTMLElement)) return;
 
     const reducedMotion = window.matchMedia(
@@ -168,7 +170,7 @@ export default function TeamCylinderCarousel() {
     const camera = new THREE.PerspectiveCamera(45, 1, 0.1, 100);
     const renderer = new THREE.WebGLRenderer({
       canvas,
-      // Transparent, so .team's `background-color: var(--dark)` is the surface
+      // Transparent, so .team_wrap's `background-color: var(--background)` is the surface
       // you see. An opaque clear here covers the whole section and the theme
       // toggle has nothing visible left to change.
       alpha: true,
@@ -192,7 +194,7 @@ export default function TeamCylinderCarousel() {
       map: null,
       side: THREE.DoubleSide,
       transparent: true,
-      // Hard discard on gap pixels so you see cleanly through to .team bg
+      // Hard discard on gap pixels so you see cleanly through to .team_wrap bg
       alphaTest: 0.5,
       depthWrite: true,
     });
@@ -279,7 +281,7 @@ export default function TeamCylinderCarousel() {
 
         if (reducedMotion) return;
 
-        // Drive spin from any page scroll — not only while .team is on screen.
+        // Drive spin from any page scroll — not only while .team_wrap is on screen.
         st = ScrollTrigger.create({
           start: 0,
           end: "max",
@@ -309,10 +311,6 @@ export default function TeamCylinderCarousel() {
   }, []);
 
   return (
-    <canvas
-      className="team-cylinder"
-      ref={canvasRef}
-      aria-hidden="true"
-    />
+    <canvas className="team_cylinder" ref={canvasRef} aria-hidden="true" />
   );
 }

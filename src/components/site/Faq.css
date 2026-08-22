@@ -1,119 +1,67 @@
-.faq {
-  position: relative;
-  width: 100%;
-  margin: 0;
-  padding-block: var(--section-space-large);
-  /* Transparent so the dimmed fluid reads through, same as every other
-     `.studio` section. */
-  background-color: transparent;
-  color: var(--ink);
-}
-
-.faq__grid {
-  row-gap: var(--space-8);
-  align-content: start;
-}
-
-.faq__statement {
-  position: relative;
-  grid-column: 1 / -1;
-  text-align: left;
-}
-
-.faq__title {
-  margin: 0;
-  max-width: none;
-  color: var(--ink);
-}
-
-.faq__label {
-  display: block;
-  margin-bottom: 0.75rem;
-  color: color-mix(in lab, var(--ink) 60%, transparent);
-}
-
-.faq__lead {
-  grid-column: 1 / -1;
-  margin: 0;
-  color: color-mix(in lab, var(--ink) 70%, transparent);
-}
-
-.faq__items {
-  grid-column: 1 / -1;
-  margin: 0;
-  padding: 0;
-  list-style: none;
-  border-bottom: var(--border-width) solid var(--border);
-}
-
-.faq__item {
-  border-top: var(--border-width) solid var(--border);
-}
-
-.faq__question {
-  width: 100%;
-  padding-block: var(--space-4);
-  display: grid;
-  grid-template-columns: auto 1fr auto;
-  align-items: center;
-  gap: var(--site-gutter);
-  border: 0;
-  color: inherit;
-}
-
-.faq__index {
-  color: color-mix(in lab, var(--ink) 60%, transparent);
-}
-
-.faq__question-text {
-  text-align: left;
-}
-
-.faq__icon {
-  flex-shrink: 0;
-  color: inherit;
-  transition: transform 0.3s ease;
-}
-
-.faq__question[aria-expanded="true"] .faq__icon {
-  transform: rotate(90deg);
-}
-
-/* Parked closed. GSAP tweens this to `auto` and back, so nothing here may set a
-   fixed open height. */
-.faq__answer {
-  height: 0;
-  overflow: hidden;
-}
-
-.faq__answer-inner {
-  padding-bottom: var(--space-4);
-}
-
-.faq__answer-copy {
-  margin: 0;
-  color: color-mix(in lab, var(--ink) 55%, transparent);
-}
-
-@media (width >= 64rem) {
-  .faq__statement {
-    grid-column: 1 / span 10;
+@layer components {
+  .faq_layout {
+    grid-column: 1 / -1;
   }
 
-  /* Sits in the title indent zone, top-aligned with the first line. */
-  .faq__label {
-    position: absolute;
-    top: 0;
-    left: 0;
-    margin-bottom: 0;
+  .faq_statement {
+    grid-column: 1 / span calc(10 * var(--_responsive---large) + 12 * (1 - var(--_responsive---large)));
   }
 
-  .faq__title {
-    text-indent: 28%;
+  .faq_lead {
+    grid-column: calc(7 * var(--_responsive---large) + 1) / span calc(5 * var(--_responsive---large) + 12 * (1 - var(--_responsive---large)));
+    margin: 0;
+    color: color-mix(in lab, var(--text) 70%, transparent);
   }
 
-  .faq__lead,
-  .faq__items {
-    grid-column: 8 / span 5;
+  .faq_items {
+    grid-column: calc(7 * var(--_responsive---large) + 1) / span calc(5 * var(--_responsive---large) + 12 * (1 - var(--_responsive---large)));
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  .faq_item + .faq_item {
+    border-top: var(--border-width) solid var(--border);
+  }
+
+  .faq_question {
+    width: 100%;
+    padding-block: var(--space-3);
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: center;
+    gap: var(--site-gutter);
+    border-width: 0;
+    color: inherit;
+  }
+
+  .faq_question_text {
+    text-align: left;
+  }
+
+  .faq_icon {
+    flex-shrink: 0;
+    color: inherit;
+    transition: transform 0.3s ease;
+  }
+
+  .faq_question[aria-expanded="true"] .faq_icon {
+    transform: rotate(90deg);
+  }
+
+  /* Parked closed. GSAP tweens this to `auto` and back, so nothing here may set a
+     fixed open height. */
+  .faq_answer {
+    height: 0;
+    overflow: clip;
+  }
+
+  .faq_answer_inner {
+    padding-bottom: var(--space-3);
+  }
+
+  .faq_answer_copy {
+    margin: 0;
+    color: color-mix(in lab, var(--text) 55%, transparent);
   }
 }

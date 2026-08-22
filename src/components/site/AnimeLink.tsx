@@ -23,7 +23,7 @@ export default function AnimeLink({
         void go(href);
       }}
     >
-      <div className="anime-link">
+      <div className="anime_link">
         {/* `data-no-reveal` opts the label out of the line reveal. It has to sit
             on an ancestor, not the `h5` itself — both the JS query in
             `lib/site/lineReveal.ts` and the pre-paint hold in `styles/site.css`
@@ -31,12 +31,12 @@ export default function AnimeLink({
             list. Without it that module would SplitText this label, fighting the
             per-char stacks RollingText has already built, exactly as noted on
             the footer links. */}
-        <div className="anime-link-label" data-no-reveal>
+        <div className="anime_link_label" data-no-reveal>
           <h5 className="text-style-main">
             <RollingText>{children}</RollingText>
           </h5>
         </div>
-        <div className="anime-link-icon">
+        <div className="anime_link_icon">
           {/* Ionicons md-arrow-forward, inlined. One glyph is not worth the
               react-icons dependency. */}
           <svg

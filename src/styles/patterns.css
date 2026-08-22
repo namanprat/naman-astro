@@ -8,10 +8,50 @@
   gap: var(--space-8);
   position: relative;
   margin-inline: auto;
+  container-type: inline-size;
   & > [class] {
     margin-top: 0;
     margin-bottom: 0;
   }
+}
+
+/* Shared studio-section shell. Faq and Process are twins: same padding,
+   statement indent, and 12-col grid. Component files only add their own
+   inner pieces. */
+.studio_section {
+  position: relative;
+  width: 100%;
+  margin: 0;
+  padding-block: var(--section-space-large);
+  background-color: transparent;
+  color: var(--text);
+}
+
+.studio_layout {
+  row-gap: var(--space-8);
+  align-content: start;
+}
+
+.studio_statement {
+  position: relative;
+  grid-column: 1 / -1;
+  text-align: left;
+}
+
+.studio_title {
+  margin: 0;
+  max-width: none;
+  color: var(--text);
+  text-indent: calc(28% * var(--_responsive---large));
+}
+
+.studio_label {
+  display: block;
+  margin-bottom: calc(0.75rem * (1 - var(--_responsive---large)));
+  color: color-mix(in lab, var(--text) 60%, transparent);
+  position: var(--relative-medium, absolute);
+  top: 0;
+  left: 0;
 }
 
 .flex-horizontal-nowrap {

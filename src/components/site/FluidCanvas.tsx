@@ -59,7 +59,7 @@ export default function FluidCanvas() {
   }, []);
 
   return (
-    <div className="fluid-wrap" data-fluid aria-hidden="true">
+    <div className="fluid_wrap" data-fluid aria-hidden="true">
       <canvas ref={canvasRef} />
     </div>
   );

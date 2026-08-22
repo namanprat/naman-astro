@@ -1,4 +1,5 @@
-.fluid-wrap {
+@layer components {
+.fluid_wrap {
   position: relative;
   width: 100%;
   height: 100svh;
@@ -7,10 +8,10 @@
   margin-top: calc(-1 * (var(--hero-chrome-pad, 0px) + var(--hero-chrome-content, 0px)));
   pointer-events: none;
   z-index: 0;
-  overflow: hidden;
+  overflow: clip;
   flex-shrink: 0;
   /* Under the sim — matches theme toggle; never paints over the logo. */
-  background-color: var(--dark);
+  background-color: var(--background);
 }
 
 /* Homepage: viewport backdrop so manifesto / team / footer read the sim
@@ -27,7 +28,7 @@ html:has(.hero) main {
   z-index: 0;
 }
 
-html:has(.hero) .fluid-wrap {
+html:has(.hero) .fluid_wrap {
   position: fixed;
   inset: 0;
   width: 100%;
@@ -35,7 +36,7 @@ html:has(.hero) .fluid-wrap {
   margin-top: 0;
 }
 
-.fluid-wrap canvas {
+.fluid_wrap canvas {
   display: block;
   width: 100%;
   height: 100%;
@@ -43,7 +44,7 @@ html:has(.hero) .fluid-wrap {
   transition: opacity 0.45s ease;
 }
 
-html.is-hero-fluid-dim .fluid-wrap canvas {
+html.is-hero-fluid-dim .fluid_wrap canvas {
   /* Dim for manifesto/team readability, but keep enough chroma that light-mode
      frost on the footer and About panel still has something to sample. */
   opacity: 0.32;
@@ -51,28 +52,28 @@ html.is-hero-fluid-dim .fluid-wrap canvas {
 
 /* Preloader: keep the sim at full strength behind the overlay. After the dim
    rule so it wins that collision. */
-html.is-preloading .fluid-wrap canvas {
+html.is-preloading .fluid_wrap canvas {
   opacity: 1;
 }
 
 /* In-flow wrap pulls under the hero chrome via negative margin. While the
    preloader is up, html/body overflow is hidden, which clips that pull-up
    and leaves a blank page behind the transparent overlay. Pin to the
-   viewport instead. Same file as `.fluid-wrap` so the override actually
-   wins the cascade (this sheet is unlayered; site.css is not). */
-html.is-preloading .fluid-wrap {
+   viewport instead. Same file as `.fluid_wrap` so the override actually
+   wins the cascade. */
+html.is-preloading .fluid_wrap {
   position: fixed;
   inset: 0;
   width: 100%;
   height: 100%;
   margin-top: 0;
   z-index: 0;
-  /* Island parent is `visibility: hidden` (it is not `.fluid-wrap`); this
+  /* Island parent is `visibility: hidden` (it is not `.fluid_wrap`); this
      restores the sim so it reads through the transparent overlay. */
   visibility: visible;
 }
 
-html.page-work .fluid-wrap {
+html.page-work .fluid_wrap {
   position: absolute;
   inset: 0;
   height: auto;
@@ -80,9 +81,10 @@ html.page-work .fluid-wrap {
 }
 
 /* Scrolling case-study — keep the sim as a viewport backdrop, not extra height. */
-html.page-work-project .fluid-wrap {
+html.page-work-project .fluid_wrap {
   position: fixed;
   inset: 0;
   height: auto;
   margin-top: 0;
+}
 }

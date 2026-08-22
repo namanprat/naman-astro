@@ -7,18 +7,18 @@ import Layout from "@/layouts/BaseLayout.astro";
   description="The page you're looking for doesn't exist."
   theme="dark"
 >
-  <section class="not-found">
+  <section class="not_found">
     <h1 class="text-style-h3">This page doesn't exist</h1>
     <p class="text-style-large">
       The page you're looking for may have moved, or the link that brought you
       here might be out of date.
     </p>
-    <a class="not-found__link text-style-main" href="/">Back to home</a>
+    <a class="not_found_link text-style-main" href="/">Back to home</a>
   </section>
 </Layout>
 
 <style>
-  .not-found {
+  .not_found {
     box-sizing: border-box;
     min-height: 100vh;
     display: flex;
@@ -30,7 +30,7 @@ import Layout from "@/layouts/BaseLayout.astro";
     max-width: 36rem;
   }
 
-  .not-found__link {
+  .not_found_link {
     color: var(--link-text);
     text-decoration: underline;
     text-underline-offset: 0.2em;

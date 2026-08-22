@@ -31,11 +31,11 @@ export type AboutPanelMode = "ride" | "padded" | "inMenu";
 function aboutPanelClass(mode: AboutPanelMode): string {
   switch (mode) {
     case "ride":
-      return "about-panel";
+      return "about_panel";
     case "padded":
-      return "about-panel about-panel--padded";
+      return "about_panel is-padded";
     case "inMenu":
-      return "about-panel about-panel--in-menu";
+      return "about_panel is-in-menu";
     default: {
       const _exhaustive: never = mode;
       return _exhaustive;
@@ -50,10 +50,11 @@ type AboutPanelProps = {
 };
 
 const SERVICES = [
-  "Brand identity",
-  "Motion design",
+  "Brand strategy",
+  "Visual identity",
   "Website design",
-  "Low-code web dev",
+  "Website development",
+  "Motion design",
 ] as const;
 
 const CLIENTS = [
@@ -87,7 +88,7 @@ function hideChrome(
   backdrop.classList.remove("is-open");
   /* inMenu lives on the already-visible overlay — don't park the surface
      off-screen or the next open flashes a card slide. */
-  if (!panel.classList.contains("about-panel--in-menu")) {
+  if (!panel.classList.contains("is-in-menu")) {
     gsap.set(surface, { top: "-100vh" });
   } else {
     gsap.set(surface, { clearProps: "transform,top" });
@@ -135,7 +136,7 @@ export default function AboutPanel({ open, mode, onClose }: AboutPanelProps) {
     if (!panel) return;
 
     if (!prevOpenRef.current) {
-      const lead = panel.querySelector<HTMLElement>(".about-panel__lead");
+      const lead = panel.querySelector<HTMLElement>(".about_panel_lead");
       const leadGooey = lead ? prepareGooey(lead) : null;
       if (leadGooey) parkGooey(leadGooey);
     }
@@ -147,7 +148,7 @@ export default function AboutPanel({ open, mode, onClose }: AboutPanelProps) {
        already-parked lines a second screen down. The canvas dissolves rather
        than slides, so this parks alpha, not y. */
     gsap.set(
-      panel.querySelectorAll(".about-panel__media .about-panel__reveal-inner"),
+      panel.querySelectorAll(".about_panel_media .about_panel_reveal_inner"),
       { autoAlpha: 0 },
     );
   }, [open, mode]);
@@ -164,7 +165,7 @@ export default function AboutPanel({ open, mode, onClose }: AboutPanelProps) {
     if (open) {
       panel.classList.add("is-open");
 
-      const lead = panel.querySelector<HTMLElement>(".about-panel__lead");
+      const lead = panel.querySelector<HTMLElement>(".about_panel_lead");
       const leadGooey = lead ? prepareGooey(lead) : null;
       if (leadGooey) parkGooey(leadGooey);
 
@@ -295,7 +296,7 @@ export default function AboutPanel({ open, mode, onClose }: AboutPanelProps) {
       <button
         ref={backdropRef}
         type="button"
-        className="about-panel__backdrop"
+        className="about_panel_backdrop"
         aria-label="Close about"
         tabIndex={open && mode !== "inMenu" ? 0 : -1}
         onClick={onClose}
@@ -317,16 +318,16 @@ export default function AboutPanel({ open, mode, onClose }: AboutPanelProps) {
             document — so without opting out, its own overflow never moves and
             the content below the fold is unreachable. Page scroll is already
             stopped while the panel is open, so nothing here fights the page. */}
-        <div className="about-panel__surface" ref={surfaceRef}>
-          <div className="about-panel__scroll" data-lenis-prevent>
-            <div className="about-panel__inner container gap-0">
-              <div className="about-panel__grid grid is-12">
+        <div className="about_panel_surface" ref={surfaceRef}>
+          <div className="about_panel_scroll" data-lenis-prevent>
+            <div className="about_panel_inner container gap-0">
+              <div className="about_panel_grid grid is-12">
                 <div
                   ref={mediaRef}
-                  className="about-panel__reveal about-panel__media"
+                  className="about_panel_reveal about_panel_media"
                   aria-hidden="true"
                 >
-                  <div className="about-panel__reveal-inner">
+                  <div className="about_panel_reveal_inner">
                     {mountCanvas && (
                       <Suspense fallback={null}>
                         <AboutDitherCanvas
@@ -338,24 +339,25 @@ export default function AboutPanel({ open, mode, onClose }: AboutPanelProps) {
                   </div>
                 </div>
 
-                <div className="about-panel__reveal about-panel__intro">
-                  <div className="about-panel__reveal-inner">
-                    <h3 className="about-panel__lead text-style-h3">
-                      I&apos;m a digital designer who makes things look good and
-                      work better. Good design isn&apos;t about adding
-                      more—it&apos;s about knowing what to leave out.
+                <div className="about_panel_reveal about_panel_intro">
+                  <div className="about_panel_reveal_inner">
+                    <h3 className="about_panel_lead text-style-h3">
+                      I make things look good and work better. Immersed in your
+                      story, ruthless about what moves people, and built to
+                      close the gap between who you are and how the world sees
+                      you.
                     </h3>
-                    <span className="about-panel__cv-clip">
+                    <span className="about_panel_cv_clip">
                       <a
-                        className="about-panel__cv text-style-main"
+                        className="about_panel_cv text-style-main"
                         href="/main-assets/cv.pdf"
                         download
                       >
-                        <span className="about-panel__cv-label">
+                        <span className="about_panel_cv_label">
                           <RollingText>Download CV</RollingText>
                         </span>
                         <span
-                          className="about-panel__cv-icon"
+                          className="about_panel_cv_icon"
                           aria-hidden="true"
                         >
                           ↗
@@ -365,13 +367,13 @@ export default function AboutPanel({ open, mode, onClose }: AboutPanelProps) {
                   </div>
                 </div>
 
-                <div className="about-panel__lists">
-                  <div className="about-panel__reveal about-panel__col about-panel__col--services">
-                    <div className="about-panel__reveal-inner">
-                      <h5 className="about-panel__col-label text-style-main">
+                <div className="about_panel_lists">
+                  <div className="about_panel_reveal about_panel_col is-services">
+                    <div className="about_panel_reveal_inner">
+                      <h5 className="about_panel_col_label text-style-main">
                         Services
                       </h5>
-                      <div className="about-panel__col-list">
+                      <div className="about_panel_col_list">
                         {SERVICES.map((item) => (
                           <h5 key={item} className="text-style-main">
                             {item}
@@ -381,16 +383,16 @@ export default function AboutPanel({ open, mode, onClose }: AboutPanelProps) {
                     </div>
                   </div>
 
-                  <div className="about-panel__reveal about-panel__col about-panel__col--clients">
-                    <div className="about-panel__reveal-inner">
-                      <h5 className="about-panel__col-label text-style-main">
+                  <div className="about_panel_reveal about_panel_col is-clients">
+                    <div className="about_panel_reveal_inner">
+                      <h5 className="about_panel_col_label text-style-main">
                         Clients
                       </h5>
-                      <div className="about-panel__clients-cols">
+                      <div className="about_panel_clients_cols">
                         {clientColumns.map((column, index) => (
                           <div
                             key={`clients-col-${index}`}
-                            className="about-panel__col-list"
+                            className="about_panel_col_list"
                           >
                             {column.map((item) => (
                               <h5 key={item} className="text-style-main">

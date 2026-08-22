@@ -42,14 +42,14 @@ const PANEL_DURATION = 0.9;
 
 export const NAV_STACKS = [
   {
-    col: "nav-stack--home",
+    col: "is-home",
     links: [
       { label: "Home", path: "/", id: "hero" },
       { label: "Work", path: "/work", id: "work" },
     ],
   },
   {
-    col: "nav-stack--about",
+    col: "is-about",
     links: [
       { label: "About", path: "/#about", id: "about" },
       { label: "Contact", path: "/#contact", id: "contact" },
@@ -59,14 +59,29 @@ export const NAV_STACKS = [
 
 export const EMAIL_HREF = "mailto:a.namanprat@gmail.com";
 
-export const SOCIAL_LINKS = [
+export type SocialLink = {
+  label: string;
+  href: string;
+  /** Opens in a new tab (Instagram, booking links, etc.). */
+  newTab?: boolean;
+};
+
+export const SOCIAL_LINKS: SocialLink[] = [
   { label: "Email", href: EMAIL_HREF },
-  { label: "Instagram", href: "https://www.instagram.com/namanprat_" },
+  {
+    label: "Instagram",
+    href: "https://www.instagram.com/namanprat_",
+    newTab: true,
+  },
   {
     label: "Discovery Call",
     href: "https://cal.com/namanprat/discovery-call",
+    newTab: true,
   },
 ];
+
+export const socialLinkTabProps = (newTab?: boolean) =>
+  newTab ? ({ target: "_blank", rel: "noreferrer noopener" } as const) : {};
 
 const OVERLAY_LINKS = [
   { label: "Home", path: "/" },
@@ -78,22 +93,22 @@ const OVERLAY_LINKS = [
 
 const SECTION_IDS = ["hero", "team", "contact"];
 
-const MENU_COPY = ".menu-overlay-items .revealer a";
-const MENU_FOOTER_COPY = ".menu-footer .revealer > *";
+const MENU_COPY = ".menu_overlay_items .revealer a";
+const MENU_FOOTER_COPY = ".menu_footer .revealer > *";
 /* The dither canvas has no lines to split, so it dissolves rather than melts —
    same duration and start as the lead's gooey, so the two arrive as one. */
 const ABOUT_MEDIA =
-  ".about-panel--in-menu .about-panel__media .about-panel__reveal-inner";
+  ".about_panel.is-in-menu .about_panel_media .about_panel_reveal_inner";
 const ABOUT_MEDIA_S = 1.5;
 /* Lead melts in via gooey; lists still split into lines. */
-const ABOUT_HEAD = ".about-panel--in-menu .about-panel__lead";
+const ABOUT_HEAD = ".about_panel.is-in-menu .about_panel_lead";
 const ABOUT_LINES = [
-  ".about-panel--in-menu .about-panel__col-label",
-  ".about-panel--in-menu .about-panel__col-list h5",
+  ".about_panel.is-in-menu .about_panel_col_label",
+  ".about_panel.is-in-menu .about_panel_col_list h5",
 ].join(", ");
 /* Rides with the lines but is never split — RollingText has already rewritten
    it into per-character spans, and SplitText would re-wrap those. */
-const ABOUT_CV = ".about-panel--in-menu .about-panel__cv";
+const ABOUT_CV = ".about_panel.is-in-menu .about_panel_cv";
 
 /** In-page destinations close the overlay; everything else hands off to the cover. */
 function isInPageMenuNav(path: string): boolean {
@@ -263,7 +278,7 @@ export default function Menu({ initialPathname = "/" }: MenuProps) {
       return;
     }
 
-    const panel = document.querySelector<HTMLElement>(".about-panel");
+    const panel = document.querySelector<HTMLElement>(".about_panel");
     if (!panel) return;
 
     aboutNavTlRef.current?.kill();
@@ -305,7 +320,7 @@ export default function Menu({ initialPathname = "/" }: MenuProps) {
       gsap.set(nav, { y: dockNav() });
     });
     ro.observe(panel);
-    const surface = panel.querySelector(".about-panel__surface");
+    const surface = panel.querySelector(".about_panel_surface");
     if (surface) ro.observe(surface);
 
     return () => {
@@ -327,11 +342,11 @@ export default function Menu({ initialPathname = "/" }: MenuProps) {
         `${height}px`,
       );
 
-      /* Cluster height *without* .name-hero's centering pad. The pad is derived
+      /* Cluster height *without* .name_hero's centering pad. The pad is derived
          from this in CSS, so it has to be measured from the inner boxes —
          reading --hero-chrome-height instead would feed the pad into its own
          input and oscillate. */
-      const lockup = chrome.querySelector<HTMLElement>(".name-hero_contain");
+      const lockup = chrome.querySelector<HTMLElement>(".name_hero_contain");
       const nav = navContainerRef.current;
       const content = (lockup?.offsetHeight ?? 0) + (nav?.offsetHeight ?? 0);
       document.documentElement.style.setProperty(
@@ -343,7 +358,7 @@ export default function Menu({ initialPathname = "/" }: MenuProps) {
     setChromeHeight();
     const chromeRo = new ResizeObserver(setChromeHeight);
     for (const child of chrome.children) chromeRo.observe(child);
-    const lockup = chrome.querySelector(".name-hero_contain");
+    const lockup = chrome.querySelector(".name_hero_contain");
     if (lockup) chromeRo.observe(lockup);
     document.fonts?.ready?.then(setChromeHeight);
 
@@ -448,7 +463,7 @@ export default function Menu({ initialPathname = "/" }: MenuProps) {
     const root = menuItemsRef.current;
     if (!root) return [];
     menuHeadsRef.current = prepareGooeyAll(
-      root.querySelectorAll<HTMLElement>("h1"),
+      root.querySelectorAll<HTMLElement>(".menu_overlay_title"),
     );
     return menuHeadsRef.current;
   };
@@ -595,8 +610,8 @@ export default function Menu({ initialPathname = "/" }: MenuProps) {
   );
 
   /* Parks the wordmark + nav at mount and plays them once the preloader hands
-     over. Not scoped to menuRef — the lockup and nav-container are siblings of
-     .menu, not children. Runs at mount so nothing is unparked for a frame. */
+     over. Not scoped to menuRef — the lockup and nav_wrap are siblings of
+     .menu_wrap, not children. Runs at mount so nothing is unparked for a frame. */
   useEffect(() => bootHomeIntro(), []);
 
   useEffect(() => {
@@ -620,8 +635,8 @@ export default function Menu({ initialPathname = "/" }: MenuProps) {
 
   useEffect(() => {
     const root = contactClusterRef.current;
-    const dropdown = root?.querySelector<HTMLElement>(".nav-contact-dropdown");
-    const lines = dropdown?.querySelectorAll<HTMLElement>(".nav-link h5");
+    const dropdown = root?.querySelector<HTMLElement>(".nav_contact_dropdown");
+    const lines = dropdown?.querySelectorAll<HTMLElement>(".nav_link h5");
     if (!dropdown || !lines?.length) return;
 
     contactTlRef.current?.kill();
@@ -945,7 +960,7 @@ export default function Menu({ initialPathname = "/" }: MenuProps) {
 
     /* Measured here, synchronously, before `menu-open` lands and pins these two
        to `fixed`. Their height leaves the flow the moment it does, which shifts
-       the whole page up — the snap before the overlay animates. `.hero-chrome`
+       the whole page up — the snap before the overlay animates. `.hero_chrome`
        reserves this back (Menu.css). Not reusing `--hero-chrome-height`: it is
        driven by a ResizeObserver for a different purpose and lags a generation
        behind a webfont swap, which left the reserve tens of pixels short. */
@@ -968,7 +983,7 @@ export default function Menu({ initialPathname = "/" }: MenuProps) {
     const overlay = menuOverlayRef.current;
     const nav = navContainerRef.current;
     parkOverlayCopy();
-    /* No dock translate: `html.menu-open .nav-container` pins the bar with
+    /* No dock translate: `html.menu-open .nav_wrap` pins the bar with
        `position: fixed` below the pinned wordmark (Menu.css, <64rem). Nudging
        it by its own offset as well drove it off the top by the hero's height. */
     if (nav) gsap.set(nav, { clearProps: "transform" });
@@ -1036,20 +1051,20 @@ export default function Menu({ initialPathname = "/" }: MenuProps) {
 
   return (
     <>
-      <div className="hero-chrome" ref={heroChromeRef}>
-        <div className="name-hero">
-          <div className="name-hero_contain container gap-0">
-            <div className="name-hero_grid grid is-12">
+      <div className="hero_chrome" ref={heroChromeRef}>
+        <div className="name_hero">
+          <div className="name_hero_contain container gap-0">
+            <div className="name_hero_grid grid is-12">
               {/* Carries the gooey reveal itself rather than wrapping a child
                     that does: CSS applies `filter` before `mask`, so the chain
                     has to sit above the masked lockup. heroIntro arms it. */}
-              <div className="name-hero__gooey">
+              <div className="name_hero_gooey">
                 {/* On inner pages this lockup is the only logo on screen (the
                     text wordmark hides below 64rem), so it has to go home.
                     `goTo` already scrolls to the hero instead when we're on
                     the home page, so the same link is right in both places. */}
                 <a
-                  className="name-hero__home"
+                  className="name_hero_home"
                   href="/"
                   onClick={(e) => {
                     e.preventDefault();
@@ -1057,7 +1072,7 @@ export default function Menu({ initialPathname = "/" }: MenuProps) {
                   }}
                 >
                   <span
-                    className="name-hero__lockup"
+                    className="name_hero_lockup"
                     role="img"
                     aria-label="Naman Pratulya"
                   >
@@ -1074,12 +1089,12 @@ export default function Menu({ initialPathname = "/" }: MenuProps) {
           </div>
         </div>
         <div
-          className={`nav-container${isOpen ? " is-menu-open" : ""}${aboutInMenu ? " is-about-open" : ""}`}
+          className={`nav_wrap${isOpen ? " is-menu-open" : ""}${aboutInMenu ? " is-about-open" : ""}`}
           ref={navContainerRef}
         >
           <div className="nav_contain container gap-0">
             <nav className="nav_grid grid is-12" ref={navRef} aria-label="Main">
-              <div className="nav-logo">
+              <div className="nav_logo">
                 <div className="revealer">
                   <a
                     href="/"
@@ -1088,8 +1103,8 @@ export default function Menu({ initialPathname = "/" }: MenuProps) {
                       goTo("/");
                     }}
                   >
-                    <span className="nav-logo-target">
-                      <span className="nav-logo-wordmark">
+                    <span className="nav_logo_target">
+                      <span className="nav_logo_wordmark">
                         <h5 className="text-style-main">Naman Pratulya</h5>
                       </span>
                     </span>
@@ -1098,7 +1113,7 @@ export default function Menu({ initialPathname = "/" }: MenuProps) {
               </div>
 
               {NAV_STACKS.map(({ col, links }) => (
-                <div key={col} className={`nav-stack ${col}`}>
+                <div key={col} className={`nav_stack ${col}`}>
                   {links.map(({ label, path, id }) => {
                     const isActive = activeId === id;
                     if (id === "contact") {
@@ -1106,14 +1121,14 @@ export default function Menu({ initialPathname = "/" }: MenuProps) {
                       return (
                         <div
                           key={path}
-                          className="nav-contact"
+                          className="nav_contact"
                           ref={contactClusterRef}
                         >
                           <button
                             type="button"
-                            className="nav-link nav-contact-toggle"
+                            className="nav_link nav_contact_toggle"
                             aria-expanded={contactOpen}
-                            aria-controls="nav-contact-dropdown"
+                            aria-controls="nav_contact_dropdown"
                             onClick={() => setContactOpen((open) => !open)}
                           >
                             <h5 className="text-style-main">
@@ -1121,13 +1136,12 @@ export default function Menu({ initialPathname = "/" }: MenuProps) {
                             </h5>
                           </button>
                           <div
-                            id="nav-contact-dropdown"
-                            className="nav-contact-dropdown"
+                            id="nav_contact_dropdown"
+                            className="nav_contact_dropdown"
                           >
                             {SOCIAL_LINKS.map(
-                              ({ label: socialLabel, href }) => {
+                              ({ label: socialLabel, href, newTab }) => {
                                 const isMail = href.startsWith("mailto:");
-                                const isHttp = href.startsWith("http");
                                 const text = isMail
                                   ? emailCopy.label
                                   : socialLabel;
@@ -1135,17 +1149,12 @@ export default function Menu({ initialPathname = "/" }: MenuProps) {
                                   <a
                                     key={socialLabel}
                                     href={href}
-                                    className="nav-link"
+                                    className="nav_link"
                                     aria-live={isMail ? "polite" : undefined}
                                     onClick={
                                       isMail ? emailCopy.onClick : undefined
                                     }
-                                    {...(isHttp
-                                      ? {
-                                          target: "_blank",
-                                          rel: "noreferrer noopener",
-                                        }
-                                      : {})}
+                                    {...socialLinkTabProps(newTab)}
                                   >
                                     <h5 className="text-style-main">
                                       <RollingText key={text}>
@@ -1170,7 +1179,7 @@ export default function Menu({ initialPathname = "/" }: MenuProps) {
                       <a
                         key={path}
                         href={path === "/" ? "/" : path}
-                        className={`nav-link${isActive ? " is-active" : ""}`}
+                        className={`nav_link${isActive ? " is-active" : ""}`}
                         aria-current={isActive ? "page" : undefined}
                         onClick={(e) => {
                           e.preventDefault();
@@ -1186,10 +1195,10 @@ export default function Menu({ initialPathname = "/" }: MenuProps) {
                 </div>
               ))}
 
-              <div className="nav-utility-stack">
+              <div className="nav_utility_stack">
                 <a
                   href="/archive"
-                  className={`nav-link nav-archive${activeId === "archive" ? " is-active" : ""}`}
+                  className={`nav_link nav_archive${activeId === "archive" ? " is-active" : ""}`}
                   aria-current={activeId === "archive" ? "page" : undefined}
                   onClick={(e) => {
                     e.preventDefault();
@@ -1203,13 +1212,15 @@ export default function Menu({ initialPathname = "/" }: MenuProps) {
                 <ThemeToggle />
               </div>
 
-              <div className="nav-menu-toggle-open">
+              <div className="nav_menu_toggle_open">
                 <button
                   type="button"
-                  className="nav-menu-toggle"
+                  className="nav_menu_toggle"
                   onClick={onToggle}
                   aria-expanded={isOpen}
-                  aria-controls={aboutInMenu ? "site-about-panel" : undefined}
+                  aria-controls={
+                    aboutInMenu ? "site-about-panel" : "site-menu-overlay"
+                  }
                   aria-label={
                     aboutInMenu
                       ? "Back to menu"
@@ -1218,17 +1229,17 @@ export default function Menu({ initialPathname = "/" }: MenuProps) {
                         : "Open menu"
                   }
                 >
-                  <span className="nav-menu-toggle__viewport">
+                  <span className="nav_menu_toggle_viewport">
                     <span
-                      className="nav-menu-toggle__track"
+                      className="nav_menu_toggle_track"
                       ref={toggleTrackRef}
                     >
-                      <span className="nav-menu-toggle__line">
+                      <span className="nav_menu_toggle_line">
                         <h5 className="text-style-main">
                           <RollingText>Menu</RollingText>
                         </h5>
                       </span>
-                      <span className="nav-menu-toggle__line">
+                      <span className="nav_menu_toggle_line">
                         <h5 className="text-style-main">
                           <RollingText key={aboutInMenu ? "Back" : "Close"}>
                             {aboutInMenu ? "Back" : "Close"}
@@ -1243,13 +1254,14 @@ export default function Menu({ initialPathname = "/" }: MenuProps) {
           </div>
         </div>
       </div>
-      <div className="menu" ref={menuRef}>
+      <div className="menu_wrap" ref={menuRef}>
         <div
-          className={`menu-overlay${aboutInMenu ? " is-about-open" : ""}`}
+          className={`menu_overlay${aboutInMenu ? " is-about-open" : ""}`}
+          id="site-menu-overlay"
           ref={menuOverlayRef}
         >
           <div
-            className="menu-overlay-items"
+            className="menu_overlay_items"
             ref={menuItemsRef}
             aria-hidden={aboutInMenu}
           >
@@ -1264,23 +1276,24 @@ export default function Menu({ initialPathname = "/" }: MenuProps) {
                     void navigateTo(path);
                   }}
                 >
-                  <h1 className="text-style-display">{label}</h1>
+                  <span className="menu_overlay_title text-style-display">
+                    {label}
+                  </span>
                 </a>
               </div>
             ))}
           </div>
           <div
-            className="menu-footer"
+            className="menu_footer"
             ref={menuFooterColsRef}
             aria-hidden={aboutInMenu}
           >
             <div className="revealer">
               <p className="text-style-h5">&copy; 2026 All Rights Reserved</p>
             </div>
-            <div className="socials">
-              {SOCIAL_LINKS.map(({ label, href }) => {
+            <div className="menu_socials">
+              {SOCIAL_LINKS.map(({ label, href, newTab }) => {
                 const isMail = href.startsWith("mailto:");
-                const isHttp = href.startsWith("http");
                 const text = isMail ? emailCopy.label : label;
                 return (
                   <div className="revealer" key={label}>
@@ -1289,9 +1302,7 @@ export default function Menu({ initialPathname = "/" }: MenuProps) {
                       href={href}
                       aria-live={isMail ? "polite" : undefined}
                       onClick={isMail ? emailCopy.onClick : undefined}
-                      {...(isHttp
-                        ? { target: "_blank", rel: "noreferrer noopener" }
-                        : {})}
+                      {...socialLinkTabProps(newTab)}
                     >
                       {text}
                     </a>

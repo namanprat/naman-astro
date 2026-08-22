@@ -1,42 +1,39 @@
-.anime-link {
-  display: flex;
-  gap: var(--space-2);
-  align-items: center;
-  position: relative;
-  cursor: pointer;
-}
+@layer components {
+  .anime_link {
+    display: flex;
+    gap: var(--space-2);
+    align-items: center;
+    position: relative;
+    cursor: pointer;
+  }
 
-.anime-link-label {
-  position: relative;
-  z-index: 2;
-  pointer-events: none;
-}
+  .anime_link_label {
+    position: relative;
+    z-index: 2;
+    pointer-events: none;
+  }
 
-/* `line-height: 1` does two jobs. It matches what RollingText already forces on
-   its glyph stacks (see RollingText.css), so the text itself doesn't move; and
-   it makes the leading trim a no-op, since the trim's margins are
-   `-0.5lh + trim` and the pair below is exactly 0.5em. Left at the inherited
-   1.2 lh the trim was computed against a taller line box than the glyphs
-   actually occupied, so the label's box sat high on its own text and
-   `align-items: center` pushed the icon below the word. */
-.anime-link-label h5 {
-  margin: 0;
-  line-height: 1;
-  --_trim-top: 0.5em;
-  --_trim-bottom: 0.5em;
-}
+  /* `line-height: 1` does two jobs. It matches what RollingText already forces on
+     its glyph stacks, so the text itself doesn't move; and it makes the leading
+     trim a no-op, since the trim's margins are `-0.5lh + trim` and the pair below
+     is exactly 0.5em. */
+  .anime_link_label h5 {
+    margin: 0;
+    line-height: var(--line-height-small);
+    --_trim-top: 0.5em;
+    --_trim-bottom: 0.5em;
+  }
 
-/* Hugs the arrow. The old fixed 4rem × 1.25rem plate left most of its width as
-   empty orange either side of a 1em glyph. */
-.anime-link-icon {
-  flex: none;
-  font-size: 0.8em;
-  padding: 0.4em 0.6em;
-  line-height: 0;
-  background-color: var(--accent);
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  z-index: 1;
-  color: var(--white);
+  .anime_link_icon {
+    flex: none;
+    font-size: 0.8em;
+    padding: 0.4em 0.6em;
+    line-height: 0;
+    background-color: var(--brand-500);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 1;
+    color: var(--light-100);
+  }
 }

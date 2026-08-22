@@ -34,7 +34,10 @@ export default function ArchiveCanvas() {
   }, []);
 
   return (
-    <div className="archive-stage">
+    <div className="archive_stage">
+      <p className="sr-only" role="heading" aria-level={1}>
+        Archive
+      </p>
       <Canvas
         dpr={[1, 1.5]}
         gl={{ antialias: true, alpha: false }}

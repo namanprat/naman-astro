@@ -22,10 +22,8 @@ export default function ViewSwitcher<T extends string>({
 }: ViewSwitcherProps<T>) {
   return (
     <div
-      className={
-        locked ? "view-switcher view-switcher--locked" : "view-switcher"
-      }
-      role="tablist"
+      className={locked ? "view_switcher is-locked" : "view_switcher"}
+      role="group"
       aria-label={label}
       data-busy={busy || undefined}
     >
@@ -33,9 +31,8 @@ export default function ViewSwitcher<T extends string>({
         <button
           key={id}
           type="button"
-          role="tab"
-          className="view-switcher__tab text-style-mono"
-          aria-selected={view === id}
+          className="view_switcher_tab text-style-mono"
+          aria-pressed={view === id}
           disabled={busy}
           onClick={() => onSelect(id)}
         >

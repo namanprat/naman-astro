@@ -47,7 +47,7 @@ test("cold session: the preloader hands over and the nav appears", async ({
   await expect(cta).toHaveAttribute("data-ready", "1", { timeout: 60_000 });
   await cta.click();
 
-  await expect(page.locator(".preloader")).toHaveCount(0, { timeout: 90_000 });
+  await expect(page.locator(".preloader_wrap")).toHaveCount(0, { timeout: 90_000 });
   await expectRevealed(page);
   await expectNavVisible(page);
 });
@@ -58,7 +58,7 @@ test("second visit in the same session skips the preloader and still reveals", a
   await skipPreloader(page);
   await page.goto("/");
 
-  await expect(page.locator(".preloader")).toHaveCount(0);
+  await expect(page.locator(".preloader_wrap")).toHaveCount(0);
   await expectRevealed(page);
   await expectNavVisible(page);
 });

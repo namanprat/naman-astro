@@ -6,8 +6,8 @@
    blur and GSAP's filter parser can't interpolate a string containing a `url()`.
 
    Registered, not merely used, for two reasons. `inherits: false` stops a parked
-   blur leaking into descendants — `.gallery-label__count` already sits inside a
-   `.gooey-reveal__inner`. And a registered property can never substitute
+   blur leaking into descendants — `.gallery_label_count` already sits inside a
+   `.gooey_reveal_inner`. And a registered property can never substitute
    invalidly: an invalid `var()` would make the whole `filter` declaration
    compute to `none`, silently dropping the threshold, which is the exact failure
    this rework exists to fix. Unsupported engines fall back to an ordinary
@@ -36,7 +36,7 @@
   --site--span-4: calc(var(--site--column-width-plus-gutter) * 4 - var(--site-gutter));
   --site--span-5: calc(var(--site--column-width-plus-gutter) * 5 - var(--site-gutter));
   --site--span-8: calc(var(--site--column-width-plus-gutter) * 8 - var(--site-gutter));
-  --muted: color-mix(in srgb, var(--ink) 70%, transparent);
+  --muted: color-mix(in srgb, var(--text) 70%, transparent);
   --site--nav-offset: 0px;
 
   --z--negative: -10;
@@ -78,13 +78,13 @@
      blur. A shallower radius keeps blob edges legible, and contrast pulls the
      softened shapes back out once the blur (and the grey scrim) has flattened
      them. */
-  --surface-frost-blur: 18px;
+  --surface-frost-blur: 1.125rem;
 }
 
 .theme-dark {
   /* Dark mode: the footer + About sheet are fully opaque orange. */
   --surface-accent: var(--brand-500);
-  --surface-frost-blur: 0px;
+  --surface-frost-blur: 0rem;
 }
 
 @layer components {
@@ -141,7 +141,7 @@
     margin-top: calc(-1 * (var(--hero-chrome-pad, 0px) + var(--hero-chrome-content, 0px)));
     padding-block: 0;
     background-color: transparent;
-    color: var(--ink);
+    color: var(--text);
     overflow: visible;
     pointer-events: none;
   }
@@ -155,7 +155,7 @@
   }
 
   .hero,
-  .team {
+  .team_wrap {
     padding-block: 0;
     padding-top: 0;
   }
@@ -223,7 +223,7 @@
     }
   }
 
-  .transition-panel {
+  .transition_panel {
     position: fixed;
     inset: 0;
     width: 100%;
@@ -231,14 +231,14 @@
     display: flex;
     justify-content: center;
     align-items: center;
-    background-color: var(--accent);
+    background-color: var(--brand-500);
     transform: translateY(100%);
     pointer-events: none;
     z-index: 1000001;
     will-change: transform;
   }
 
-  html.is-page-transitioning .transition-panel {
+  html.is-page-transitioning .transition_panel {
     transform: translateY(0);
     pointer-events: all;
   }
@@ -254,21 +254,19 @@
 
   /* While the preloader is up, only the backdrop overlay, the in-flow fluid,
      and the grain may paint — the overlay is transparent so the canvas reads
-     through it, which means the rest of the page has to be hidden.
-     The wrap itself is pinned to the viewport in FluidCanvas.css (unlayered)
-     so the hero-chrome pull-up isn't clipped by overflow:hidden here. */
+     through it, which means the rest of the page has to be hidden. */
   html.is-preloading body > *:not(.site-backdrop):not(.site-grain):not(main) {
     visibility: hidden;
   }
 
-  html.is-preloading main > *:not(.fluid-wrap) {
+  html.is-preloading main > *:not(.fluid_wrap) {
     visibility: hidden;
   }
 
   /* In-flow fluid sits under the chrome after preload; while the overlay is up
      pin it as a true viewport backdrop so it fills the screen behind the
      transparent preloader (chrome is visibility:hidden but still in flow). */
-  html.is-preloading .fluid-wrap {
+  html.is-preloading .fluid_wrap {
     position: fixed;
     inset: 0;
     width: 100%;
@@ -281,13 +279,13 @@
   /* Two independent pre-paint holds, one per entrance module. Each list mirrors
      the SKIP constant in its own module — `lineReveal.ts` for the first,
      `gooeyReveal.ts` for the second — and the two lists differ on purpose:
-     `.manifesto` opts out of the line reveal but not the gooey. */
+     `.manifesto_wrap` opts out of the line reveal but not the gooey. */
 
-  html.is-line-revealing .text-style-main:not(:is(.nav-container, .footer, .menu, .about-panel, .manifesto, .content__group, .transition-panel, [data-no-reveal]) *) {
+  html.is-line-revealing .text-style-main:not(:is(.nav_wrap, .footer_wrap, .menu_wrap, .about_panel, .manifesto_wrap, .content_group, .transition_panel, [data-no-reveal]) *) {
     visibility: hidden;
   }
 
-  html.is-gooey-arming :is(h1, h2, h3):not(:is(.nav-container, .footer, .menu, .about-panel, .content__group, .transition-panel, [data-no-reveal]) *) {
+  html.is-gooey-arming :is(h1, h2, h3):not(:is(.nav_wrap, .footer_wrap, .menu_wrap, .about_panel, .content_group, .transition_panel, [data-no-reveal]) *) {
     visibility: hidden;
   }
 
@@ -304,9 +302,9 @@
      0.4px softener moved inside `#blur-matrix`: it keeps this list at exactly
      two functions.
 
-     `.gooey-reveal` is now a pure marker class — park/arm/settle toggle it, it
+     `.gooey_reveal` is now a pure marker class — park/arm/settle toggle it, it
      paints nothing itself. */
-  .gooey-reveal .gooey-reveal__inner,
+  .gooey_reveal .gooey_reveal_inner,
   .is-gooey-armed {
     filter: blur(var(--gooey-blur, 0px)) url(#blur-matrix);
   }
@@ -321,13 +319,13 @@
 
      Blur-only rather than `filter: none`: the entrance still has to run, it just
      must not name a `url()`. */
-  .gooey-reveal--soft .gooey-reveal__inner,
-  html.is-gooey-soft .gooey-reveal .gooey-reveal__inner,
+  .gooey_reveal_soft .gooey_reveal_inner,
+  html.is-gooey-soft .gooey_reveal .gooey_reveal_inner,
   html.is-gooey-soft .is-gooey-armed {
     filter: blur(var(--gooey-blur, 0px));
   }
 
-  .gooey-reveal__line {
+  .gooey_reveal_line {
     display: block;
   }
 
@@ -335,7 +333,7 @@
      every line into its own block — so an indented heading would repeat its
      indent on each line and shove the wide ones past the edge. The first line
      keeps the inherited value; the rest start flush. */
-  .gooey-reveal__line + .gooey-reveal__line {
+  .gooey_reveal_line + .gooey_reveal_line {
     text-indent: 0;
   }
 
@@ -344,7 +342,7 @@
      nothing and is half of what broke the threshold in the first place. Every
      consumer parks with a `gsap.set` a frame before its tween, so there is no
      first-frame hitch to protect against. */
-  .gooey-reveal__inner {
+  .gooey_reveal_inner {
     display: inline-block;
     /* Also a first-line box, nested inside one that already took the indent. */
     text-indent: 0;
@@ -363,7 +361,7 @@
     background: transparent;
   }
 
-  .overlay-scrollbar {
+  .overlay_scrollbar {
     position: fixed;
     top: 0.625rem;
     right: 0.25rem;
@@ -374,14 +372,14 @@
     background: transparent;
   }
 
-  .overlay-scrollbar[hidden] {
+  .overlay_scrollbar[hidden] {
     display: none;
   }
 
-  .overlay-scrollbar__thumb {
+  .overlay_scrollbar_thumb {
     width: 100%;
     border-radius: var(--radius-round);
-    background: color-mix(in srgb, var(--ink) 45%, transparent);
+    background: color-mix(in srgb, var(--text) 45%, transparent);
     will-change: transform;
   }
 }

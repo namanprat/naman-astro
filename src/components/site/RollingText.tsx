@@ -23,7 +23,7 @@ export default function RollingText({ children, className }: RollingTextProps) {
   return (
     <span
       ref={ref}
-      className={["roll-text", className].filter(Boolean).join(" ")}
+      className={["roll_text", className].filter(Boolean).join(" ")}
     >
       {children}
     </span>

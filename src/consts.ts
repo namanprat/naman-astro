@@ -2,7 +2,7 @@
 export const SITE_NAME = "Naman Pratulya";
 /** Fallback meta description for pages that don't set their own. */
 export const SITE_DESCRIPTION =
-  "Based out of Mumbai and Bangalore. Working with culture, curating digital experiences.";
+  "Based in Mumbai and Bangalore. Websites for brands whose reputation has outgrown their digital presence.";
 /** Canonical origin. Resolves canonical URLs, social images, and the sitemap. */
 export const SITE_URL = "https://namanprat.com";
 /**

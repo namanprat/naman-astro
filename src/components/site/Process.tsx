@@ -9,46 +9,52 @@ import "./Process.css";
  */
 const CARDS = [
   {
-    title: "Diagnose",
+    title: "Uncover your story",
     description:
-      "We find what's really stopping growth across brand, GTM, sales, pricing, talent and operations. Every gap and data blind spot gets surfaced and named, not glossed over. You leave with a clear picture of what to fix first.",
+      "We dig into your brand, surface what makes you irreplaceable, and shape it into sharp positioning and a website strategy that connects in seconds.",
   },
   {
-    title: "Build",
+    title: "Shape the presence",
     description:
-      "We build the commercial system your growth actually needs. Positioning, campaigns, CRM, dashboards and team structure come together as one coherent architecture. Execution systems replace guesswork with repeatable, measurable process.",
+      "With the narrative locked, we design a brand and website that feels premium, signals credibility, and gives your audience one clear reason to lean in and act.",
   },
   {
-    title: "Orchestrate",
+    title: "Send it into the world",
     description:
-      "We own execution and keep every partner and channel pointed at a single revenue outcome. Delivery is managed end to end, not handed off and hoped on. We stay embedded and accountable until the numbers actually move.",
+      "The site goes live as a long-term asset that turns attention into opportunity, attracts the clients you're built for, and grows with you.",
   },
 ];
 
 export default function Process() {
   return (
-    <section className="process" id="process" aria-label="Process">
-      <div className="process__inner container gap-0">
-        <div className="process__grid grid is-12">
-          <div className="process__statement">
-            <span className="process__label text-style-mono">(Process)</span>
-            <h2 className="process__title text-style-h2">
-              If any of this sounds familiar, you don&apos;t need another
-              agency. You need a system. Voice gives you the words.
+    <section
+      className="process_wrap studio_section"
+      id="process"
+      aria-label="Process"
+    >
+      <div className="process_contain container gap-0">
+        <div className="process_layout studio_layout grid is-12">
+          <div className="process_statement studio_statement">
+            <span className="process_label studio_label text-style-mono">
+              (Process)
+            </span>
+            <h2 className="process_title studio_title text-style-h2">
+              We design website experiences that finally reflect what
+              you&apos;ve actually built.
             </h2>
           </div>
 
-          <ul className="process__cards">
+          <ul className="process_cards">
             {CARDS.map((card, i) => (
-              <li className="process__card" key={card.title}>
-                <h3 className="process__card-title text-style-h3">
+              <li className="process_card" key={card.title}>
+                <h3 className="process_card_title text-style-h3">
                   {card.title}
                 </h3>
-                <div className="process__card-foot">
-                  <span className="process__card-index text-style-mono">
+                <div className="process_card_foot">
+                  <span className="process_card_index text-style-mono">
                     {`0${i + 1} / 0${CARDS.length}`}
                   </span>
-                  <p className="process__card-copy text-style-main">
+                  <p className="process_card_copy text-style-main">
                     {card.description}
                   </p>
                 </div>

@@ -12,54 +12,39 @@ const CLOSE_S = 0.4;
 
 const FAQ_ITEMS = [
   {
-    question: "What exactly does GXO do?",
+    question: "Who will actually be working on the project?",
     answer:
-      "We operate as a single commercial transformation partner. We diagnose what's blocking growth, build the commercial system to fix it, and stay embedded until revenue moves: brand, GTM, sales, pricing, talent, operations and data under one roof.",
+      "I lead every engagement: strategy, creative direction, and your primary point of contact throughout. Depending on scope, a small set of collaborators supports on design and development. The level of care stays consistent, regardless of project size.",
   },
   {
-    question: "How is this different from hiring an agency?",
+    question: "How long do projects usually take?",
     answer:
-      "Agencies run campaigns and hand you deliverables. We own the outcome. One connected brief, one accountable partner, and a system that ties spend to pipeline, not three agencies and four channels nobody is orchestrating.",
+      "Most projects run 10–14 weeks end-to-end. Timelines flex with scope, but milestones are set from day one so there are no surprises.",
   },
   {
-    question: "How does the engagement work?",
+    question: "How do you communicate and manage work?",
     answer:
-      "A three-part operating system (Voice, Visibility, Velocity) led by a fractional CMO. Voice gives you the narrative, Visibility gives you the room, Velocity turns awareness into revenue. Typically 90 days to a 5× pipeline lift.",
+      "Simple and transparent. You'll get async updates and weekly communication; calls are scheduled to review important decisions or milestones. We can work in your tools so the process stays structured without getting heavy.",
   },
   {
-    question: "What are Voice, Visibility, and Velocity?",
+    question: "What do you need to start?",
     answer:
-      "Voice is narrative systems and executive alignment: what you say and why now. Visibility is executive and brand credibility: where you show up and how you're perceived. Velocity is performance marketing and GTM execution: how awareness becomes measurable growth.",
+      "We'll talk through your needs on a call and I'll send a tailored proposal. After that, a signed agreement and the initial deposit. That's all. Onboarding stays short so we can get to the work.",
+  },
+  {
+    question: "What happens after launch?",
+    answer:
+      "A stretch of hands-on support so everything runs, plus the notes you need to update the site yourself. After that you're equipped to run it in-house — and if you want ongoing care, we can talk about that separately.",
+  },
+  {
+    question: "Can you handle branding, design and development?",
+    answer:
+      "Yes. The work is delivering them together. Narrative, identity, visuals and functionality get aligned from day one, so the final experience is one thing, not three handoffs.",
   },
   {
     question: "Who do you work with?",
     answer:
-      "Growth-stage founders and leadership teams who are scaling but still run everything through the founder, whose message differs between sales and marketing, or who need senior leadership without the cost and ramp of a full-time CMO.",
-  },
-  {
-    question: "Do I get a full-time CMO?",
-    answer:
-      "You get fractional CMO-led leadership backed by a global team: the senior firepower without the $300K hire, long ramp, and single point of risk.",
-  },
-  {
-    question: "Where is the team based?",
-    answer:
-      "Battle-tested leadership across continents: an agile team spanning the USA, UK, Brussels, South Africa, Egypt, Dubai and India. Global scale, local execution.",
-  },
-  {
-    question: "How do you measure success?",
-    answer:
-      "Revenue accountability. We build revenue-driven KPI dashboards that connect marketing spend to pipeline, so progress is visible, not a story you have to take on faith when the board asks.",
-  },
-  {
-    question: "Do you host events?",
-    answer:
-      "Yes. GXO hosts intimate gatherings for entrepreneurs, taste makers and thought leaders, including our evening on the eve of Cannes Lions. By invitation only; share your details and we'll be in touch.",
-  },
-  {
-    question: "How do we get started?",
-    answer:
-      "Use the contact form to tell us what's slowing your revenue. We'll talk through where the system is broken and what to build first.",
+      "Founders and brands whose reputation has outgrown their digital presence — established work that still looks smaller than it is. If the site no longer matches what you've built, that's the brief.",
   },
 ];
 
@@ -84,7 +69,7 @@ export default function Faq() {
       const root = rootRef.current;
       if (!root || prefersReducedMotion()) return;
 
-      const items = gsap.utils.toArray<HTMLElement>(".faq__item", root);
+      const items = gsap.utils.toArray<HTMLElement>(".faq_item", root);
       if (!items.length) return;
 
       gsap.from(items, {
@@ -129,46 +114,48 @@ export default function Faq() {
   };
 
   return (
-    <section className="faq" id="faq" aria-label="FAQ" ref={rootRef}>
-      <div className="faq__inner container gap-0">
-        <div className="faq__grid grid is-12">
-          <div className="faq__statement">
-            <span className="faq__label text-style-mono">(FAQ&apos;s)</span>
-            <h2 className="faq__title text-style-h2">
-              GXO exists as a single point of accountability for commercial
-              growth. A reference for how we diagnose, build, and stay embedded
-              until revenue moves.
+    <section
+      className="faq_wrap studio_section"
+      id="faq"
+      aria-label="FAQ"
+      ref={rootRef}
+    >
+      <div className="faq_contain container gap-0">
+        <div className="faq_layout studio_layout grid is-12">
+          <div className="faq_statement studio_statement">
+            <span className="faq_label studio_label text-style-mono">
+              (FAQ&apos;s)
+            </span>
+            <h2 className="faq_title studio_title text-style-h2">
+              Here&apos;s what you need to consider before we start.
             </h2>
           </div>
 
-          <p className="faq__lead text-style-h4">
-            It reflects a belief in focus, restraint, and doing fewer things
-            properly: the conditions required to make growth repeatable.
+          <p className="faq_lead text-style-h4">
+            Fewer projects, fully present. Intention over speed — every layer
+            earns its place before we move to the next.
           </p>
 
-          <ul className="faq__items">
+          <ul className="faq_items">
             {FAQ_ITEMS.map((item, index) => {
               const isOpen = open.has(index);
               const panelId = `faq-panel-${index}`;
               const buttonId = `faq-question-${index}`;
               return (
-                <li className="faq__item" key={item.question}>
+                <li className="faq_item" key={item.question}>
                   <button
-                    className="faq__question"
+                    className="faq_question"
                     id={buttonId}
                     type="button"
                     aria-expanded={isOpen}
                     aria-controls={panelId}
                     onClick={() => toggle(index)}
                   >
-                    <span className="faq__index text-style-mono">
-                      {`(${index + 1})`}
-                    </span>
-                    <span className="faq__question-text text-style-main">
+                    <span className="faq_question_text text-style-main">
                       {item.question}
                     </span>
                     <svg
-                      className="faq__icon"
+                      className="faq_icon"
                       viewBox="0 0 20 20"
                       width="20"
                       height="20"
@@ -187,7 +174,7 @@ export default function Faq() {
                   </button>
 
                   <div
-                    className="faq__answer"
+                    className="faq_answer"
                     id={panelId}
                     role="region"
                     aria-labelledby={buttonId}
@@ -197,8 +184,8 @@ export default function Faq() {
                   >
                     {/* Padding lives on the inner box so `height: "auto"`
                         measures it, instead of being tweened alongside. */}
-                    <div className="faq__answer-inner">
-                      <p className="faq__answer-copy text-style-main">
+                    <div className="faq_answer_inner">
+                      <p className="faq_answer_copy text-style-main">
                         {item.answer}
                       </p>
                     </div>

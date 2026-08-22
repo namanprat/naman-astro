@@ -82,7 +82,7 @@ function localScale(wrap: HTMLElement, wrapRect: DOMRect) {
 
 /**
  * Interactive ASCII wordmark — port of codegrid-interactive-ascii-footer-hover,
- * painted across the footer card and sampling the `.footer-logo` source SVG.
+ * painted across the footer card and sampling the `.footer_logo` source SVG.
  */
 export default function FooterAsciiLogo({
   sourceRef,
@@ -437,11 +437,11 @@ export default function FooterAsciiLogo({
 
   return (
     <>
-      <div className="footer-ascii" ref={wrapRef} aria-hidden="true">
-        <canvas className="footer-ascii__canvas" ref={canvasRef} />
+      <div className="footer_ascii" ref={wrapRef} aria-hidden="true">
+        <canvas className="footer_ascii_canvas" ref={canvasRef} />
       </div>
-      <div className="footer-ascii__cursor" ref={cursorRef} aria-hidden="true">
-        <span className="footer-ascii__cursor-label" ref={cursorLabelRef}>
+      <div className="footer_ascii_cursor" ref={cursorRef} aria-hidden="true">
+        <span className="footer_ascii_cursor_label" ref={cursorLabelRef}>
           SCATTER
         </span>
       </div>

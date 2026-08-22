@@ -20,7 +20,7 @@ export const PT_COVER_KEY = "pt:cover";
 const DURATION = 0.9;
 
 function panelEl() {
-  return document.querySelector<HTMLElement>(".transition-panel");
+  return document.querySelector<HTMLElement>(".transition_panel");
 }
 
 function lockScroll() {

@@ -1,14 +1,15 @@
+@layer components {
 html.menu-open {
   overflow: hidden;
   /* Dark: black on accent. Light: white on frost. Same pairing as footer / About. */
-  --menu-ink: var(--black);
+  --menu-ink: var(--dark-900);
 }
 
 html.theme-light.menu-open {
-  --menu-ink: var(--white);
+  --menu-ink: var(--light-100);
 }
 
-.menu {
+.menu_wrap {
   position: fixed;
   top: 0;
   left: 0;
@@ -18,8 +19,8 @@ html.theme-light.menu-open {
   z-index: var(--z--menu);
 }
 
-.menu a,
-.menu p {
+.menu_wrap a,
+.menu_wrap p {
   position: relative;
   color: var(--menu-ink);
   display: block;
@@ -30,18 +31,18 @@ html.theme-light.menu-open {
 /*
   Chrome over the hero. display:contents so sticky nav is not trapped in a
   short parent — children participate in the page flow; ResizeObserver still
-  measures .name-hero + .nav-container via chrome.children.
+  measures .name_hero + .nav_wrap via chrome.children.
 */
-.hero-chrome {
+.hero_chrome {
   display: contents;
 }
 
 /* Name lockup — SVG mask, full grid width */
-.name-hero_contain {
+.name_hero_contain {
   gap: 0;
 }
 
-.name-hero_grid {
+.name_hero_grid {
   width: 100%;
 }
 
@@ -51,7 +52,7 @@ html.theme-light.menu-open {
    blurring the lockup itself would blur a flat colour box and then clip it with
    a razor-sharp mask. Hidden until bootHomeIntro parks the start blur (or skips
    it), so the sharp lockup never flashes before the melt. */
-.name-hero__gooey {
+.name_hero_gooey {
   grid-column: 1 / -1;
   min-width: 0;
   /* em box for the melt: the lockup's height (grid width × 70/446). heroIntro
@@ -60,7 +61,7 @@ html.theme-light.menu-open {
   font-size: calc(var(--site--grid-width) * 70 / 446);
 }
 
-.name-hero__gooey:not(.is-gooey-parked) {
+.name_hero_gooey:not(.is-gooey-parked) {
   visibility: hidden;
 }
 
@@ -69,18 +70,18 @@ html.theme-light.menu-open {
    lays out; a 0-height lockup makes mask-size: 100% resolve to nothing. */
 /* The lockup is a span inside this link — both need to be blocks or the
    `aspect-ratio` box collapses to an inline run. */
-.name-hero__home {
+.name_hero_home {
   display: block;
   width: 100%;
   min-width: 0;
 }
 
-.name-hero__lockup {
+.name_hero_lockup {
   display: block;
   width: 100%;
   min-width: 0;
   aspect-ratio: 446 / 70;
-  background-color: var(--ink);
+  background-color: var(--text);
   -webkit-mask-image: url("/main-assets/name-hero.svg");
   -webkit-mask-repeat: no-repeat;
   -webkit-mask-position: 0 0;
@@ -93,7 +94,7 @@ html.theme-light.menu-open {
 
 /* Layout is `aspect-ratio` on the lockup. Display none so an opacity:0 child
    can't collapse mix-blend-mode:difference on iOS Safari. */
-.name-hero__lockup img {
+.name_hero_lockup img {
   display: none;
 }
 
@@ -108,12 +109,12 @@ html.theme-light.menu-open {
   The margin floor keeps it sane on viewports too short to centre.
 */
 :root {
-  --hero-chrome-pad: max(calc(var(--site--safe-area-top) + var(--site--margin)), calc((100svh - var(--hero-chrome-content, 0px)) / 2));
+  --hero-chrome-pad: max(calc(var(--site--safe-area-top) + var(--site-margin)), calc((100svh - var(--hero-chrome-content, 0px)) / 2));
 }
 
-.name-hero {
+.name_hero {
   position: relative;
-  /* Above the in-flow .fluid-wrap so the blend can still sample the sim. */
+  /* Above the in-flow .fluid_wrap so the blend can still sample the sim. */
   z-index: var(--z--raised);
   width: 100%;
   padding-top: var(--hero-chrome-pad);
@@ -121,21 +122,21 @@ html.theme-light.menu-open {
 }
 
 /* Invert against whatever the fluid sim paints underneath as it follows the
-   cursor. Sits on .name-hero, not the lockup — .name-hero__gooey's filter makes
+   cursor. Sits on .name_hero, not the lockup — .name_hero_gooey's filter makes
    its own buffer, and blending inside that would never see the canvas. */
-.name-hero,
-.nav-container {
+.name_hero,
+.nav_wrap {
   mix-blend-mode: difference;
 }
 
 /* Over the menu the blend has to go: overlay ink is a flat `--menu-ink`, and
    `difference` would cancel it against the panel (black-on-accent, white-on-frost). */
-html.menu-open .name-hero,
-html.menu-open .nav-container {
+html.menu-open .name_hero,
+html.menu-open .nav_wrap {
   mix-blend-mode: normal;
 }
 
-.nav-container {
+.nav_wrap {
   position: sticky;
   top: 0;
   width: 100%;
@@ -155,45 +156,45 @@ html.menu-open .nav-container {
   position: relative;
   width: 100%;
   /* Gutter = logo→nav gap and sticky top padding (with safe-area on container) */
-  padding-block: var(--site--gutter);
+  padding-block: var(--site-gutter);
   align-items: start;
 }
 
 /* Frame items are column-anchored but may overflow empty gutters */
-.nav_grid > .nav-logo,
-.nav_grid > .nav-stack,
-.nav_grid > .nav-utility-stack {
+.nav_grid > .nav_logo,
+.nav_grid > .nav_stack,
+.nav_grid > .nav_utility_stack {
   min-width: max-content;
 }
 
-.nav-container .nav_grid a,
-.nav-container .nav_grid .nav-menu-toggle,
-.nav-container .nav_grid .nav-theme-toggle,
-.nav-container .nav_grid h5 {
-  color: var(--ink);
+.nav_wrap .nav_grid a,
+.nav_wrap .nav_grid .nav_menu_toggle,
+.nav_wrap .nav_grid .nav_theme_toggle,
+.nav_wrap .nav_grid h5 {
+  color: var(--text);
 }
 
-.nav-container.is-menu-open {
+.nav_wrap.is-menu-open {
   z-index: calc(var(--z--menu) + 1);
 }
 
-.nav-container.is-menu-open .nav_grid a,
-.nav-container.is-menu-open .nav_grid .nav-menu-toggle,
-.nav-container.is-menu-open .nav_grid .nav-theme-toggle,
-.nav-container.is-menu-open .nav_grid h5 {
+.nav_wrap.is-menu-open .nav_grid a,
+.nav_wrap.is-menu-open .nav_grid .nav_menu_toggle,
+.nav_wrap.is-menu-open .nav_grid .nav_theme_toggle,
+.nav_wrap.is-menu-open .nav_grid h5 {
   color: var(--menu-ink);
 }
 
-.nav-logo a {
+.nav_logo a {
   position: relative;
   display: inline-block;
 }
 
-.nav-logo-target {
+.nav_logo_target {
   display: inline-block;
 }
 
-.nav-logo-wordmark {
+.nav_logo_wordmark {
   display: block;
   color: inherit;
   white-space: nowrap;
@@ -209,31 +210,32 @@ html.menu-open .nav-container {
 
    Below 64rem the grid is 8/6/4 and the stacks hide — Menu spans the full
    grid; theme lives in the overlay. */
-.nav-logo {
+.nav_logo {
   grid-column: 1 / span 2;
   overflow: visible;
   z-index: 1;
+  display: block;
 }
 
-.nav-stack--home {
+.nav_stack.is-home {
   grid-column: 8 / span 2;
 }
 
-.nav-stack--about {
+.nav_stack.is-about {
   grid-column: 10 / span 2;
 }
 
-.nav-logo .revealer,
-.nav-logo a,
-.nav-logo-target {
+.nav_logo .revealer,
+.nav_logo a,
+.nav_logo_target {
   overflow: visible;
   max-width: none;
   width: max-content;
 }
 
-/* Stacked link pairs — hide at medium via band flag */
-.nav-stack {
-  display: none;
+/* Stacked link pairs — hidden below 64rem (Menu pill takes over). */
+.nav_stack {
+  display: flex;
   flex-direction: column;
   align-items: flex-start;
   gap: 0.15rem;
@@ -242,14 +244,14 @@ html.menu-open .nav-container {
   overflow: visible;
 }
 
-.nav-contact {
+.nav_contact {
   position: relative;
   display: flex;
   flex-direction: column;
   align-items: flex-start;
 }
 
-.nav-contact-toggle {
+.nav_contact_toggle {
   appearance: none;
   background: none;
   border: none;
@@ -260,7 +262,7 @@ html.menu-open .nav-container {
   color: inherit;
 }
 
-.nav-contact-dropdown {
+.nav_contact_dropdown {
   display: none;
   position: absolute;
   top: calc(100% + var(--space-2));
@@ -271,7 +273,7 @@ html.menu-open .nav-container {
   gap: 0.15rem;
 }
 
-.nav-link {
+.nav_link {
   position: relative;
   display: inline-block;
   color: inherit;
@@ -282,10 +284,10 @@ html.menu-open .nav-container {
   margin-left: -0.8em;
 }
 
-.nav-logo-wordmark,
-.nav-link,
-.nav-archive,
-.nav-menu-toggle__line {
+.nav_logo_wordmark,
+.nav_link,
+.nav_archive,
+.nav_menu_toggle_line {
   /* Size/face/weight/tracking from text-style-main; tight leading for hit box. */
   line-height: 1;
 }
@@ -294,28 +296,28 @@ html.menu-open .nav-container {
    RollingText has already split those h5s into .roll-char stacks for the hover,
    so the reveal moves the whole heading rather than splitting it a second
    time. .roll-char is 1em inside a 1em line, so this clips nothing on hover. */
-.nav_grid .nav-link,
-.nav_grid .nav-logo-wordmark {
-  overflow: hidden;
+.nav_grid .nav_link,
+.nav_grid .nav_logo_wordmark {
+  overflow: clip;
 }
 
-.nav-link h5,
-.nav-logo-wordmark h5,
-.nav-archive h5,
-.nav-menu-toggle__line h5 {
+.nav_link h5,
+.nav_logo_wordmark h5,
+.nav_archive h5,
+.nav_menu_toggle_line h5 {
   margin: 0;
   color: inherit;
   line-height: 1;
 }
 
 /* Leading-trim pulls glyphs up inside the 1em pill viewport. */
-.nav-menu-toggle__line h5::before,
-.nav-menu-toggle__line h5::after {
+.nav_menu_toggle_line h5::before,
+.nav_menu_toggle_line h5::after {
   content: none;
 }
 
 /* Archive link + theme toggle stack — last two columns. */
-.nav-utility-stack {
+.nav_utility_stack {
   display: flex;
   flex-direction: column;
   align-items: flex-start;
@@ -327,7 +329,7 @@ html.menu-open .nav-container {
   pointer-events: auto;
 }
 
-.nav-theme-toggle {
+.nav_theme_toggle {
   appearance: none;
   background: none;
   background-color: transparent;
@@ -346,7 +348,7 @@ html.menu-open .nav-container {
   height: 1cap;
 }
 
-.nav-theme-toggle__svg {
+.nav_theme_toggle_svg {
   display: block;
   height: 1cap;
   width: auto;
@@ -354,7 +356,7 @@ html.menu-open .nav-container {
   background-color: transparent;
 }
 
-.nav-link.is-active::before {
+.nav_link.is-active::before {
   content: "";
   position: absolute;
   left: 0;
@@ -379,7 +381,7 @@ html.menu-open .nav-container {
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .nav-link.is-active::before {
+  .nav_link.is-active::before {
     animation: none;
     opacity: 1;
   }
@@ -388,8 +390,8 @@ html.menu-open .nav-container {
 /* Archive link — hide at medium via band flag (the overlay menu carries it
    there); toggle stays visible. Unlike the clock this is interactive, so no
    pointer-events:none. */
-.nav-archive {
-  display: none;
+.nav_archive {
+  display: block;
   /* No active-dot gutter — sit flush in the utility column. */
   padding-left: 0;
   margin: 0;
@@ -400,19 +402,19 @@ html.menu-open .nav-container {
   overflow: visible;
 }
 
-.nav-archive.is-active::before {
+.nav_archive.is-active::before {
   content: none;
 }
 
-.nav-menu-toggle-open {
-  display: flex;
+.nav_menu_toggle_open {
+  display: none;
   justify-content: flex-end;
   justify-self: end;
   align-self: center;
   height: max-content;
 }
 
-.nav-menu-toggle {
+.nav_menu_toggle {
   appearance: none;
   background: transparent;
   color: inherit;
@@ -422,80 +424,65 @@ html.menu-open .nav-container {
   border: none;
 }
 
-@media (width >= 64rem) {
-  .nav-stack {
-    display: flex;
-  }
+html:not(:has(.hero)) .name_hero {
+  display: var(--none-large);
+}
 
-  .nav-archive {
-    display: block;
-  }
-
-  .nav-menu-toggle-open {
-    display: none;
-  }
-
-  /* Inner pages: the lockup is a home-only desktop treatment. */
-  html:not(:has(.hero)) .name-hero {
-    display: none;
-  }
+.menu_overlay_items [data-overlay-link="/#contact"] {
+  display: var(--none-medium);
 }
 
 /* Mobile / tablet: Menu pill spans the full grid; logo + theme hide. */
 @media (width < 64rem) {
-  .nav-contact-dropdown {
-    display: none !important;
+  .nav_logo,
+  .nav_stack,
+  .nav_utility_stack {
+    display: none;
   }
 
-  /* The menu footer already carries Email / Instagram / Discovery Call here,
-     so the overlay's Contact entry is a second route to the same three links. */
-  .menu-overlay-items [data-overlay-link="/#contact"] {
-    display: none;
+  .nav_contact_dropdown {
+    display: none !important;
   }
 
   :root {
     /* Lockup aspect 446×70 at grid width — shared by sticky nav + menu-open pin. */
-    --mark-h: calc((100vw - var(--site--margin) * 2) * 70 / 446);
-    --lockup-top: calc(var(--site--safe-area-top) + var(--site--gutter));
-    --lockup-gap: var(--site--gutter);
+    --mark-h: calc((100vw - var(--site-margin) * 2) * 70 / 446);
+    --lockup-top: calc(var(--site--safe-area-top) + var(--site-gutter));
+    --lockup-gap: var(--site-gutter);
   }
 
-  .nav-logo,
-  .nav-utility-stack {
-    display: none;
-  }
-
-  .nav-menu-toggle-open {
+  .nav_menu_toggle_open {
+    display: flex;
     grid-column: 1 / -1;
     justify-self: stretch;
   }
 
-  .nav-menu-toggle {
+  .nav_menu_toggle {
     display: flex;
     align-items: center;
     justify-content: center;
     width: 100%;
     box-sizing: border-box;
     padding: 0.55rem 0.9rem;
-    border: 1px solid currentColor;
+    border: var(--border-width) solid currentColor;
     border-radius: 3rem;
     text-align: center;
   }
 
-  .name-hero__gooey {
+  .name_hero_gooey {
     grid-column: 1 / -1;
   }
 
   /* SVG + Menu pill stick as one lockup. Negative top eats the hero centering
      pad so only the wordmark remains in the viewport; the pill sticks to the
      mark's bottom edge. Gap below the mark is .nav_grid padding-block. */
-  .name-hero {
+  .name_hero {
     position: sticky;
     top: calc(-1 * var(--hero-chrome-pad) + var(--lockup-top));
     z-index: calc(var(--z--nav) + 1);
   }
 
-  .nav-container {
+  .nav_wrap {
     position: sticky;
     top: calc(var(--lockup-top) + var(--mark-h));
     /* Safe-area lives on the wordmark; don't stack it again under the pill. */
@@ -508,24 +495,24 @@ html.menu-open .nav-container {
 
   /* Menu open: pin the wordmark to the top, above the overlay —
      the logo stays put while the panel covers everything else. */
-  html.menu-open .name-hero {
+  html.menu-open .name_hero {
     position: fixed;
     top: 0;
     left: 0;
-    /* Over .menu (--z--menu) and the nav that lifts to --z--menu + 1. */
+    /* Over .menu_wrap (--z--menu) and the nav that lifts to --z--menu + 1. */
     z-index: calc(var(--z--menu) + 2);
     width: 100%;
     padding-top: var(--lockup-top);
-    /* The lockup paints `background-color: var(--ink)` through its mask, so
+    /* The lockup paints `background-color: var(--text)` through its mask, so
        the mark follows the overlay's themed ink. */
-    --ink: var(--menu-ink);
+    --text: var(--menu-ink);
     pointer-events: none;
   }
 
   /* Drop the Close pill below the pinned mark instead of under it. Fixed, not
-     sticky: pinning .name-hero pulls its height out of the flow, and a sticky
+     sticky: pinning .name_hero pulls its height out of the flow, and a sticky
      nav then loses its containing block and scrolls off the top. */
-  html.menu-open .nav-container {
+  html.menu-open .nav_wrap {
     position: fixed;
     top: 0;
     left: 0;
@@ -535,35 +522,35 @@ html.menu-open .nav-container {
 
   /* Pinning both of the above to `fixed` pulls their height out of the document,
      so the page shifts up by exactly that much the instant the menu opens — the
-     snap you see before the overlay animates in. `.hero-chrome` is
+     snap you see before the overlay animates in. `.hero_chrome` is
      `display: contents`, so it normally holds no box of its own; give it one for
      the duration and the flow keeps its height. `--menu-chrome-reserve` is
      measured in `openMenu` immediately before the class lands, so it is exactly
      the height that leaves. */
-  html.menu-open .hero-chrome {
+  html.menu-open .hero_chrome {
     display: block;
     height: var(--menu-chrome-reserve, 0px);
   }
 
   /* Pages without the hero lockup: pill clears the notch on its own. */
-  .nav-container.is-nameless,
-  html.menu-open .nav-container.is-nameless {
+  .nav_wrap.is-nameless,
+  html.menu-open .nav_wrap.is-nameless {
     top: 0;
     padding-top: var(--site--safe-area-top);
   }
 
   /* Pages without the hero lockup: wordmark + Back while About is in the menu. */
-  .nav-container.is-menu-open.is-about-open.is-nameless .nav-logo {
+  .nav_wrap.is-menu-open.is-about-open.is-nameless .nav_logo {
     display: block;
     align-self: center;
   }
 
-  .nav-container.is-menu-open.is-about-open.is-nameless .nav-menu-toggle-open {
+  .nav_wrap.is-menu-open.is-about-open.is-nameless .nav_menu_toggle_open {
     grid-column: -3 / -1;
     justify-self: end;
   }
 
-  .nav-container.is-menu-open.is-about-open.is-nameless .nav-menu-toggle {
+  .nav_wrap.is-menu-open.is-about-open.is-nameless .nav_menu_toggle {
     width: auto;
     min-width: 5.5rem;
   }
@@ -571,7 +558,7 @@ html.menu-open .nav-container {
   /* Inner pages: same stuck lockup as home (wordmark + pill), overlaying the
      stage so overflow-hidden routes don't get pushed down. Drop out while the
      menu is open so the pin rules above keep the mark over the overlay. */
-  html:not(:has(.hero)):not(.menu-open) .name-hero {
+  html:not(:has(.hero)):not(.menu-open) .name_hero {
     position: fixed;
     top: 0;
     left: 0;
@@ -580,7 +567,7 @@ html.menu-open .nav-container {
     z-index: calc(var(--z--nav) + 1);
   }
 
-  html:not(:has(.hero)):not(.menu-open) .nav-container {
+  html:not(:has(.hero)):not(.menu-open) .nav_wrap {
     position: fixed;
     top: 0;
     left: 0;
@@ -589,19 +576,19 @@ html.menu-open .nav-container {
   }
 }
 
-.nav-menu-toggle__viewport {
+.nav_menu_toggle_viewport {
   display: block;
-  overflow: hidden;
+  overflow: clip;
   height: 1em;
 }
 
-.nav-menu-toggle__track {
+.nav_menu_toggle_track {
   display: flex;
   flex-direction: column;
   will-change: transform;
 }
 
-.nav-menu-toggle__line {
+.nav_menu_toggle_line {
   display: block;
   height: 1em;
   line-height: 1;
@@ -613,14 +600,14 @@ img.logo-img {
   width: 2rem;
 }
 
-.menu-overlay {
+.menu_overlay {
   position: fixed;
   top: 0;
   left: 0;
   width: 100%;
   height: 100dvh;
-  overflow: hidden;
-  background-color: var(--surface-accent);
+  overflow: clip;
+  background-color: var(--brand-500);
   backdrop-filter: blur(var(--surface-frost-blur));
   -webkit-backdrop-filter: blur(var(--surface-frost-blur));
   transform: translateY(100%);
@@ -633,13 +620,13 @@ img.logo-img {
   justify-content: center;
 }
 
-.menu-overlay a,
-.menu-overlay p,
-.menu-overlay .nav-theme-toggle {
+.menu_overlay a,
+.menu_overlay p,
+.menu_overlay .nav_theme_toggle {
   color: var(--menu-ink);
 }
 
-.menu-overlay-items {
+.menu_overlay_items {
   position: relative;
   z-index: 1;
   display: flex;
@@ -649,37 +636,32 @@ img.logo-img {
   text-align: center;
 }
 
-.menu-overlay-items .revealer {
+.menu_overlay_items .revealer {
   width: max-content;
 }
 
-.menu-overlay-items .revealer a {
+.menu_overlay_items .revealer a {
   display: block;
 }
 
-.menu-overlay-items .revealer h1 {
+.menu_overlay_title {
   margin: 0;
-  line-height: 1;
+  line-height: var(--line-height-small);
 }
 
-.menu-overlay-items .revealer h1::before,
-.menu-overlay-items .revealer h1::after {
+.menu_overlay_title::before,
+.menu_overlay_title::after {
   content: none;
 }
 
-.menu-overlay-items .revealer h1::before,
-.menu-overlay-items .revealer h1::after {
-  content: none;
-}
-
-.menu-overlay.is-about-open .menu-overlay-items,
-.menu-overlay.is-about-open .menu-footer {
+.menu_overlay.is-about-open .menu_overlay_items,
+.menu_overlay.is-about-open .menu_footer {
   pointer-events: none;
 }
 
-.menu-footer {
+.menu_footer {
   position: absolute;
-  bottom: calc(var(--site--margin) + var(--site--safe-area-bottom));
+  bottom: calc(var(--site-margin) + var(--site--safe-area-bottom));
   left: 0;
   right: 0;
   z-index: 1;
@@ -687,42 +669,43 @@ img.logo-img {
   flex-direction: column;
   align-items: center;
   gap: 0.75rem;
-  padding-inline: var(--site--margin);
+  padding-inline: var(--site-margin);
 }
 
 /* The footer band reads as chrome, so it takes the nav's uppercase rather than
    the overlay headings' sentence case. Set on the leaves, not the container:
    `text-style-h5` writes `text-transform: var(--h5-text-transform)` — `none` —
    which beats anything inherited from an ancestor. */
-.menu-footer :is(p, a) {
+.menu_footer :is(p, a) {
   text-transform: uppercase;
 }
 
-.menu-footer .revealer {
+.menu_footer .revealer {
   width: max-content;
-  overflow: hidden;
+  overflow: clip;
   clip-path: polygon(0 0, 100% 0, 100% 100%, 0% 100%);
 }
 
-.socials {
+.menu_socials {
   display: flex;
   flex-wrap: wrap;
   justify-content: center;
   gap: 0.75rem 1rem;
 }
 
-.socials .revealer {
+.menu_socials .revealer {
   width: max-content;
-  overflow: hidden;
+  overflow: clip;
   clip-path: polygon(0 0, 100% 0, 100% 100%, 0% 100%);
 }
 
-.menu-footer .nav-theme-toggle {
+.menu_footer .nav_theme_toggle {
   height: 1.25em;
   color: var(--menu-ink);
 }
 
-.menu-footer .nav-theme-toggle__svg {
+.menu_footer .nav_theme_toggle_svg {
   height: 100%;
   width: auto;
+}
 }

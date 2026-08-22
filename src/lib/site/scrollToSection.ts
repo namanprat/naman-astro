@@ -8,7 +8,7 @@ gsap.registerPlugin(ScrollTrigger);
 
 function syncNavForSection(id: string): void {
   const navBar = document.querySelector(".nav_grid");
-  const wordmark = document.querySelector(".nav-logo-wordmark");
+  const wordmark = document.querySelector(".nav_logo_wordmark");
   const footerActive = id === "contact";
 
   if (wordmark) {

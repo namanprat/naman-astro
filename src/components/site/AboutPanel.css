@@ -1,27 +1,28 @@
-.about-panel__backdrop {
+@layer components {
+.about_panel_backdrop {
   position: fixed;
   inset: 0;
   z-index: calc(var(--z--nav) - 2);
   margin: 0;
   padding: 0;
   border: 0;
-  background-color: color-mix(in srgb, var(--black) 20%, transparent);
+  background-color: color-mix(in srgb, var(--dark-900) 20%, transparent);
   cursor: pointer;
   opacity: 0;
   visibility: hidden;
   pointer-events: none;
 }
 
-.about-panel__backdrop.is-open {
+.about_panel_backdrop.is-open {
   pointer-events: all;
 }
 
 /* Soften the scrim in light mode so the frosted surface can read the page. */
-html.theme-light .about-panel__backdrop {
+html.theme-light .about_panel_backdrop {
   background-color: transparent;
 }
 
-.about-panel {
+.about_panel {
   position: fixed;
   top: 0;
   left: 0;
@@ -34,15 +35,15 @@ html.theme-light .about-panel__backdrop {
   background-color: transparent;
   /* Dark mode: black on accent. Light mode: white on frost.
      Never inherit the page's light-mode grey ink. */
-  --panel-ink: var(--black);
-  --ink: var(--panel-ink);
+  --panel-ink: var(--dark-900);
+  --text: var(--panel-ink);
   color: var(--panel-ink);
   overflow: visible;
   pointer-events: none;
   visibility: hidden;
   box-sizing: border-box;
   /* Outer float — gutter air on all four sides; surface is width 100% inside. */
-  padding: var(--site--gutter);
+  padding: var(--site-gutter);
   display: flex;
   flex-direction: column;
   /*
@@ -59,14 +60,14 @@ html.theme-light .about-panel__backdrop {
     different ranges (gutter 16→32, margin 16→48), so the gap between them —
     and so the mismatch — grew with the viewport.
   */
-  --about--inset: calc(var(--site--margin) - var(--site--gutter));
+  --about--inset: calc(var(--site-margin) - var(--site-gutter));
 }
 
-html.theme-light .about-panel {
-  --panel-ink: var(--white);
+html.theme-light .about_panel {
+  --panel-ink: var(--light-100);
 }
 
-.about-panel__surface {
+.about_panel_surface {
   position: relative;
   background-color: var(--surface-accent);
   backdrop-filter: blur(var(--surface-frost-blur)) saturate(var(--surface-frost-saturate, 1))
@@ -74,7 +75,7 @@ html.theme-light .about-panel {
   -webkit-backdrop-filter: blur(var(--surface-frost-blur)) saturate(var(--surface-frost-saturate, 1))
     contrast(var(--surface-frost-contrast, 1));
   width: 100%;
-  max-height: calc(85vh - var(--site--gutter) * 2);
+  max-height: calc(85vh - var(--site-gutter) * 2);
   overflow: visible;
   box-sizing: border-box;
   /* Slide with `top`, not transform: a GSAP translate makes this a backdrop
@@ -82,8 +83,8 @@ html.theme-light .about-panel {
 }
 
 /* Dark mode: fully opaque orange; blur is not needed. */
-html.theme-dark .about-panel__surface {
-  background-color: var(--accent);
+html.theme-dark .about_panel_surface {
+  background-color: var(--brand-500);
   backdrop-filter: none;
   -webkit-backdrop-filter: none;
 }
@@ -91,25 +92,25 @@ html.theme-dark .about-panel__surface {
 /* Scroll lives here, not on the frost node: overflow on the same box as
    backdrop-filter is a common Safari miss, and `will-change: transform`
    used to promote an empty layer the filter then sampled. */
-.about-panel__scroll {
-  max-height: calc(85vh - var(--site--gutter) * 2);
+.about_panel_scroll {
+  max-height: calc(85vh - var(--site-gutter) * 2);
   overflow-x: hidden;
   overflow-y: auto;
   scrollbar-width: none;
 }
 
-.about-panel__scroll::-webkit-scrollbar {
+.about_panel_scroll::-webkit-scrollbar {
   width: 0;
   height: 0;
   display: none;
   background: transparent;
 }
 
-.about-panel--padded {
-  padding-top: calc(var(--nav-offset, var(--site--nav-offset)) + var(--site--gutter));
+.about_panel.is-padded {
+  padding-top: calc(var(--nav-offset, var(--site--nav-offset)) + var(--site-gutter));
 }
 
-.about-panel--in-menu {
+.about_panel.is-in-menu {
   z-index: var(--z--menu);
   inset: 0;
   width: 100%;
@@ -121,25 +122,25 @@ html.theme-dark .about-panel__surface {
      grid line either way — only the (transparent) surface edge moves. */
   padding: 0;
   padding-top: var(--nav-offset, var(--site--nav-offset));
-  padding-inline: var(--site--gutter);
-  padding-bottom: calc(var(--site--margin) + var(--site--safe-area-bottom));
-  overflow: hidden;
+  padding-inline: var(--site-gutter);
+  padding-bottom: calc(var(--site-margin) + var(--site--safe-area-bottom));
+  overflow: clip;
   /* Overlay ink: black on accent (dark), white on frost (light). */
-  --panel-ink: var(--menu-ink, var(--black));
-  --ink: var(--menu-ink, var(--black));
+  --panel-ink: var(--menu-ink, var(--dark-900));
+  --text: var(--menu-ink, var(--dark-900));
 }
 
-html.theme-light .about-panel--in-menu {
-  --panel-ink: var(--menu-ink, var(--white));
-  --ink: var(--menu-ink, var(--white));
+html.theme-light .about_panel.is-in-menu {
+  --panel-ink: var(--menu-ink, var(--light-100));
+  --text: var(--menu-ink, var(--light-100));
 }
 
-.about-panel--in-menu .about-panel__backdrop {
+.about_panel.is-in-menu .about_panel_backdrop {
   pointer-events: none;
   visibility: hidden;
 }
 
-.about-panel--in-menu .about-panel__surface {
+.about_panel.is-in-menu .about_panel_surface {
   background-color: transparent;
   backdrop-filter: none;
   -webkit-backdrop-filter: none;
@@ -149,7 +150,7 @@ html.theme-light .about-panel--in-menu {
   overflow: visible;
 }
 
-.about-panel--in-menu .about-panel__scroll {
+.about_panel.is-in-menu .about_panel_scroll {
   max-height: none;
   height: 100%;
 }
@@ -157,61 +158,61 @@ html.theme-light .about-panel--in-menu {
 /* No width/padding override — inMenu uses the same grid band and the same
    `--about--inset` as the card modes. */
 
-.about-panel--in-menu .about-panel__reveal:not(.about-panel__intro) {
-  overflow: hidden;
+.about_panel.is-in-menu .about_panel_reveal:not(.about_panel_intro) {
+  overflow: clip;
   clip-path: polygon(0 0, 100% 0, 100% 100%, 0% 100%);
 }
 
 /* Desktop: inner is transparent to the parent grid. inMenu: a real box GSAP can move. */
-.about-panel__reveal-inner {
+.about_panel_reveal_inner {
   display: contents;
 }
 
-.about-panel--in-menu .about-panel__reveal-inner {
+.about_panel.is-in-menu .about_panel_reveal_inner {
   display: block;
   will-change: transform, opacity;
 }
 
-.about-panel--in-menu .about-panel__intro .about-panel__reveal-inner {
+.about_panel.is-in-menu .about_panel_intro .about_panel_reveal_inner {
   display: flex;
   flex-direction: column;
   align-items: flex-start;
   min-width: 0;
 }
 
-.about-panel--in-menu .about-panel__col--services .about-panel__reveal-inner,
-.about-panel--in-menu .about-panel__col--clients .about-panel__reveal-inner {
+.about_panel.is-in-menu .about_panel_col.is-services .about_panel_reveal_inner,
+.about_panel.is-in-menu .about_panel_col.is-clients .about_panel_reveal_inner {
   display: flex;
   flex-direction: column;
   gap: var(--space-3);
 }
 
-.about-panel--in-menu .about-panel__media {
+.about_panel.is-in-menu .about_panel_media {
   background-color: transparent;
 }
 
-.about-panel--in-menu .about-panel__media .about-panel__reveal-inner {
+.about_panel.is-in-menu .about_panel_media .about_panel_reveal_inner {
   width: 100%;
   height: 100%;
-  background-color: var(--black);
+  background-color: var(--dark-900);
 }
 
-.about-panel.is-open {
+.about_panel.is-open {
   visibility: visible;
 }
 
-.about-panel.is-open .about-panel__surface {
+.about_panel.is-open .about_panel_surface {
   pointer-events: auto;
 }
 
-.about-panel:focus {
+.about_panel:focus {
   outline: none;
 }
 
 /*
   Same column band as the page overlay / nav. Vertical pad only.
 */
-.about-panel__inner.container {
+.about_panel_inner.container {
   flex: 0 1 auto;
   min-height: 0;
   box-sizing: border-box;
@@ -229,14 +230,14 @@ html.theme-light .about-panel--in-menu {
 /*
   12-col map, on the nav stacks' own tracks:
     media 1–4, lead 5–end
-    Services 8–9 (.nav-stack--home)
-    Clients 10–12 (.nav-stack--about + .nav-utility-stack)
+    Services 8–9 (.nav_stack.is-home)
+    Clients 10–12 (.nav_stack.is-about + .nav_utility_stack)
 
   Two rows: the lead takes row 1, the lists row 2. Media spans both, and
   row 2 is the 1fr that absorbs whatever height the media's square forces —
   which is what lets the lists sit on its bottom edge.
 */
-.about-panel__grid {
+.about_panel_grid {
   flex: 0 1 auto;
   width: 100%;
   min-height: 0;
@@ -247,7 +248,7 @@ html.theme-light .about-panel--in-menu {
 }
 
 @media (width >= 64rem) {
-  .about-panel:not(.about-panel--in-menu) {
+  .about_panel:not(.is-in-menu) {
     padding: 0;
     /* Ride mode (desktop About) is not --padded. Side gap is --about--inset
        (margin − gutter); mirror it on top. Do not use --nav-offset here: it
@@ -255,35 +256,35 @@ html.theme-light .about-panel--in-menu {
     padding-top: var(--about--inset);
   }
 
-  .about-panel--padded:not(.about-panel--in-menu) {
+  .about_panel.is-padded:not(.is-in-menu) {
     padding-top: calc(var(--nav-offset, var(--site--nav-offset)) + var(--about--inset));
   }
 
-  .about-panel:not(.about-panel--in-menu) .about-panel__surface {
-    width: calc(var(--site--grid-width) + var(--site--gutter) * 2);
+  .about_panel:not(.is-in-menu) .about_panel_surface {
+    width: calc(var(--site--grid-width) + var(--site-gutter) * 2);
     margin-inline: auto;
     max-height: 85vh;
   }
 
-  .about-panel:not(.about-panel--in-menu) .about-panel__scroll {
+  .about_panel:not(.is-in-menu) .about_panel_scroll {
     max-height: 85vh;
   }
 
-  .about-panel:not(.about-panel--in-menu) .about-panel__inner.container {
+  .about_panel:not(.is-in-menu) .about_panel_inner.container {
     width: 100%;
     max-width: none;
     margin-inline: 0;
-    padding: var(--site--gutter);
+    padding: var(--site-gutter);
   }
 
-  .about-panel:not(.about-panel--in-menu) .about-panel__grid {
+  .about_panel:not(.is-in-menu) .about_panel_grid {
     width: 100%;
     max-width: none;
     margin-inline: 0;
   }
 }
 
-.about-panel__media {
+.about_panel_media {
   grid-column: 1 / span 4;
   grid-row: 1 / span 2;
   justify-self: stretch;
@@ -295,16 +296,16 @@ html.theme-light .about-panel--in-menu {
   max-width: 100%;
   aspect-ratio: 1;
   height: auto;
-  overflow: hidden;
+  overflow: clip;
   /* Ride-mode ground — always --black (both themes) for the dither clear.
      inMenu parks this on the dissolve inner so the plate isn't visible
      before the headers unreveal. */
-  background-color: var(--black);
+  background-color: var(--dark-900);
   pointer-events: auto;
 }
 
-.about-panel__media canvas,
-.about-panel__canvas {
+.about_panel_media canvas,
+.about_panel_canvas {
   width: 100%;
   height: 100%;
   display: block;
@@ -313,12 +314,12 @@ html.theme-light .about-panel--in-menu {
   mix-blend-mode: screen;
 }
 
-.about-panel__media canvas:active,
-.about-panel__canvas:active {
+.about_panel_media canvas:active,
+.about_panel_canvas:active {
   cursor: grabbing;
 }
 
-.about-panel__intro {
+.about_panel_intro {
   grid-column: 5 / -1;
   grid-row: 1;
   display: flex;
@@ -333,7 +334,7 @@ html.theme-light .about-panel--in-menu {
   --about--indent: calc(var(--about--indent-cols) * (100% + var(--site-gutter)) / var(--about--lead-cols));
 }
 
-.about-panel__lead {
+.about_panel_lead {
   margin: 0;
   max-width: none;
   color: var(--panel-ink);
@@ -344,14 +345,14 @@ html.theme-light .about-panel--in-menu {
   text-indent: var(--about--indent);
 }
 
-.about-panel__lead::before,
-.about-panel__lead::after {
+.about_panel_lead::before,
+.about_panel_lead::after {
   content: none;
   display: none;
   margin: 0;
 }
 
-.about-panel__cv {
+.about_panel_cv {
   display: inline-flex;
   /* Top, not baseline: RollingText clips each glyph to a 1em box, so its
      baseline sits wherever the mask ends rather than on the text's. */
@@ -364,39 +365,39 @@ html.theme-light .about-panel--in-menu {
   align-self: flex-start;
 }
 
-.about-panel__cv-clip {
+.about_panel_cv_clip {
   display: block;
   width: max-content;
 }
 
-.about-panel--in-menu .about-panel__cv-clip {
-  overflow: hidden;
+.about_panel.is-in-menu .about_panel_cv_clip {
+  overflow: clip;
 }
 
 /* `line-height: 1` so the box hugs the glyphs. Inheriting the 1.5 body leading
    left the rule floating ~10px under the word, reading as a detached line. */
-.about-panel__cv-label {
+.about_panel_cv_label {
   display: inline-block;
   line-height: 1;
-  border-bottom: 1px solid currentColor;
+  border-bottom: var(--border-width) solid currentColor;
   padding-bottom: 0.18em;
 }
 
 /* No gap — the arrow leaves the last glyph rather than hovering beside it. */
-.about-panel__cv-icon {
+.about_panel_cv_icon {
   display: inline-block;
   font-size: 0.5em;
   line-height: 1;
 }
 
-.about-panel__col--services {
+.about_panel_col.is-services {
   grid-column: 8 / span 2;
   display: flex;
   flex-direction: column;
   gap: var(--space-3);
 }
 
-.about-panel__col--clients {
+.about_panel_col.is-clients {
   grid-column: 10 / -1;
   display: grid;
   grid-template-columns: subgrid;
@@ -404,27 +405,27 @@ html.theme-light .about-panel--in-menu {
   gap: var(--space-3) var(--site-gutter);
 }
 
-.about-panel__col--services,
-.about-panel__col--clients {
+.about_panel_col.is-services,
+.about_panel_col.is-clients {
   grid-row: 2;
   align-self: end;
 }
 
-.about-panel :is(h1, h2, h3, h4, h5, h6, p) {
+.about_panel :is(h1, h2, h3, h4, h5, h6, p) {
   color: var(--panel-ink);
 }
 
-.about-panel__col {
+.about_panel_col {
   min-width: 0;
 }
 
-.about-panel__col-label {
+.about_panel_col_label {
   margin: 0;
   color: var(--panel-ink);
 }
 
 /* Grid placement owns the width now — a span token here would fight it. */
-.about-panel__col-list {
+.about_panel_col_list {
   margin: 0;
   padding: 0;
   color: var(--panel-ink);
@@ -435,16 +436,16 @@ html.theme-light .about-panel--in-menu {
   gap: var(--space-1);
 }
 
-.about-panel__col-list p {
+.about_panel_col_list p {
   margin: 0;
 }
 
-.about-panel__col--clients .about-panel__col-label {
+.about_panel_col.is-clients .about_panel_col_label {
   grid-column: 1 / span 2;
   grid-row: 1;
 }
 
-.about-panel__clients-cols {
+.about_panel_clients_cols {
   display: grid;
   grid-template-columns: subgrid;
   grid-column: 1 / -1;
@@ -456,9 +457,9 @@ html.theme-light .about-panel--in-menu {
    edge still lands on a site grid line. Two columns (8 clients / 4 per col)
    placed two tracks apart — one track is 72px and the longest name needs
    123px, so adjacent tracks would collide. */
-.about-panel__clients-cols .about-panel__col-list {
+.about_panel_clients_cols .about_panel_col_list {
   /* Hug the longest name. `max-width: none` is load-bearing: the base
-     .about-panel__col-list sets `max-width: 100%`, which resolves against the
+     .about_panel_col_list sets `max-width: 100%`, which resolves against the
      72px track and clamps max-content straight back to a wrapping column. */
   width: max-content;
   max-width: none;
@@ -466,11 +467,11 @@ html.theme-light .about-panel--in-menu {
   justify-self: start;
 }
 
-.about-panel__clients-cols > *:nth-child(2) {
+.about_panel_clients_cols > *:nth-child(2) {
   grid-column: 3;
 }
 
-.about-panel__lists {
+.about_panel_lists {
   display: contents;
 }
 
@@ -479,11 +480,11 @@ html.theme-light .about-panel--in-menu {
   Below 48rem the lists stack with Clients above Services.
   inMenu always; standalone padded About below 48rem.
 */
-.about-panel--in-menu .about-panel__grid {
+.about_panel.is-in-menu .about_panel_grid {
   grid-template-rows: auto auto auto;
 }
 
-.about-panel--in-menu .about-panel__intro {
+.about_panel.is-in-menu .about_panel_intro {
   grid-column: 1 / -1;
   grid-row: 1;
   --about--indent-cols: 0;
@@ -491,18 +492,18 @@ html.theme-light .about-panel--in-menu {
   --about--indent: 0;
 }
 
-.about-panel--in-menu .about-panel__lead {
+.about_panel.is-in-menu .about_panel_lead {
   text-indent: 0;
 }
 
-.about-panel--in-menu .about-panel__media {
+.about_panel.is-in-menu .about_panel_media {
   grid-column: 1 / -1;
   grid-row: 2;
   width: 100%;
   max-width: none;
 }
 
-.about-panel--in-menu .about-panel__lists {
+.about_panel.is-in-menu .about_panel_lists {
   display: grid;
   grid-column: 1 / -1;
   grid-row: 3;
@@ -511,20 +512,20 @@ html.theme-light .about-panel--in-menu {
   align-items: start;
 }
 
-.about-panel--in-menu .about-panel__col--services,
-.about-panel--in-menu .about-panel__col--clients {
+.about_panel.is-in-menu .about_panel_col.is-services,
+.about_panel.is-in-menu .about_panel_col.is-clients {
   grid-column: auto;
   grid-row: auto;
   align-self: start;
 }
 
-.about-panel--in-menu .about-panel__col--clients {
+.about_panel.is-in-menu .about_panel_col.is-clients {
   display: flex;
   flex-direction: column;
   gap: var(--space-3);
 }
 
-.about-panel--in-menu .about-panel__clients-cols {
+.about_panel.is-in-menu .about_panel_clients_cols {
   display: grid;
   grid-template-columns: repeat(2, max-content);
   grid-column: auto;
@@ -532,11 +533,11 @@ html.theme-light .about-panel--in-menu {
   gap: var(--space-3) var(--site-gutter);
 }
 
-.about-panel--in-menu .about-panel__clients-cols > *:nth-child(2) {
+.about_panel.is-in-menu .about_panel_clients_cols > *:nth-child(2) {
   grid-column: auto;
 }
 
-.about-panel--in-menu .about-panel__col--clients .about-panel__col-label {
+.about_panel.is-in-menu .about_panel_col.is-clients .about_panel_col_label {
   grid-column: auto;
   grid-row: auto;
 }
@@ -546,47 +547,47 @@ html.theme-light .about-panel--in-menu {
   /* Run-off room under the last row. On the content, not the panel — padding on
      the fixed shell would just shorten the scrollport instead of adding travel
      the reader can scroll into. */
-  .about-panel__inner.container {
+  .about_panel_inner.container {
     padding-bottom: 20vh;
   }
 
-  .about-panel:not(.about-panel--in-menu) .about-panel__media {
+  .about_panel:not(.is-in-menu) .about_panel_media {
     grid-column: 1 / span 3;
   }
 
-  .about-panel:not(.about-panel--in-menu) .about-panel__intro {
+  .about_panel:not(.is-in-menu) .about_panel_intro {
     grid-column: 4 / -1;
     --about--indent-cols: 1;
     --about--lead-cols: 5;
   }
 
-  .about-panel:not(.about-panel--in-menu) .about-panel__col--services {
+  .about_panel:not(.is-in-menu) .about_panel_col.is-services {
     grid-column: 5 / span 2;
   }
 
-  .about-panel:not(.about-panel--in-menu) .about-panel__col--clients {
+  .about_panel:not(.is-in-menu) .about_panel_col.is-clients {
     grid-column: 7 / -1;
   }
 
   /* Only 2 tracks here, so the two-track offset above would push the second
      column into an implicit track. */
-  .about-panel:not(.about-panel--in-menu) .about-panel__clients-cols > *:nth-child(2) {
+  .about_panel:not(.is-in-menu) .about_panel_clients_cols > *:nth-child(2) {
     grid-column: auto;
   }
 }
 
 /* Stack on 6/4-col (standalone padded About + in-menu on small screens) */
 @media (width < 48rem) {
-  .about-panel:not(.about-panel--in-menu) .about-panel__surface,
-  .about-panel:not(.about-panel--in-menu) .about-panel__scroll {
-    max-height: calc(90vh - var(--site--gutter) * 2);
+  .about_panel:not(.is-in-menu) .about_panel_surface,
+  .about_panel:not(.is-in-menu) .about_panel_scroll {
+    max-height: calc(90vh - var(--site-gutter) * 2);
   }
 
-  .about-panel:not(.about-panel--in-menu) .about-panel__grid {
+  .about_panel:not(.is-in-menu) .about_panel_grid {
     grid-template-rows: auto auto auto;
   }
 
-  .about-panel:not(.about-panel--in-menu) .about-panel__intro {
+  .about_panel:not(.is-in-menu) .about_panel_intro {
     grid-column: 1 / -1;
     grid-row: 1;
     --about--indent-cols: 0;
@@ -594,19 +595,19 @@ html.theme-light .about-panel--in-menu {
     --about--indent: 0;
   }
 
-  .about-panel:not(.about-panel--in-menu) .about-panel__lead {
+  .about_panel:not(.is-in-menu) .about_panel_lead {
     text-indent: 0;
   }
 
-  .about-panel:not(.about-panel--in-menu) .about-panel__media {
+  .about_panel:not(.is-in-menu) .about_panel_media {
     grid-column: 1 / -1;
     grid-row: 2;
     width: 100%;
     max-width: none;
   }
 
-  .about-panel--in-menu .about-panel__lists,
-  .about-panel:not(.about-panel--in-menu) .about-panel__lists {
+  .about_panel.is-in-menu .about_panel_lists,
+  .about_panel:not(.is-in-menu) .about_panel_lists {
     display: grid;
     grid-column: 1 / -1;
     grid-row: 3;
@@ -615,26 +616,26 @@ html.theme-light .about-panel--in-menu {
     align-items: start;
   }
 
-  .about-panel--in-menu .about-panel__col--services,
-  .about-panel--in-menu .about-panel__col--clients,
-  .about-panel:not(.about-panel--in-menu) .about-panel__col--services,
-  .about-panel:not(.about-panel--in-menu) .about-panel__col--clients {
+  .about_panel.is-in-menu .about_panel_col.is-services,
+  .about_panel.is-in-menu .about_panel_col.is-clients,
+  .about_panel:not(.is-in-menu) .about_panel_col.is-services,
+  .about_panel:not(.is-in-menu) .about_panel_col.is-clients {
     grid-column: auto;
     grid-row: auto;
     align-self: start;
   }
 
   /* Clients above Services on small screens (DOM order is Services, Clients). */
-  .about-panel--in-menu .about-panel__col--clients,
-  .about-panel:not(.about-panel--in-menu) .about-panel__col--clients {
+  .about_panel.is-in-menu .about_panel_col.is-clients,
+  .about_panel:not(.is-in-menu) .about_panel_col.is-clients {
     order: -1;
     display: flex;
     flex-direction: column;
     gap: var(--space-3);
   }
 
-  .about-panel--in-menu .about-panel__clients-cols,
-  .about-panel:not(.about-panel--in-menu) .about-panel__clients-cols {
+  .about_panel.is-in-menu .about_panel_clients_cols,
+  .about_panel:not(.is-in-menu) .about_panel_clients_cols {
     display: grid;
     grid-template-columns: repeat(2, max-content);
     grid-column: auto;
@@ -642,14 +643,15 @@ html.theme-light .about-panel--in-menu {
     gap: var(--space-3) var(--site-gutter);
   }
 
-  .about-panel--in-menu .about-panel__clients-cols > *:nth-child(2),
-  .about-panel:not(.about-panel--in-menu) .about-panel__clients-cols > *:nth-child(2) {
+  .about_panel.is-in-menu .about_panel_clients_cols > *:nth-child(2),
+  .about_panel:not(.is-in-menu) .about_panel_clients_cols > *:nth-child(2) {
     grid-column: auto;
   }
 
-  .about-panel--in-menu .about-panel__col--clients .about-panel__col-label,
-  .about-panel:not(.about-panel--in-menu) .about-panel__col--clients .about-panel__col-label {
+  .about_panel.is-in-menu .about_panel_col.is-clients .about_panel_col_label,
+  .about_panel:not(.is-in-menu) .about_panel_col.is-clients .about_panel_col_label {
     grid-column: auto;
     grid-row: auto;
   }
+}
 }

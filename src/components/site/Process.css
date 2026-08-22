@@ -1,115 +1,54 @@
-.process {
-  position: relative;
-  width: 100%;
-  margin: 0;
-  padding-block: var(--section-space-large);
-  /* Transparent so the dimmed fluid reads through, same as every other
-     `.studio` section. */
-  background-color: transparent;
-  color: var(--ink);
-}
-
-.process__grid {
-  row-gap: var(--space-8);
-  align-content: start;
-}
-
-.process__statement {
-  position: relative;
-  grid-column: 1 / -1;
-  text-align: left;
-}
-
-.process__title {
-  margin: 0;
-  max-width: none;
-  color: var(--ink);
-}
-
-.process__label {
-  display: block;
-  margin-bottom: 0.75rem;
-  color: color-mix(in lab, var(--ink) 60%, transparent);
-}
-
-.process__cards {
-  grid-column: 1 / -1;
-  display: grid;
-  grid-template-columns: minmax(0, 1fr);
-  gap: var(--site-gutter);
-  margin: 0;
-  padding: 0;
-  list-style: none;
-}
-
-.process__card {
-  position: relative;
-  min-width: 0;
-  min-height: 60vh;
-  padding: var(--space-4);
-  display: flex;
-  flex-direction: column;
-  justify-content: space-between;
-  text-align: center;
-  overflow: hidden;
-  /* Orange panel with black ink, the same pairing `.footer-box` uses on the
-     accent card. `--ink` is reset too so the copy inside inherits it. */
-  background-color: var(--accent);
-  --ink: var(--black);
-  color: var(--black);
-}
-
-.process__card-title {
-  margin: 0;
-  color: inherit;
-}
-
-.process__card-foot {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-3);
-}
-
-.process__card-index {
-  color: color-mix(in lab, currentcolor 60%, transparent);
-}
-
-.process__card-copy {
-  margin: 0;
-  color: inherit;
-}
-
-@media (width >= 48rem) {
-  .process__cards {
-    grid-template-columns: repeat(3, minmax(0, 1fr));
+@layer components {
+  .process_layout {
+    grid-column: 1 / -1;
   }
 
-  .process__card {
-    /* Portrait panels once they sit side by side; the flat min-height above is
-       only there for the stacked case. */
-    min-height: 0;
+  .process_statement {
+    grid-column: 1 / span calc(10 * var(--_responsive---large) + 12 * (1 - var(--_responsive---large)));
+  }
+
+  .process_cards {
+    grid-column: calc(1 * var(--_responsive---large) + 1) / span calc(10 * var(--_responsive---large) + 12 * (1 - var(--_responsive---large)));
+    display: grid;
+    grid-template-columns: repeat(calc(3 - 2 * var(--_responsive---small)), minmax(0, 1fr));
+    gap: var(--site-gutter);
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  .process_card {
+    position: relative;
+    min-width: 0;
+    min-height: calc(60vh * var(--_responsive---small));
     aspect-ratio: 4 / 5;
-  }
-}
-
-@media (width >= 64rem) {
-  .process__statement {
-    grid-column: 1 / span 10;
-  }
-
-  /* Sits in the title indent zone, top-aligned with the first line. */
-  .process__label {
-    position: absolute;
-    top: 0;
-    left: 0;
-    margin-bottom: 0;
+    padding: var(--space-4);
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    text-align: center;
+    overflow: clip;
+    background-color: var(--brand-500);
+    color: var(--dark-900);
   }
 
-  .process__title {
-    text-indent: 28%;
+  .process_card_title {
+    margin: 0;
+    color: inherit;
   }
 
-  .process__cards {
-    grid-column: 2 / span 10;
+  .process_card_foot {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-3);
+  }
+
+  .process_card_index {
+    color: color-mix(in lab, currentcolor 60%, transparent);
+  }
+
+  .process_card_copy {
+    margin: 0;
+    color: inherit;
   }
 }

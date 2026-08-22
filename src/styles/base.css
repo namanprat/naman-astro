@@ -3,12 +3,13 @@
    ========================================================================== */
 
 :root {
-  /* Swatches */
+  /* Swatches — light mode is one white and one grey. --light-200 aliases
+     --grey so nothing can pick a third cream. */
   --light-100: #e2e2dd;
-  --light-200: #d8d8d3;
+  --grey: #8b8b8b;
+  --light-200: var(--grey);
   --dark-800: #1a1a1a;
   --dark-900: #101010;
-  --grey: #8b8b8b;
   --brand-500: #ec4d2d;
   --brand-text: var(--light-100);
 
@@ -253,6 +254,51 @@
   --section-space-nav-overlap: clamp(var(--section-space-nav-overlap-min) / 16 * 1rem, ((var(--section-space-nav-overlap-min) - ((var(--section-space-nav-overlap-max) - var(--section-space-nav-overlap-min)) / (var(--viewport-max) - var(--viewport-min)) * var(--viewport-min))) / 16 * 1rem + ((var(--section-space-nav-overlap-max) - var(--section-space-nav-overlap-min)) / (var(--viewport-max) - var(--viewport-min))) * 100vw), var(--section-space-nav-overlap-max) / 16 * 1rem);
   --section-space-nav-overlap-min: 160;
   --section-space-nav-overlap-max: 224;
+
+  /* Responsive keywords. Empty at the large breakpoint so `var(--flex-medium, grid)`
+     falls through to the second arg; filled at medium and below so that arg is
+     ignored. Matches the site's existing 48rem / 64rem cuts. */
+  --_responsive---large: 1;
+  --_responsive---medium: 0;
+  --_responsive---small: 0;
+  --flex-medium: ;
+  --column-medium: ;
+  --relative-medium: ;
+  --none-medium: ;
+  --unset-medium: ;
+  --row-medium: ;
+  --start-medium: ;
+  --center-medium: ;
+  --end-medium: ;
+  --flex-small: ;
+  --unset-small: ;
+  --none-large: none;
+}
+
+@media (width < 64rem) {
+  :root {
+    --_responsive---large: 0;
+    --_responsive---medium: 1;
+    --flex-medium: flex;
+    --column-medium: column;
+    --relative-medium: relative;
+    --none-medium: none;
+    --unset-medium: unset;
+    --row-medium: row;
+    --start-medium: start;
+    --center-medium: center;
+    --end-medium: end;
+    --none-large: ;
+  }
+}
+
+@media (width < 48rem) {
+  :root {
+    --_responsive---medium: 0;
+    --_responsive---small: 1;
+    --flex-small: flex;
+    --unset-small: unset;
+  }
 }
 
 /* ==========================================================================
@@ -264,8 +310,12 @@
 .theme-dark .theme-invert {
   color-scheme: light;
 
-  --background: var(--light-200);
-  --background-2: var(--light-100);
+  --background: var(--light-100);
+  --background-2: var(--grey);
+  /* Fluid sim reads these off <html> (lib/site/fluid). Light mode paints the
+     page white and the liquid trail grey — the inverse of dark mode. */
+  --ink: var(--grey);
+  --dark: var(--light-100);
   --background-skeleton: color-mix(in lab, currentcolor 10%, transparent);
   --text: var(--grey);
   --border: color-mix(in lab, var(--text) 20%, transparent);
@@ -300,6 +350,8 @@
 
   --background: var(--dark-900);
   --background-2: var(--dark-800);
+  --ink: var(--light-100);
+  --dark: var(--dark-800);
   --background-skeleton: color-mix(in lab, currentcolor 10%, transparent);
   --text: var(--light-100);
   --border: color-mix(in lab, var(--text) 20%, transparent);
@@ -329,7 +381,7 @@
 }
 
 /* Named, not `[class*="theme-"]` — that substring also caught
-   `nav-theme-toggle` and `nav-theme-toggle__svg`, repainting the switch in
+   `nav_theme_toggle` and `nav_theme_toggle_svg`, repainting the switch in
    `--text` wherever it sits on a surface that isn't the page background. */
 :root,
 .theme-dark,
@@ -337,18 +389,6 @@
 .theme-invert {
   background-color: var(--background);
   color: var(--text);
-
-  /* Aliases so original site CSS/shaders resolve against Lumos tokens. */
-  --ink: var(--text);
-  --dark: var(--background);
-  --accent: var(--brand-500);
-  --white: var(--light-100);
-  --black: var(--dark-900);
-  --surface-accent: var(--brand-500);
-  --surface-frost-blur: 0px;
-  --site--margin: var(--site-margin);
-  --site--gutter: var(--site-gutter);
-  --max-width--main: var(--max-width-main);
 }
 
 /* ==========================================================================

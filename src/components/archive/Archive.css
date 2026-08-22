@@ -1,3 +1,4 @@
+@layer components {
 /* Archive — full-viewport WebGL stage. Ground is always brand black; theme
    tokens would wash it to grey in light mode. Nav is brand white (no
    difference-blend) so it stays readable over the scene. */
@@ -9,10 +10,10 @@ html.page-archive body {
   overscroll-behavior: none;
   touch-action: none;
   scrollbar-width: none;
-  background-color: var(--black);
+  background-color: var(--dark-900);
 }
 
-html.page-archive .nav-container {
+html.page-archive .nav_wrap {
   position: fixed;
   top: 0;
   left: 0;
@@ -20,28 +21,29 @@ html.page-archive .nav-container {
   mix-blend-mode: normal;
 }
 
-html.page-archive .name-hero {
+html.page-archive .name_hero {
   mix-blend-mode: normal;
 }
 
-html.page-archive .nav-container .nav_grid a,
-html.page-archive .nav-container .nav_grid .nav-menu-toggle,
-html.page-archive .nav-container .nav_grid .nav-theme-toggle,
-html.page-archive .nav-container .nav_grid h5 {
-  color: var(--white);
+html.page-archive .nav_wrap .nav_grid a,
+html.page-archive .nav_wrap .nav_grid .nav_menu_toggle,
+html.page-archive .nav_wrap .nav_grid .nav_theme_toggle,
+html.page-archive .nav_wrap .nav_grid h5 {
+  color: var(--light-100);
 }
 
-html.page-archive .nav-container.is-menu-open .nav_grid a,
-html.page-archive .nav-container.is-menu-open .nav_grid .nav-menu-toggle,
-html.page-archive .nav-container.is-menu-open .nav_grid .nav-theme-toggle,
-html.page-archive .nav-container.is-menu-open .nav_grid h5 {
+html.page-archive .nav_wrap.is-menu-open .nav_grid a,
+html.page-archive .nav_wrap.is-menu-open .nav_grid .nav_menu_toggle,
+html.page-archive .nav_wrap.is-menu-open .nav_grid .nav_theme_toggle,
+html.page-archive .nav_wrap.is-menu-open .nav_grid h5 {
   color: var(--menu-ink);
 }
 
-.archive-stage {
+.archive_stage {
   position: fixed;
   inset: 0;
   /* Below the nav, above nothing else — the scene is the whole page. */
   z-index: 0;
-  background-color: var(--black);
+  background-color: var(--dark-900);
+}
 }

@@ -1,25 +1,21 @@
-.manifesto {
-  position: relative;
-  width: 100%;
-  margin: 0;
-  background-color: transparent;
-  color: var(--ink);
-  padding-bottom: 50vh;
-}
+@layer components {
+  .manifesto_wrap {
+    position: relative;
+    width: 100%;
+    margin: 0;
+    background-color: transparent;
+    color: var(--text);
+    padding-bottom: 50vh;
+  }
 
-.manifesto__grid {
-  width: 100%;
-}
+  .manifesto_layout {
+    width: 100%;
+  }
 
-.manifesto__lead {
-  grid-column: 1 / -1;
-  margin: 0;
-  max-width: none;
-  color: var(--ink);
-}
-
-@media (width >= 64rem) {
-  .manifesto__lead {
-    grid-column: 3 / span 8;
+  .manifesto_lead {
+    grid-column: calc(3 * var(--_responsive---large) + 1) / span calc(8 * var(--_responsive---large) + 12 * (1 - var(--_responsive---large)));
+    margin: 0;
+    max-width: none;
+    color: var(--text);
   }
 }

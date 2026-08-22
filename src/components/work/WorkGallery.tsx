@@ -167,10 +167,10 @@ export default function WorkGallery() {
       );
 
     const slideEls = () => [
-      ...root.querySelectorAll<HTMLElement>(".gallery__slide"),
+      ...root.querySelectorAll<HTMLElement>(".gallery_slide"),
     ];
 
-    /* `about-open` rather than `.about-panel.is-open`: that class carries the
+    /* `about-open` rather than `.about_panel.is-open`: that class carries the
        panel's visibility and pointer-events, so it has to outlive the exit
        animation and is removed from an `onReverseComplete`. An exit that never
        completed would have muted the gallery for good. */
@@ -205,7 +205,7 @@ export default function WorkGallery() {
         });
       }
 
-      gsap.set(root.querySelectorAll(".gallery__img-wrapper"), {
+      gsap.set(root.querySelectorAll(".gallery_img_wrap"), {
         autoAlpha: 1,
       });
       return new WheelView({
@@ -233,9 +233,10 @@ export default function WorkGallery() {
       const gallery = root.querySelector<HTMLElement>(".gallery");
 
       if (next === "grid") {
-        setHoverTitle(
-          isWorkGridMobile() ? (workItems[centered]?.title ?? null) : null,
-        );
+        morphTlRef.current?.kill();
+        shownRef.current = null;
+        setHoverTitle(null);
+        setShownTitle(null);
       } else {
         setHoverTitle(workItems[centered]?.title ?? null);
       }
@@ -257,7 +258,7 @@ export default function WorkGallery() {
            and the ring's placement. Clear them or the cached values fight the new
            layout. Same reason Slider.rebuild() does this before re-measuring. */
         gsap.set(slideEls(), { clearProps: "transform,zIndex" });
-        gsap.set(root.querySelectorAll(".gallery__img"), {
+        gsap.set(root.querySelectorAll(".gallery_img"), {
           clearProps: "transform",
         });
 
@@ -319,9 +320,9 @@ export default function WorkGallery() {
            `overflow: hidden`, so there is no document scroller for a `root`
            Lenis to take. Same settings as the homepage and the hard project
            page, so all three scroll identically. */
-        const wrap = root.querySelector<HTMLElement>(".content-wrapper");
+        const wrap = root.querySelector<HTMLElement>(".content_wrap");
         const groupList = root.querySelector<HTMLElement>(
-          ".content__group-list",
+          ".content_group_list",
         );
 
         if (wrap && groupList) {
@@ -414,7 +415,7 @@ export default function WorkGallery() {
 
         const tileOfEvent = (e: Event) =>
           e.target instanceof Element
-            ? e.target.closest<HTMLElement>(".gallery__slide")
+            ? e.target.closest<HTMLElement>(".gallery_slide")
             : null;
 
         on(root, "click", (e) => {
@@ -434,7 +435,7 @@ export default function WorkGallery() {
         /* Hover is delegated too, and for the same reason clicks are: half the
            ring is clones, which carry no listeners of their own. `mouseenter`
            and `focus` don't bubble, so this uses their bubbling counterparts.
-           No same-tile guard needed — `.gallery__img-wrapper` is
+           No same-tile guard needed — `.gallery_img_wrap` is
            `pointer-events: none`, so the figure is the only hit target inside
            a tile and moving within one never re-fires. */
         const nameTile = (tile: HTMLElement) => {
@@ -504,11 +505,11 @@ export default function WorkGallery() {
         /* The clear beat fades the *slides*, not their wrappers — restoring
            wrappers left the six tiles at `autoAlpha: 0, scale: 0.6` and the
            Works view came back empty. */
-        gsap.set(root.querySelectorAll(".gallery__slide"), {
+        gsap.set(root.querySelectorAll(".gallery_slide"), {
           autoAlpha: 1,
           scale: 1,
         });
-        gsap.set(root.querySelectorAll(".gallery__img-wrapper"), {
+        gsap.set(root.querySelectorAll(".gallery_img_wrap"), {
           autoAlpha: 1,
         });
         engineRef.current?.start();
@@ -571,26 +572,28 @@ export default function WorkGallery() {
   return (
     <div
       ref={rootRef}
-      className={`work-page${ready ? "" : " is-loading"}`}
+      className={`work_wrap${ready ? "" : " is-loading"}`}
       data-work-view={view}
     >
       {/* Permanently armed, unlike the one-shot heading entrance: the label
           morphs repeatedly and at blur 0 the threshold is a near no-op, so
-          `.gooey-reveal` is static here rather than being toggled by
+          `.gooey_reveal` is static here rather than being toggled by
           park/settle. The inner carries the filter chain, same as everywhere
           else — keeping it off the `<p>` also keeps the filter away from a
           `position: fixed` + `transform` box, which WebKit handles badly. */}
       <p
-        className="gallery-label gooey-reveal text-style-display"
+        className="gallery_label gooey_reveal text-style-display"
+        role="heading"
+        aria-level={1}
         aria-live="polite"
       >
-        <span ref={labelInnerRef} className="gooey-reveal__inner">
+        <span ref={labelInnerRef} className="gooey_reveal_inner">
           {shownTitle ? (
             shownTitle
           ) : (
             <>
               Works
-              <span className="gallery-label__count">({workItems.length})</span>
+              <span className="gallery_label_count">({workItems.length})</span>
             </>
           )}
         </span>
@@ -600,7 +603,7 @@ export default function WorkGallery() {
         {workItems.map((item, index) => (
           <figure
             key={item.slug}
-            className="gallery__slide"
+            className="gallery_slide"
             data-slug={item.slug}
             data-title={item.title}
             data-href={`/work/${item.slug}`}
@@ -616,9 +619,9 @@ export default function WorkGallery() {
               } as CSSProperties
             }
           >
-            <div className="gallery__img-wrapper">
+            <div className="gallery_img_wrap">
               <img
-                className="gallery__img"
+                className="gallery_img"
                 src={item.image}
                 alt={item.alt}
                 loading="eager"
@@ -638,8 +641,8 @@ export default function WorkGallery() {
       />
 
       <div className="content" aria-hidden="true">
-        <div className="content-wrapper">
-          <div className="content__group-list">
+        <div className="content_wrap">
+          <div className="content_group_list">
             {workItems.map((item, index) => (
               <ProjectDetail
                 key={item.slug}

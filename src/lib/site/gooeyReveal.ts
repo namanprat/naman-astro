@@ -8,7 +8,7 @@
  * sees a still-sharp shape, which is a no-op, and you are left with a plain blur
  * rather than a melt.
  *
- * Both halves sit on one element — the line's `.gooey-reveal__inner` — and the
+ * Both halves sit on one element — the line's `.gooey_reveal_inner` — and the
  * chain is declared once in `styles/site.css`. It used to be split in two, the
  * heading carrying the threshold and its inners carrying the animated blur, but
  * WebKit never GPU-accelerates a reference filter, so that split fed a
@@ -58,12 +58,12 @@ const TARGETS = "h1, h2, h3";
  * moved its lead off the old scrubbed word reveal and onto this one.
  */
 const SKIP = [
-  ".nav-container",
-  ".menu",
-  ".footer",
-  ".about-panel",
-  ".content__group",
-  ".transition-panel",
+  ".nav_wrap",
+  ".menu_wrap",
+  ".footer_wrap",
+  ".about_panel",
+  ".content_group",
+  ".transition_panel",
   "[data-no-reveal]",
 ].join(", ");
 
@@ -137,7 +137,7 @@ function hasThreshold(): boolean {
  * Route the whole document to the soft chain when `#blur-matrix` is missing.
  *
  * The per-target fallback in `gooeyClass` only covers targets that go through
- * park/arm. `.gallery-label` carries `.gooey-reveal` statically in JSX, so
+ * park/arm. `.gallery_label` carries `.gooey_reveal` statically in JSX, so
  * without this its filter list would still name a `url()` that resolves to
  * nothing — which on WebKit blanks the element rather than degrading. One class
  * on the root closes that off for every consumer at once.
@@ -161,7 +161,7 @@ function wait(ms: number): Promise<void> {
  *  chain and the animated blur; the line itself stays unfiltered. */
 function wrapInner(line: Element): HTMLElement {
   const inner = document.createElement("span");
-  inner.className = "gooey-reveal__inner";
+  inner.className = "gooey_reveal_inner";
   while (line.firstChild) inner.appendChild(line.firstChild);
   line.appendChild(inner);
   return inner;
@@ -180,11 +180,11 @@ const registry = new WeakMap<HTMLElement, GooeyTarget>();
  * so the entrance still runs — soft — instead of not running at all. Any future
  * capability bail-out belongs here too.
  */
-function gooeyClass(el: HTMLElement): "gooey-reveal" | "gooey-reveal--soft" {
+function gooeyClass(el: HTMLElement): "gooey_reveal" | "gooey_reveal_soft" {
   if (usesSoftGooey() || el.dataset.reveal === "soft" || !hasThreshold()) {
-    return "gooey-reveal--soft";
+    return "gooey_reveal_soft";
   }
-  return "gooey-reveal";
+  return "gooey_reveal";
 }
 
 function innersOf(target: GooeyTarget | GooeyTarget[]): HTMLElement[] {
@@ -197,7 +197,7 @@ function innersOf(target: GooeyTarget | GooeyTarget[]): HTMLElement[] {
 export function settleGooey(target: GooeyTarget | GooeyTarget[]): void {
   const list = Array.isArray(target) ? target : [target];
   for (const t of list) {
-    t.el.classList.remove("gooey-reveal", "gooey-reveal--soft");
+    t.el.classList.remove("gooey_reveal", "gooey_reveal_soft");
     for (const inner of t.inners) {
       inner.style.removeProperty(GOOEY_BLUR_VAR);
       inner.style.removeProperty("filter");
@@ -226,7 +226,7 @@ export function prepareGooey(el: HTMLElement): GooeyTarget | null {
   el.dataset.gooey = "";
   const split = SplitText.create(el, {
     type: "lines",
-    linesClass: "gooey-reveal__line",
+    linesClass: "gooey_reveal_line",
     aria: "auto",
   });
   const target: GooeyTarget = { el, inners: split.lines.map(wrapInner) };

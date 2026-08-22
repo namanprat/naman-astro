@@ -337,7 +337,7 @@ function AboutDistortionHover() {
 
     const el = gl.domElement;
     const hitTarget: HTMLElement =
-      (el.closest(".about-panel__media") as HTMLElement | null) ?? el;
+      (el.closest(".about_panel_media") as HTMLElement | null) ?? el;
 
     const syncPointer = (event: PointerEvent) => {
       const rect = el.getBoundingClientRect();
@@ -475,7 +475,7 @@ export default function AboutDitherCanvas({
   return (
     <ModelErrorBoundary onError={() => setAlive(false)}>
       <Canvas
-        className="about-panel__canvas"
+        className="about_panel_canvas"
         eventSource={eventSource as RefObject<HTMLElement> | undefined}
         frameloop="always"
         shadows={{ type: THREE.PCFShadowMap }}
@@ -488,7 +488,7 @@ export default function AboutDitherCanvas({
         }}
         resize={{ scroll: false, debounce: 0 }}
         onCreated={({ gl, setSize }) => {
-          /* Transparent GL clear — CSS .about-panel__media (--black) is the ground. */
+          /* Transparent GL clear — CSS .about_panel_media (--black) is the ground. */
           gl.setClearColor(0x000000, 0);
           gl.toneMapping = THREE.NoToneMapping;
           gl.outputColorSpace = THREE.SRGBColorSpace;

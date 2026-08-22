@@ -10,7 +10,7 @@ type Props =
 
 function CoverFigure({ item }: { item: WorkItem }) {
   return (
-    <figure className="project__cover-media" data-project-preview>
+    <figure className="project_cover_media" data-project-preview>
       <img src={item.image} alt={item.alt} draggable={false} />
     </figure>
   );
@@ -18,7 +18,7 @@ function CoverFigure({ item }: { item: WorkItem }) {
 
 function CoverVideo({ src, title }: { src: string; title: string }) {
   return (
-    <figure className="project__cover-video">
+    <figure className="project_cover_video">
       <video
         src={src}
         aria-label={`${title} reveal`}
@@ -34,7 +34,7 @@ function CoverVideo({ src, title }: { src: string; title: string }) {
 
 function CoverBelowImage({ src, alt }: { src: string; alt: string }) {
   return (
-    <figure className="project__cover-below">
+    <figure className="project_cover_below">
       <img src={src} alt={alt} draggable={false} />
     </figure>
   );
@@ -42,16 +42,16 @@ function CoverBelowImage({ src, alt }: { src: string; alt: string }) {
 
 function CopyBlock({ title, body }: { title: string; body: string }) {
   return (
-    <div className="project__copy">
-      <h2 className="project__copy-title text-style-h3">{title}</h2>
-      <p className="project__copy-body text-style-main">{body}</p>
+    <div className="project_copy">
+      <h2 className="project_copy_title text-style-h3">{title}</h2>
+      <p className="project_copy_body text-style-main">{body}</p>
     </div>
   );
 }
 
 function PanelMedia({ src, alt }: { src: string; alt: string }) {
   return (
-    <figure className="project__panel-media">
+    <figure className="project_panel_media">
       <img src={src} alt={alt} draggable={false} />
     </figure>
   );
@@ -61,7 +61,7 @@ function CaseBlock({ group }: { group: WorkGroup }) {
   switch (group.kind) {
     case "pair":
       return (
-        <section className="project__block project__block--pair">
+        <section className="project_block is-pair">
           <div className="container gap-0">
             <div className="grid is-12">
               <PanelMedia src={group.src} alt={group.alt} />
@@ -72,7 +72,7 @@ function CaseBlock({ group }: { group: WorkGroup }) {
       );
     case "image":
       return (
-        <section className="project__block project__block--image">
+        <section className="project_block is-image">
           <div className="container gap-0">
             <div className="grid is-12">
               <PanelMedia src={group.src} alt={group.alt} />
@@ -82,7 +82,7 @@ function CaseBlock({ group }: { group: WorkGroup }) {
       );
     case "text":
       return (
-        <section className="project__block project__block--text">
+        <section className="project_block is-text">
           <div className="container gap-0">
             <div className="grid is-12">
               <CopyBlock title={group.title} body={group.body} />
@@ -105,13 +105,13 @@ function ProjectLayout({ item }: { item: WorkItem }) {
   const groups = groupWorkPanels(item.panels);
 
   return (
-    <div className="project__layout" data-project-track>
-      <section className="project__hero">
-        <h1 className="project__title text-style-display">{item.title}</h1>
-        <div className="container gap-0 project__hero-container">
-          <div className="grid is-12 project__hero-grid">
-            <div className="project__services">
-              <div className="project__services-list">
+    <div className="project_layout" data-project-track>
+      <section className="project_hero">
+        <h1 className="project_title text-style-display">{item.title}</h1>
+        <div className="container gap-0 project_hero_contain">
+          <div className="grid is-12 project_hero_grid">
+            <div className="project_services">
+              <div className="project_services_list">
                 {item.services.map((service) => (
                   <h5 key={service} className="text-style-main">
                     {service}
@@ -120,12 +120,12 @@ function ProjectLayout({ item }: { item: WorkItem }) {
               </div>
             </div>
 
-            <p className="project__body text-style-main">{item.description}</p>
+            <p className="project_body text-style-main">{item.description}</p>
           </div>
         </div>
       </section>
 
-      <section className="project__cover">
+      <section className="project_cover">
         <div className="container gap-0">
           <div className="grid is-12">
             <CoverFigure item={item} />
@@ -150,7 +150,7 @@ export default function ProjectDetail(props: Props) {
   if (props.variant === "overlay") {
     return (
       <div
-        className="content__group"
+        className="content_group"
         data-index={props.index}
         data-slug={props.item.slug}
       >

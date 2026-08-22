@@ -4,7 +4,7 @@
  *
  * `PortfolioHome` and `WorkProject` each carried a verbatim copy of both
  * helpers. They only ever differed in one unreachable branch — home also fell
- * back to `.studio` when it couldn't find `.footer`, but `.studio` *is* the
+ * back to `.studio` when it couldn't find `.footer_wrap`, but `.studio` *is* the
  * footer's previous sibling there, so the fallback only fired when there was no
  * footer to measure in the first place.
  */
@@ -39,7 +39,7 @@ function LenisGsapSync(): null {
 function NavHideOnFooter(): null {
   useGSAP(() => {
     const navBar = document.querySelector(".nav_grid");
-    const footerEl = document.querySelector<HTMLElement>(".footer");
+    const footerEl = document.querySelector<HTMLElement>(".footer_wrap");
     const footerPrev = footerEl?.previousElementSibling;
 
     const setNavHidden = (hidden: boolean) => {

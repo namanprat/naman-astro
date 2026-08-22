@@ -11,13 +11,13 @@ const EDGE = 10;
 /** Returns a teardown, or nothing when there was no bar to boot. */
 export function bootOverlayScrollbar(): (() => void) | undefined {
   if (typeof document === "undefined") return;
-  if (document.querySelector(".overlay-scrollbar")) return;
+  if (document.querySelector(".overlay_scrollbar")) return;
 
   const root = document.createElement("div");
-  root.className = "overlay-scrollbar";
+  root.className = "overlay_scrollbar";
   root.setAttribute("aria-hidden", "true");
   const thumb = document.createElement("div");
-  thumb.className = "overlay-scrollbar__thumb";
+  thumb.className = "overlay_scrollbar_thumb";
   root.appendChild(thumb);
   document.body.appendChild(root);
 

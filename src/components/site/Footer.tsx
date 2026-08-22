@@ -15,7 +15,12 @@ import {
 } from "@/lib/site/gooeyReveal";
 import { prefersReducedMotion } from "@/lib/site/prefersReducedMotion";
 import { useCopyEmail } from "@/lib/site/copyEmail";
-import { EMAIL_HREF, NAV_STACKS, SOCIAL_LINKS } from "./Menu";
+import {
+  EMAIL_HREF,
+  NAV_STACKS,
+  SOCIAL_LINKS,
+  socialLinkTabProps,
+} from "./Menu";
 import FooterAsciiLogo from "./FooterAsciiLogo";
 import RollingText from "./RollingText";
 import "./Footer.css";
@@ -33,13 +38,11 @@ const FOOTER_LINKS = [
   { label: "Archive", path: "/archive" },
 ];
 
-/** One gooey-revealed line. The GSAP pass below drives every .footer-text. */
+/** One gooey-revealed line. The GSAP pass below drives every .footer_text. */
 function Reveal({ children }: { children: React.ReactNode }) {
   return (
-    <span className="footer-text">
-      <span className="footer-text-content gooey-reveal__inner">
-        {children}
-      </span>
+    <span className="footer_text">
+      <span className="footer_text_content gooey_reveal_inner">{children}</span>
     </span>
   );
 }
@@ -77,8 +80,8 @@ export default function Footer() {
          `prepareGooey`: that splits the element with SplitText, and RollingText
          has already split this same text into per-char glyph stacks for its
          hover roll — a second split fights it. Each link is one line anyway, so
-         the split buys nothing; `.footer-text` stands in for the split line and
-         its content span stands in for the `.gooey-reveal__inner` that would
+         the split buys nothing; `.footer_text` stands in for the split line and
+         its content span stands in for the `.gooey_reveal_inner` that would
          normally be minted — which is why that span carries the inner class in
          the markup above, since the filter chain hangs off it. */
       /* Hand-building the target also skips the reduced-motion guard that
@@ -86,13 +89,13 @@ export default function Footer() {
          these links would animate while every other gooey heading sits still. */
       const linkGooey: GooeyTarget[] = [];
       if (!prefersReducedMotion()) {
-        footer.querySelectorAll<HTMLElement>(".footer-text").forEach((el) => {
-          const inner = el.querySelector<HTMLElement>(".footer-text-content");
+        footer.querySelectorAll<HTMLElement>(".footer_text").forEach((el) => {
+          const inner = el.querySelector<HTMLElement>(".footer_text_content");
           if (inner) linkGooey.push({ el, inners: [inner] });
         });
       }
 
-      const tagline = footer.querySelector<HTMLElement>(".footer-tagline");
+      const tagline = footer.querySelector<HTMLElement>(".footer_tagline");
       const taglineGooey = tagline ? prepareGooey(tagline) : null;
 
       if (taglineGooey) parkGooey(taglineGooey);
@@ -105,7 +108,7 @@ export default function Footer() {
       };
 
       const prev = footer.previousElementSibling;
-      const child = footer.querySelector(".footer-child");
+      const child = footer.querySelector(".footer_scale");
       if (!prev || !child) return;
 
       gsap.fromTo(
@@ -134,84 +137,83 @@ export default function Footer() {
   );
 
   return (
-    <footer className="footer" id="contact" ref={footerRef}>
-      <div className="footer-child">
-        {/* Panel is the floating card; the container inside keeps content on grid. */}
-        <div className="footer-box">
-          <FooterAsciiLogo sourceRef={asciiSourceRef} />
-          <div className="footer_contain container gap-0">
-            <div className="footer-main grid is-12">
-              <h3 className="footer-tagline text-style-main">
-                I&apos;m a digital designer who makes things look good and work
-                better. Good design isn&apos;t about adding more—it&apos;s about
-                knowing what to leave out.
-              </h3>
+    <footer className="footer_wrap" id="contact" ref={footerRef}>
+      <div className="footer_child">
+        <div className="footer_scale">
+          {/* Panel is the floating card; the container inside keeps content on grid. */}
+          <div className="footer_box">
+            <FooterAsciiLogo sourceRef={asciiSourceRef} />
+            <div className="footer_contain container gap-0">
+              <div className="footer_layout grid is-12">
+                <h3 className="footer_tagline text-style-main">
+                  I&apos;m a digital designer who makes things look good and
+                  work better. Good design isn&apos;t about adding
+                  more—it&apos;s about knowing what to leave out.
+                </h3>
 
-              <nav className="footer-col footer-col--nav" aria-label="Footer">
-                <ul className="footer-list">
-                  {FOOTER_LINKS.map(({ label, path }) => (
-                    <li key={path}>
-                      <a
-                        className="footer-link text-style-h4"
-                        href={path === "/" ? "/" : path}
-                        onClick={(e) => onNavClick(e, path)}
-                      >
-                        <Reveal>
-                          <RollingText>{label}</RollingText>
-                        </Reveal>
-                      </a>
-                    </li>
-                  ))}
-                </ul>
-              </nav>
-
-              <div className="footer-col footer-col--connect">
-                <ul className="footer-list">
-                  {SOCIAL_LINKS.map(({ label, href }) => {
-                    const isMail = href.startsWith("mailto:");
-                    const isHttp = href.startsWith("http");
-                    const text = isMail ? emailCopy.label : label;
-                    return (
-                      <li key={label}>
+                <nav className="footer_col is-nav" aria-label="Footer">
+                  <ul className="footer_list">
+                    {FOOTER_LINKS.map(({ label, path }) => (
+                      <li key={path}>
                         <a
-                          className="footer-link footer-link--external text-style-h4"
-                          href={href}
-                          aria-live={isMail ? "polite" : undefined}
-                          onClick={isMail ? emailCopy.onClick : undefined}
-                          {...(isHttp
-                            ? { target: "_blank", rel: "noreferrer noopener" }
-                            : {})}
+                          className="footer_link text-style-h4"
+                          href={path === "/" ? "/" : path}
+                          onClick={(e) => onNavClick(e, path)}
                         >
                           <Reveal>
-                            <RollingText key={text}>{text}</RollingText>
-                            {isHttp ? (
-                              <span
-                                className="footer-link__icon"
-                                aria-hidden="true"
-                              >
-                                ↗
-                              </span>
-                            ) : null}
+                            <RollingText>{label}</RollingText>
                           </Reveal>
                         </a>
                       </li>
-                    );
-                  })}
-                </ul>
-              </div>
-            </div>
+                    ))}
+                  </ul>
+                </nav>
 
-            {/* Same container as the copy above so the wordmark locks to the
+                <div className="footer_col is-connect">
+                  <ul className="footer_list">
+                    {SOCIAL_LINKS.map(({ label, href, newTab }) => {
+                      const isMail = href.startsWith("mailto:");
+                      const text = isMail ? emailCopy.label : label;
+                      return (
+                        <li key={label}>
+                          <a
+                            className="footer_link is-external text-style-h4"
+                            href={href}
+                            aria-live={isMail ? "polite" : undefined}
+                            onClick={isMail ? emailCopy.onClick : undefined}
+                            {...socialLinkTabProps(newTab)}
+                          >
+                            <Reveal>
+                              <RollingText key={text}>{text}</RollingText>
+                              {newTab ? (
+                                <span
+                                  className="footer_link_icon"
+                                  aria-hidden="true"
+                                >
+                                  ↗
+                                </span>
+                              ) : null}
+                            </Reveal>
+                          </a>
+                        </li>
+                      );
+                    })}
+                  </ul>
+                </div>
+              </div>
+
+              {/* Same container as the copy above so the wordmark locks to the
                 12-col band, not the full card bleed. */}
-            <div className="footer-logo">
-              <img
-                ref={asciiSourceRef}
-                className="footer-logo__source"
-                src="/main-assets/name-hero.svg"
-                alt=""
-                decoding="async"
-                draggable={false}
-              />
+              <div className="footer_logo">
+                <img
+                  ref={asciiSourceRef}
+                  className="footer_logo_source"
+                  src="/main-assets/name-hero.svg"
+                  alt=""
+                  decoding="async"
+                  draggable={false}
+                />
+              </div>
             </div>
           </div>
         </div>

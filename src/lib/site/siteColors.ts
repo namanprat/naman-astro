@@ -1,6 +1,6 @@
 /**
  * Palette for WebGL, where CSS custom properties can't reach.
- * Keep in sync with --white / --black in styles/base.css.
+ * Keep in sync with --light-100 / --dark-900 in styles/base.css.
  */
 export const SWATCH_LIGHT = "#e2e2dd";
 export const SWATCH_DARK = "#1a1a1a";

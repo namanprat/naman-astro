@@ -15,8 +15,8 @@ export default class Reveal {
   items = new Map<HTMLElement, RevealItem>();
 
   constructor(root: ParentNode = document) {
-    gsap.utils.toArray<HTMLElement>(".gallery__slide", root).forEach((slide) => {
-      const wrapper = slide.querySelector<HTMLElement>(".gallery__img-wrapper");
+    gsap.utils.toArray<HTMLElement>(".gallery_slide", root).forEach((slide) => {
+      const wrapper = slide.querySelector<HTMLElement>(".gallery_img_wrap");
       if (!wrapper) return;
 
       gsap.set(wrapper, { autoAlpha: 0 });

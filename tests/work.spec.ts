@@ -32,7 +32,7 @@ for (const view of ["slider", "grid"] as const) {
       await expect
         .poll(() => rootClasses(page), { timeout: 30_000 })
         .toContain("page-work");
-      await expect(page.locator(".work-page")).not.toHaveClass(/is-loading/);
+      await expect(page.locator(".work_wrap")).not.toHaveClass(/is-loading/);
     });
 
     test("the gallery responds to this device's scroll input", async ({
@@ -197,14 +197,14 @@ test.describe("the mobile menu", () => {
     await stubWebGL(page);
     await skipPreloader(page);
     await page.goto("/work");
-    await expect(page.locator(".work-page")).not.toHaveClass(/is-loading/);
+    await expect(page.locator(".work_wrap")).not.toHaveClass(/is-loading/);
 
     await openNearestProject(page);
 
-    await page.locator(".nav-menu-toggle").first().click();
+    await page.locator(".nav_menu_toggle").first().click();
     await expect.poll(() => rootClasses(page)).toContain("menu-open");
 
-    await page.locator('.menu a[href="/work"]').first().click();
+    await page.locator('.menu_wrap a[href="/work"]').first().click();
 
     // `menu-open` is one of `engineEnabled()`'s gates, and it comes off at the
     // end of a 0.9s close — well after `work:close` has already fired.

@@ -6,6 +6,7 @@
 
 import gsap from "gsap";
 import { SplitText } from "gsap/SplitText";
+import { prefersReducedMotion } from "./prefersReducedMotion";
 
 gsap.registerPlugin(SplitText);
 
@@ -14,19 +15,19 @@ type RollingTextDispose = () => void;
 function resolveHost(el: HTMLElement): HTMLElement {
   return (
     el.closest<HTMLElement>("a, button") ??
-    el.closest<HTMLElement>(".anime-link") ??
+    el.closest<HTMLElement>(".anime_link") ??
     el
   );
 }
 
 export function initRollingText(el: HTMLElement): RollingTextDispose {
-  if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+  if (prefersReducedMotion()) {
     return () => {};
   }
 
   const split = SplitText.create(el, {
     type: "chars",
-    charsClass: "roll-char",
+    charsClass: "roll_char",
     aria: "auto",
   });
 
@@ -37,15 +38,15 @@ export function initRollingText(el: HTMLElement): RollingTextDispose {
     if (!html || html === " ") continue;
 
     const inner = document.createElement("span");
-    inner.className = "roll-char__inner";
+    inner.className = "roll_char_inner";
     inner.setAttribute("aria-hidden", "true");
 
     const a = document.createElement("span");
-    a.className = "roll-char__glyph";
+    a.className = "roll_char_glyph";
     a.innerHTML = html;
 
     const b = document.createElement("span");
-    b.className = "roll-char__glyph";
+    b.className = "roll_char_glyph";
     b.innerHTML = html;
 
     inner.append(a, b);

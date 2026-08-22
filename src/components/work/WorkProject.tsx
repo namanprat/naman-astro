@@ -19,7 +19,7 @@ export default function WorkProject({ item }: Props) {
 
   return (
     <SiteScroll>
-      <article className="work-project">
+      <article className="work_project">
         <ProjectDetail item={item} variant="page" />
       </article>
       <Footer />

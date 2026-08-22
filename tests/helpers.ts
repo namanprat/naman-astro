@@ -25,7 +25,7 @@ export function isNarrowNav(): boolean {
  * *between* two touch-move frames and pull the drag back to where it started,
  * so every timing-sensitive assertion here would be measuring the container.
  *
- * Scoped to the fluid canvas by its `.fluid-wrap` parent: the homepage's team
+ * Scoped to the fluid canvas by its `.fluid_wrap` parent: the homepage's team
  * carousel and the archive are three.js too, and refusing every WebGL context
  * takes those islands down with it — the homepage then never mounts and has
  * nothing to scroll.
@@ -41,7 +41,7 @@ export async function stubWebGL(page: Page) {
       type: string,
       ...rest: unknown[]
     ) {
-      if (String(type).includes("webgl") && this.closest(".fluid-wrap")) {
+      if (String(type).includes("webgl") && this.closest(".fluid_wrap")) {
         return null;
       }
       return (original as never as (...args: unknown[]) => unknown).call(
@@ -100,12 +100,12 @@ export async function expectRevealed(page: Page) {
  * the width — so checking either alone passes vacuously on the other half of
  * the matrix:
  *
- * - The nav lines, pushed to `yPercent: 110` inside an `overflow: hidden`
+ * - The nav lines, pushed to `yPercent: 110` inside an `overflow: clip`
  *   parent. A parked line is neither off-screen nor transparent, just clipped
  *   out of a box that is still exactly where it belongs, so it has to be
  *   compared against the box that clips it rather than against the viewport.
  * - The hero lockup, held at `visibility: hidden` by
- *   `.name-hero__gooey:not(.is-gooey-parked)` until the melt is armed.
+ *   `.name_hero_gooey:not(.is-gooey-parked)` until the melt is armed.
  *
  * Below the 64rem nav breakpoint the homepage renders *no* nav text at all —
  * the link stack is hidden and the wordmark lives in the hero lockup — so
@@ -120,7 +120,7 @@ export async function expectNavVisible(page: Page) {
         page.evaluate(() => {
           const rendered = [
             ...document.querySelectorAll<HTMLElement>(
-              ".nav_grid .nav-stack > .nav-link h5, .nav_grid .nav-logo-wordmark h5",
+              ".nav_grid .nav_stack > .nav_link h5, .nav_grid .nav_logo_wordmark h5",
             ),
           ].filter((line) => line.getBoundingClientRect().height > 0);
 
@@ -135,7 +135,7 @@ export async function expectNavVisible(page: Page) {
           if (parked.length) return `${parked.length} nav line(s) parked`;
 
           const lockup =
-            document.querySelector<HTMLElement>(".name-hero__gooey");
+            document.querySelector<HTMLElement>(".name_hero_gooey");
           const lockupPainted =
             !!lockup &&
             lockup.getBoundingClientRect().height > 0 &&
@@ -156,7 +156,7 @@ export async function expectNavVisible(page: Page) {
 /** Position of every gallery tile — the whole set, so a wrapped loop still reads as movement. */
 export const tilePositions = (page: Page) =>
   page.evaluate(() =>
-    [...document.querySelectorAll<HTMLElement>(".gallery__slide")].map((el) => {
+    [...document.querySelectorAll<HTMLElement>(".gallery_slide")].map((el) => {
       const box = el.getBoundingClientRect();
       return `${Math.round(box.x)},${Math.round(box.y)}`;
     }),
@@ -224,7 +224,7 @@ export async function openNearestProject(page: Page) {
     const midY = window.innerHeight / 2;
     let best: { x: number; y: number; d: number } | null = null;
     for (const el of document.querySelectorAll<HTMLElement>(
-      ".gallery__slide",
+      ".gallery_slide",
     )) {
       const box = el.getBoundingClientRect();
       const x = box.x + box.width / 2;

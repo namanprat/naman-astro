@@ -5,6 +5,16 @@ import sitemap from "@astrojs/sitemap";
 import { SITE_URL } from "./src/consts.ts";
 import { isNoindexRoute } from "./src/utils/seo.ts";
 
+// `astro check` and `astro build` share Vite's default `node_modules/.vite`
+// cache with `astro dev`. A check/build pass rewrites that cache in production
+// mode (`exports.jsxDEV = void 0` in react-jsx-dev-runtime.production.js). The
+// still-running dev server keeps serving those files, and every island dies
+// with `_jsxDEV is not a function`. Split the caches so the two modes cannot
+// overwrite each other.
+const viteCacheDir = process.argv.some((arg) => arg === "build" || arg === "check")
+  ? "node_modules/.vite/build"
+  : "node_modules/.vite/dev";
+
 export default defineConfig({
   site: SITE_URL,
   integrations: [
@@ -14,6 +24,10 @@ export default defineConfig({
     }),
   ],
   vite: {
+    cacheDir: viteCacheDir,
+    resolve: {
+      dedupe: ["react", "react-dom"],
+    },
     // Every heavy island here is `client:only`, so Vite's dep scanner never
     // sees these imports at boot. Without this list it discovers them on the
     // first request instead, re-optimizes mid-flight, and the in-flight island

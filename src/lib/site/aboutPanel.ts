@@ -8,7 +8,7 @@ let setter: AboutSetter | null = null;
  * On `<html>` for exactly as long as About is up, driven by the panel's `open`
  * prop.
  *
- * Distinct from `.about-panel.is-open`, which carries `visibility` and
+ * Distinct from `.about_panel.is-open`, which carries `visibility` and
  * `pointer-events` and so has to outlive the exit animation — it is removed
  * from `onReverseComplete`. Anything asking "is About up?" needs the state, not
  * the animation's lifetime: `WorkGallery` mutes the gallery's wheel and touch
@@ -75,7 +75,7 @@ export function installAboutInterceptors(): () => void {
     if (!isAboutHref(anchor.getAttribute("href"))) return;
 
     // Nav / overlay / footer already call toggleAboutPanel themselves.
-    if (anchor.closest(".nav-container, .menu, .footer")) return;
+    if (anchor.closest(".nav_wrap, .menu_wrap, .footer_wrap")) return;
 
     event.preventDefault();
     event.stopPropagation();

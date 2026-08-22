@@ -1,3 +1,4 @@
+@layer components {
 /* Work gallery + project detail (Flip overlay / hard-load share the same layout). */
 
 html.page-work,
@@ -11,12 +12,12 @@ html.page-work body {
 
 html.page-work body,
 html.page-work-project body {
-  background-color: var(--dark);
-  color: var(--ink);
+  background-color: var(--background);
+  color: var(--text);
 }
 
-html.page-work .nav-container,
-html.page-work-project .nav-container {
+html.page-work .nav_wrap,
+html.page-work-project .nav_wrap {
   position: fixed;
   top: 0;
   left: 0;
@@ -28,32 +29,32 @@ html.page-work-project main {
   position: relative;
 }
 
-.work-page {
+.work_wrap {
   position: relative;
   min-height: 100dvh;
   background-color: transparent;
-  color: var(--ink);
+  color: var(--text);
 }
 
-.work-page.is-loading::before,
-.work-page.is-loading::after {
+.work_wrap.is-loading::before,
+.work_wrap.is-loading::after {
   content: "";
   position: fixed;
   z-index: var(--z--overlay);
 }
 
-.work-page.is-loading::before {
+.work_wrap.is-loading::before {
   inset: 0;
-  background: var(--dark);
+  background: var(--background);
 }
 
-.work-page.is-loading::after {
+.work_wrap.is-loading::after {
   top: 50%;
   left: 50%;
-  width: 100px;
-  height: 1px;
-  margin: 0 0 0 -50px;
-  background: var(--ink);
+  width: 6.25rem;
+  height: var(--border-width);
+  translate: -50% -50%;
+  background-color: var(--text);
   animation: workLoaderAnim 1.5s ease-in-out infinite alternate forwards;
 }
 
@@ -80,38 +81,38 @@ html.page-work-project main {
 }
 
 /* Viewport-centered via vh/% (not inset:0 flex centering). */
-.work-page .gallery-label {
+.work_wrap .gallery_label {
   position: fixed;
   top: 50vh;
   left: 50%;
   z-index: calc(var(--z--nav) - 3);
   margin: 0;
-  padding-inline: var(--site--margin);
-  max-width: calc(100vw - 2 * var(--site--margin));
+  padding-inline: var(--site-margin);
+  max-width: calc(100vw - 2 * var(--site-margin));
   transform: translate(-50%, -50%);
   pointer-events: none;
   text-align: center;
-  color: var(--ink);
+  color: var(--text);
   transition: opacity 0.35s ease;
-  /* No filter here: the `.gooey-reveal` class in the markup puts the chain on
+  /* No filter here: the `.gooey_reveal` class in the markup puts the chain on
      the inner instead, so the soft-mode rule in site.css already covers this
      label and it needs no `html.is-gooey-soft` override of its own.
      `text-style-display` is heavy enough to survive the threshold sitting on
      permanently. */
 }
 
-.work-page .gallery-label__count {
+.work_wrap .gallery_label_count {
   font-size: 0.4em;
   line-height: 1;
   vertical-align: super;
   margin-left: 0.08em;
 }
 
-/* The label hands off to `.project__title`, which occupies the identical box.
+/* The label hands off to `.project_title`, which occupies the identical box.
    So it goes the frame the overlay appears — not when the clear beat starts,
    which would leave a gap with neither on screen — and instantly, or the two
    cross-fade and the title reads as re-entering rather than never moving. */
-html.work-morphing .work-page .gallery-label {
+html.work-morphing .work_wrap .gallery_label {
   opacity: 0;
   transition: none;
 }
@@ -121,12 +122,12 @@ html.work-morphing .work-page .gallery-label {
    the same colour the project page had, so the gap reads as continuous. The
    loader bar is suppressed for the same reason — nothing should announce a
    page boot mid-transition. */
-html.work-returning .work-page .gallery,
-html.work-returning .work-page .gallery-label {
+html.work-returning .work_wrap .gallery,
+html.work-returning .work_wrap .gallery_label {
   opacity: 0;
 }
 
-html.work-returning .work-page.is-loading::after {
+html.work-returning .work_wrap.is-loading::after {
   display: none;
 }
 
@@ -137,7 +138,7 @@ html.work-transitioning * {
   cursor: progress !important;
 }
 
-.work-page .gallery {
+.work_wrap .gallery {
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -160,13 +161,13 @@ html.work-transitioning * {
    of `.gallery`, and it has to size itself against the ring it sits inside.
    WheelView overwrites --wheel-radius here on every measure; the value below is
    only what stands before the island mounts, so the width term mirrors its cap. */
-.work-page[data-work-view="slider"] {
-  --wheel-radius: min(350px, 32vh, calc(50vw - 3rem));
-  --wheel-tile-w: 64px;
-  --wheel-tile-h: 64px;
+.work_wrap[data-work-view="slider"] {
+  --wheel-radius: min(21.875rem, 32vh, calc(50vw - 3rem));
+  --wheel-tile-w: 4rem;
+  --wheel-tile-h: 4rem;
 }
 
-.work-page[data-work-view="slider"] .gallery {
+.work_wrap[data-work-view="slider"] .gallery {
   position: fixed;
   inset: 0;
   display: block;
@@ -180,37 +181,37 @@ html.work-transitioning * {
 /* Square thumbnails on the ring. The grid's span tokens and its translateX
    column placement are both meaningless here — the tile's position is polar,
    not a grid block. The project cover keeps its 0.8 crop; Flip interpolates. */
-.work-page[data-work-view="slider"] .gallery__slide {
+.work_wrap[data-work-view="slider"] .gallery_slide {
   position: absolute;
   top: 0;
   left: 0;
   width: var(--wheel-tile-w);
   height: var(--wheel-tile-h);
-  overflow: hidden;
+  overflow: clip;
   transform: none;
 }
 
 /* Marks the anchor — the project the label names and a click opens. Sits just
    under the top tile, pointing back up at it. Positioned off the same radius
    token as the ring, so it tracks the cap on short viewports. */
-.work-page[data-work-view="slider"] .gallery::after {
+.work_wrap[data-work-view="slider"] .gallery::after {
   content: "";
   position: absolute;
   left: 50%;
   top: calc(50% - var(--wheel-radius) + var(--wheel-tile-h) / 2 + 0.5rem);
   width: 0;
   height: 0;
-  border-left: 5px solid transparent;
-  border-right: 5px solid transparent;
-  border-bottom: 6px solid var(--ink);
+  border-left: 0.3125rem solid transparent;
+  border-right: 0.3125rem solid transparent;
+  border-bottom: 0.375rem solid var(--text);
   transform: translateX(-50%);
   pointer-events: none;
   transition: opacity 0.3s ease;
 }
 
 /* Part of the ring, so it leaves with it — same clear beat as the tiles. */
-html.work-project-open .work-page[data-work-view="slider"] .gallery::after,
-html.work-returning .work-page[data-work-view="slider"] .gallery::after {
+html.work-project-open .work_wrap[data-work-view="slider"] .gallery::after,
+html.work-returning .work_wrap[data-work-view="slider"] .gallery::after {
   opacity: 0;
 }
 
@@ -226,16 +227,16 @@ html.work-returning .work-page[data-work-view="slider"] .gallery::after {
    by height instead and grows to ~330, so the bare ratio *enlarged* the label to
    137px rather than shrinking it. This can only ever take size away. */
 @media (width < 48rem) {
-  .work-page[data-work-view="slider"] .gallery-label {
+  .work_wrap[data-work-view="slider"] .gallery_label {
     font-size: min(4.2rem, calc(var(--wheel-radius) * 0.42));
   }
 }
 
-.work-page[data-work-view="slider"] .gallery__img-wrapper {
+.work_wrap[data-work-view="slider"] .gallery_img_wrap {
   width: 100%;
   height: 100%;
   aspect-ratio: auto;
-  overflow: hidden;
+  overflow: clip;
 }
 
 /* No tile shrink on narrow screens. Shrinking them was what made the phone ring
@@ -244,8 +245,8 @@ html.work-returning .work-page[data-work-view="slider"] .gallery::after {
    `WheelView.syncCopies` works out from the circumference on its own. */
 
 /* The overlay is the project view — the switcher has nothing to act on. */
-html.work-project-open .view-switcher,
-html.work-returning .view-switcher {
+html.work-project-open .view_switcher,
+html.work-returning .view_switcher {
   opacity: 0;
   pointer-events: none;
 }
@@ -260,7 +261,7 @@ html.work-returning .view-switcher {
    span shrinks to fit. Straight clamping would pile every slide onto the last
    legal column at 4 columns and flatten the left/right rhythm; this keeps it
    on desktop. Phones drop the translate so the stack sits on centre. */
-.work-page .gallery__slide {
+.work_wrap .gallery_slide {
   --_span: min(var(--slide-span, 3), calc(var(--site-column-count) - 1));
   --_max-col: calc(var(--site-column-count) - var(--_span));
   --_ref-max-col: calc(var(--site-column-count-max) - var(--slide-span, 3));
@@ -274,18 +275,18 @@ html.work-returning .view-switcher {
   margin: 0;
 }
 
-.work-page .gallery__img-wrapper {
+.work_wrap .gallery_img_wrap {
   position: relative;
   margin: 0;
   width: var(--_span-width);
   height: auto;
   aspect-ratio: 0.8;
-  overflow: hidden;
+  overflow: clip;
   pointer-events: none;
   user-select: none;
 }
 
-.work-page .gallery__img-wrapper img {
+.work_wrap .gallery_img_wrap img {
   position: absolute;
   top: 0;
   left: 0;
@@ -298,25 +299,25 @@ html.work-returning .view-switcher {
 /* Phone grid: no column stagger — flex already centres the stack. Cover crop
    is centred too; image parallax (same factor on every tile) lives in Slider. */
 @media (width < 48rem) {
-  .work-page[data-work-view="grid"] .gallery__slide {
+  .work_wrap[data-work-view="grid"] .gallery_slide {
     transform: none;
   }
 
-  .work-page[data-work-view="grid"] .gallery__img-wrapper img {
+  .work_wrap[data-work-view="grid"] .gallery_img_wrap img {
     object-position: center;
   }
 }
 
 /* Flip destination / project overlay */
-.work-page .content {
+.work_wrap .content {
   display: none;
   position: fixed;
   inset: 0;
   z-index: calc(var(--z--nav) - 2);
-  overflow: hidden;
+  overflow: clip;
 }
 
-.work-page .content-wrapper {
+.work_wrap .content_wrap {
   position: relative;
   width: 100%;
   height: 100%;
@@ -327,52 +328,52 @@ html.work-returning .view-switcher {
   scrollbar-width: none;
 }
 
-.work-page .content-wrapper::-webkit-scrollbar {
+.work_wrap .content_wrap::-webkit-scrollbar {
   display: none;
 }
 
-.work-page .content__group-list {
+.work_wrap .content_group_list {
   position: relative;
   z-index: 2;
   width: 100%;
   min-height: 100%;
 }
 
-.work-page .content__group {
+.work_wrap .content_group {
   display: none;
   width: 100%;
 }
 
-.work-page .content__group.active {
+.work_wrap .content_group.is-active {
   display: block;
 }
 
 /* ── Vertical case-study (overlay + hard page share one namespace) ────── */
-.project__layout {
+.project_layout {
   position: relative;
   z-index: 2;
   width: 100%;
-  color: var(--ink);
+  color: var(--text);
 }
 
-.work-page,
-.work-project {
+.work_wrap,
+.work_project {
   --project--content-start: 8;
 }
 
-.project__hero {
+.project_hero {
   position: relative;
   display: flex;
   flex-direction: column;
   min-height: 100dvh;
   box-sizing: border-box;
   overflow: visible;
-  padding-block: calc(var(--hero-chrome-height, 4rem) + var(--site--gutter)) var(--site--margin);
+  padding-block: calc(var(--hero-chrome-height, 4rem) + var(--site-gutter)) var(--site-margin);
 }
 
 /* Same box as the absolutely centered title, so services and body share its
    vertical midpoint. Stretch overrides `.container`'s center/start alignment. */
-.project__hero-container {
+.project_hero_contain {
   position: absolute;
   inset: 0;
   height: auto;
@@ -383,33 +384,33 @@ html.work-returning .view-switcher {
 }
 
 /* One full-height row so services and description sit on the title's center. */
-.project__hero-grid {
+.project_hero_grid {
   height: 100%;
   min-height: 100%;
   grid-template-rows: 1fr;
   align-items: center;
 }
 
-/* Same viewport lockup as `.gallery-label` — dead-center, so opening a project
+/* Same viewport lockup as `.gallery_label` — dead-center, so opening a project
    leaves it exactly where the label was and `Transition` has nothing to travel.
    Under 64rem it drops into flow at the top of the hero instead, and there the
    morph does carry it up. No `width` here: absolutely positioned at `left: 50%`,
    a full width would put a viewport-wide box half a screen off centre. */
-.project__title {
+.project_title {
   position: absolute;
   top: 50%;
   left: 50%;
   z-index: 1;
   margin: 0;
-  padding-inline: var(--site--margin);
-  max-width: calc(100vw - 2 * var(--site--margin));
+  padding-inline: var(--site-margin);
+  max-width: calc(100vw - 2 * var(--site-margin));
   transform: translate(-50%, -50%);
   pointer-events: none;
   text-align: center;
-  color: var(--ink);
+  color: var(--text);
 }
 
-.project__services {
+.project_services {
   grid-column: 1 / span 3;
   align-self: center;
   justify-self: start;
@@ -423,19 +424,19 @@ html.work-returning .view-switcher {
   z-index: 1;
 }
 
-.project__services-label,
-.project__services-list h5 {
+.project_services_label,
+.project_services_list h5 {
   margin: 0;
 }
 
-.project__services-list {
+.project_services_list {
   display: flex;
   flex-direction: column;
   align-items: flex-start;
   gap: var(--space-1);
 }
 
-.project__body {
+.project_body {
   grid-column: 10 / -1;
   align-self: center;
   justify-self: stretch;
@@ -445,30 +446,30 @@ html.work-returning .view-switcher {
   padding-inline-start: var(--space-3);
   /* One grey on this page. `--muted` is the same hue at 70% alpha, which reads
      as a second, lighter grey against the ground. */
-  color: var(--ink);
+  color: var(--text);
   position: relative;
   z-index: 1;
 }
 
 /* SplitText line wrappers inherit; otherwise mask inners can sit centered. */
-.project__body * {
+.project_body * {
   text-align: inherit;
 }
 
-.project__cover {
+.project_cover {
   margin-top: calc(-0.25 * var(--site--span-4));
-  padding-block: 0 var(--site--margin);
+  padding-block: 0 var(--site-margin);
 }
 
-.project__block {
-  padding-block: 0 var(--site--margin);
+.project_block {
+  padding-block: 0 var(--site-margin);
 }
 
-.project__panel-media {
+.project_panel_media {
   grid-column: 4 / span 6;
   margin: 0;
-  overflow: hidden;
-  background-color: var(--dark);
+  overflow: clip;
+  background-color: var(--background);
 }
 
 /* Explicit rows, not auto-placement. The cover is the Flip target, so it spends
@@ -477,47 +478,47 @@ html.work-returning .view-switcher {
    which is exactly the flicker where the second image surfaced under the cover.
    Pinned rows cannot be re-placed. `Transition.lockCoverRow` freezes the track
    sizes to match, so row 1 keeps its height while the cover is away. */
-.project__cover-media {
+.project_cover_media {
   grid-row: 1;
   grid-column: 4 / span 6;
   margin: 0;
-  overflow: hidden;
-  background-color: var(--dark);
+  overflow: clip;
+  background-color: var(--background);
   aspect-ratio: 0.8;
 }
 
-.project__cover-media img {
+.project_cover_media img {
   width: 100%;
   height: 100%;
   object-fit: cover;
   display: block;
 }
 
-.project__cover-video,
-.project__cover-below {
+.project_cover_video,
+.project_cover_below {
   /* Both sit under the cover and only one is ever present per project, so they
      share row 2 rather than each claiming one and leaving an empty track. */
   grid-row: 2;
   grid-column: 4 / span 6;
   margin: 0;
-  overflow: hidden;
-  background-color: var(--dark);
+  overflow: clip;
+  background-color: var(--background);
 }
 
-.project__cover-video video,
-.project__cover-below img {
+.project_cover_video video,
+.project_cover_below img {
   width: 100%;
   height: auto;
   display: block;
 }
 
-.project__panel-media img {
+.project_panel_media img {
   width: 100%;
   height: auto;
   display: block;
 }
 
-.project__copy {
+.project_copy {
   grid-column: 4 / span 6;
   min-width: 0;
   display: flex;
@@ -526,36 +527,36 @@ html.work-returning .view-switcher {
   align-self: start;
 }
 
-.project__copy-title,
-.project__copy-body {
+.project_copy_title,
+.project_copy_body {
   margin: 0;
 }
 
 /* Panel copy is parked, not deleted — delete this rule to bring it back. Must
-   sit after `.project__copy`'s own `display: flex`, which otherwise wins on
+   sit after `.project_copy`'s own `display: flex`, which otherwise wins on
    source order. The text-only block goes too, or it keeps paying its padding
    for content that no longer renders. */
-.project__copy,
-.project__block--text {
+.project_copy,
+.project_block.is-text {
   display: none;
 }
 
-.work-project {
+.work_project {
   position: relative;
   z-index: 2;
   width: 100%;
   background-color: transparent;
-  color: var(--ink);
+  color: var(--text);
 }
 
 /* Stack below Lumos large so copy isn't squeezed into one of 8 cols. */
 @media (width < 64rem) {
-  .work-page,
-  .work-project {
+  .work_wrap,
+  .work_project {
     --project--content-start: 1;
   }
 
-  .project__hero {
+  .project_hero {
     min-height: 0;
   }
 
@@ -564,33 +565,33 @@ html.work-returning .view-switcher {
      services and description on an absolutely-centred title. This is also what
      gives the title somewhere to travel to, so the morph carries it up here and
      leaves it still on desktop. */
-  .project__hero-container {
+  .project_hero_contain {
     position: relative;
     inset: auto;
-    margin-top: var(--site--gutter);
+    margin-top: var(--site-gutter);
   }
 
-  .project__hero-container,
-  .project__hero-grid {
+  .project_hero_contain,
+  .project_hero_grid {
     height: auto;
     min-height: 0;
   }
 
-  .project__hero-grid {
+  .project_hero_grid {
     grid-template-rows: none;
     align-items: start;
   }
 
-  .project__services,
-  .project__body {
+  .project_services,
+  .project_body {
     align-self: start;
   }
 
-  .project__cover {
+  .project_cover {
     margin-top: 0;
   }
 
-  .project__title {
+  .project_title {
     position: relative;
     top: auto;
     left: auto;
@@ -601,10 +602,10 @@ html.work-returning .view-switcher {
     text-align: center;
   }
 
-  .project__services,
-  .project__body,
-  .project__panel-media,
-  .project__copy {
+  .project_services,
+  .project_body,
+  .project_panel_media,
+  .project_copy {
     grid-row: auto;
     grid-column: 1 / -1;
   }
@@ -612,13 +613,14 @@ html.work-returning .view-switcher {
   /* Full width like the rest, but the cover section keeps its explicit rows —
      `grid-row: auto` here would let the siblings re-place into the cover's row
      the moment Flip lifts it out of flow, which is the desktop bug again. */
-  .project__cover-media,
-  .project__cover-video,
-  .project__cover-below {
+  .project_cover_media,
+  .project_cover_video,
+  .project_cover_below {
     grid-column: 1 / -1;
   }
 
-  .project__body {
+  .project_body {
     padding-inline-start: 0;
   }
+}
 }

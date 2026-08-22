@@ -121,7 +121,7 @@ export default class WheelView {
     // Cached, not re-queried per frame — the reference ran querySelectorAll
     // over every node inside its rAF loop.
     const originals = gsap.utils.toArray<HTMLElement>(
-      ".gallery__slide",
+      ".gallery_slide",
       this.root,
     );
     this.projectCount = originals.length;
@@ -175,7 +175,7 @@ export default class WheelView {
     const host =
       this.root instanceof HTMLElement
         ? this.root
-        : this.root.querySelector<HTMLElement>(".work-page");
+        : this.root.querySelector<HTMLElement>(".work_wrap");
     host?.style.setProperty("--wheel-radius", `${this.radius}px`);
 
     // Radius first — how many tiles fit is a question about the circumference.
@@ -323,7 +323,7 @@ export default class WheelView {
         const y = self.y;
         if (x == null || y == null) return;
         const hit = document.elementFromPoint(x, y);
-        hit?.closest<HTMLElement>(".gallery__slide")?.click();
+        hit?.closest<HTMLElement>(".gallery_slide")?.click();
       },
     });
   }

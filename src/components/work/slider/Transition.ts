@@ -105,7 +105,7 @@ export default class Transition {
     const content = root.querySelector<HTMLElement>(".content");
     if (!content) throw new Error("Transition: .content element not found");
     this.content = content;
-    this.groups = gsap.utils.toArray<HTMLElement>(".content__group", root);
+    this.groups = gsap.utils.toArray<HTMLElement>(".content_group", root);
   }
 
   async open(slide: HTMLElement, index: number) {
@@ -178,9 +178,9 @@ export default class Transition {
     /* Only the body is split. The title is deliberately untouched — it occupies
        the same box as the gallery label it replaces, so animating it is what
        made it read as re-entering instead of never having moved. */
-    const active = ".content__group.active ";
+    const active = ".content_group.is-active ";
 
-    this.splitBody = new SplitText(active + ".project__body", {
+    this.splitBody = new SplitText(active + ".project_body", {
       type: "lines",
       mask: "lines",
     });
@@ -294,9 +294,9 @@ export default class Transition {
     document.documentElement.classList.add("work-project-open");
     document.documentElement.classList.add("work-morphing");
 
-    const active = ".content__group.active ";
+    const active = ".content_group.is-active ";
 
-    this.splitBody = new SplitText(active + ".project__body", {
+    this.splitBody = new SplitText(active + ".project_body", {
       type: "lines",
       mask: "lines",
     });
@@ -420,16 +420,16 @@ export default class Transition {
   }
 
   async fillContent(slide: HTMLElement, index: number) {
-    const img = slide.querySelector<HTMLImageElement>(".gallery__img");
+    const img = slide.querySelector<HTMLImageElement>(".gallery_img");
     if (!img) return;
 
     this.groups.forEach((group) => {
       const active = Number(group.dataset.index) === index;
-      group.classList.toggle("active", active);
+      group.classList.toggle("is-active", active);
     });
 
     const activeGroup = this.groups.find((group) =>
-      group.classList.contains("active"),
+      group.classList.contains("is-active"),
     );
     this.preview =
       activeGroup?.querySelector<HTMLElement>("[data-project-preview]") ?? null;
@@ -529,21 +529,21 @@ export default class Transition {
   }
 
   private activeTitle() {
-    const group = this.groups.find((g) => g.classList.contains("active"));
-    return group?.querySelector<HTMLElement>(".project__title") ?? null;
+    const group = this.groups.find((g) => g.classList.contains("is-active"));
+    return group?.querySelector<HTMLElement>(".project_title") ?? null;
   }
 
   private contentParts() {
-    const group = this.groups.find((g) => g.classList.contains("active"));
+    const group = this.groups.find((g) => g.classList.contains("is-active"));
     if (!group) return [];
 
     /* The cover's own siblings are in here too: they sit in the cover's grid,
        so without this they were at full opacity the instant `.content`
        displayed — you saw the second image first, then the cover flew in over
-       the top of it. Not `.project__cover-media` itself, which is the thing
+       the top of it. Not `.project_cover_media` itself, which is the thing
        morphing. */
     return gsap.utils.toArray<HTMLElement>(
-      ".project__services, .project__body, .project__block, .project__cover-video, .project__cover-below",
+      ".project_services, .project_body, .project_block, .project_cover_video, .project_cover_below",
       group,
     );
   }
@@ -554,10 +554,10 @@ export default class Transition {
     /* Queried live, not cached in the constructor: WheelView appends its ring
        clones after Transition is built, and a clone left behind sits over the
        project at full opacity for the whole morph. */
-    const all = gsap.utils.toArray<HTMLElement>(".gallery__slide", this.root);
+    const all = gsap.utils.toArray<HTMLElement>(".gallery_slide", this.root);
 
     return {
-      wrapper: slide.querySelector(".gallery__img-wrapper") as HTMLElement,
+      wrapper: slide.querySelector(".gallery_img_wrap") as HTMLElement,
       others: all.filter((s) => s !== slide),
     };
   }

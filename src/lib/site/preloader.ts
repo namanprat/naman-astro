@@ -57,7 +57,7 @@ function counterTween(onTick: (value: number) => void) {
 }
 
 export function bootPreloader(): void {
-  const root = document.querySelector<HTMLElement>(".preloader");
+  const root = document.querySelector<HTMLElement>(".preloader_wrap");
   if (!root) return;
 
   // Already seen this session — the head script left `is-preloading` off, so
@@ -66,7 +66,7 @@ export function bootPreloader(): void {
     root.remove();
     return;
   }
-  const card = root.querySelector<HTMLElement>(".preloader__card");
+  const card = root.querySelector<HTMLElement>(".preloader_card");
 
   const percent = root.querySelector<HTMLElement>("[data-preload-percent]");
   const assets = root.querySelector<HTMLElement>("[data-preload-assets]");
@@ -128,7 +128,29 @@ export function bootPreloader(): void {
   const counter = counterTween(paint);
 
   const onKeydown = (event: KeyboardEvent) => {
-    if (event.key === "Enter") enter();
+    if (event.key === "Enter" || event.key === "Escape") {
+      enter();
+      return;
+    }
+    if (event.key !== "Tab") return;
+    const nodes = [
+      ...root.querySelectorAll<HTMLElement>("button:not([disabled]), a[href]"),
+    ];
+    if (nodes.length === 0) {
+      event.preventDefault();
+      root.focus();
+      return;
+    }
+    const first = nodes[0];
+    const last = nodes[nodes.length - 1];
+    const active = document.activeElement;
+    if (event.shiftKey && (active === first || active === root)) {
+      event.preventDefault();
+      last.focus();
+    } else if (!event.shiftKey && active === last) {
+      event.preventDefault();
+      first.focus();
+    }
   };
 
   function enter() {
@@ -148,7 +170,7 @@ export function bootPreloader(): void {
 
     if (prefersReducedMotion()) return finish();
 
-    // Slides up inside .preloader__clip, so the mask edge eats it rather than
+    // Slides up inside .preloader_clip, so the mask edge eats it rather than
     // letting it fly over the page it's about to reveal.
     gsap.to(card, {
       yPercent: -100,
@@ -160,6 +182,7 @@ export function bootPreloader(): void {
 
   cta?.addEventListener("click", enter);
   document.addEventListener("keydown", onKeydown);
+  root.focus({ preventScroll: true });
 
   // The CSS overflow lock can't stop Lenis' own transform loop, and Lenis
   // mounts with the home island — after this module runs. Stop it on arrival

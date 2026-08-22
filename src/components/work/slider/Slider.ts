@@ -13,7 +13,7 @@ const SPEEDS = [1.3, 0.8, 1.15, 0.7, 1.25, 0.85];
     image inside the crop rather than the slide, so the centred stack stays even. */
 const MOBILE_SPEED = 1.15;
 
-/** Matches the CSS `scale(1.2)` crop on `.gallery__img`. */
+/** Matches the CSS `scale(1.2)` crop on `.gallery_img`. */
 const IMAGE_SCALE = 1.2;
 
 /** Extra crop on each side of a scale(1.2) image, as a fraction of wrapper height.
@@ -101,7 +101,7 @@ export default class Slider {
   }
 
   private slides() {
-    return gsap.utils.toArray<HTMLElement>(".gallery__slide", this.root);
+    return gsap.utils.toArray<HTMLElement>(".gallery_slide", this.root);
   }
 
   createLoop() {
@@ -120,7 +120,7 @@ export default class Slider {
   createParallax() {
     this.parallax = this.slides().map((slide) => ({
       el: slide,
-      img: slide.querySelector<HTMLElement>(".gallery__img"),
+      img: slide.querySelector<HTMLElement>(".gallery_img"),
       factor: 0,
       offset: 0,
       visible: false,
@@ -237,7 +237,7 @@ export default class Slider {
         const y = self.y;
         if (x == null || y == null) return;
         const hit = document.elementFromPoint(x, y);
-        hit?.closest<HTMLElement>(".gallery__slide")?.click();
+        hit?.closest<HTMLElement>(".gallery_slide")?.click();
       },
     });
   }

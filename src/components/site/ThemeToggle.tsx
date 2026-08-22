@@ -74,13 +74,13 @@ export default function ThemeToggle() {
   return (
     <button
       type="button"
-      className="nav-theme-toggle"
+      className="nav_theme_toggle"
       onClick={onToggle}
       aria-pressed={isLight}
-      aria-label="Toggle color theme"
+      aria-label="Light theme"
     >
       <svg
-        className="nav-theme-toggle__svg"
+        className="nav_theme_toggle_svg"
         width="124"
         height="73"
         viewBox="0 0 124 73"

@@ -12,15 +12,15 @@
  */
 ---
 
-<div class="preloader" role="dialog" aria-modal="true" aria-label="Loading">
-  <div class="preloader__clip">
-    <div class="preloader__card padding-4">
-      <div class="preloader__grid grid is-12 gap-2 gap-row-4">
-        <div class="preloader__mark" role="img" aria-label="Naman Pratulya">
+<div class="preloader_wrap" role="dialog" aria-modal="true" aria-label="Loading" tabindex="-1">
+  <div class="preloader_clip">
+    <div class="preloader_card padding-4">
+      <div class="preloader_grid grid is-12 gap-2 gap-row-4">
+        <div class="preloader_mark" role="img" aria-label="Naman Pratulya">
         </div>
 
         <div
-          class="preloader__row flex-horizontal-nowrap justify-content-between gap-2"
+          class="preloader_row flex-horizontal-nowrap justify-content-between gap-2"
         >
           <p class="text-style-mono">
             Loaded <span data-preload-percent aria-live="polite">0%</span>
@@ -30,12 +30,12 @@
           </p>
         </div>
 
-        <div class="preloader__bar" aria-hidden="true">
-          <div class="preloader__fill" data-preload-fill></div>
+        <div class="preloader_bar" aria-hidden="true">
+          <div class="preloader_fill" data-preload-fill></div>
         </div>
 
         <div
-          class="preloader__row preloader__foot justify-content-between align-items-end gap-2"
+          class="preloader_row preloader_foot justify-content-between align-items-end gap-2"
         >
           <p class="text-style-mono">
             Based out of Mumbai and Bangalore<br />
@@ -43,11 +43,11 @@
           </p>
           <button
             type="button"
-            class="preloader__cta text-style-mono radius-round"
+            class="preloader_cta text-style-mono radius-round"
             data-preload-cta
             disabled
           >
-            <span class="roll-text" data-preload-cta-label>Enter</span>
+            <span class="roll_text" data-preload-cta-label>Enter</span>
           </button>
         </div>
       </div>
@@ -56,7 +56,7 @@
 </div>
 
 <style>
-  .preloader {
+  .preloader_wrap {
     position: fixed;
     inset: 0;
     /* Just under .site-grain (1000000) so the grain overlays the card like it
@@ -73,9 +73,9 @@
     will-change: transform;
   }
 
-  .preloader__clip,
-  .preloader__card,
-  .preloader__cta {
+  .preloader_clip,
+  .preloader_card,
+  .preloader_cta {
     pointer-events: auto;
   }
 
@@ -83,38 +83,38 @@
      --surface-accent / --panel-ink pairing the About panel uses. */
   /* Exit mask — the card animates to yPercent -100 inside this, so it slides
      up behind the clip edge instead of drifting off over the page. */
-  .preloader__clip {
+  .preloader_clip {
     width: 100%;
     max-width: 38rem;
-    overflow: hidden;
+    overflow: clip;
   }
 
-  .preloader__card {
-    --card-ink: var(--black);
+  .preloader_card {
+    --card-ink: var(--dark-900);
     width: 100%;
     background-color: var(--surface-accent);
     color: var(--card-ink);
   }
 
   /* Blur only — the fill stays --surface-accent in both themes, matching
-     .about-panel__surface and .footer-child exactly. */
-  :global(html.theme-light) .preloader__card {
-    --card-ink: var(--white);
+     .about_panel_surface and .footer_child exactly. */
+  :global(html.theme-light) .preloader_card {
+    --card-ink: var(--light-100);
     backdrop-filter: blur(var(--surface-frost-blur));
     -webkit-backdrop-filter: blur(var(--surface-frost-blur));
   }
 
   /* Every row spans the full grid, so the 4/6/8/12 column counts never
      reposition anything — the splits are flex, not grid placement. */
-  .preloader__mark,
-  .preloader__row,
-  .preloader__bar {
+  .preloader_mark,
+  .preloader_row,
+  .preloader_bar {
     grid-column: 1 / -1;
   }
 
   /* Masked rather than <img> so the wordmark takes the card's ink colour, the
-     same trick .name-hero__lockup uses in Menu.css. */
-  .preloader__mark {
+     same trick .name_hero_lockup uses in Menu.css. */
+  .preloader_mark {
     width: min(16rem, 55%);
     aspect-ratio: 446 / 70;
     background-color: var(--card-ink);
@@ -122,24 +122,24 @@
     mask: url(/main-assets/name-hero.svg) left center / contain no-repeat;
   }
 
-  .preloader__foot {
+  .preloader_foot {
     display: flex;
     flex-flow: row wrap;
   }
 
-  .preloader__cta {
+  .preloader_cta {
     flex: none;
     padding: 0.75em 2em;
     border: 0;
-    background-color: var(--white);
-    color: var(--black);
+    background-color: var(--light-100);
+    color: var(--dark-900);
     cursor: pointer;
     /* Opacity only, never `visibility: hidden` — a hidden element can't take
        focus, so the keyboard path would break the moment it unlocked. */
     opacity: 0;
   }
 
-  .preloader__cta:disabled {
+  .preloader_cta:disabled {
     cursor: default;
   }
 
@@ -148,8 +148,8 @@
      Pitch matches the reference's cell rhythm (~60 columns across the card);
      the dot fills 80% of its cell so it reads as chunky as the ref's squares
      rather than a thin polka run. */
-  .preloader__bar {
-    --pitch: 9px;
+  .preloader_bar {
+    --pitch: 0.5625rem;
     --dot: 40%;
     --rows: 3;
     position: relative;
@@ -164,7 +164,7 @@
 
   /* Same dots at full strength, clipped by width. JS snaps that width to whole
      --pitch steps so a dot is never cut in half mid-column. */
-  .preloader__fill {
+  .preloader_fill {
     position: absolute;
     inset: 0 auto 0 0;
     width: 0;
@@ -177,7 +177,7 @@
   }
 
   @media (prefers-reduced-motion: reduce) {
-    .preloader {
+    .preloader_wrap {
       will-change: auto;
     }
   }
