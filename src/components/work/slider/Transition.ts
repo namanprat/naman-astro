@@ -1,6 +1,7 @@
 import { gsap } from "gsap";
 import { Flip } from "gsap/Flip";
 import { SplitText } from "gsap/SplitText";
+import { LINE_PARK_PERCENT } from "@/lib/site/lineMask";
 
 gsap.registerPlugin(Flip, SplitText);
 
@@ -219,7 +220,7 @@ export default class Transition {
     this.tl.from(
       this.splitBody.lines,
       {
-        yPercent: 110,
+        yPercent: LINE_PARK_PERCENT,
         duration: BODY_LINE_DURATION,
         ease: "power3.out",
         stagger: BODY_LINE_STEP,
@@ -362,7 +363,7 @@ export default class Transition {
       .to(
         bodyLines,
         {
-          yPercent: 110,
+          yPercent: LINE_PARK_PERCENT,
           duration: FADE_DURATION,
           stagger: 0.03,
           ease: "power2.in",

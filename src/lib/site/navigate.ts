@@ -1,4 +1,5 @@
 import { animateIn, markCovered, PT_COVER_KEY } from "./pageTransition";
+import { writeFlag } from "./sessionFlag";
 
 export type GoOptions = {
   /** Menu overlay already covers the viewport — skip the rising-panel cover. */
@@ -30,10 +31,6 @@ export async function go(href: string, options?: GoOptions): Promise<void> {
   } else {
     await animateIn();
   }
-  try {
-    sessionStorage.setItem(PT_COVER_KEY, "1");
-  } catch {
-    /* private mode */
-  }
+  writeFlag(PT_COVER_KEY, "1");
   window.location.assign(href);
 }

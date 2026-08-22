@@ -10,6 +10,7 @@
  * in BaseLayout, so clicking Home while already on `/` does not remount it.
  */
 import gsap from "gsap";
+import { parkLines } from "./lineMask";
 import { prefersReducedMotion } from "./prefersReducedMotion";
 import { PAGE_REVEALED_EVENT, isPageRevealed } from "./pageReveal";
 import {
@@ -113,7 +114,7 @@ function createSession(): HomeIntroSession {
     tl = null;
     if (lines.length) {
       gsap.killTweensOf(lines);
-      gsap.set(lines, { yPercent: 110 });
+      parkLines(lines);
     }
     if (!gooeyEl) return;
 

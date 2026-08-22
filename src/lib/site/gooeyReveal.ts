@@ -39,7 +39,7 @@ import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import { SplitText } from "gsap/SplitText";
 import { prefersReducedMotion } from "./prefersReducedMotion";
-import { pollUntil } from "./pollUntil";
+import { pollUntil, REVEAL_FAILSAFE_MS, REVEAL_POLL_MS } from "./pollUntil";
 
 gsap.registerPlugin(ScrollTrigger, SplitText);
 
@@ -80,10 +80,6 @@ const REVEAL_START = "top 80%";
 /** Blur peak for a swap. Lower than the entrance — it is a shorter beat. */
 const MORPH_BLUR_EM = 0.3;
 const MORPH_S = 0.22;
-
-/** Matches lineReveal: text must never stay hidden if fonts or an island fail. */
-const FAILSAFE_MS = 2000;
-const POLL_MS = 50;
 
 const ARMING = "is-gooey-arming";
 const SOFT = "is-gooey-soft";
@@ -341,16 +337,16 @@ export async function bootGooeyHeadings(): Promise<void> {
   const failsafe = setTimeout(() => {
     expired = true;
     done();
-  }, FAILSAFE_MS);
+  }, REVEAL_FAILSAFE_MS);
 
   try {
-    await Promise.race([document.fonts.ready, wait(FAILSAFE_MS)]);
+    await Promise.race([document.fonts.ready, wait(REVEAL_FAILSAFE_MS)]);
 
     // `client:only` islands — the whole home page, work, archive — mount after
     // this module runs, so the headings often aren't in the DOM yet.
     const heads = await pollUntil(queryHeadings, {
-      deadline: performance.now() + FAILSAFE_MS,
-      intervalMs: POLL_MS,
+      deadline: performance.now() + REVEAL_FAILSAFE_MS,
+      intervalMs: REVEAL_POLL_MS,
     });
 
     // Past the deadline the headings are already on screen; parking them at a

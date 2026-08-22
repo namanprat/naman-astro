@@ -8,8 +8,9 @@ import { SplitText } from "gsap/SplitText";
 import { useGSAP } from "@gsap/react";
 import { go, type GoOptions } from "@/lib/site/navigate";
 import { hashId, scrollToSection } from "@/lib/site/scrollToSection";
+import { LINE_PARK_PERCENT, parkLines } from "@/lib/site/lineMask";
 import { prefersReducedMotion } from "@/lib/site/prefersReducedMotion";
-import { markWorkReturn } from "@/lib/site/workReturn";
+import { markWorkReturn } from "@/lib/site/workSession";
 import {
   registerAboutPanel,
   toggleAboutPanel,
@@ -537,7 +538,7 @@ export default function Menu({ initialPathname = "/" }: MenuProps) {
     const head = aboutHead();
     if (head) parkGooey(head);
     const lines = splitAboutCopy();
-    gsap.set(lines, { yPercent: 110 });
+    parkLines(lines);
     return lines;
   };
 
@@ -628,14 +629,14 @@ export default function Menu({ initialPathname = "/" }: MenuProps) {
 
     if (!contactReadyRef.current) {
       contactReadyRef.current = true;
-      gsap.set(lines, { yPercent: 110 });
+      parkLines(lines);
       gsap.set(dropdown, { display: "none" });
     } else if (prefersReducedMotion()) {
-      gsap.set(lines, { yPercent: contactOpen ? 0 : 110 });
+      gsap.set(lines, { yPercent: contactOpen ? 0 : LINE_PARK_PERCENT });
       gsap.set(dropdown, { display: contactOpen ? "flex" : "none" });
     } else if (contactOpen) {
       gsap.set(dropdown, { display: "flex" });
-      gsap.set(lines, { yPercent: 110 });
+      parkLines(lines);
       contactTlRef.current = gsap.timeline();
       contactTlRef.current.to(lines, {
         yPercent: 0,
@@ -650,7 +651,7 @@ export default function Menu({ initialPathname = "/" }: MenuProps) {
         },
       });
       contactTlRef.current.to(lines, {
-        yPercent: 110,
+        yPercent: LINE_PARK_PERCENT,
         duration: 0.9,
         ease: "introHop",
         stagger: 0.06,

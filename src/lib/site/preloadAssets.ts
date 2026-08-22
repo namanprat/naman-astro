@@ -11,8 +11,9 @@ import { completeAll, register, report } from "./preloadProgress";
 const GRAIN_URL = "/main-assets/grain.webp";
 
 /**
- * Flat deadline for the whole boot, same philosophy as lineReveal's FAILSAFE_MS:
- * one number to raise, not per-stage timeouts.
+ * Flat deadline for the whole boot, same philosophy as REVEAL_FAILSAFE_MS in
+ * `pollUntil`: one number to raise, not per-stage timeouts. Much longer than
+ * the reveal budget — this one waits on multi-megabyte assets.
  */
 const PRELOAD_FAILSAFE_MS = 12_000;
 

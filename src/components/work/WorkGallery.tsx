@@ -7,12 +7,12 @@ import { gooeyMorph } from "@/lib/site/gooeyReveal";
 import { setSiteLenis } from "@/lib/site/lenisBridge";
 import { SCROLL_SETTINGS, driveLenisWithGsap } from "@/lib/site/lenisScroll";
 import { prefersReducedMotion } from "@/lib/site/prefersReducedMotion";
-import { takeWorkReturn } from "@/lib/site/workReturn";
 import {
   readWorkView,
+  takeWorkReturn,
   writeWorkView,
   type WorkView,
-} from "@/lib/site/workView";
+} from "@/lib/site/workSession";
 import ProjectDetail from "./ProjectDetail";
 import Reveal from "./slider/Reveal";
 import Slider, { isWorkGridMobile, WORK_GRID_MOBILE_MQ } from "./slider/Slider";

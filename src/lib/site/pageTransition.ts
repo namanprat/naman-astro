@@ -12,6 +12,7 @@ import {
   PRELOAD_ENTERED_EVENT,
 } from "./pageReveal";
 import { prefersReducedMotion } from "./prefersReducedMotion";
+import { takeFlag } from "./sessionFlag";
 import "./eases";
 
 export const PT_COVER_KEY = "pt:cover";
@@ -130,15 +131,7 @@ export async function bootIfCovered(): Promise<void> {
     return;
   }
 
-  let covered = false;
-  try {
-    covered = sessionStorage.getItem(PT_COVER_KEY) === "1";
-    if (covered) sessionStorage.removeItem(PT_COVER_KEY);
-  } catch {
-    covered = false;
-  }
-
   // Plain load: nothing is hiding the page, so it is already revealed.
-  if (covered) await animateOut();
+  if (takeFlag(PT_COVER_KEY) === "1") await animateOut();
   markPageRevealed();
 }
