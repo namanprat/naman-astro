@@ -10,6 +10,7 @@ const files = [
   "src/components/site/Faq.css",
   "src/components/site/Process.css",
   "src/components/site/Manifesto.css",
+  "src/components/site/CamilleSlider.css",
   "src/components/site/Team.css",
   "src/components/site/AnimeLink.css",
   "src/components/site/RollingText.css",

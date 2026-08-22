@@ -392,18 +392,17 @@ html.menu-open .nav_wrap {
    pointer-events:none. */
 .nav_archive {
   display: block;
-  /* No active-dot gutter — sit flush in the utility column. */
-  padding-left: 0;
-  margin: 0;
+  /* Same active-dot gutter as `.nav_link`. */
+  padding-left: 0.8em;
+  margin-left: -0.8em;
+  margin-top: 0;
+  margin-bottom: 0;
+  margin-right: 0;
   color: inherit;
   white-space: nowrap;
   width: max-content;
   max-width: none;
   overflow: visible;
-}
-
-.nav_archive.is-active::before {
-  content: none;
 }
 
 .nav_menu_toggle_open {

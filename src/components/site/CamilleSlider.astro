@@ -1,0 +1,123 @@
+---
+/**
+ * Camille-style slider. 8-col stage; frame + thumbs share `--camille-ratio`.
+ * Slides come from work items tagged `featured`.
+ */
+import { featuredWorkItems } from "@/content/work";
+import "./CamilleSlider.css";
+
+const SLIDES = featuredWorkItems.map((item) => ({
+  title: item.title,
+  src: item.image,
+  alt: item.alt,
+}));
+
+const TOTAL = String(SLIDES.length).padStart(2, "0");
+const LINES = Array.from({ length: 80 }, (_, i) => i);
+---
+
+<section class="camille_slider_wrap studio_section" id="series" aria-label="Featured work">
+  <div class="camille_slider_contain container gap-0">
+    <div class="camille_slider_layout studio_layout grid is-12">
+      <div class="camille_slider_stage">
+        <button
+          type="button"
+          class="camille_slider_prev text-style-h1"
+          aria-label="Previous slide"
+        >
+          ‹
+        </button>
+
+        <div class="camille_slider_frame">
+          <div class="camille_slider_images">
+            {
+              SLIDES.map((slide, i) => (
+                <div
+                  class:list={["camille_slider_img", { "is-active": i === 0 }]}
+                  data-slide-index={i}
+                >
+                  <img
+                    class="camille_slider_photo"
+                    src={slide.src}
+                    alt={slide.alt}
+                    draggable="false"
+                    loading="eager"
+                    decoding="async"
+                  />
+                </div>
+              ))
+            }
+          </div>
+
+          <div class="camille_slider_title_wrap">
+            <h2
+              class="camille_slider_title gooey_reveal text-style-h2"
+              data-no-reveal
+            >
+              <span class="camille_slider_title_inner gooey_reveal_inner"
+                >{SLIDES[0]?.title ?? ""}</span
+              >
+            </h2>
+          </div>
+
+          <div class="camille_slider_chrome">
+            <div class="camille_slider_counter">
+              <div class="camille_slider_count">
+                <div class="camille_slider_current">01</div>
+                <div class="camille_slider_divider">//</div>
+                <div class="camille_slider_total">{TOTAL}</div>
+              </div>
+            </div>
+
+            <div class="camille_slider_lines" aria-hidden="true">
+              {LINES.map((i) => <div class="camille_slider_line" data-i={i}></div>)}
+            </div>
+
+            <div class="camille_slider_thumbs" role="tablist" aria-label="Slides">
+              {
+                SLIDES.map((slide, i) => (
+                  <button
+                    type="button"
+                    class:list={["camille_slider_thumb", { "is-active": i === 0 }]}
+                    role="tab"
+                    aria-selected={i === 0 ? "true" : "false"}
+                    aria-label={slide.title}
+                    data-slide-index={i}
+                    data-slide-title={slide.title}
+                  >
+                    <img
+                      class="camille_slider_thumb_img"
+                      src={slide.src}
+                      alt=""
+                      draggable="false"
+                      loading="eager"
+                      decoding="async"
+                    />
+                  </button>
+                ))
+              }
+            </div>
+          </div>
+        </div>
+
+        <button
+          type="button"
+          class="camille_slider_next text-style-h1"
+          aria-label="Next slide"
+        >
+          ›
+        </button>
+      </div>
+    </div>
+  </div>
+</section>
+
+<script>
+  import { initCamilleSlider } from "@/lib/site/camilleSlider";
+
+  document.querySelectorAll(".camille_slider_wrap").forEach((node) => {
+    if (!(node instanceof HTMLElement) || node.dataset.scriptInitialized) return;
+    node.dataset.scriptInitialized = "true";
+    initCamilleSlider(node);
+  });
+</script>

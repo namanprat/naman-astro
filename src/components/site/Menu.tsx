@@ -1061,29 +1061,43 @@ export default function Menu({ initialPathname = "/" }: MenuProps) {
               <div className="name_hero_gooey">
                 {/* On inner pages this lockup is the only logo on screen (the
                     text wordmark hides below 64rem), so it has to go home.
-                    `goTo` already scrolls to the hero instead when we're on
-                    the home page, so the same link is right in both places. */}
-                <a
-                  className="name_hero_home"
-                  href="/"
-                  onClick={(e) => {
-                    e.preventDefault();
-                    goTo("/");
-                  }}
-                >
-                  <span
-                    className="name_hero_lockup"
-                    role="img"
-                    aria-label="Naman Pratulya"
+                    On home it is not a link — the mark already is the brand. */}
+                {pathname === "/" ? (
+                  <div className="name_hero_home">
+                    <span
+                      className="name_hero_lockup"
+                      role="img"
+                      aria-label="Naman Pratulya"
+                    >
+                      <img
+                        src="/main-assets/name-hero.svg"
+                        alt=""
+                        aria-hidden="true"
+                      />
+                    </span>
+                  </div>
+                ) : (
+                  <a
+                    className="name_hero_home"
+                    href="/"
+                    onClick={(e) => {
+                      e.preventDefault();
+                      goTo("/");
+                    }}
                   >
-                    {/* Sizes the box from the SVG's own ratio — see Menu.css. */}
-                    <img
-                      src="/main-assets/name-hero.svg"
-                      alt=""
-                      aria-hidden="true"
-                    />
-                  </span>
-                </a>
+                    <span
+                      className="name_hero_lockup"
+                      role="img"
+                      aria-label="Naman Pratulya"
+                    >
+                      <img
+                        src="/main-assets/name-hero.svg"
+                        alt=""
+                        aria-hidden="true"
+                      />
+                    </span>
+                  </a>
+                )}
               </div>
             </div>
           </div>

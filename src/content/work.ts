@@ -19,6 +19,8 @@ export type WorkItem = {
   coverVideo?: string;
   /** Still stacked under the cover — same slot as `coverVideo`. */
   coverImage?: string;
+  /** Shown in the home Camille featured slider when true. */
+  featured?: boolean;
   /** Width in Lumos column spans. */
   span: WorkSpan;
   /** Start column on the Lumos grid, 0-indexed. Clamped so col + span fits
@@ -41,6 +43,7 @@ export const workItems: WorkItem[] = [
       "money.me helps with financial awareness. With a simple and easy to use interface, it empowers its users to take control of their finances by tracking expenses.",
     image: "/work/money-me/money-me-cover.webp",
     alt: "money.me",
+    featured: true,
     span: 3,
     col: 1,
     services: ["Website design", "Low-code web dev"],
@@ -121,6 +124,7 @@ export const workItems: WorkItem[] = [
     image: "/work/haptic/haptic-cover.webp",
     alt: "Haptic",
     coverVideo: "/work/haptic/haptic-reveal.webm",
+    featured: true,
     span: 3,
     col: 7,
     services: ["Brand identity", "Motion design"],
@@ -185,6 +189,7 @@ export const workItems: WorkItem[] = [
       "Brand and digital work for Notice — a studio that builds clear, considered creative systems for clients who need presence without noise.",
     image: "/work/notice/notice-cover.webp",
     alt: "Notice",
+    featured: true,
     span: 3,
     col: 8,
     services: ["Brand identity", "Website design"],
@@ -203,6 +208,7 @@ export const workItems: WorkItem[] = [
       "Project Qaafi — identity and digital foundations for a project that needed a clear visual voice from the start.",
     image: "/work/project-qaafi/project-qaafi-cover.webp",
     alt: "Project Qaafi",
+    featured: true,
     span: 3,
     col: 1,
     services: ["Brand identity", "Website design"],
@@ -222,6 +228,7 @@ export const workItems: WorkItem[] = [
     image: "/work/t-bonk/t-bonk-cover.webp",
     alt: "t.Bonk",
     coverImage: "/work/t-bonk/t-bonk-project.webp",
+    featured: true,
     span: 3,
     col: 9,
     services: ["Brand identity", "Motion design"],
@@ -252,6 +259,9 @@ export const workItems: WorkItem[] = [
     ],
   },
 ];
+
+/** Home Camille slider — order follows `workItems`. */
+export const featuredWorkItems = workItems.filter((item) => item.featured);
 
 export type WorkGroup =
   | {

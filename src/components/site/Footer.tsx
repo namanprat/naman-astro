@@ -1,4 +1,4 @@
-import { useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useLenis } from "lenis/react";
 import gsap from "gsap";
 import ScrollTrigger from "gsap/ScrollTrigger";
@@ -13,7 +13,9 @@ import {
   prepareGooey,
   type GooeyTarget,
 } from "@/lib/site/gooeyReveal";
+import { getSiteLenis, subscribeSiteLenis } from "@/lib/site/lenisBridge";
 import { prefersReducedMotion } from "@/lib/site/prefersReducedMotion";
+import { previousFlowSibling } from "@/lib/site/previousFlowSibling";
 import { useCopyEmail } from "@/lib/site/copyEmail";
 import {
   EMAIL_HREF,
@@ -50,8 +52,12 @@ function Reveal({ children }: { children: React.ReactNode }) {
 export default function Footer() {
   const footerRef = useRef<HTMLElement>(null);
   const asciiSourceRef = useRef<HTMLImageElement>(null);
-  const lenis = useLenis();
+  const lenisFromContext = useLenis();
+  const [bridgedLenis, setBridgedLenis] = useState(() => getSiteLenis());
+  const lenis = lenisFromContext ?? bridgedLenis;
   const emailCopy = useCopyEmail(EMAIL_HREF);
+
+  useEffect(() => subscribeSiteLenis(setBridgedLenis), []);
 
   const onNavClick = (e: React.MouseEvent, href: string) => {
     e.preventDefault();
@@ -107,7 +113,7 @@ export default function Footer() {
         if (linkGooey.length) addGooeyReveal(tl, linkGooey, 0.1);
       };
 
-      const prev = footer.previousElementSibling;
+      const prev = previousFlowSibling(footer);
       const child = footer.querySelector(".footer_scale");
       if (!prev || !child) return;
 

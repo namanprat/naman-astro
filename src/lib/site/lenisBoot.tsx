@@ -3,10 +3,8 @@
  * GSAP ticker, with the nav fading out over the footer.
  *
  * `PortfolioHome` and `WorkProject` each carried a verbatim copy of both
- * helpers. They only ever differed in one unreachable branch — home also fell
- * back to `.studio` when it couldn't find `.footer_wrap`, but `.studio` *is* the
- * footer's previous sibling there, so the fallback only fired when there was no
- * footer to measure in the first place.
+ * helpers. Home Footer is an Astro island, so the preceding block is found via
+ * `previousFlowSibling` (walks past the island host to `.studio`).
  */
 import { useEffect, type ReactNode } from "react";
 import { ReactLenis, useLenis } from "lenis/react";
@@ -15,6 +13,7 @@ import { ScrollTrigger } from "gsap/ScrollTrigger";
 import { useGSAP } from "@gsap/react";
 import { setSiteLenis } from "./lenisBridge";
 import { SCROLL_SETTINGS, driveLenisWithGsap } from "./lenisScroll";
+import { previousFlowSibling } from "./previousFlowSibling";
 
 gsap.registerPlugin(ScrollTrigger);
 
@@ -40,7 +39,7 @@ function NavHideOnFooter(): null {
   useGSAP(() => {
     const navBar = document.querySelector(".nav_grid");
     const footerEl = document.querySelector<HTMLElement>(".footer_wrap");
-    const footerPrev = footerEl?.previousElementSibling;
+    const footerPrev = previousFlowSibling(footerEl);
 
     const setNavHidden = (hidden: boolean) => {
       if (!navBar) return;

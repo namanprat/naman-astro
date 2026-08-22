@@ -1,0 +1,200 @@
+@layer components {
+  .camille_slider_layout {
+    grid-column: 1 / -1;
+  }
+
+  .camille_slider_stage {
+    --camille-ratio: 16 / 10;
+    --camille-line-base: 0.75rem;
+    --camille-line-wave: 1.75rem;
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr) auto;
+    align-items: center;
+    gap: var(--space-4);
+    grid-column: calc(2 * var(--_responsive---large) + 1) /
+      span calc(8 * var(--_responsive---large) + 12 * (1 - var(--_responsive---large)));
+    width: 100%;
+    min-width: 0;
+    user-select: none;
+  }
+
+  .camille_slider_frame {
+    position: relative;
+    grid-column: 2;
+    width: 100%;
+    aspect-ratio: var(--camille-ratio);
+    overflow: clip;
+    background-color: var(--background-skeleton);
+    color: var(--light-100);
+    container-type: inline-size;
+  }
+
+  .camille_slider_images {
+    position: absolute;
+    inset: 0;
+  }
+
+  .camille_slider_img {
+    position: absolute;
+    inset: 0;
+    visibility: hidden;
+    z-index: 0;
+  }
+
+  .camille_slider_img.is-active,
+  .camille_slider_img.is-hopping {
+    visibility: visible;
+    z-index: 1;
+  }
+
+  .camille_slider_img.is-hopping.is-incoming {
+    z-index: 2;
+  }
+
+  .camille_slider_photo {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+    background-color: var(--background-skeleton);
+  }
+
+  .camille_slider_title_wrap {
+    position: absolute;
+    inset: 0;
+    z-index: 2;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding-inline: var(--space-4);
+    pointer-events: none;
+  }
+
+  .camille_slider_title {
+    margin: 0;
+    text-align: center;
+    color: var(--light-100);
+    text-shadow: 0 0.05em 0.35em color-mix(in lab, var(--dark-900) 55%, transparent);
+  }
+
+  .camille_slider_title_inner {
+    display: inline-block;
+  }
+
+  .camille_slider_chrome {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    z-index: 3;
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-3);
+    width: 100%;
+    padding: var(--space-4);
+    color: var(--light-100);
+  }
+
+  .camille_slider_counter {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    gap: var(--space-3);
+    font-size: var(--text-small);
+    font-variant-numeric: tabular-nums;
+    color: var(--light-100);
+    text-shadow: 0 0.05em 0.35em color-mix(in lab, var(--dark-900) 55%, transparent);
+  }
+
+  .camille_slider_prev,
+  .camille_slider_next {
+    flex-shrink: 0;
+    align-self: center;
+    padding: 0;
+    margin: 0;
+    border: none;
+    background-color: transparent;
+    color: var(--grey);
+    cursor: pointer;
+    line-height: 1;
+  }
+
+  .camille_slider_prev {
+    grid-column: 1;
+  }
+
+  .camille_slider_next {
+    grid-column: 3;
+  }
+
+  .camille_slider_count {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+    color: var(--light-100);
+  }
+
+  .camille_slider_divider {
+    color: color-mix(in lab, var(--light-100) 60%, transparent);
+  }
+
+  .camille_slider_lines {
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    width: 100%;
+    height: calc(var(--camille-line-base) + var(--camille-line-wave));
+    pointer-events: none;
+  }
+
+  .camille_slider_line {
+    width: 0.125rem;
+    height: var(--camille-line-h, var(--camille-line-base));
+    padding: 0;
+    flex-shrink: 0;
+    transform-origin: bottom center;
+    background-color: color-mix(
+      in lab,
+      var(--light-100) calc(var(--camille-line-opacity, 0.3) * 100%),
+      transparent
+    );
+    transition: height 0.5s ease, background-color 0.5s ease;
+  }
+
+  .camille_slider_thumbs {
+    display: flex;
+    width: 100%;
+    gap: var(--space-2);
+    padding: 0;
+    margin: 0;
+  }
+
+  .camille_slider_thumb {
+    flex: 1 1 0;
+    min-width: 0;
+    aspect-ratio: var(--camille-ratio);
+    height: auto;
+    padding: 0;
+    margin: 0;
+    border: none;
+    overflow: clip;
+    cursor: pointer;
+    background-color: var(--background-skeleton);
+    opacity: 0.5;
+    transition: opacity 300ms;
+  }
+
+  .camille_slider_thumb.is-active {
+    opacity: 1;
+  }
+
+  .camille_slider_thumb_img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: left center;
+    display: block;
+  }
+
+}
