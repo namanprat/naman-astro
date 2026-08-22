@@ -1,6 +1,6 @@
 /**
  * Self-check for the weighted progress math.
- *   node --experimental-strip-types src/lib/site/preloadProgress.check.ts
+ *   npm run test:unit
  */
 import assert from "node:assert/strict";
 import {
@@ -9,7 +9,7 @@ import {
   reset,
   segmentCount,
   subscribe,
-} from "./preloadProgress.ts";
+} from "../src/lib/site/preloadProgress.ts";
 
 function latest(): number {
   let value = -1;

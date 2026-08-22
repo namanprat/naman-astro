@@ -5,7 +5,7 @@ import { PerspectiveCamera } from "@react-three/drei";
  * the fov mid-route. There is no shared camera in this site — the archive owns
  * its canvas outright — so the camera just rests at ARCHIVE_FOV.
  */
-export const ARCHIVE_FOV = 75;
+const ARCHIVE_FOV = 75;
 
 export default function ArchiveCameras() {
   return (

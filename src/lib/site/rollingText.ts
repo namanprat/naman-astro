@@ -9,7 +9,7 @@ import { SplitText } from "gsap/SplitText";
 
 gsap.registerPlugin(SplitText);
 
-export type RollingTextDispose = () => void;
+type RollingTextDispose = () => void;
 
 function resolveHost(el: HTMLElement): HTMLElement {
   return (

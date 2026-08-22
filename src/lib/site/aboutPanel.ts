@@ -38,7 +38,7 @@ export function closeAboutPanel() {
   setter?.(false);
 }
 
-export function isAboutHref(href: string | null | undefined): boolean {
+function isAboutHref(href: string | null | undefined): boolean {
   if (!href) return false;
   if (href === "#about" || href === "/#about") return true;
   try {

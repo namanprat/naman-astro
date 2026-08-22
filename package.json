@@ -13,6 +13,7 @@
     "preview": "astro preview",
     "astro": "astro",
     "format": "prettier --write .",
+    "test:unit": "node --experimental-strip-types tests/preloadProgress.check.ts",
     "test:e2e": "playwright test"
   },
   "dependencies": {

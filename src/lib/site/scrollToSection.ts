@@ -1,10 +1,12 @@
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import type Lenis from "lenis";
+// Aliased: the name collides with the DOM's own `ScrollToOptions`.
+import type { ScrollToOptions as LenisScrollToOptions } from "lenis";
 
 gsap.registerPlugin(ScrollTrigger);
 
-export function syncNavForSection(id: string) {
+function syncNavForSection(id: string): void {
   const navBar = document.querySelector(".nav_grid");
   const wordmark = document.querySelector(".nav-logo-wordmark");
   const footerActive = id === "contact";
@@ -20,7 +22,7 @@ export function syncNavForSection(id: string) {
   }
 }
 
-function afterSnap(id: string) {
+function afterSnap(id: string): void {
   ScrollTrigger.update();
   syncNavForSection(id);
   requestAnimationFrame(() => {
@@ -32,19 +34,19 @@ function afterSnap(id: string) {
 export function scrollToSection(
   lenis: Lenis | null | undefined,
   id: string,
-  options: Record<string, unknown> = {},
-) {
+  options: LenisScrollToOptions = {},
+): void {
   if (!id || !lenis) return;
 
-  const opts = {
+  const opts: LenisScrollToOptions = {
     immediate: true,
     force: true,
     ...options,
-    onComplete: () => {
-      (options.onComplete as (() => void) | undefined)?.();
+    onComplete: (instance) => {
+      options.onComplete?.(instance);
       afterSnap(id);
     },
-  } as Parameters<Lenis["scrollTo"]>[1];
+  };
 
   if (id === "contact") {
     lenis.scrollTo("bottom", opts);

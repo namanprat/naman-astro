@@ -67,7 +67,7 @@ export const SOCIAL_LINKS = [
   },
 ];
 
-export const OVERLAY_LINKS = [
+const OVERLAY_LINKS = [
   { label: "Home", path: "/" },
   { label: "About", path: "/#about" },
   { label: "Work", path: "/work" },
@@ -881,7 +881,6 @@ export default function Menu({ initialPathname = "/" }: MenuProps) {
     void closeMenu();
     // Close on the desktop breakpoint flip only — closeMenu is the latest
     // closure from this render.
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- isDesktopNav
   }, [isDesktopNav]);
 
   const unrevealMenuText = (): Promise<void> => {
