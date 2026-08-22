@@ -12,15 +12,28 @@
   pointer-events: none;
 }
 
+/* `line-height: 1` does two jobs. It matches what RollingText already forces on
+   its glyph stacks (see RollingText.css), so the text itself doesn't move; and
+   it makes the leading trim a no-op, since the trim's margins are
+   `-0.5lh + trim` and the pair below is exactly 0.5em. Left at the inherited
+   1.2 lh the trim was computed against a taller line box than the glyphs
+   actually occupied, so the label's box sat high on its own text and
+   `align-items: center` pushed the icon below the word. */
 .anime-link-label h5 {
   margin: 0;
+  line-height: 1;
+  --_trim-top: 0.5em;
+  --_trim-bottom: 0.5em;
 }
 
+/* Hugs the arrow. The old fixed 4rem × 1.25rem plate left most of its width as
+   empty orange either side of a 1em glyph. */
 .anime-link-icon {
-  width: 4rem;
-  height: 1.25rem;
+  flex: none;
+  font-size: 0.8em;
+  padding: 0.4em 0.6em;
+  line-height: 0;
   background-color: var(--accent);
-  border-radius: 5rem;
   display: flex;
   justify-content: center;
   align-items: center;

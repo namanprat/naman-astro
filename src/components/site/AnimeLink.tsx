@@ -24,8 +24,15 @@ export default function AnimeLink({
       }}
     >
       <div className="anime-link">
-        <div className="anime-link-label">
-          <h5 className="text-style-h5">
+        {/* `data-no-reveal` opts the label out of the line reveal. It has to sit
+            on an ancestor, not the `h5` itself — both the JS query in
+            `lib/site/lineReveal.ts` and the pre-paint hold in `styles/site.css`
+            match `.text-style-main` and exclude only descendants of the skip
+            list. Without it that module would SplitText this label, fighting the
+            per-char stacks RollingText has already built, exactly as noted on
+            the footer links. */}
+        <div className="anime-link-label" data-no-reveal>
+          <h5 className="text-style-main">
             <RollingText>{children}</RollingText>
           </h5>
         </div>

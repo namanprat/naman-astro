@@ -21,16 +21,20 @@
   display: none;
   align-items: center;
   justify-content: center;
-  width: 5.5rem;
-  height: 5.5rem;
-  border-radius: 50%;
+  padding: 0.5rem 0.75rem;
   pointer-events: none;
-  background: #fff;
-  color: #000;
-  mix-blend-mode: difference;
+  /* Orange over the light-mode footer, which is grey frost. Dark mode inverts
+     below, where the card itself is already orange. */
+  background: var(--accent);
+  color: var(--brand-text);
   opacity: 0;
   transform: translate3d(-50%, -50%, 0);
   transition: opacity 0.15s ease;
+}
+
+html.theme-dark .footer-ascii__cursor {
+  background: var(--black);
+  color: var(--white);
 }
 
 .footer-ascii__cursor.is-visible {

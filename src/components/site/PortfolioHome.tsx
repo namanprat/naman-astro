@@ -10,6 +10,8 @@ import {
 } from "../../lib/site/lenisScroll";
 import Manifesto from "./Manifesto";
 import Team from "./Team";
+import Process from "./Process";
+import Faq from "./Faq";
 import Footer from "./Footer";
 
 gsap.registerPlugin(ScrollTrigger);
@@ -75,6 +77,8 @@ export default function PortfolioHome() {
       <section className="hero" id="hero" aria-label="Home" />
       <div className="studio">
         <Manifesto />
+        <Process />
+        <Faq />
         <Team />
       </div>
       <Footer />
