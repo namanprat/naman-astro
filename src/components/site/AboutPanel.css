@@ -70,10 +70,14 @@ html.theme-light .about_panel {
 .about_panel_surface {
   position: relative;
   background-color: var(--surface-accent);
-  backdrop-filter: blur(var(--surface-frost-blur)) saturate(var(--surface-frost-saturate, 1))
-    contrast(var(--surface-frost-contrast, 1));
-  -webkit-backdrop-filter: blur(var(--surface-frost-blur)) saturate(var(--surface-frost-saturate, 1))
-    contrast(var(--surface-frost-contrast, 1));
+  /* Same one-function chain as the other three frosted surfaces (footer, menu
+     overlay, view switcher). This used to add
+     `saturate(var(--surface-frost-saturate, 1)) contrast(var(--surface-frost-contrast, 1))`
+     — neither token was ever defined anywhere, so both resolved to their `1`
+     fallback and the pass was a no-op dressed up as a tuning knob. If the
+     light frost ever needs the blob edges pulled back out, define the tokens
+     for real and give all four surfaces the same chain. */
+  backdrop-filter: blur(var(--surface-frost-blur));
   width: 100%;
   max-height: calc(85vh - var(--site-gutter) * 2);
   overflow: visible;
@@ -86,7 +90,6 @@ html.theme-light .about_panel {
 html.theme-dark .about_panel_surface {
   background-color: var(--brand-500);
   backdrop-filter: none;
-  -webkit-backdrop-filter: none;
 }
 
 /* Scroll lives here, not on the frost node: overflow on the same box as
@@ -143,7 +146,6 @@ html.theme-light .about_panel.is-in-menu {
 .about_panel.is-in-menu .about_panel_surface {
   background-color: transparent;
   backdrop-filter: none;
-  -webkit-backdrop-filter: none;
   border-radius: 0;
   max-height: none;
   height: 100%;
@@ -334,8 +336,29 @@ html.theme-light .about_panel.is-in-menu {
   --about--indent: calc(var(--about--indent-cols) * (100% + var(--site-gutter)) / var(--about--lead-cols));
 }
 
+/*
+  `width: 100%` is load-bearing, not tidying.
+
+  `.about_panel_intro` is a column flex box with `align-items: flex-start`, and
+  `.about_panel_reveal_inner` is `display: contents`, so this heading is itself
+  a flex item — which means its width would otherwise be shrink-to-fit. Blink
+  resolves that as `min(max-content, available)` and lands on the full column;
+  WebKit folds the `overflow-wrap: break-word` that `base.css` puts on every
+  heading into its min-content calculation and collapses the box to its
+  narrowest legal width, i.e. one word per line.
+
+  That is not a transient mis-measure either: `prepareGooey` splits this
+  heading with SplitText on open and bakes the wrap points into real
+  `.gooey_reveal_line` divs, so a collapsed first layout stays collapsed.
+
+  A definite width means no engine ever computes an intrinsic one. It resolves
+  against the flex container in all three modes (ride / padded / inMenu), so
+  the in-menu variant — same `align-items: flex-start` — is covered too.
+  `align-items` stays as it is: `.about_panel_cv_clip` hugs its text by it.
+*/
 .about_panel_lead {
   margin: 0;
+  width: 100%;
   max-width: none;
   color: var(--panel-ink);
   line-height: 1.1;

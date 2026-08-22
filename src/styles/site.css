@@ -73,11 +73,14 @@
   /* Scrim over the frosted surfaces (About panel, footer). Keep enough ink
      contrast for white type, but leave the liquid readable through the blur. */
   --surface-accent: color-mix(in srgb, var(--text) 45%, transparent);
-  /* A heavy radius over the mostly-flat liquid sim just averages everything
-     into a uniform tint, so the "frost" reads as a plain fill with no visible
-     blur. A shallower radius keeps blob edges legible, and contrast pulls the
-     softened shapes back out once the blur (and the grey scrim) has flattened
-     them. */
+  /* Radius for every frosted surface. Kept shallow on purpose: a heavy one
+     over the mostly-flat liquid sim averages the blobs into a uniform tint, so
+     the frost stops reading as glass and reads as a plain fill.
+
+     If this ever looks flat again, check the built CSS before re-tuning the
+     number. The declaration is easy to lose in the build — see the
+     `cssTarget` note in `astro.config.mjs` — and a dropped `backdrop-filter`
+     and a too-wide radius look identical on screen. */
   --surface-frost-blur: 1.125rem;
 }
 

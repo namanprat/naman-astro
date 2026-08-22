@@ -32,7 +32,6 @@
   margin-inline: auto;
   background-color: var(--surface-accent);
   backdrop-filter: blur(var(--surface-frost-blur));
-  -webkit-backdrop-filter: blur(var(--surface-frost-blur));
 }
 
 .footer_scale {
@@ -46,7 +45,6 @@
 html.theme-dark .footer_child {
   background-color: var(--brand-500);
   backdrop-filter: none;
-  -webkit-backdrop-filter: none;
 }
 
 .footer_box {
