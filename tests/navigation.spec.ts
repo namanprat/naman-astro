@@ -6,6 +6,7 @@ import {
   isTouch,
   rootClasses,
   scrollDown,
+  seedTheme,
   skipPreloader,
   stubWebGL,
 } from "./helpers";
@@ -140,5 +141,50 @@ test("the About lead fills its column rather than sizing to its text", async ({
   // count is the failure this guards.
   if (geometry!.lines > 0) {
     expect(geometry!.lines).toBeLessThan(geometry!.words / 2);
+  }
+});
+
+/**
+ * Every frosted surface must ship a `backdrop-filter` this engine understands.
+ *
+ * The stylesheets used to hand-write `-webkit-backdrop-filter` after the
+ * unprefixed property. Lightning CSS merges that pair into one property, and
+ * with no `build.cssTarget` the last declaration won outright — so the build
+ * shipped the `-webkit-` form alone. Safari honours it; Chromium dropped the
+ * alias and Firefox never had it, so the frost silently computed to `none` in
+ * both and every card read as a flat tint.
+ *
+ * Nothing about that is visible in the source, which is why it is asserted
+ * against the *built* CSS through a real browser rather than by grepping.
+ */
+test("the frosted surfaces actually carry a backdrop filter", async ({
+  page,
+}) => {
+  // Light mode is where the frost exists at all: dark turns it off and fills
+  // the same surfaces with opaque orange.
+  await seedTheme(page, "light");
+  await page.goto("/");
+  await expectRevealed(page);
+
+  await page.evaluate(() => {
+    window.location.hash = "#about";
+  });
+  await expect.poll(() => rootClasses(page)).toContain("about-open");
+
+  const frost = await page.evaluate(() =>
+    [".about_panel_surface", ".footer_child", ".menu_overlay"]
+      .map((selector) => {
+        const el = document.querySelector(selector);
+        return {
+          selector,
+          value: el ? getComputedStyle(el).backdropFilter : "ABSENT",
+        };
+      })
+      .filter((entry) => entry.value !== "ABSENT"),
+  );
+
+  expect(frost.length).toBeGreaterThan(0);
+  for (const { selector, value } of frost) {
+    expect(value, `${selector} backdrop-filter`).toMatch(/blur\(\d/);
   }
 });

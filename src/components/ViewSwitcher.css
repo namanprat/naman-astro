@@ -18,7 +18,6 @@
     border-style: solid;
     border-color: color-mix(in srgb, var(--view_switcher_ink) 20%, transparent);
     backdrop-filter: blur(0.625rem);
-    -webkit-backdrop-filter: blur(0.625rem);
     pointer-events: auto;
     transition: opacity 0.3s ease;
   }

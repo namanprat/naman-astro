@@ -609,7 +609,6 @@ img.logo-img {
   overflow: clip;
   background-color: var(--brand-500);
   backdrop-filter: blur(var(--surface-frost-blur));
-  -webkit-backdrop-filter: blur(var(--surface-frost-blur));
   transform: translateY(100%);
   will-change: transform;
   pointer-events: none;

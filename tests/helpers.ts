@@ -53,6 +53,22 @@ export async function stubWebGL(page: Page) {
   });
 }
 
+/**
+ * Pin the colour theme before `BaseLayout`'s pre-paint script reads it.
+ *
+ * Pages set their own default — the homepage is `theme="dark"` — and the two
+ * themes are not cosmetic variants of one surface: dark mode turns the frost
+ * off outright (`--surface-frost-blur: 0rem`, opaque orange fills), so
+ * anything asserting on the frost has to say which theme it means.
+ */
+export async function seedTheme(page: Page, theme: "light" | "dark") {
+  await page.addInitScript((value) => {
+    try {
+      localStorage.setItem("site-theme", value);
+    } catch {}
+  }, theme);
+}
+
 /** Pre-set the session keys a test wants, before any script on the page runs. */
 export async function seedSession(page: Page, entries: Record<string, string>) {
   await page.addInitScript((values) => {
