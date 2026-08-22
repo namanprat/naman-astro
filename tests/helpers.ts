@@ -153,6 +153,25 @@ export async function expectNavVisible(page: Page) {
     .toBe("ok");
 }
 
+/**
+ * Tile centres, for the signed drift metric below.
+ *
+ * Deliberately *not* shared with `tilePositions`, which reads the top-left
+ * corner. Folding the two into one geometry read looks like tidying and is
+ * not: the corner and the centre disagree whenever a tile's box scales rather
+ * than translates, and the reverse Flip on the return-from-project path does
+ * exactly that. Rewriting `tilePositions` in terms of centres made
+ * `galleryMoves` report "nothing moved" there, and that test went from passing
+ * six times out of six to failing six out of six.
+ */
+const tileCentres = (page: Page) =>
+  page.evaluate(() =>
+    [...document.querySelectorAll<HTMLElement>(".gallery_slide")].map((el) => {
+      const box = el.getBoundingClientRect();
+      return { x: box.x + box.width / 2, y: box.y + box.height / 2 };
+    }),
+  );
+
 /** Position of every gallery tile — the whole set, so a wrapped loop still reads as movement. */
 export const tilePositions = (page: Page) =>
   page.evaluate(() =>
@@ -161,6 +180,54 @@ export const tilePositions = (page: Page) =>
       return `${Math.round(box.x)},${Math.round(box.y)}`;
     }),
   );
+
+const median = (values: number[]) => {
+  const sorted = [...values].sort((a, b) => a - b);
+  const mid = sorted.length >> 1;
+  return sorted.length % 2 ? sorted[mid] : (sorted[mid - 1] + sorted[mid]) / 2;
+};
+
+/**
+ * Which way the gallery moved under one gesture, as a signed scalar.
+ *
+ * The two views need different scalars because they move on different axes:
+ * the grid translates vertically, the ring rotates about the viewport centre.
+ * Both are *medians*, not means. The grid's loop can wrap a tile by the full
+ * loop height mid-gesture and the ring's angles wrap at ±180°, and in either
+ * case one outlier would drag a mean past zero and flip the sign this exists
+ * to report.
+ *
+ * The number has no unit and is only ever compared against another reading
+ * from the same view — its sign is the whole point.
+ */
+export async function galleryDrift(
+  page: Page,
+  cdp: CDPSession,
+  touch: boolean,
+  view: "grid" | "slider",
+): Promise<number> {
+  const before = await tileCentres(page);
+  await scrollDown(page, cdp, touch);
+  const after = await tileCentres(page);
+  if (before.length !== after.length || !before.length) return 0;
+
+  const { width, height } = page.viewportSize()!;
+
+  if (view === "grid") {
+    return median(after.map((box, i) => box.y - before[i].y));
+  }
+
+  const angle = (p: { x: number; y: number }) =>
+    Math.atan2(p.y - height / 2, p.x - width / 2);
+  return median(
+    after.map((box, i) => {
+      const delta = angle(box) - angle(before[i]);
+      // Shortest way round, so a tile crossing the seam is not read as a
+      // near-full turn in the opposite direction.
+      return Math.atan2(Math.sin(delta), Math.cos(delta));
+    }),
+  );
+}
 
 /** A downward scroll gesture in whatever form this device actually sends. */
 export async function scrollDown(page: Page, cdp: CDPSession, touch: boolean) {
