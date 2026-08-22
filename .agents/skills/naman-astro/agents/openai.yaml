@@ -1,0 +1,6 @@
+interface:
+  display_name: "Naman Astro"
+  short_description: "Repo-specific patterns and workflows for naman-astro"
+  default_prompt: "Use the naman-astro repo skill to follow existing architecture, testing, and workflow conventions."
+policy:
+  allow_implicit_invocation: true
