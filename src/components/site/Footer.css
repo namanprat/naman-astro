@@ -120,7 +120,7 @@ html.theme-light .footer-box {
 }
 
 /*
-  tokens.css sets `body, h1..h6, p, a, time { color: var(--ink) }` — a direct
+  base.css sets `body, h1..h6, p, a, time { color: var(--ink) }` — a direct
   type-selector hit, which beats the panel's colour arriving by inheritance. So
   every typographic element in here has to opt back in explicitly.
 */

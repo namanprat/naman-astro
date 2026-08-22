@@ -4,6 +4,10 @@ export interface SeoProps {
   title?: string;
   /** Meta description, also used for `og:description` and `twitter:description`. Defaults to `SITE_DESCRIPTION`. */
   description?: string;
-  /** Social share image. Defaults to `/main-assets/og-image.jpg`. Relative paths resolve against `site` in `astro.config.mjs`. */
+  /**
+   * Social share image. Relative paths resolve against `site` in
+   * `astro.config.mjs`. Omitted entirely when unset — the image tags are
+   * skipped rather than pointed at a file that may not exist.
+   */
   image?: string;
 }

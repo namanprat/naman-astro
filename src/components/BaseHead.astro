@@ -5,17 +5,17 @@ import type { SeoProps } from "@/types.ts";
 
 type Props = SeoProps;
 
-const {
-  title,
-  description = SITE_DESCRIPTION,
-  image = "/main-assets/og-image.jpg",
-} = Astro.props;
+const { title, description = SITE_DESCRIPTION, image } = Astro.props;
 
 const isNoindex = isNoindexRoute(Astro.url.pathname);
 
 const pageTitle = title ? `${title} | ${SITE_NAME}` : SITE_NAME;
 const canonical = new URL(Astro.url.pathname, Astro.site);
-const socialImage = new URL(image, Astro.site);
+
+/* The old default pointed at `/main-assets/og-image.jpg`, which has never
+   existed — every share rendered a blank card against a 404. Until there is a
+   real asset, emit no image and let the platform fall back to a text card. */
+const socialImage = image ? new URL(image, Astro.site) : null;
 ---
 
 <meta charset="utf-8" />
@@ -52,12 +52,15 @@ const socialImage = new URL(image, Astro.site);
 <meta property="og:title" content={pageTitle} />
 <meta property="og:description" content={description} />
 <meta property="og:url" content={canonical} />
-<meta property="og:image" content={socialImage} />
+{socialImage && <meta property="og:image" content={socialImage} />}
 
-<meta name="twitter:card" content="summary_large_image" />
+<meta
+  name="twitter:card"
+  content={socialImage ? "summary_large_image" : "summary"}
+/>
 <meta name="twitter:title" content={pageTitle} />
 <meta name="twitter:description" content={description} />
-<meta name="twitter:image" content={socialImage} />
+{socialImage && <meta name="twitter:image" content={socialImage} />}
 
 <link rel="icon" type="image/svg+xml" href="/main-assets/favicon.svg" />
 <link rel="icon" href="/main-assets/favicon.ico" />
