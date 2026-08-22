@@ -1,7 +1,7 @@
 import { useLayoutEffect } from "react";
 import * as THREE from "three";
 import { useThree } from "@react-three/fiber";
-import { SWATCH_BLACK_NUM } from "../../lib/site/siteColors";
+import { SWATCH_BLACK_NUM } from "@/lib/site/siteColors";
 
 /** Brand-black canvas + no fog — the shared scene keeps Env's HDR / FogExp2 otherwise. */
 export default function ArchiveSceneClear() {

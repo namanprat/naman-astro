@@ -6,14 +6,14 @@ import {
   ARCHIVE_GLOBE_HEIGHT,
   ARCHIVE_GRID_CELL_SIZE,
   ARCHIVE_GRID_HEIGHT,
-} from "../../lib/archive/archiveConfig";
-import type { ArchiveSpan } from "../../content/archive";
-import { rigState } from "../../lib/archive/rigState";
+} from "@/lib/archive/archiveConfig";
+import type { ArchiveSpan } from "@/content/archive";
+import { rigState } from "@/lib/archive/rigState";
 import {
   stereographicUnwrap,
   wrappedCellWorld,
   type Vec3,
-} from "../../lib/archive/archiveLayout";
+} from "@/lib/archive/archiveLayout";
 
 export type TileData = {
   index: number;

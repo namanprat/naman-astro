@@ -1,5 +1,5 @@
 import type { ReactNode } from "react";
-import { go } from "../../lib/site/navigate";
+import { go } from "@/lib/site/navigate";
 import RollingText from "./RollingText";
 import "./AnimeLink.css";
 

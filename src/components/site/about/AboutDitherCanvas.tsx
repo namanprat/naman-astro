@@ -26,10 +26,10 @@ import {
   AboutDistortionEffect,
   aboutDistortionState,
 } from "./aboutDistortionEffect";
-import { SWATCH_LIGHT_NUM } from "../../../lib/site/siteColors";
-import { getAboutCanvasMaxDpr, BUST_URL } from "../../../lib/site/aboutBust";
-import { hasFinePointerHover } from "../../../lib/site/hasFinePointerHover";
-import { prefersReducedMotion } from "../../../lib/site/prefersReducedMotion";
+import { SWATCH_LIGHT_NUM } from "@/lib/site/siteColors";
+import { getAboutCanvasMaxDpr, BUST_URL } from "@/lib/site/aboutBust";
+import { hasFinePointerHover } from "@/lib/site/hasFinePointerHover";
+import { prefersReducedMotion } from "@/lib/site/prefersReducedMotion";
 
 const DRACO_PATH = "/draco/gltf/";
 /** Longest-axis size after normalize; Center's `scale` then reads as world units. */

@@ -1,5 +1,5 @@
 import { useMemo, useRef } from "react";
-import { SWATCH_LIGHT } from "../../lib/site/siteColors";
+import { SWATCH_LIGHT } from "@/lib/site/siteColors";
 import { Text } from "@react-three/drei";
 import { useFrame } from "@react-three/fiber";
 import ArchiveRig from "./ArchiveRig";
@@ -7,11 +7,11 @@ import PosterTile, { buildTileData, type TileData } from "./PosterTile";
 import {
   ARCHIVE_CONFIG,
   ARCHIVE_PRIMARY_FONT,
-} from "../../lib/archive/archiveConfig";
-import { ARCHIVE_ITEMS } from "../../content/archive";
-import { fibonacciSpherePoints } from "../../lib/archive/archiveLayout";
-import { rigState } from "../../lib/archive/rigState";
-import { useArchiveTextures } from "../../lib/archive/useArchiveTextures";
+} from "@/lib/archive/archiveConfig";
+import { ARCHIVE_ITEMS } from "@/content/archive";
+import { fibonacciSpherePoints } from "@/lib/archive/archiveLayout";
+import { rigState } from "@/lib/archive/rigState";
+import { useArchiveTextures } from "@/lib/archive/useArchiveTextures";
 
 export default function ArchivePosterField() {
   const textures = useArchiveTextures();

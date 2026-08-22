@@ -6,7 +6,7 @@ import {
   resetArchiveToOrbView,
   setArchiveView,
   useArchiveView,
-} from "../../lib/archive/archiveView";
+} from "@/lib/archive/archiveView";
 import "./Archive.css";
 
 const ARCHIVE_VIEWS = [

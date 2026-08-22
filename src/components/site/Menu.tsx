@@ -6,20 +6,20 @@ import type Lenis from "lenis";
 import gsap from "gsap";
 import { SplitText } from "gsap/SplitText";
 import { useGSAP } from "@gsap/react";
-import { go, type GoOptions } from "../../lib/site/navigate";
-import { hashId, scrollToSection } from "../../lib/site/scrollToSection";
-import { prefersReducedMotion } from "../../lib/site/prefersReducedMotion";
-import { markWorkReturn } from "../../lib/site/workReturn";
+import { go, type GoOptions } from "@/lib/site/navigate";
+import { hashId, scrollToSection } from "@/lib/site/scrollToSection";
+import { prefersReducedMotion } from "@/lib/site/prefersReducedMotion";
+import { markWorkReturn } from "@/lib/site/workReturn";
 import {
   registerAboutPanel,
   toggleAboutPanel,
   openAboutPanel,
   closeAboutPanel,
   installAboutInterceptors,
-} from "../../lib/site/aboutPanel";
-import { getSiteLenis, subscribeSiteLenis } from "../../lib/site/lenisBridge";
-import { bootHomeIntro, replayHomeIntro } from "../../lib/site/heroIntro";
-import { useCopyEmail } from "../../lib/site/copyEmail";
+} from "@/lib/site/aboutPanel";
+import { getSiteLenis, subscribeSiteLenis } from "@/lib/site/lenisBridge";
+import { bootHomeIntro, replayHomeIntro } from "@/lib/site/heroIntro";
+import { useCopyEmail } from "@/lib/site/copyEmail";
 import {
   addGooeyReveal,
   addGooeyUnreveal,
@@ -29,11 +29,11 @@ import {
   prepareGooeyAll,
   settleGooey,
   type GooeyTarget,
-} from "../../lib/site/gooeyReveal";
+} from "@/lib/site/gooeyReveal";
 import AboutPanel, { type AboutPanelMode } from "./AboutPanel";
 import RollingText from "./RollingText";
 import ThemeToggle from "./ThemeToggle";
-import "../../lib/site/eases";
+import "@/lib/site/eases";
 
 gsap.registerPlugin(SplitText);
 

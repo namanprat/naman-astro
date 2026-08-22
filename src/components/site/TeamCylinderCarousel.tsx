@@ -6,7 +6,7 @@ import { useEffect, useRef } from "react";
 import * as THREE from "three";
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
-import { workItems } from "../../content/work";
+import { workItems } from "@/content/work";
 
 gsap.registerPlugin(ScrollTrigger);
 

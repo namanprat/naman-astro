@@ -3,12 +3,12 @@ import { ReactLenis, useLenis } from "lenis/react";
 import { gsap } from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import { useGSAP } from "@gsap/react";
-import type { WorkItem } from "../../content/work";
-import { setSiteLenis } from "../../lib/site/lenisBridge";
+import type { WorkItem } from "@/content/work";
+import { setSiteLenis } from "@/lib/site/lenisBridge";
 import {
   SCROLL_SETTINGS,
   driveLenisWithGsap,
-} from "../../lib/site/lenisScroll";
+} from "@/lib/site/lenisScroll";
 import Footer from "../site/Footer";
 import ProjectDetail from "./ProjectDetail";
 import "./Work.css";

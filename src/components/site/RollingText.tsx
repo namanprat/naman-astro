@@ -1,5 +1,5 @@
 import { useEffect, useRef, type ReactNode } from "react";
-import { initRollingText } from "../../lib/site/rollingText";
+import { initRollingText } from "@/lib/site/rollingText";
 import "./RollingText.css";
 
 type RollingTextProps = {

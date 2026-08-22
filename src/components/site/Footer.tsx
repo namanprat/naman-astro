@@ -3,18 +3,18 @@ import { useLenis } from "lenis/react";
 import gsap from "gsap";
 import ScrollTrigger from "gsap/ScrollTrigger";
 import { useGSAP } from "@gsap/react";
-import { go } from "../../lib/site/navigate";
-import { replayHomeIntro } from "../../lib/site/heroIntro";
-import { hashId, scrollToSection } from "../../lib/site/scrollToSection";
-import { toggleAboutPanel } from "../../lib/site/aboutPanel";
+import { go } from "@/lib/site/navigate";
+import { replayHomeIntro } from "@/lib/site/heroIntro";
+import { hashId, scrollToSection } from "@/lib/site/scrollToSection";
+import { toggleAboutPanel } from "@/lib/site/aboutPanel";
 import {
   addGooeyReveal,
   parkGooey,
   prepareGooey,
   type GooeyTarget,
-} from "../../lib/site/gooeyReveal";
-import { prefersReducedMotion } from "../../lib/site/prefersReducedMotion";
-import { useCopyEmail } from "../../lib/site/copyEmail";
+} from "@/lib/site/gooeyReveal";
+import { prefersReducedMotion } from "@/lib/site/prefersReducedMotion";
+import { useCopyEmail } from "@/lib/site/copyEmail";
 import { EMAIL_HREF, NAV_STACKS, SOCIAL_LINKS } from "./Menu";
 import FooterAsciiLogo from "./FooterAsciiLogo";
 import RollingText from "./RollingText";

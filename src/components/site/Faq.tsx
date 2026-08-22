@@ -2,7 +2,7 @@ import { useRef, useState } from "react";
 import gsap from "gsap";
 import ScrollTrigger from "gsap/ScrollTrigger";
 import { useGSAP } from "@gsap/react";
-import { prefersReducedMotion } from "../../lib/site/prefersReducedMotion";
+import { prefersReducedMotion } from "@/lib/site/prefersReducedMotion";
 import "./Faq.css";
 
 gsap.registerPlugin(ScrollTrigger);

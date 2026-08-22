@@ -2,7 +2,7 @@ import {
   groupWorkPanels,
   type WorkGroup,
   type WorkItem,
-} from "../../content/work";
+} from "@/content/work";
 
 type Props =
   | { item: WorkItem; variant?: "page"; index?: never }

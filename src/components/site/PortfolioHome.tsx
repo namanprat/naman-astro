@@ -3,11 +3,11 @@ import { ReactLenis, useLenis } from "lenis/react";
 import { gsap } from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import { useGSAP } from "@gsap/react";
-import { setSiteLenis } from "../../lib/site/lenisBridge";
+import { setSiteLenis } from "@/lib/site/lenisBridge";
 import {
   SCROLL_SETTINGS,
   driveLenisWithGsap,
-} from "../../lib/site/lenisScroll";
+} from "@/lib/site/lenisScroll";
 import Manifesto from "./Manifesto";
 import Team from "./Team";
 import Process from "./Process";

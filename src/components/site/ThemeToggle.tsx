@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import gsap from "gsap";
-import "../../lib/site/eases";
+import "@/lib/site/eases";
 
 /** theme-switch.svg circle centers — both rings, filled-left was the old disc. */
 const THEME_CX = { left: 36.3018, right: 87.4512 } as const;

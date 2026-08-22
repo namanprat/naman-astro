@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import * as THREE from "three";
-import { ARCHIVE_MEDIA_URLS } from "../../content/archive";
+import { ARCHIVE_MEDIA_URLS } from "@/content/archive";
 import {
   disposeArchiveMediaSource,
   loadArchiveMediaSource,

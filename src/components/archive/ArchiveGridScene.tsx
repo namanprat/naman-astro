@@ -1,8 +1,8 @@
 import { useEffect, useMemo, useRef } from "react";
 import * as THREE from "three";
 import { useFrame, useThree } from "@react-three/fiber";
-import { rigState } from "../../lib/archive/rigState";
-import { prefersReducedMotion } from "../../lib/site/prefersReducedMotion";
+import { rigState } from "@/lib/archive/rigState";
+import { prefersReducedMotion } from "@/lib/site/prefersReducedMotion";
 
 const SIZE = 120;
 const DIVISIONS = 60;

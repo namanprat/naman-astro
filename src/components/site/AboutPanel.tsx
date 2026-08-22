@@ -9,16 +9,16 @@ import {
   useState,
 } from "react";
 import gsap from "gsap";
-import { shouldMountAboutBust } from "../../lib/site/aboutBust";
-import { ABOUT_OPEN_CLASS } from "../../lib/site/aboutPanel";
-import { prefersReducedMotion } from "../../lib/site/prefersReducedMotion";
+import { shouldMountAboutBust } from "@/lib/site/aboutBust";
+import { ABOUT_OPEN_CLASS } from "@/lib/site/aboutPanel";
+import { prefersReducedMotion } from "@/lib/site/prefersReducedMotion";
 import {
   addGooeyReveal,
   parkGooey,
   prepareGooey,
-} from "../../lib/site/gooeyReveal";
+} from "@/lib/site/gooeyReveal";
 import RollingText from "./RollingText";
-import "../../lib/site/eases";
+import "@/lib/site/eases";
 
 const AboutDitherCanvas = lazy(() => import("./about/AboutDitherCanvas"));
 
