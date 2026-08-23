@@ -44,7 +44,7 @@
   }
 
   .process_card_index {
-    color: color-mix(in lab, currentcolor 60%, transparent);
+    color: inherit;
   }
 
   .process_card_copy {

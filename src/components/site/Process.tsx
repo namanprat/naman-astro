@@ -35,9 +35,6 @@ export default function Process() {
       <div className="process_contain container gap-0">
         <div className="process_layout studio_layout grid is-12">
           <div className="process_statement studio_statement">
-            <span className="process_label studio_label text-style-mono">
-              (Process)
-            </span>
             <h2 className="process_title studio_title text-style-h2">
               We design website experiences that finally reflect what
               you&apos;ve actually built.

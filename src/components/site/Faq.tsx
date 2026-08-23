@@ -123,17 +123,14 @@ export default function Faq() {
       <div className="faq_contain container gap-0">
         <div className="faq_layout studio_layout grid is-12">
           <div className="faq_statement studio_statement">
-            <span className="faq_label studio_label text-style-mono">
-              (FAQ&apos;s)
-            </span>
             <h2 className="faq_title studio_title text-style-h2">
-              Here&apos;s what you need to consider before we start.
+              Fewer projects, fully present. Intention over speed — every layer
+              earns its place before we move to the next.
             </h2>
           </div>
 
           <p className="faq_lead text-style-h4">
-            Fewer projects, fully present. Intention over speed — every layer
-            earns its place before we move to the next.
+            Here&apos;s what you need to consider before we start.
           </p>
 
           <ul className="faq_items">
