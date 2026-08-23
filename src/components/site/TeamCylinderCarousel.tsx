@@ -4,7 +4,7 @@
  */
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Canvas, useFrame, useThree } from "@react-three/fiber";
-import { folder, useControls } from "leva";
+import { folder, Leva, useControls } from "leva";
 import * as THREE from "three";
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
@@ -39,7 +39,8 @@ const TAU = Math.PI * 2;
 const VELOCITY_UV_SCALE = 0.000012 / TAU;
 /** Continuous idle crawl (UV/s) so the strip keeps moving off-scroll. */
 const IDLE_UV_PER_SEC = 0.12 / TAU;
-const ASCII_GRANULARITY = 24;
+const ASCII_GRANULARITY = 35;
+const ASCII_FONT_SIZE = 1.95;
 
 /** Strip transform. Pose is fixed; only the shader UVs travel. */
 const STRIP = {
@@ -196,7 +197,7 @@ function TeamCylinderScene({ controls }: { controls: StripControls }) {
       uAsciiTexture: { value: null as THREE.Texture | null },
       uGlyphCount: { value: 1 },
       uGranularity: { value: ASCII_GRANULARITY },
-      uFontSize: { value: 1 },
+      uFontSize: { value: ASCII_FONT_SIZE },
       uSurfaceAspect: { value: IMAGE_COUNT * TILE_ASPECT },
       uColor: { value: new THREE.Color("#8b8b8b") },
       uTime: { value: 0 },
@@ -313,7 +314,7 @@ function TeamCylinderScene({ controls }: { controls: StripControls }) {
     const mat = materialRef.current;
     if (!mat) return;
     mat.uniforms.uGranularity.value = controls.granularity;
-    mat.uniforms.uFontSize.value = controls.fontSize ?? 1;
+    mat.uniforms.uFontSize.value = controls.fontSize ?? ASCII_FONT_SIZE;
     mat.uniforms.uNoise.value = reducedMotion ? 0 : controls.noise;
     mat.uniforms.uScroll.value = scrollUv.current;
     if (!reducedMotion) mat.uniforms.uTime.value += dt;
@@ -351,6 +352,19 @@ function TeamCylinderScene({ controls }: { controls: StripControls }) {
 }
 
 export default function TeamCylinderCarousel() {
+  const [inView, setInView] = useState(false);
+
+  useEffect(() => {
+    const el = document.getElementById("team");
+    if (!el) return;
+    const io = new IntersectionObserver(
+      ([entry]) => setInView(entry.isIntersecting),
+      { rootMargin: "20% 0px", threshold: 0 },
+    );
+    io.observe(el);
+    return () => io.disconnect();
+  }, []);
+
   const controls = useControls({
     moveCylinder: { value: true, label: "Move cylinder" },
     ASCII: folder({
@@ -360,7 +374,7 @@ export default function TeamCylinderCarousel() {
         max: 64,
         step: 1,
       },
-      fontSize: { value: 1, min: 0.4, max: 3, step: 0.05 },
+      fontSize: { value: ASCII_FONT_SIZE, min: 0.4, max: 3, step: 0.05 },
       noise: { value: 1, min: 0, max: 1, step: 0.01 },
       scrollSpeed: { value: 1, min: 0, max: 4, step: 0.05 },
     }),
@@ -388,30 +402,34 @@ export default function TeamCylinderCarousel() {
   });
 
   return (
-    <Canvas
-      className="team_cylinder"
-      dpr={[1, 1.5]}
-      gl={{
-        alpha: true,
-        antialias: true,
-        powerPreference: "high-performance",
-      }}
-      camera={{ position: [0, 0, 6.4], fov: 45, near: 0.1, far: 100 }}
-      resize={{ scroll: false }}
-      style={{
-        position: "absolute",
-        inset: 0,
-        width: "100%",
-        height: "100%",
-        display: "block",
-        pointerEvents: "none",
-      }}
-      onCreated={({ gl }) => {
-        gl.setClearColor(0x000000, 0);
-        gl.outputColorSpace = THREE.SRGBColorSpace;
-      }}
-    >
-      <TeamCylinderScene controls={controls} />
-    </Canvas>
+    <>
+      <Leva hidden={import.meta.env.PROD} />
+      <Canvas
+        className="team_cylinder"
+        frameloop={inView ? "always" : "never"}
+        dpr={[1, 1.5]}
+        gl={{
+          alpha: true,
+          antialias: true,
+          powerPreference: "high-performance",
+        }}
+        camera={{ position: [0, 0, 6.4], fov: 45, near: 0.1, far: 100 }}
+        resize={{ scroll: false }}
+        style={{
+          position: "absolute",
+          inset: 0,
+          width: "100%",
+          height: "100%",
+          display: "block",
+          pointerEvents: "none",
+        }}
+        onCreated={({ gl }) => {
+          gl.setClearColor(0x000000, 0);
+          gl.outputColorSpace = THREE.SRGBColorSpace;
+        }}
+      >
+        <TeamCylinderScene controls={controls} />
+      </Canvas>
+    </>
   );
 }

@@ -34,20 +34,42 @@
     position: relative;
     z-index: 1;
     color: var(--text);
+  }
+
+  .team_layout {
     width: 100%;
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    align-items: center;
-    text-align: center;
+    align-content: center;
+    row-gap: var(--space-5);
+  }
+
+  .team_title {
+    grid-column: 1 / -1;
+    margin: 0;
+    max-width: none;
+    min-width: 0;
   }
 
   .team_copy_stack {
+    grid-column: 1 / -1;
     display: flex;
     flex-direction: column;
     align-items: center;
     gap: var(--space-5);
-    width: min(100%, var(--site--span-5));
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
+  }
+
+  /* 12-col lockup at ≥64rem. Below that the grid is 4/6/8, so 1 / -1
+     keeps both the headline and the body inside the container. */
+  @media (width >= 64rem) {
+    .team_title {
+      grid-column: 3 / span 8;
+    }
+
+    .team_copy_stack {
+      grid-column: 4 / span 6;
+    }
   }
 
   .team_cta {
