@@ -249,7 +249,10 @@ html.theme-light .about_panel.is-in-menu {
   row-gap: var(--space-8);
 }
 
-@media (width >= 64rem) {
+/* The ride/padded card chrome. Cut at 48rem with the nav (Menu.tsx's
+   DESKTOP_NAV_MQ), not at the site's 64rem grid cut — the 8-col content map
+   further down already covers the 48–64rem band. */
+@media (width >= 48rem) {
   .about_panel:not(.is-in-menu) {
     padding: 0;
     /* Ride mode (desktop About) is not --padded. Side gap is --about--inset
@@ -563,6 +566,15 @@ html.theme-light .about_panel.is-in-menu {
 .about_panel.is-in-menu .about_panel_col.is-clients .about_panel_col_label {
   grid-column: auto;
   grid-row: auto;
+}
+
+/* Tablet portrait is only 1024px tall and the nav docks to the card's bottom
+   edge, so 85vh would push the close row off screen. */
+@media (width >= 48rem) and (width < 64rem) {
+  .about_panel:not(.is-in-menu) .about_panel_surface,
+  .about_panel:not(.is-in-menu) .about_panel_scroll {
+    max-height: 75vh;
+  }
 }
 
 /* 8-col band (Lumos medium) */

@@ -11,9 +11,10 @@ export function isTouch(): boolean {
   return name === "tablet" || name === "phone";
 }
 
-/** True below the `(width >= 64rem)` nav breakpoint, where WORK has no BACK state. */
+/** True below the `(width >= 48rem)` nav breakpoint (Menu.tsx's DESKTOP_NAV_MQ),
+ *  where WORK has no BACK state. */
 export function isNarrowNav(): boolean {
-  return (test.info().project.use.viewport?.width ?? 0) < 1024;
+  return (test.info().project.use.viewport?.width ?? 0) < 768;
 }
 
 /**
@@ -123,7 +124,7 @@ export async function expectRevealed(page: Page) {
  * - The hero lockup, held at `visibility: hidden` by
  *   `.name_hero_gooey:not(.is-gooey-parked)` until the melt is armed.
  *
- * Below the 64rem nav breakpoint the homepage renders *no* nav text at all —
+ * Below the 48rem nav breakpoint the homepage renders *no* nav text at all —
  * the link stack is hidden and the wordmark lives in the hero lockup — so
  * unrendered lines are skipped rather than failed, and the lockup carries the
  * assertion instead. Requiring at least one of the two signals is what stops

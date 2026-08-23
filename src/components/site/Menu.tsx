@@ -93,6 +93,15 @@ const OVERLAY_LINKS = [
 
 const SECTION_IDS = ["hero", "team", "contact"];
 
+/**
+ * Where the chrome switches between the hamburger and the desktop nav, and with
+ * it the About panel's `ride` vs `inMenu`/`padded` mode. Tablet portrait sits
+ * above it, so this is 48rem — deliberately *not* the site's 64rem grid cut,
+ * which still hands this band 8 columns. Mirrored by `Menu.css`'s `< 48rem`
+ * block and `AboutPanel.css`'s `>= 48rem` block.
+ */
+export const DESKTOP_NAV_MQ = "(width >= 48rem)";
+
 const MENU_COPY = ".menu_overlay_items .revealer a";
 const MENU_FOOTER_COPY = ".menu_footer .revealer > *";
 /* The dither canvas has no lines to split, so it dissolves rather than melts —
@@ -203,7 +212,7 @@ export default function Menu({ initialPathname = "/" }: MenuProps) {
   }, []);
 
   useEffect(() => {
-    const mq = window.matchMedia("(width >= 64rem)");
+    const mq = window.matchMedia(DESKTOP_NAV_MQ);
     const syncDesktop = () => setIsDesktopNav(mq.matches);
     syncDesktop();
     mq.addEventListener("change", syncDesktop);
@@ -236,7 +245,7 @@ export default function Menu({ initialPathname = "/" }: MenuProps) {
       setAboutOpen((prev) => {
         const next = typeof value === "function" ? value(prev) : value;
         if (next && !prev) {
-          const desktop = window.matchMedia("(width >= 64rem)").matches;
+          const desktop = window.matchMedia(DESKTOP_NAV_MQ).matches;
           const menuOpen =
             phaseRef.current === "open" || phaseRef.current === "opening";
           setAboutMode(desktop ? "ride" : menuOpen ? "inMenu" : "padded");
@@ -826,7 +835,7 @@ export default function Menu({ initialPathname = "/" }: MenuProps) {
     resetNavDock();
     if (
       aboutModeRef.current === "inMenu" &&
-      !window.matchMedia("(width >= 64rem)").matches
+      !window.matchMedia(DESKTOP_NAV_MQ).matches
     ) {
       setAboutOpen(false);
     }
@@ -984,7 +993,7 @@ export default function Menu({ initialPathname = "/" }: MenuProps) {
     const nav = navContainerRef.current;
     parkOverlayCopy();
     /* No dock translate: `html.menu-open .nav_wrap` pins the bar with
-       `position: fixed` below the pinned wordmark (Menu.css, <64rem). Nudging
+       `position: fixed` below the pinned wordmark (Menu.css, <48rem). Nudging
        it by its own offset as well drove it off the top by the hero's height. */
     if (nav) gsap.set(nav, { clearProps: "transform" });
 
@@ -1060,7 +1069,7 @@ export default function Menu({ initialPathname = "/" }: MenuProps) {
                     has to sit above the masked lockup. heroIntro arms it. */}
               <div className="name_hero_gooey">
                 {/* On inner pages this lockup is the only logo on screen (the
-                    text wordmark hides below 64rem), so it has to go home.
+                    text wordmark hides below 48rem), so it has to go home.
                     On home it is not a link — the mark already is the brand. */}
                 {pathname === "/" ? (
                   <div className="name_hero_home">
