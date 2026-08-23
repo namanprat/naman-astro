@@ -4,8 +4,9 @@ import "./Process.css";
  * Markup only. The section heading is an ordinary `h2` and each card title an
  * `h3`, so both are picked up by the site-wide gooey entrance in
  * `lib/site/gooeyReveal.ts` — `.process` is absent from that module's SKIP list
- * for exactly this reason. The heading's `text-indent` survives the line split
- * because `styles/site.css` zeroes it on every continuation line.
+ * for exactly this reason. The heading's hanging first line is the empty
+ * `.studio_title_indent` box, not a `text-indent` — being ordinary inline
+ * content, it wraps and splits along with the rest of the heading.
  */
 const CARDS = [
   {
@@ -36,6 +37,7 @@ export default function Process() {
         <div className="process_layout studio_layout grid is-12">
           <div className="process_statement studio_statement">
             <h2 className="process_title studio_title text-style-h2">
+              <span className="studio_title_indent" aria-hidden="true" />
               We design website experiences that finally reflect what
               you&apos;ve actually built.
             </h2>

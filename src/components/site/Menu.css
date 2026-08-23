@@ -208,8 +208,8 @@ html.menu-open .nav_wrap {
      10–11 about/contact
      12    archive + theme
 
-   Below 64rem the grid is 8/6/4 and the stacks hide — Menu spans the full
-   grid; theme lives in the overlay. */
+   48–64rem remaps onto 8 tracks below. Under 48rem the stacks hide — Menu
+   spans the full grid; theme lives in the overlay. */
 .nav_logo {
   grid-column: 1 / span 2;
   overflow: visible;
@@ -329,6 +329,23 @@ html.menu-open .nav_wrap {
   pointer-events: auto;
 }
 
+/* 48–64rem: the site grid is 8 tracks here, not 12, so the desktop nav gets its
+   own map. Reusing the 12-col one would put `is-about` (10) and the utility
+   stack (12 / -1) in tracks that don't exist. */
+@media (width >= 48rem) and (width < 64rem) {
+  .nav_stack.is-home {
+    grid-column: 4 / span 2;
+  }
+
+  .nav_stack.is-about {
+    grid-column: 6 / span 2;
+  }
+
+  .nav_utility_stack {
+    grid-column: 8 / -1;
+  }
+}
+
 .nav_theme_toggle {
   appearance: none;
   background: none;
@@ -423,20 +440,28 @@ html.menu-open .nav_wrap {
   border: none;
 }
 
+/* Inner pages carry the wordmark in `.nav_logo`, so the big SVG lockup is off by
+   default and comes back only with the phone chrome below. (Not `--none-large`:
+   that flips at 64rem, and the nav's cut is 48rem.) */
 html:not(:has(.hero)) .name_hero {
-  display: var(--none-large);
+  display: none;
 }
 
 .menu_overlay_items [data-overlay-link="/#contact"] {
   display: var(--none-medium);
 }
 
-/* Mobile / tablet: Menu pill spans the full grid; logo + theme hide. */
-@media (width < 64rem) {
+/* Phones: Menu pill spans the full grid; logo + theme hide. Tablet portrait and
+   up keeps the desktop nav, so this cut is 48rem, not the site's 64rem. */
+@media (width < 48rem) {
   .nav_logo,
   .nav_stack,
   .nav_utility_stack {
     display: none;
+  }
+
+  html:not(:has(.hero)) .name_hero {
+    display: block;
   }
 
   .nav_contact_dropdown {

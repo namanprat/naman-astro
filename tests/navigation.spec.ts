@@ -35,7 +35,7 @@ test("the homepage scrolls", async ({ page, context }) => {
  * Scroll the homepage with this device's own input, then get back to the top
  * through whichever surface the width actually offers.
  *
- * The nav stack and the overlay menu swap at exactly the 64rem breakpoint —
+ * The nav stack and the overlay menu swap at exactly the 48rem breakpoint —
  * above it the menu toggle is hidden and the links live in `.nav_grid`, below
  * it the reverse — so Home has to be reached differently on each side. Both
  * ends land in `goTo("/")`, which does not navigate when already on `/`: it
