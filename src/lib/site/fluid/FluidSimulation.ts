@@ -329,7 +329,7 @@ export class FluidSimulation {
   }
 
   private onThemeMutation = (): void => {
-    this.readTheme(false);
+    this.readTheme(true);
   };
 
   private onResize = (): void => {
@@ -371,7 +371,7 @@ export class FluidSimulation {
     const tick = (now: number) => {
       if (!this.running) return;
       this.raf = requestAnimationFrame(tick);
-      const dt = Math.min((now - this.lastTime) / 1000, 0.016);
+      const dt = Math.min((now - this.lastTime) / 1000, 1 / 30);
       this.lastTime = now;
       this.frame(dt);
     };

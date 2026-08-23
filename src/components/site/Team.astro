@@ -1,0 +1,32 @@
+---
+/**
+ * Studio closer. Copy is server-rendered; the cylinder is an R3F island,
+ * same split as archive.astro / CamilleSlider.
+ */
+import TeamCylinderCarousel from "./TeamCylinderCarousel";
+import AnimeLink from "./AnimeLink";
+import "./Team.css";
+---
+
+<section class="team_wrap" id="team" aria-label="Studio">
+  <TeamCylinderCarousel client:only="react" />
+  <div class="team_copy container">
+    <div class="team_layout grid is-12">
+      <h2 class="team_title text-style-h1 alignment-center">
+        We close
+        <br />
+        that gap.
+      </h2>
+      <div class="team_copy_stack">
+        <p class="text-style-main alignment-center">
+          Your website is where ideal customers decide if you're worth their
+          time. We take what makes you irreplaceable, shape the entire experience
+          around it, and make sure they feel that before they read another word.
+        </p>
+        <AnimeLink client:only="react" href="/work" className="team_cta">
+          View Work
+        </AnimeLink>
+      </div>
+    </div>
+  </div>
+</section>

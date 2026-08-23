@@ -18,7 +18,6 @@ const GRAVITY = 0.05;
 const BOUNCE = 0.25;
 const RESET_EASE = 0.05;
 const STAGGER_FRAMES = 18;
-const DESKTOP_MQ = "(min-width: 64rem)";
 /** Fallback only — live ink is read off the wrapper's `color`. */
 const CHAR_COLOR_FALLBACK = "#f14827";
 const MONO_FONT =
@@ -111,10 +110,9 @@ export default function FooterAsciiLogo({
     // Live MediaQueryLists, not one-shot reads: the canvas re-enables itself
     // when the visitor changes any of these mid-session (see the `change`
     // listeners below), so `prefersReducedMotion()` wouldn't do.
-    const desktopMq = window.matchMedia(DESKTOP_MQ);
     const reduceMq = window.matchMedia(REDUCED_MOTION_QUERY);
     const fineHoverMq = window.matchMedia(FINE_HOVER_QUERY);
-    const enabled = () => desktopMq.matches && !reduceMq.matches;
+    const enabled = () => !reduceMq.matches;
     const cursorOn = () => enabled() && fineHoverMq.matches;
 
     let phase: Phase = "logo";
@@ -398,7 +396,6 @@ export default function FooterAsciiLogo({
     box.addEventListener("pointermove", onPointerMove, { passive: true });
     box.addEventListener("pointerleave", onPointerLeave);
     box.addEventListener("click", onClick);
-    desktopMq.addEventListener("change", syncEnabled);
     reduceMq.addEventListener("change", syncEnabled);
     fineHoverMq.addEventListener("change", syncCursorMode);
 
@@ -426,7 +423,6 @@ export default function FooterAsciiLogo({
       box.removeEventListener("pointermove", onPointerMove);
       box.removeEventListener("pointerleave", onPointerLeave);
       box.removeEventListener("click", onClick);
-      desktopMq.removeEventListener("change", syncEnabled);
       reduceMq.removeEventListener("change", syncEnabled);
       fineHoverMq.removeEventListener("change", syncCursorMode);
       box.classList.remove("is-ascii-hover");

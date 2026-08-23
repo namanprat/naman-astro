@@ -77,8 +77,11 @@ export default function ThemeToggle() {
       className="nav_theme_toggle"
       onClick={onToggle}
       aria-pressed={isLight}
-      aria-label="Light theme"
+      aria-label="Switch theme"
     >
+      <span className="nav_theme_toggle_label">
+        <h5 className="text-style-main">Switch theme</h5>
+      </span>
       <svg
         className="nav_theme_toggle_svg"
         width="124"
@@ -89,7 +92,7 @@ export default function ThemeToggle() {
         aria-hidden="true"
       >
         {/* The indicator: a filled disc that keeps its stroke, sliding between
-            the two positions to mark the active side. The other stays a ring. */}
+              the two positions to mark the active side. The other stays a ring. */}
         <circle
           ref={filledRef}
           cx={THEME_CX.left}

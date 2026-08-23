@@ -10,7 +10,7 @@
   .faq_lead {
     grid-column: calc(7 * var(--_responsive---large) + 1) / span calc(5 * var(--_responsive---large) + 12 * (1 - var(--_responsive---large)));
     margin: 0;
-    color: color-mix(in lab, var(--text) 70%, transparent);
+    color: var(--text);
   }
 
   .faq_items {
@@ -62,6 +62,6 @@
 
   .faq_answer_copy {
     margin: 0;
-    color: color-mix(in lab, var(--text) 55%, transparent);
+    color: var(--text);
   }
 }

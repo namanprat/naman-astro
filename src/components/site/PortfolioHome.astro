@@ -9,7 +9,7 @@ import Manifesto from "./Manifesto.tsx";
 import CamilleSlider from "./CamilleSlider.astro";
 import Process from "./Process.tsx";
 import Faq from "./Faq.tsx";
-import Team from "./Team.tsx";
+import Team from "./Team.astro";
 import Footer from "./Footer.tsx";
 ---
 
@@ -20,6 +20,6 @@ import Footer from "./Footer.tsx";
   <CamilleSlider />
   <Process client:only="react" />
   <Faq client:only="react" />
-  <Team client:only="react" />
+  <Team />
 </div>
 <Footer client:only="react" />

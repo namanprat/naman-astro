@@ -27,8 +27,11 @@
   color: var(--text);
 }
 
+/* The row gap lives in the `components` layer alongside `.grid` (styles/site.css):
+   `.grid` sets `grid-row-gap: var(--_gap-size)` there, and a later layer beats an
+   earlier one whatever the selectors say, so a row-gap declared here would never
+   apply. Only the alignment stays. */
 .studio_layout {
-  row-gap: var(--space-8);
   align-content: start;
 }
 
@@ -42,7 +45,25 @@
   margin: 0;
   max-width: none;
   color: var(--text);
-  text-indent: calc(28% * var(--_responsive---large));
+  /* Greedy wrapping, overriding the `balance` inherited from `.text-style-h2`.
+     The gooey entrance splits these headings into one block per line and freezes
+     each as an atomic inline-block; a balanced pass does not reproduce the breaks
+     it measured once that has happened, and the first line comes back holding
+     more words than fit and overruns the column edge. */
+  text-wrap: wrap;
+}
+
+/* The display headline's hanging first line. A real inline box rather than
+   `text-indent`, for two reasons: it is exactly three columns plus their gutters,
+   so the first line starts on column line 4 where a percentage of the 10-column
+   statement box could only land between column lines; and it wraps as ordinary
+   inline content, so the line split measures the same breaks the browser renders.
+   A `text-indent` length does not survive that measurement — it silently collapses
+   the available width and shatters the heading into one word per line.
+   Zero below 64rem, where the statement is full width and flush. */
+.studio_title_indent {
+  display: inline-block;
+  width: calc(var(--site--column-width-plus-gutter) * 3 * var(--_responsive---large));
 }
 
 .studio_label {

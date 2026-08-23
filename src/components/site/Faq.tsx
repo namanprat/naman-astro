@@ -51,8 +51,9 @@ const FAQ_ITEMS = [
 /**
  * The FAQ statement is an ordinary `h2`, so the site-wide gooey entrance in
  * `lib/site/gooeyReveal.ts` owns it — `.faq` is absent from that module's SKIP
- * list on purpose, and `styles/site.css` keeps the `text-indent` on the first
- * split line only.
+ * list on purpose. The hanging first line is the empty `.studio_title_indent`
+ * box rather than a `text-indent`: it is exactly three columns wide and, being
+ * ordinary inline content, it wraps and splits with the rest of the heading.
  *
  * Panels animate to `height: "auto"` rather than a cached `scrollHeight`, so a
  * resize or a late font swap can't leave a panel clipped. Every settled toggle
@@ -123,17 +124,15 @@ export default function Faq() {
       <div className="faq_contain container gap-0">
         <div className="faq_layout studio_layout grid is-12">
           <div className="faq_statement studio_statement">
-            <span className="faq_label studio_label text-style-mono">
-              (FAQ&apos;s)
-            </span>
             <h2 className="faq_title studio_title text-style-h2">
-              Here&apos;s what you need to consider before we start.
+              <span className="studio_title_indent" aria-hidden="true" />
+              Fewer projects, fully present. Intention over speed — every layer
+              earns its place before we move to the next.
             </h2>
           </div>
 
           <p className="faq_lead text-style-h4">
-            Fewer projects, fully present. Intention over speed — every layer
-            earns its place before we move to the next.
+            Here&apos;s what you need to consider before we start.
           </p>
 
           <ul className="faq_items">

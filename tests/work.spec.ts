@@ -214,13 +214,13 @@ test.describe("returning from a hard-loaded project page", () => {
   });
 });
 
-test.describe("the mobile menu", () => {
+test.describe("the mobile nav", () => {
   test.skip(
     () => !isNarrowNav(),
-    "the overlay menu only exists below the nav breakpoint",
+    "this path is the compact nav below the desktop breakpoint",
   );
 
-  test("reaching WORK through the menu closes the project and frees the scroll", async ({
+  test("reaching WORK through the nav closes the project and frees the scroll", async ({
     page,
     context,
   }) => {
@@ -233,16 +233,8 @@ test.describe("the mobile menu", () => {
 
     await openNearestProject(page);
 
-    await page.locator(".nav_menu_toggle").first().click();
-    await expect.poll(() => rootClasses(page)).toContain("menu-open");
+    await page.locator('.nav_grid a[href="/work"]').first().click();
 
-    await page.locator('.menu_wrap a[href="/work"]').first().click();
-
-    // `menu-open` is one of `engineEnabled()`'s gates, and it comes off at the
-    // end of a 0.9s close — well after `work:close` has already fired.
-    await expect
-      .poll(() => rootClasses(page), { timeout: 30_000 })
-      .not.toContain("menu-open");
     await expectGalleryRestored(page);
     expect(await galleryMoves(page, cdp, isTouch())).toBe(true);
   });

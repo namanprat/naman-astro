@@ -83,18 +83,37 @@ export const SOCIAL_LINKS: SocialLink[] = [
 export const socialLinkTabProps = (newTab?: boolean) =>
   newTab ? ({ target: "_blank", rel: "noreferrer noopener" } as const) : {};
 
-const OVERLAY_LINKS = [
-  { label: "Home", path: "/" },
-  { label: "About", path: "/#about" },
-  { label: "Work", path: "/work" },
-  { label: "Archive", path: "/archive" },
-  { label: "Contact", path: "/#contact" },
+type OverlayLink = { label: string; path: string };
+type OverlayAction = { label: string; action: "theme" };
+type OverlayItem = OverlayLink | OverlayAction;
+
+const isOverlayLink = (item: OverlayItem): item is OverlayLink =>
+  "path" in item;
+
+const OVERLAY_COLUMNS: OverlayItem[][] = [
+  [
+    { label: "Work", path: "/work" },
+    { label: "About", path: "/#about" },
+  ],
+  [
+    { label: "Archive", path: "/archive" },
+    { label: "Switch theme", action: "theme" },
+  ],
+  [{ label: "Contact", path: "/#contact" }],
 ];
 
 const SECTION_IDS = ["hero", "team", "contact"];
 
-const MENU_COPY = ".menu_overlay_items .revealer a";
-const MENU_FOOTER_COPY = ".menu_footer .revealer > *";
+/**
+ * Where the chrome switches between the compact mobile nav and the desktop
+ * stacks, and with it the About panel's `ride` vs `padded` mode. Tablet
+ * portrait sits above it, so this is 48rem — deliberately *not* the site's
+ * 64rem grid cut, which still hands this band 8 columns. Mirrored by
+ * `Menu.css`'s `< 48rem` block and `AboutPanel.css`'s `>= 48rem` block.
+ */
+export const DESKTOP_NAV_MQ = "(width >= 48rem)";
+
+const MENU_COPY = ".menu_overlay_items .revealer :is(a, button)";
 /* The dither canvas has no lines to split, so it dissolves rather than melts —
    same duration and start as the lead's gooey, so the two arrive as one. */
 const ABOUT_MEDIA =
@@ -137,7 +156,7 @@ type MenuProps = {
 export default function Menu({ initialPathname = "/" }: MenuProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [aboutOpen, setAboutOpen] = useState(false);
-  const [aboutMode, setAboutMode] = useState<AboutPanelMode>("padded");
+  const [aboutMode, setAboutMode] = useState<AboutPanelMode>("ride");
   /** Home scroll section only — never used while About is open or on /work. */
   const [homeSectionId, setHomeSectionId] = useState("hero");
   const [pathname, setPathname] = useState(initialPathname);
@@ -169,7 +188,6 @@ export default function Menu({ initialPathname = "/" }: MenuProps) {
   const menuOverlayRef = useRef<HTMLDivElement>(null);
   const toggleTrackRef = useRef<HTMLSpanElement>(null);
   const menuItemsRef = useRef<HTMLDivElement>(null);
-  const menuFooterColsRef = useRef<HTMLDivElement>(null);
   const navContainerRef = useRef<HTMLDivElement>(null);
   const heroChromeRef = useRef<HTMLDivElement>(null);
   const overlayTlRef = useRef<gsap.core.Timeline | null>(null);
@@ -203,7 +221,7 @@ export default function Menu({ initialPathname = "/" }: MenuProps) {
   }, []);
 
   useEffect(() => {
-    const mq = window.matchMedia("(width >= 64rem)");
+    const mq = window.matchMedia(DESKTOP_NAV_MQ);
     const syncDesktop = () => setIsDesktopNav(mq.matches);
     syncDesktop();
     mq.addEventListener("change", syncDesktop);
@@ -236,10 +254,7 @@ export default function Menu({ initialPathname = "/" }: MenuProps) {
       setAboutOpen((prev) => {
         const next = typeof value === "function" ? value(prev) : value;
         if (next && !prev) {
-          const desktop = window.matchMedia("(width >= 64rem)").matches;
-          const menuOpen =
-            phaseRef.current === "open" || phaseRef.current === "opening";
-          setAboutMode(desktop ? "ride" : menuOpen ? "inMenu" : "padded");
+          setAboutMode("ride");
         }
         return next;
       });
@@ -257,16 +272,9 @@ export default function Menu({ initialPathname = "/" }: MenuProps) {
     const nav = navContainerRef.current;
     if (!nav) return;
 
-    // Keep mode in sync if viewport crosses the desktop/tablet boundary while open.
-    if (aboutOpen) {
-      if (isDesktopNav && aboutMode !== "ride") {
-        setAboutMode("ride");
-        return;
-      }
-      if (!isDesktopNav && aboutMode === "ride") {
-        setAboutMode(isOpen ? "inMenu" : "padded");
-        return;
-      }
+    if (aboutOpen && aboutMode !== "ride") {
+      setAboutMode("ride");
+      return;
     }
 
     if (!aboutOpen || aboutMode !== "ride") {
@@ -294,7 +302,12 @@ export default function Menu({ initialPathname = "/" }: MenuProps) {
       el.offsetHeight - (parseFloat(getComputedStyle(el).paddingBottom) || 0);
 
     const dockNav = () => {
-      const navTop = nav.getBoundingClientRect().top;
+      /* Mobile chrome puts extra padding-top on the wrap (SVG lockup slot).
+         Dock the grid, not the wrap, or the links land a mark-height too low. */
+      const anchor = isDesktopNav
+        ? nav
+        : (nav.querySelector<HTMLElement>(".nav_grid") ?? nav);
+      const navTop = anchor.getBoundingClientRect().top;
       const panelTop = panel.getBoundingClientRect().top;
       return Math.max(0, panelTop + cardBottom(panel) - navTop);
     };
@@ -353,6 +366,24 @@ export default function Menu({ initialPathname = "/" }: MenuProps) {
         "--hero-chrome-content",
         `${content}px`,
       );
+
+      /* Mobile About clients col 2 sits on the Archive/Contact cluster.
+         Measure the label, not the link box — `.nav_link` hangs an active-dot
+         gutter (`padding-left` / negative `margin-left`) that the names omit. */
+      const grid = chrome.querySelector<HTMLElement>(".nav_grid");
+      const archive = grid?.querySelector<HTMLElement>(".nav_archive");
+      if (grid && archive && window.matchMedia("(width < 48rem)").matches) {
+        const label = archive.querySelector<HTMLElement>("h5") ?? archive;
+        const inset =
+          label.getBoundingClientRect().left -
+          grid.getBoundingClientRect().left;
+        document.documentElement.style.setProperty(
+          "--nav-mid-inset",
+          `${Math.max(0, inset)}px`,
+        );
+      } else {
+        document.documentElement.style.removeProperty("--nav-mid-inset");
+      }
     };
 
     setChromeHeight();
@@ -361,11 +392,14 @@ export default function Menu({ initialPathname = "/" }: MenuProps) {
     const lockup = chrome.querySelector(".name_hero_contain");
     if (lockup) chromeRo.observe(lockup);
     document.fonts?.ready?.then(setChromeHeight);
+    window.addEventListener("resize", setChromeHeight);
 
     return () => {
       chromeRo.disconnect();
+      window.removeEventListener("resize", setChromeHeight);
       document.documentElement.style.removeProperty("--hero-chrome-height");
       document.documentElement.style.removeProperty("--hero-chrome-content");
+      document.documentElement.style.removeProperty("--nav-mid-inset");
     };
   }, []);
 
@@ -479,7 +513,6 @@ export default function Menu({ initialPathname = "/" }: MenuProps) {
   const parkOverlayCopy = () => {
     gsap.set(MENU_COPY, { y: "0%", autoAlpha: 1 });
     parkGooey(menuHeads());
-    gsap.set(MENU_FOOTER_COPY, { y: "100%" });
   };
 
   const parkOverlay = () => {
@@ -513,16 +546,6 @@ export default function Menu({ initialPathname = "/" }: MenuProps) {
         ease: "power3.in",
       });
     }
-    tl.to(
-      MENU_FOOTER_COPY,
-      {
-        y: "-100%",
-        duration: 0.7,
-        stagger: { each: 0.1, from: "end" },
-        ease: "power3.in",
-      },
-      "<",
-    );
   };
 
   /** Whatever is currently split — the close runs against the live wrappers. */
@@ -693,7 +716,6 @@ export default function Menu({ initialPathname = "/" }: MenuProps) {
 
     if (prefersReducedMotion()) {
       gsap.set(MENU_COPY, { y: "-100%" });
-      gsap.set(MENU_FOOTER_COPY, { y: "-100%" });
       gsap.set(ABOUT_MEDIA, { autoAlpha: 1 });
       revertAboutCopy();
       focusAboutPanel();
@@ -718,7 +740,6 @@ export default function Menu({ initialPathname = "/" }: MenuProps) {
       gsap.set(ABOUT_MEDIA, { autoAlpha: 0 });
       revertAboutCopy();
       gsap.set(MENU_COPY, { y: "0%", autoAlpha: 1 });
-      gsap.set(MENU_FOOTER_COPY, { y: "0%" });
       setAboutOpen(false);
       return;
     }
@@ -736,7 +757,6 @@ export default function Menu({ initialPathname = "/" }: MenuProps) {
     gsap.set(ABOUT_MEDIA, { autoAlpha: 0 });
     revertAboutCopy();
     gsap.set(MENU_COPY, { y: "0%", autoAlpha: 1 });
-    gsap.set(MENU_FOOTER_COPY, { y: "0%" });
     const heads = menuHeads();
     if (heads.length) settleGooey(heads);
     setAboutOpen(false);
@@ -826,7 +846,7 @@ export default function Menu({ initialPathname = "/" }: MenuProps) {
     resetNavDock();
     if (
       aboutModeRef.current === "inMenu" &&
-      !window.matchMedia("(width >= 64rem)").matches
+      !window.matchMedia(DESKTOP_NAV_MQ).matches
     ) {
       setAboutOpen(false);
     }
@@ -902,7 +922,6 @@ export default function Menu({ initialPathname = "/" }: MenuProps) {
   const unrevealMenuText = (): Promise<void> => {
     if (prefersReducedMotion()) {
       gsap.set(MENU_COPY, { y: "-100%" });
-      gsap.set(MENU_FOOTER_COPY, { y: "-100%" });
       gsap.set(toggleTrackRef.current, { yPercent: 0 });
       return Promise.resolve();
     }
@@ -948,7 +967,6 @@ export default function Menu({ initialPathname = "/" }: MenuProps) {
       pointerEvents: "all",
     });
     gsap.set(MENU_COPY, { y: "0%" });
-    gsap.set(MENU_FOOTER_COPY, { y: "0%" });
     await unrevealMenuText();
     goTo(path, { alreadyCovered: true });
   };
@@ -984,14 +1002,13 @@ export default function Menu({ initialPathname = "/" }: MenuProps) {
     const nav = navContainerRef.current;
     parkOverlayCopy();
     /* No dock translate: `html.menu-open .nav_wrap` pins the bar with
-       `position: fixed` below the pinned wordmark (Menu.css, <64rem). Nudging
+       `position: fixed` below the pinned wordmark (Menu.css, <48rem). Nudging
        it by its own offset as well drove it off the top by the hero's height. */
     if (nav) gsap.set(nav, { clearProps: "transform" });
 
     if (prefersReducedMotion()) {
       gsap.set(overlay, { y: 0, yPercent: 0, pointerEvents: "all" });
       gsap.set(MENU_COPY, { y: "0%" });
-      gsap.set(MENU_FOOTER_COPY, { y: "0%" });
       gsap.set(toggleTrackRef.current, { yPercent: -50 });
       phaseRef.current = "open";
       return;
@@ -1028,16 +1045,6 @@ export default function Menu({ initialPathname = "/" }: MenuProps) {
     );
 
     addGooeyReveal(tl, menuHeads(), "-=0.15");
-    tl.to(
-      MENU_FOOTER_COPY,
-      {
-        y: "0%",
-        duration: 1,
-        stagger: 0.1,
-        ease: "power3.out",
-      },
-      "<",
-    );
   };
 
   const onToggle = () => {
@@ -1059,45 +1066,28 @@ export default function Menu({ initialPathname = "/" }: MenuProps) {
                     that does: CSS applies `filter` before `mask`, so the chain
                     has to sit above the masked lockup. heroIntro arms it. */}
               <div className="name_hero_gooey">
-                {/* On inner pages this lockup is the only logo on screen (the
-                    text wordmark hides below 64rem), so it has to go home.
-                    On home it is not a link — the mark already is the brand. */}
-                {pathname === "/" ? (
-                  <div className="name_hero_home">
-                    <span
-                      className="name_hero_lockup"
-                      role="img"
-                      aria-label="Naman Pratulya"
-                    >
-                      <img
-                        src="/main-assets/name-hero.svg"
-                        alt=""
-                        aria-hidden="true"
-                      />
-                    </span>
-                  </div>
-                ) : (
-                  <a
-                    className="name_hero_home"
-                    href="/"
-                    onClick={(e) => {
-                      e.preventDefault();
-                      goTo("/");
-                    }}
+                {/* The lockup is Home: on inner pages it is the only mark, and
+                    on home it still has to replay the intro / scroll to top. */}
+                <a
+                  className="name_hero_home"
+                  href="/"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    goTo("/");
+                  }}
+                >
+                  <span
+                    className="name_hero_lockup"
+                    role="img"
+                    aria-label="Naman Pratulya"
                   >
-                    <span
-                      className="name_hero_lockup"
-                      role="img"
-                      aria-label="Naman Pratulya"
-                    >
-                      <img
-                        src="/main-assets/name-hero.svg"
-                        alt=""
-                        aria-hidden="true"
-                      />
-                    </span>
-                  </a>
-                )}
+                    <img
+                      src="/main-assets/name-hero.svg"
+                      alt=""
+                      aria-hidden="true"
+                    />
+                  </span>
+                </a>
               </div>
             </div>
           </div>
@@ -1156,7 +1146,7 @@ export default function Menu({ initialPathname = "/" }: MenuProps) {
                             {SOCIAL_LINKS.map(
                               ({ label: socialLabel, href, newTab }) => {
                                 const isMail = href.startsWith("mailto:");
-                                const text = isMail
+                                const line = isMail
                                   ? emailCopy.label
                                   : socialLabel;
                                 return (
@@ -1171,8 +1161,8 @@ export default function Menu({ initialPathname = "/" }: MenuProps) {
                                     {...socialLinkTabProps(newTab)}
                                   >
                                     <h5 className="text-style-main">
-                                      <RollingText key={text}>
-                                        {text}
+                                      <RollingText key={line}>
+                                        {line}
                                       </RollingText>
                                     </h5>
                                   </a>
@@ -1186,14 +1176,14 @@ export default function Menu({ initialPathname = "/" }: MenuProps) {
                     const text =
                       id === "about" && aboutOpen
                         ? "Close"
-                        : id === "work" && workProjectOpen && isDesktopNav
+                        : id === "work" && workProjectOpen
                           ? "Back"
                           : label;
                     return (
                       <a
                         key={path}
                         href={path === "/" ? "/" : path}
-                        className={`nav_link${isActive ? " is-active" : ""}`}
+                        className={`nav_link${id === "hero" ? " nav_home" : ""}${id === "work" ? " nav_work" : ""}${id === "about" ? " nav_about" : ""}${isActive ? " is-active" : ""}`}
                         aria-current={isActive ? "page" : undefined}
                         onClick={(e) => {
                           e.preventDefault();
@@ -1268,7 +1258,7 @@ export default function Menu({ initialPathname = "/" }: MenuProps) {
           </div>
         </div>
       </div>
-      <div className="menu_wrap" ref={menuRef}>
+      <div className="menu_wrap" ref={menuRef} aria-hidden="true" inert>
         <div
           className={`menu_overlay${aboutInMenu ? " is-about-open" : ""}`}
           id="site-menu-overlay"
@@ -1279,53 +1269,53 @@ export default function Menu({ initialPathname = "/" }: MenuProps) {
             ref={menuItemsRef}
             aria-hidden={aboutInMenu}
           >
-            {OVERLAY_LINKS.map(({ label, path }) => (
-              <div className="revealer" key={path} data-overlay-link={path}>
-                <a
-                  href={path}
-                  tabIndex={aboutInMenu ? -1 : undefined}
-                  onClick={(e) => {
-                    if (phaseRef.current === "closed") return;
-                    e.preventDefault();
-                    void navigateTo(path);
-                  }}
-                >
-                  <span className="menu_overlay_title text-style-display">
-                    {label}
-                  </span>
-                </a>
-              </div>
-            ))}
-          </div>
-          <div
-            className="menu_footer"
-            ref={menuFooterColsRef}
-            aria-hidden={aboutInMenu}
-          >
-            <div className="revealer">
-              <p className="text-style-h5">&copy; 2026 All Rights Reserved</p>
+            <div className="revealer menu_overlay_brand">
+              <a
+                href="/"
+                tabIndex={aboutInMenu ? -1 : undefined}
+                onClick={(e) => {
+                  if (phaseRef.current === "closed") return;
+                  e.preventDefault();
+                  void navigateTo("/");
+                }}
+              >
+                <span className="menu_overlay_title text-style-main">
+                  Naman Pratulya
+                </span>
+              </a>
             </div>
-            <div className="menu_socials">
-              {SOCIAL_LINKS.map(({ label, href, newTab }) => {
-                const isMail = href.startsWith("mailto:");
-                const text = isMail ? emailCopy.label : label;
-                return (
-                  <div className="revealer" key={label}>
-                    <a
-                      className="text-style-h5"
-                      href={href}
-                      aria-live={isMail ? "polite" : undefined}
-                      onClick={isMail ? emailCopy.onClick : undefined}
-                      {...socialLinkTabProps(newTab)}
-                    >
-                      {text}
-                    </a>
-                  </div>
-                );
-              })}
-            </div>
-            <div className="revealer">
-              <ThemeToggle />
+            <div className="menu_overlay_grid">
+              {OVERLAY_COLUMNS.map((column, columnIndex) => (
+                <div className="menu_overlay_col" key={columnIndex}>
+                  {column.map((item) =>
+                    isOverlayLink(item) ? (
+                      <div
+                        className="revealer"
+                        key={item.path}
+                        data-overlay-link={item.path}
+                      >
+                        <a
+                          href={item.path}
+                          tabIndex={aboutInMenu ? -1 : undefined}
+                          onClick={(e) => {
+                            if (phaseRef.current === "closed") return;
+                            e.preventDefault();
+                            void navigateTo(item.path);
+                          }}
+                        >
+                          <span className="menu_overlay_title text-style-main">
+                            {item.label}
+                          </span>
+                        </a>
+                      </div>
+                    ) : (
+                      <div className="revealer" key={item.action}>
+                        <ThemeToggle />
+                      </div>
+                    ),
+                  )}
+                </div>
+              ))}
             </div>
           </div>
         </div>

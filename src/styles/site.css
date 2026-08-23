@@ -130,6 +130,20 @@
     --_cols-lg: 12;
   }
 
+  /* The studio sections' row rhythm. It lives here rather than next to the rest
+     of `.studio_layout` in `patterns.css` because `.grid` above sets
+     `grid-row-gap` in this layer, and `components` beats `patterns` outright. */
+  .studio_layout {
+    row-gap: var(--space-8);
+  }
+
+  /* Extra air under the display headline, so only the headline-to-cluster edge
+     opens up while every other row keeps `--space-8`. Net gap there is
+     `--section-space-small`. Shared by Faq and Process. */
+  .studio_statement {
+    margin-bottom: calc(var(--section-space-small) - var(--space-8));
+  }
+
   /* Home scroll composition — one viewport of fluid, then the studio stack.
      The wrap is `position: fixed` on home, so `.hero` takes back the first
      viewport (and the chrome pull-up) the wrap used to occupy in flow. */

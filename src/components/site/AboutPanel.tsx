@@ -247,6 +247,7 @@ export default function AboutPanel({ open, mode, onClose }: AboutPanelProps) {
       return;
     }
 
+    if (window.matchMedia("(width < 48rem)").matches) return;
     if (!shouldMountAboutBust()) return;
 
     const cancel = scheduleAboutBustMount(() => {

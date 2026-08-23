@@ -57,7 +57,7 @@ html.theme-dark .footer_ascii_cursor {
   }
 }
 
-@media (width < 64rem), (prefers-reduced-motion: reduce) {
+@media (prefers-reduced-motion: reduce) {
   .footer_ascii {
     display: none;
   }
