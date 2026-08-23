@@ -48,19 +48,27 @@ const PAGE = {
 
 /* Type ramp ---------------------------------------------------------------- */
 // size / lineHeight / letterSpacing, all in artboard px.
+//
+// `anchor:'cap'` means the y in deck.cjs is the CAP TOP, not the text-box top.
+// Display copy in the reference is outlined vector, so the only y that can be
+// measured off it is the cap top; the renderer converts. Sans and mono copy is
+// live text there, whose span bbox top already lines up with a Figma box top.
+const CAP_RATIO = { Marcellus: 0.70, Arimo: 0.716, 'Courier New': 0.571 };
+
 const TYPE = {
   // display — Marcellus
-  wordmarkTop:  { font: ['Marcellus', 'Regular'], size: pt(53),    lh: pt(56),   ls: pt(23.7) },
-  wordmarkMain: { font: ['Marcellus', 'Regular'], size: pt(65),    lh: pt(68),   ls: pt(5.8)  },
-  locality:     { font: ['Marcellus', 'Regular'], size: pt(21.4),  lh: pt(26),   ls: pt(4.3)  },
-  tagline:      { font: ['Marcellus', 'Regular'], size: pt(19),    lh: pt(26.4), ls: 0 },
-  headline:     { font: ['Marcellus', 'Regular'], size: pt(41.5),  lh: pt(44.2), ls: 0 },
-  headlineSm:   { font: ['Marcellus', 'Regular'], size: pt(35.4),  lh: pt(41.7), ls: 0 },
-  statNumber:   { font: ['Marcellus', 'Regular'], size: pt(44),    lh: pt(46),   ls: 0 },
-  statUnit:     { font: ['Marcellus', 'Regular'], size: pt(26),    lh: pt(30),   ls: 0 },
-  promise:      { font: ['Marcellus', 'Regular'], size: pt(18.4),  lh: pt(22),   ls: 0 },
-  closingLine:  { font: ['Marcellus', 'Regular'], size: pt(23),    lh: pt(27),   ls: 0 },
-  cardTitle:    { font: ['Marcellus', 'Regular'], size: pt(17),    lh: pt(21),   ls: 0 },
+  wordmarkTop:  { font: ['Marcellus', 'Regular'], size: pt(53),    lh: pt(56),   ls: pt(23.7), anchor: 'cap' },
+  wordmarkMain: { font: ['Marcellus', 'Regular'], size: pt(65),    lh: pt(68),   ls: pt(5.8) , anchor: 'cap' },
+  locality:     { font: ['Marcellus', 'Regular'], size: pt(21.4),  lh: pt(26),   ls: pt(4.3) , anchor: 'cap' },
+  tagline:      { font: ['Marcellus', 'Regular'], size: pt(19),    lh: pt(26.4), ls: 0, anchor: 'cap' },
+  headline:     { font: ['Marcellus', 'Regular'], size: pt(41.5),  lh: pt(44.2), ls: 0, anchor: 'cap' },
+  headlineSm:   { font: ['Marcellus', 'Regular'], size: pt(35.4),  lh: pt(41.7), ls: 0, anchor: 'cap' },
+  statNumber:   { font: ['Marcellus', 'Regular'], size: pt(44),    lh: pt(46),   ls: 0, anchor: 'cap' },
+  statUnit:     { font: ['Marcellus', 'Regular'], size: pt(26),    lh: pt(30),   ls: 0, anchor: 'cap' },
+  promise:      { font: ['Marcellus', 'Regular'], size: pt(18.4),  lh: pt(22),   ls: 0, anchor: 'cap' },
+  mosaicDesc:   { font: ['Marcellus', 'Regular'], size: pt(15.4),  lh: pt(18.5), ls: 0, anchor: 'cap' },
+  closingLine:  { font: ['Marcellus', 'Regular'], size: pt(23),    lh: pt(27),   ls: 0, anchor: 'cap' },
+  cardTitle:    { font: ['Marcellus', 'Regular'], size: pt(17),    lh: pt(21),   ls: 0, anchor: 'cap' },
 
   // sans — Arimo. `ls` reproduces the reference's letterspaced caps, which were faked
   // there with literal spaces between characters; here it is real tracking.
@@ -91,4 +99,4 @@ const GAP = {
   blockToClosing:   pt(25.4), // 53
 };
 
-module.exports = { SCALE, pt, hex, COLOR, PAGE, TYPE, GAP };
+module.exports = { SCALE, pt, hex, COLOR, PAGE, TYPE, GAP, CAP_RATIO };

@@ -237,10 +237,10 @@ const PAGES = [
     kicker('THE FIVE PILLARS', 'gold'),
     headline(['BUILT AROUND THE WAY', 'YOU WANT TO LIVE.'], 'cream'),
 
-    { k: 'plate', x: M,     y: 189.3, w: 252.2, h: 214.8, fill: 'panel', img: 'pillar1', cap: ['SCENIC APPROACH ROAD'] },
-    { k: 'plate', x: 304.0, y: 189.3, w: 252.2, h: 197.5, fill: 'panel', img: 'pillar2', cap: ['YOGA · POOL · NATURE'] },
-    { k: 'plate', x: M,     y: 490.0, w: 252.2, h: 195.1, fill: 'panel', img: 'pillar3', cap: ['RESIDENTS · COMMON AREA'] },
-    { k: 'plate', x: 304.0, y: 490.0, w: 252.2, h: 178.4, fill: 'panel', img: 'pillar4', cap: ['OUTDOOR DINING · SPORT'] },
+    { k: 'plate', x: M,     y: 189.3, w: 252.2, h: 214.8, fill: 'panel', img: 'pillar1', cap: ['SCENIC APPROACH ROAD'], capTop: true },
+    { k: 'plate', x: 304.0, y: 189.3, w: 252.2, h: 197.5, fill: 'panel', img: 'pillar2', cap: ['YOGA · POOL · NATURE'], capTop: true },
+    { k: 'plate', x: M,     y: 490.0, w: 252.2, h: 195.1, fill: 'panel', img: 'pillar3', cap: ['RESIDENTS · COMMON AREA'], capTop: true },
+    { k: 'plate', x: 304.0, y: 490.0, w: 252.2, h: 178.4, fill: 'panel', img: 'pillar4', cap: ['OUTDOOR DINING · SPORT'], capTop: true },
 
     { k: 'pillar', x: M,     y: 414, w: 252.2, n: '01', label: 'ACCESSIBILITY',
       promise: 'Escape without disappearing.', support: 'Connected enough to return to regularly.' },

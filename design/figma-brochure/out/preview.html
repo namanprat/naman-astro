@@ -1,0 +1,455 @@
+<title>AART Brochure Rebuild</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Marcellus&family=Arimo:wght@400;700&display=swap">
+<style>
+  :root{
+    --ground:#F2F0E6; --raised:#FFFFFF; --edge:#D9D5C4;
+    --fg:#141A15; --fg-dim:#5C6659; --accent:#005D30; --gold:#9A7526;
+    --shadow:0 1px 2px rgba(8,42,19,.06), 0 12px 32px rgba(8,42,19,.10);
+  }
+  :root:not([data-theme="light"]){ @media (prefers-color-scheme: dark){
+    --ground:#0C1410; --raised:#141E17; --edge:#26332A;
+    --fg:#EDEFE6; --fg-dim:#9AA795; --accent:#5FBF8A; --gold:#E0B257;
+    --shadow:0 1px 2px rgba(0,0,0,.5), 0 18px 44px rgba(0,0,0,.55);
+  }}
+  :root[data-theme="dark"]{
+    --ground:#0C1410; --raised:#141E17; --edge:#26332A;
+    --fg:#EDEFE6; --fg-dim:#9AA795; --accent:#5FBF8A; --gold:#E0B257;
+    --shadow:0 1px 2px rgba(0,0,0,.5), 0 18px 44px rgba(0,0,0,.55);
+  }
+
+  body{ background:var(--ground); color:var(--fg);
+    font-family:'Arimo',Arial,sans-serif; margin:0;
+    padding:clamp(24px,5vw,72px) clamp(16px,4vw,56px); }
+  .wrap{ max-width:1180px; margin:0 auto; display:flex; flex-direction:column; gap:clamp(40px,6vw,72px); }
+
+  header h1{ font-family:'Marcellus',Georgia,serif; font-weight:400;
+    font-size:clamp(34px,5.2vw,58px); line-height:1.06; margin:0 0 14px;
+    text-wrap:balance; letter-spacing:-.01em; }
+  header p{ margin:0; max-width:62ch; color:var(--fg-dim); font-size:16px; line-height:1.65; }
+  .eyebrow{ font-size:12px; font-weight:700; letter-spacing:.18em; text-transform:uppercase;
+    color:var(--accent); margin:0 0 18px; }
+
+  .note{ border-left:2px solid var(--gold); padding:2px 0 2px 18px; margin-top:26px;
+    color:var(--fg-dim); font-size:14.5px; line-height:1.65; max-width:64ch; }
+  .note strong{ color:var(--fg); font-weight:700; }
+
+  h2{ font-family:'Marcellus',Georgia,serif; font-weight:400; font-size:26px;
+    margin:0 0 4px; letter-spacing:.005em; }
+  .sub{ color:var(--fg-dim); font-size:14px; margin:0 0 22px; }
+
+  .swatches{ display:grid; grid-template-columns:repeat(auto-fit,minmax(150px,1fr)); gap:12px; }
+  .swatch{ display:flex; align-items:center; gap:10px; background:var(--raised);
+    border:1px solid var(--edge); border-radius:2px; padding:10px 12px; }
+  .chip{ width:26px; height:26px; border-radius:1px; flex:none;
+    box-shadow:inset 0 0 0 1px rgba(0,0,0,.14); }
+  .cname{ font-size:13.5px; font-weight:700; }
+  .chex{ font-size:12px; color:var(--fg-dim); margin-left:auto;
+    font-family:'Courier New',monospace; }
+
+  .tablewrap{ overflow-x:auto; border:1px solid var(--edge); border-radius:2px; background:var(--raised); }
+  table{ border-collapse:collapse; width:100%; min-width:560px; font-size:13.5px; }
+  th,td{ text-align:left; padding:9px 14px; border-bottom:1px solid var(--edge); }
+  th{ font-size:11px; letter-spacing:.13em; text-transform:uppercase; color:var(--fg-dim); font-weight:700; }
+  tr:last-child td{ border-bottom:0; }
+  .mono{ font-family:'Courier New',monospace; }
+  .num{ text-align:right; font-variant-numeric:tabular-nums; }
+
+  .spreads{ display:flex; flex-direction:column; gap:clamp(32px,4.5vw,56px); }
+  .spread{ margin:0; }
+  figcaption{ display:flex; align-items:baseline; gap:12px; margin-bottom:12px;
+    padding-bottom:9px; border-bottom:1px solid var(--edge); }
+  .folio{ font-family:'Courier New',monospace; font-size:13px; color:var(--gold); }
+  .sname{ font-family:'Marcellus',Georgia,serif; font-size:19px; }
+  .sground{ margin-left:auto; font-size:11px; letter-spacing:.13em;
+    text-transform:uppercase; color:var(--fg-dim); }
+
+  /* Artboard is authored at true 1240x1754 and scaled down, so every measured
+     value stays literal and the proof cannot drift from the Figma output. */
+  .stage{ width:100%; aspect-ratio:1240/1754; position:relative; overflow:hidden;
+    box-shadow:var(--shadow); border-radius:1px; }
+  .artboard{ position:absolute; top:0; left:0; width:1240px; height:1754px;
+    transform-origin:top left; overflow:hidden; }
+
+  @media (min-width:900px){
+    .spreads{ display:grid; grid-template-columns:1fr 1fr; gap:44px 40px; }
+  }
+</style>
+
+<div class="wrap">
+  <header>
+    <p class="eyebrow">Measured from AART_BROCHURE.pdf</p>
+    <h1>Estate Brochure&nbsp;— rebuild proof</h1>
+    <p>All ten spreads, drawn from the same spec file the Figma build scripts read.
+       Geometry, type and colour come straight out of the reference PDF at
+       1&nbsp;pt&nbsp;=&nbsp;2.0833&nbsp;px against a 1240&nbsp;×&nbsp;1754 artboard.
+       Check anything that looks off here before it costs a Figma call.</p>
+    <p class="note"><strong>Plates show placeholders.</strong> In Figma each one resolves
+       to photography already in the file; slots with no photo keep the flat plate and its
+       caption, exactly as drawn here.</p>
+  </header>
+
+  <section>
+    <h2>Palette</h2>
+    <p class="sub">Three of the six already exist as Figma variables and match the reference exactly.</p>
+    <div class="swatches">
+  <div class="swatch">
+    <span class="chip" style="background:#082A13"></span>
+    <span class="cname">ink</span>
+    <span class="chex">#082A13</span>
+  </div>
+  <div class="swatch">
+    <span class="chip" style="background:#0B3319"></span>
+    <span class="cname">panel</span>
+    <span class="chex">#0B3319</span>
+  </div>
+  <div class="swatch">
+    <span class="chip" style="background:#FFFBE9"></span>
+    <span class="cname">cream</span>
+    <span class="chex">#FFFBE9</span>
+  </div>
+  <div class="swatch">
+    <span class="chip" style="background:#EFE9D2"></span>
+    <span class="cname">sand</span>
+    <span class="chex">#EFE9D2</span>
+  </div>
+  <div class="swatch">
+    <span class="chip" style="background:#005D30"></span>
+    <span class="cname">green</span>
+    <span class="chex">#005D30</span>
+  </div>
+  <div class="swatch">
+    <span class="chip" style="background:#E0B257"></span>
+    <span class="cname">gold</span>
+    <span class="chex">#E0B257</span>
+  </div></div>
+  </section>
+
+  <section>
+    <h2>Type ramp</h2>
+    <p class="sub">Reference sizes in points, artboard sizes in pixels. Tracking reproduces the reference's letterspaced caps as real tracking rather than literal spaces.</p>
+    <div class="tablewrap">
+      <table>
+        <thead><tr><th>Role</th><th>Face</th><th class="num">Reference</th><th class="num">Size</th><th class="num">Leading</th><th class="num">Track</th></tr></thead>
+        <tbody>
+  <tr>
+    <td>Headline</td>
+    <td class="mono">Marcellus</td>
+    <td class="mono num">41.5 pt</td>
+    <td class="mono num">86 px</td>
+    <td class="mono num">92 px</td>
+    <td class="mono num">0.0</td>
+  </tr>
+  <tr>
+    <td>Cover wordmark</td>
+    <td class="mono">Marcellus</td>
+    <td class="mono num">65 pt</td>
+    <td class="mono num">135 px</td>
+    <td class="mono num">142 px</td>
+    <td class="mono num">12.1</td>
+  </tr>
+  <tr>
+    <td>Closing line</td>
+    <td class="mono">Marcellus</td>
+    <td class="mono num">23 pt</td>
+    <td class="mono num">48 px</td>
+    <td class="mono num">56 px</td>
+    <td class="mono num">0.0</td>
+  </tr>
+  <tr>
+    <td>Section kicker</td>
+    <td class="mono">Arimo Bold</td>
+    <td class="mono num">9.59 pt</td>
+    <td class="mono num">20 px</td>
+    <td class="mono num">27 px</td>
+    <td class="mono num">6.9</td>
+  </tr>
+  <tr>
+    <td>Lead body</td>
+    <td class="mono">Arimo</td>
+    <td class="mono num">13.9 pt</td>
+    <td class="mono num">29 px</td>
+    <td class="mono num">47 px</td>
+    <td class="mono num">0.2</td>
+  </tr>
+  <tr>
+    <td>Body</td>
+    <td class="mono">Arimo</td>
+    <td class="mono num">12.47 pt</td>
+    <td class="mono num">26 px</td>
+    <td class="mono num">41 px</td>
+    <td class="mono num">0.2</td>
+  </tr>
+  <tr>
+    <td>Plate caption</td>
+    <td class="mono">Courier New</td>
+    <td class="mono num">7.19 pt</td>
+    <td class="mono num">15 px</td>
+    <td class="mono num">20 px</td>
+    <td class="mono num">1.0</td>
+  </tr></tbody>
+      </table>
+    </div>
+  </section>
+
+  <section>
+    <h2>Spreads</h2>
+    <p class="sub">Rendered at true proportion.</p>
+    <div class="spreads">
+<figure class="spread">
+  <figcaption>
+    <span class="folio">01</span>
+    <span class="sname">Cover</span>
+    <span class="sground">dark ground</span>
+  </figcaption>
+  <div class="stage"><div class="artboard" style="background:#082A13"><div style="position:absolute;left:0px;top:0px;width:1238.33px;height:1217.3px;overflow:hidden;background:#0B3319"><div style="position:absolute;left:27.91px;right:27.91px;top:50%;transform:translateY(-50%);text-align:center;font-family:'Courier New', 'Roboto Mono', ui-monospace, monospace;font-weight:400;font-size:14.98px;line-height:20.41px;letter-spacing:1.04px;color:rgba(255,251,233,0.45);white-space:pre-wrap">HERO IMAGE
+ESTATE · FOREST · RIVER · HILLS</div></div>
+<div style="position:absolute;left:517.2px;top:74.99px;width:204.13px;height:62.49px;display:flex;align-items:center;justify-content:center;font-family:'Arimo', Arial, Helvetica, sans-serif;font-weight:700;font-size:18.98px;line-height:25.00px;letter-spacing:6.46px;color:rgba(255,251,233,0.55)">AART GROUP</div>
+<div style="position:absolute;left:79.99px;top:1067.53px;width:1078.57px;font-family:'Arimo', Arial, Helvetica, sans-serif;font-weight:700;font-size:19.98px;line-height:27.08px;letter-spacing:6.87px;color:#E0B257;text-align:center;white-space:pre-wrap">AART GROUP PRESENTS</div>
+<div style="position:absolute;left:79.99px;top:1107.21px;width:1078.57px;font-family:'Marcellus', 'Cormorant Garamond', Georgia, serif;font-weight:400;font-size:110.40px;line-height:116.65px;letter-spacing:49.37px;color:#FFFBE9;text-align:center;white-space:pre-wrap">AART</div>
+<div style="position:absolute;left:79.99px;top:1199.28px;width:1078.57px;font-family:'Marcellus', 'Cormorant Garamond', Georgia, serif;font-weight:400;font-size:135.39px;line-height:141.64px;letter-spacing:12.08px;color:#FFFBE9;text-align:center;white-space:pre-wrap">ESTATE</div>
+<div style="position:absolute;left:308.28px;top:1356.02px;width:620.73px;height:5.42px;background:#FFFBE9"></div>
+<div style="position:absolute;left:79.99px;top:1384.12px;width:1078.57px;font-family:'Marcellus', 'Cormorant Garamond', Georgia, serif;font-weight:400;font-size:44.58px;line-height:54.16px;letter-spacing:8.96px;color:#FFFBE9;text-align:center;white-space:pre-wrap">SHAKUMBHARI HILLS</div>
+<div style="position:absolute;left:571.36px;top:1511px;width:95.82px;height:1.04px;background:#E0B257"></div>
+<div style="position:absolute;left:79.99px;top:1534.02px;width:1078.57px;font-family:'Marcellus', 'Cormorant Garamond', Georgia, serif;font-weight:400;font-size:39.58px;line-height:54.99px;letter-spacing:0.00px;color:#FFFBE9;text-align:center;white-space:pre-wrap">We don’t sell square feet.
+We curate the hours you can’t get anywhere else.</div></div></div>
+</figure>
+
+<figure class="spread">
+  <figcaption>
+    <span class="folio">02</span>
+    <span class="sname">The Positioning</span>
+    <span class="sground">dark ground</span>
+  </figcaption>
+  <div class="stage"><div class="artboard" style="background:#082A13"><div style="position:absolute;left:0px;top:0px;width:1238.33px;height:820.9px;overflow:hidden;background:#0B3319"><div style="position:absolute;left:27.91px;right:27.91px;top:50%;transform:translateY(-50%);text-align:center;font-family:'Courier New', 'Roboto Mono', ui-monospace, monospace;font-weight:400;font-size:14.98px;line-height:20.41px;letter-spacing:1.04px;color:rgba(255,251,233,0.45);white-space:pre-wrap">AERIAL LANDSCAPE
+WHERE THE PLAINS MEET THE HILLS</div></div>
+<div style="position:absolute;left:79.99px;top:89.57px;width:1078.57px;font-family:'Arimo', Arial, Helvetica, sans-serif;font-weight:700;font-size:19.98px;line-height:27.08px;letter-spacing:6.87px;color:#E0B257;text-align:left;white-space:pre-wrap">THE POSITIONING</div>
+<div style="position:absolute;left:79.99px;top:979.89px;width:1078.57px;font-family:'Marcellus', 'Cormorant Garamond', Georgia, serif;font-weight:400;font-size:86.44px;line-height:92.07px;letter-spacing:0.00px;color:#FFFBE9;text-align:left;white-space:pre-wrap">WHERE THE HILLS BEGIN,
+LIFE CHANGES PACE.</div>
+<div style="position:absolute;left:79.99px;top:1243.54px;width:861.31px;font-family:'Arimo', Arial, Helvetica, sans-serif;font-weight:400;font-size:28.95px;line-height:46.87px;letter-spacing:0.21px;color:#FFFBE9;text-align:left;white-space:pre-wrap">A private hillside in the Shivaliks where the home is yours to shape, the days are centered around you, and the home looked after for you so the place you bought for the next generation is still worth handing over.</div>
+<div style="position:absolute;left:79.99px;top:1653.47px;width:1078.57px;font-family:'Arimo', Arial, Helvetica, sans-serif;font-weight:700;font-size:16.98px;line-height:22.91px;letter-spacing:5.83px;color:rgba(255,251,233,0.55);text-align:left;white-space:pre-wrap">AART ESTATE</div>
+<div style="position:absolute;left:79.99px;top:1653.47px;width:1078.57px;font-family:'Arimo', Arial, Helvetica, sans-serif;font-weight:700;font-size:16.98px;line-height:22.91px;letter-spacing:5.83px;color:#FFFBE9;text-align:right;white-space:pre-wrap">02</div></div></div>
+</figure>
+
+<figure class="spread">
+  <figcaption>
+    <span class="folio">03</span>
+    <span class="sname">Life at AART Estate</span>
+    <span class="sground">cream ground</span>
+  </figcaption>
+  <div class="stage"><div class="artboard" style="background:#FFFBE9"><div style="position:absolute;left:79.99px;top:89.57px;width:1078.57px;font-family:'Arimo', Arial, Helvetica, sans-serif;font-weight:700;font-size:19.98px;line-height:27.08px;letter-spacing:6.87px;color:#005D30;text-align:left;white-space:pre-wrap">LIFE AT AART ESTATE</div>
+<div style="position:absolute;left:79.99px;top:145.86px;width:1078.57px;font-family:'Marcellus', 'Cormorant Garamond', Georgia, serif;font-weight:400;font-size:86.44px;line-height:92.07px;letter-spacing:0.00px;color:#082A13;text-align:left;white-space:pre-wrap">LIFE HERE IS MADE
+OF MOMENTS.</div>
+<div style="position:absolute;left:79.99px;top:387.43px;width:418.47px;height:819.86px;overflow:hidden;background:#EFE9D2"><div style="position:absolute;left:27.91px;right:27.91px;top:27.91px;text-align:left;font-family:'Courier New', 'Roboto Mono', ui-monospace, monospace;font-weight:400;font-size:14.98px;line-height:20.41px;letter-spacing:1.04px;color:rgba(8,42,19,0.45);white-space:pre-wrap">TREKKING · HILL TRAILS</div><div style="position:absolute;left:27.91px;right:27.91px;bottom:27.91px;display:flex;flex-direction:column;gap:8.33px"><div style="font-family:'Arimo', Arial, Helvetica, sans-serif;font-weight:700;font-size:18.98px;line-height:25.00px;letter-spacing:6.46px;color:#005D30">INTO THE HILLS</div><div style="font-family:'Marcellus', 'Cormorant Garamond', Georgia, serif;font-weight:400;font-size:32.08px;line-height:38.54px;letter-spacing:0.00px;color:#082A13">Trekking. Horse riding. Nature trails.</div></div></div>
+<div style="position:absolute;left:518.25px;top:387.43px;width:640.1px;height:444.51px;overflow:hidden;background:#EFE9D2"><div style="position:absolute;left:27.91px;right:27.91px;top:50%;transform:translateY(-50%);text-align:center;font-family:'Courier New', 'Roboto Mono', ui-monospace, monospace;font-weight:400;font-size:14.98px;line-height:20.41px;letter-spacing:1.04px;color:rgba(8,42,19,0.45);white-space:pre-wrap">HORSE RIDING · FOREST TRAIL</div></div>
+<div style="position:absolute;left:518.25px;top:851.73px;width:310.57px;height:355.57px;overflow:hidden;background:#082A13"><div style="position:absolute;left:27.91px;right:27.91px;bottom:27.91px;display:flex;flex-direction:column;gap:8.33px"><div style="font-family:'Arimo', Arial, Helvetica, sans-serif;font-weight:700;font-size:18.98px;line-height:25.00px;letter-spacing:6.46px;color:#E0B257">CLOSER TO YOURSELF</div><div style="font-family:'Marcellus', 'Cormorant Garamond', Georgia, serif;font-weight:400;font-size:32.08px;line-height:38.54px;letter-spacing:0.00px;color:#FFFBE9">Quiet mornings. Reflection. Spiritual connection.</div></div></div>
+<div style="position:absolute;left:849.02px;top:851.73px;width:309.53px;height:355.57px;overflow:hidden;background:#EFE9D2"><div style="position:absolute;left:27.91px;right:27.91px;top:50%;transform:translateY(-50%);text-align:center;font-family:'Courier New', 'Roboto Mono', ui-monospace, monospace;font-weight:400;font-size:14.98px;line-height:20.41px;letter-spacing:1.04px;color:rgba(8,42,19,0.45);white-space:pre-wrap">SHAKUMBHARI DEVI ·
+REFLECTION</div></div>
+<div style="position:absolute;left:79.99px;top:1227.29px;width:418.47px;height:355.57px;overflow:hidden;background:#005D30"><div style="position:absolute;left:27.91px;right:27.91px;bottom:27.91px;display:flex;flex-direction:column;gap:8.33px"><div style="font-family:'Arimo', Arial, Helvetica, sans-serif;font-weight:700;font-size:18.98px;line-height:25.00px;letter-spacing:6.46px;color:#E0B257">WELLNESS, CURATED</div><div style="font-family:'Marcellus', 'Cormorant Garamond', Georgia, serif;font-weight:400;font-size:32.08px;line-height:38.54px;letter-spacing:0.00px;color:#FFFBE9">Yoga. Movement. Mindfulness.</div></div></div>
+<div style="position:absolute;left:518.25px;top:1227.29px;width:310.57px;height:355.57px;overflow:hidden;background:#EFE9D2"><div style="position:absolute;left:27.91px;right:27.91px;top:27.91px;text-align:left;font-family:'Courier New', 'Roboto Mono', ui-monospace, monospace;font-weight:400;font-size:14.98px;line-height:20.41px;letter-spacing:1.04px;color:rgba(8,42,19,0.45);white-space:pre-wrap">SPORT · POOL · TENNIS</div><div style="position:absolute;left:27.91px;right:27.91px;bottom:27.91px;display:flex;flex-direction:column;gap:8.33px"><div style="font-family:'Arimo', Arial, Helvetica, sans-serif;font-weight:700;font-size:18.98px;line-height:25.00px;letter-spacing:6.46px;color:#005D30">DAYS SPENT TOGETHER</div><div style="font-family:'Marcellus', 'Cormorant Garamond', Georgia, serif;font-weight:400;font-size:32.08px;line-height:38.54px;letter-spacing:0.00px;color:#082A13">Swimming. Badminton. Clubhouse life.</div></div></div>
+<div style="position:absolute;left:849.02px;top:1227.29px;width:309.53px;height:355.57px;overflow:hidden;background:#EFE9D2"><div style="position:absolute;left:27.91px;right:27.91px;top:27.91px;text-align:left;font-family:'Courier New', 'Roboto Mono', ui-monospace, monospace;font-weight:400;font-size:14.98px;line-height:20.41px;letter-spacing:1.04px;color:rgba(8,42,19,0.45);white-space:pre-wrap">FAMILY · VERANDAH</div><div style="position:absolute;left:27.91px;right:27.91px;bottom:27.91px;display:flex;flex-direction:column;gap:8.33px"><div style="font-family:'Arimo', Arial, Helvetica, sans-serif;font-weight:700;font-size:18.98px;line-height:25.00px;letter-spacing:6.46px;color:#005D30">THE MOMENTS IN BETWEEN</div><div style="font-family:'Marcellus', 'Cormorant Garamond', Georgia, serif;font-weight:400;font-size:32.08px;line-height:38.54px;letter-spacing:0.00px;color:#082A13">Family time. Slow evenings.</div></div></div>
+<div style="position:absolute;left:79.99px;top:1613.38px;width:1078.57px;font-family:'Marcellus', 'Cormorant Garamond', Georgia, serif;font-weight:400;font-size:47.91px;line-height:56.24px;letter-spacing:0.00px;color:#082A13;text-align:left;white-space:pre-wrap">This is life with more room in it.</div>
+<div style="position:absolute;left:79.99px;top:1654.31px;width:1078.57px;font-family:'Arimo', Arial, Helvetica, sans-serif;font-weight:700;font-size:16.98px;line-height:22.91px;letter-spacing:5.83px;color:#082A13;text-align:right;white-space:pre-wrap">03</div></div></div>
+</figure>
+
+<figure class="spread">
+  <figcaption>
+    <span class="folio">04</span>
+    <span class="sname">The Homes</span>
+    <span class="sground">cream ground</span>
+  </figcaption>
+  <div class="stage"><div class="artboard" style="background:#FFFBE9"><div style="position:absolute;left:79.99px;top:89.57px;width:1078.57px;font-family:'Arimo', Arial, Helvetica, sans-serif;font-weight:700;font-size:19.98px;line-height:27.08px;letter-spacing:6.87px;color:#005D30;text-align:left;white-space:pre-wrap">THE HOMES</div>
+<div style="position:absolute;left:79.99px;top:145.86px;width:1078.57px;font-family:'Marcellus', 'Cormorant Garamond', Georgia, serif;font-weight:400;font-size:86.44px;line-height:92.07px;letter-spacing:0.00px;color:#082A13;text-align:left;white-space:pre-wrap">ONE VISION. TWO WAYS
+TO MAKE IT YOURS.</div>
+<div style="position:absolute;left:79.99px;top:404.31px;width:521.37px;height:902.76px;overflow:hidden;background:#EFE9D2"><div style="position:absolute;left:27.91px;right:27.91px;top:50%;transform:translateY(-50%);text-align:center;font-family:'Courier New', 'Roboto Mono', ui-monospace, monospace;font-weight:400;font-size:14.98px;line-height:20.41px;letter-spacing:1.04px;color:rgba(8,42,19,0.45);white-space:pre-wrap">VILLA RENDER
+ESTATE DESIGN LANGUAGE</div></div>
+<div style="position:absolute;left:637.18px;top:404.31px;width:521.37px;height:902.76px;overflow:hidden;background:#082A13"><div style="position:absolute;left:27.91px;right:27.91px;top:50%;transform:translateY(-50%);text-align:center;font-family:'Courier New', 'Roboto Mono', ui-monospace, monospace;font-weight:400;font-size:14.98px;line-height:20.41px;letter-spacing:1.04px;color:rgba(255,251,233,0.45);white-space:pre-wrap">DRAWINGS · MATERIALS
+CUSTOM VILLA CONCEPT</div></div>
+<div style="position:absolute;left:79.99px;top:1341.44px;width:521.37px;height:1.04px;background:rgba(8,42,19,0.25)"></div>
+<div style="position:absolute;left:637.18px;top:1341.44px;width:521.37px;height:1.04px;background:rgba(8,42,19,0.25)"></div>
+<div style="position:absolute;left:79.99px;top:1348.84px;width:521.37px;font-family:'Marcellus', 'Cormorant Garamond', Georgia, serif;font-weight:400;font-size:47.91px;line-height:56.24px;letter-spacing:0.00px;color:#082A13;text-align:left;white-space:pre-wrap">Pre-designed villas</div>
+<div style="position:absolute;left:637.18px;top:1348.84px;width:521.37px;font-family:'Marcellus', 'Cormorant Garamond', Georgia, serif;font-weight:400;font-size:47.91px;line-height:56.24px;letter-spacing:0.00px;color:#082A13;text-align:left;white-space:pre-wrap">Design your own</div>
+<div style="position:absolute;left:79.99px;top:1441.42px;width:489.5px;font-family:'Arimo', Arial, Helvetica, sans-serif;font-weight:400;font-size:25.97px;line-height:40.83px;letter-spacing:0.21px;color:#082A13;text-align:left;white-space:pre-wrap">Homes created within the AART Estate design language — ready to choose, personalise and make your own.</div>
+<div style="position:absolute;left:637.18px;top:1441.42px;width:521.37px;font-family:'Arimo', Arial, Helvetica, sans-serif;font-weight:400;font-size:25.97px;line-height:40.83px;letter-spacing:0.21px;color:#082A13;text-align:left;white-space:pre-wrap">Shape your villa and interiors around the way you live, within architectural guidelines that preserve the character of the estate.</div>
+<div style="position:absolute;left:79.99px;top:1613.38px;width:1078.57px;font-family:'Marcellus', 'Cormorant Garamond', Georgia, serif;font-weight:400;font-size:47.91px;line-height:56.24px;letter-spacing:0.00px;color:#005D30;text-align:left;white-space:pre-wrap">Different homes. One unmistakable estate.</div>
+<div style="position:absolute;left:79.99px;top:1654.31px;width:1078.57px;font-family:'Arimo', Arial, Helvetica, sans-serif;font-weight:700;font-size:16.98px;line-height:22.91px;letter-spacing:5.83px;color:#082A13;text-align:right;white-space:pre-wrap">04</div></div></div>
+</figure>
+
+<figure class="spread">
+  <figcaption>
+    <span class="folio">05</span>
+    <span class="sname">The Design Language</span>
+    <span class="sground">dark ground</span>
+  </figcaption>
+  <div class="stage"><div class="artboard" style="background:#082A13"><div style="position:absolute;left:79.99px;top:89.57px;width:1078.57px;font-family:'Arimo', Arial, Helvetica, sans-serif;font-weight:700;font-size:19.98px;line-height:27.08px;letter-spacing:6.87px;color:#E0B257;text-align:left;white-space:pre-wrap">THE DESIGN LANGUAGE</div>
+<div style="position:absolute;left:79.99px;top:145.86px;width:1078.57px;font-family:'Marcellus', 'Cormorant Garamond', Georgia, serif;font-weight:400;font-size:86.44px;line-height:92.07px;letter-spacing:0.00px;color:#FFFBE9;text-align:left;white-space:pre-wrap">FREEDOM INSIDE
+GUIDELINES.</div>
+<div style="position:absolute;left:79.99px;top:345.78px;width:874.85px;font-family:'Arimo', Arial, Helvetica, sans-serif;font-weight:400;font-size:26.97px;line-height:43.12px;letter-spacing:0.21px;color:#FFFBE9;text-align:left;white-space:pre-wrap">Owners shape their own homes, while an estate-wide design language keeps the whole community visually coherent and premium.</div>
+<div style="position:absolute;left:79.99px;top:504.29px;width:343.48px;height:544.28px;overflow:hidden;background:#0B3319"><div style="position:absolute;left:27.91px;right:27.91px;top:27.91px;text-align:left;font-family:'Courier New', 'Roboto Mono', ui-monospace, monospace;font-weight:400;font-size:14.98px;line-height:20.41px;letter-spacing:1.04px;color:rgba(255,251,233,0.45);white-space:pre-wrap">PLACEHOLDER</div><div style="position:absolute;left:27.91px;right:27.91px;bottom:27.91px;font-family:'Marcellus', 'Cormorant Garamond', Georgia, serif;font-weight:400;font-size:35.41px;line-height:43.74px;letter-spacing:0.00px;color:#FFFBE9">Villa architecture</div></div>
+<div style="position:absolute;left:447.42px;top:504.29px;width:343.48px;height:544.28px;overflow:hidden;background:#0B3319"><div style="position:absolute;left:27.91px;right:27.91px;top:27.91px;text-align:left;font-family:'Courier New', 'Roboto Mono', ui-monospace, monospace;font-weight:400;font-size:14.98px;line-height:20.41px;letter-spacing:1.04px;color:rgba(255,251,233,0.45);white-space:pre-wrap">PLACEHOLDER</div><div style="position:absolute;left:27.91px;right:27.91px;bottom:27.91px;font-family:'Marcellus', 'Cormorant Garamond', Georgia, serif;font-weight:400;font-size:35.41px;line-height:43.74px;letter-spacing:0.00px;color:#FFFBE9">Villa interiors</div></div>
+<div style="position:absolute;left:815.07px;top:504.29px;width:343.48px;height:544.28px;overflow:hidden;background:#0B3319"><div style="position:absolute;left:27.91px;right:27.91px;top:27.91px;text-align:left;font-family:'Courier New', 'Roboto Mono', ui-monospace, monospace;font-weight:400;font-size:14.98px;line-height:20.41px;letter-spacing:1.04px;color:rgba(255,251,233,0.45);white-space:pre-wrap">PLACEHOLDER</div><div style="position:absolute;left:27.91px;right:27.91px;bottom:27.91px;font-family:'Marcellus', 'Cormorant Garamond', Georgia, serif;font-weight:400;font-size:35.41px;line-height:43.74px;letter-spacing:0.00px;color:#FFFBE9">Landscape &amp; gardens</div></div>
+<div style="position:absolute;left:79.99px;top:1072.53px;width:343.48px;height:545.33px;overflow:hidden;background:#0B3319"><div style="position:absolute;left:27.91px;right:27.91px;top:27.91px;text-align:left;font-family:'Courier New', 'Roboto Mono', ui-monospace, monospace;font-weight:400;font-size:14.98px;line-height:20.41px;letter-spacing:1.04px;color:rgba(255,251,233,0.45);white-space:pre-wrap">PLACEHOLDER</div><div style="position:absolute;left:27.91px;right:27.91px;bottom:27.91px;font-family:'Marcellus', 'Cormorant Garamond', Georgia, serif;font-weight:400;font-size:35.41px;line-height:43.74px;letter-spacing:0.00px;color:#FFFBE9">Clubhouse architecture</div></div>
+<div style="position:absolute;left:447.42px;top:1072.53px;width:711.13px;height:545.33px;overflow:hidden;background:#005D30"><div style="position:absolute;left:27.91px;right:27.91px;top:27.91px;text-align:left;font-family:'Courier New', 'Roboto Mono', ui-monospace, monospace;font-weight:400;font-size:14.98px;line-height:20.41px;letter-spacing:1.04px;color:rgba(255,251,233,0.45);white-space:pre-wrap">MATERIAL &amp; PALETTE BOARD</div><div style="position:absolute;left:27.91px;right:27.91px;bottom:27.91px;font-family:'Marcellus', 'Cormorant Garamond', Georgia, serif;font-weight:400;font-size:35.41px;line-height:43.74px;letter-spacing:0.00px;color:#FFFBE9">Estate-wide material and visual language</div></div>
+<div style="position:absolute;left:79.99px;top:1661.39px;width:1078.57px;font-family:'Arimo', Arial, Helvetica, sans-serif;font-weight:700;font-size:16.98px;line-height:22.91px;letter-spacing:5.83px;color:rgba(255,251,233,0.55);text-align:left;white-space:pre-wrap">AART ESTATE</div>
+<div style="position:absolute;left:79.99px;top:1661.39px;width:1078.57px;font-family:'Arimo', Arial, Helvetica, sans-serif;font-weight:700;font-size:16.98px;line-height:22.91px;letter-spacing:5.83px;color:#FFFBE9;text-align:right;white-space:pre-wrap">05</div></div></div>
+</figure>
+
+<figure class="spread">
+  <figcaption>
+    <span class="folio">06</span>
+    <span class="sname">Location &amp; Access</span>
+    <span class="sground">cream ground</span>
+  </figcaption>
+  <div class="stage"><div class="artboard" style="background:#FFFBE9"><div style="position:absolute;left:79.99px;top:89.57px;width:1078.57px;font-family:'Arimo', Arial, Helvetica, sans-serif;font-weight:700;font-size:19.98px;line-height:27.08px;letter-spacing:6.87px;color:#005D30;text-align:left;white-space:pre-wrap">LOCATION &amp; ACCESS</div>
+<div style="position:absolute;left:79.99px;top:145.86px;width:1078.57px;font-family:'Marcellus', 'Cormorant Garamond', Georgia, serif;font-weight:400;font-size:86.44px;line-height:92.07px;letter-spacing:0.00px;color:#082A13;text-align:left;white-space:pre-wrap">CLOSE ENOUGH TO USE.
+FAR ENOUGH TO FEEL
+DIFFERENT.</div>
+<div style="position:absolute;left:79.99px;top:426.08px;width:1078.57px;font-family:'Marcellus', 'Cormorant Garamond', Georgia, serif;font-weight:400;font-size:47.91px;line-height:56.24px;letter-spacing:0.00px;color:#005D30;text-align:left;white-space:pre-wrap">The hills are no longer only for holidays.</div>
+<div style="position:absolute;left:79.99px;top:536.16px;width:557.2px;height:714.05px;overflow:hidden;background:#EFE9D2"><div style="position:absolute;left:27.91px;right:27.91px;top:50%;transform:translateY(-50%);text-align:center;font-family:'Courier New', 'Roboto Mono', ui-monospace, monospace;font-weight:400;font-size:14.98px;line-height:20.41px;letter-spacing:1.04px;color:rgba(8,42,19,0.45);white-space:pre-wrap">REGIONAL MAP
+DELHI · SAHARANPUR · DEHRADUN</div></div>
+<div style="position:absolute;left:673.64px;top:535.95px;width:484.92px;font-family:'Arimo', Arial, Helvetica, sans-serif;font-weight:700;font-size:18.98px;line-height:25.00px;letter-spacing:6.46px;color:#005D30;text-align:left;white-space:pre-wrap">THE LOCATION</div>
+<div style="position:absolute;left:673.64px;top:585.32px;width:484.92px"><div style="position:absolute;top:72.95px;left:0;width:100%;height:1px;background:rgba(8,42,19,0.18)"></div><div style="position:absolute;top:12.5px;left:0;font-family:'Arimo', Arial, Helvetica, sans-serif;font-weight:400;font-size:25.97px;line-height:40.83px;letter-spacing:0.21px;color:#082A13">Behat</div><div style="position:absolute;top:0px;right:0;text-align:right;font-family:'Marcellus', 'Cormorant Garamond', Georgia, serif;font-weight:400;font-size:33.58px;line-height:38.74px;letter-spacing:0.00px;color:#082A13">16 km</div><div style="position:absolute;top:146.9px;left:0;width:100%;height:1px;background:rgba(8,42,19,0.18)"></div><div style="position:absolute;top:86.45px;left:0;font-family:'Arimo', Arial, Helvetica, sans-serif;font-weight:400;font-size:25.97px;line-height:40.83px;letter-spacing:0.21px;color:#082A13">Saharanpur City &amp; Railhead</div><div style="position:absolute;top:73.95px;right:0;text-align:right;font-family:'Marcellus', 'Cormorant Garamond', Georgia, serif;font-weight:400;font-size:33.58px;line-height:38.74px;letter-spacing:0.00px;color:#082A13">40 km</div><div style="position:absolute;top:220.83999999999997px;left:0;width:100%;height:1px;background:rgba(8,42,19,0.18)"></div><div style="position:absolute;top:160.39px;left:0;font-family:'Arimo', Arial, Helvetica, sans-serif;font-weight:400;font-size:25.97px;line-height:40.83px;letter-spacing:0.21px;color:#082A13">Dehradun</div><div style="position:absolute;top:147.89px;right:0;text-align:right;font-family:'Marcellus', 'Cormorant Garamond', Georgia, serif;font-weight:400;font-size:33.58px;line-height:38.74px;letter-spacing:0.00px;color:#082A13">70 km</div><div style="position:absolute;top:294.79px;left:0;width:100%;height:1px;background:rgba(8,42,19,0.18)"></div><div style="position:absolute;top:234.34px;left:0;font-family:'Arimo', Arial, Helvetica, sans-serif;font-weight:400;font-size:25.97px;line-height:40.83px;letter-spacing:0.21px;color:#082A13">Jolly Grant Airport</div><div style="position:absolute;top:221.84px;right:0;text-align:right;font-family:'Marcellus', 'Cormorant Garamond', Georgia, serif;font-weight:400;font-size:33.58px;line-height:38.74px;letter-spacing:0.00px;color:#082A13">95 km</div><div style="position:absolute;top:368.72999999999996px;left:0;width:100%;height:1px;background:rgba(8,42,19,0.18)"></div><div style="position:absolute;top:308.28px;left:0;font-family:'Arimo', Arial, Helvetica, sans-serif;font-weight:400;font-size:25.97px;line-height:40.83px;letter-spacing:0.21px;color:#082A13">Haridwar</div><div style="position:absolute;top:295.78px;right:0;text-align:right;font-family:'Marcellus', 'Cormorant Garamond', Georgia, serif;font-weight:400;font-size:33.58px;line-height:38.74px;letter-spacing:0.00px;color:#082A13">110 km</div><div style="position:absolute;top:442.68px;left:0;width:100%;height:1px;background:rgba(8,42,19,0.18)"></div><div style="position:absolute;top:382.23px;left:0;font-family:'Arimo', Arial, Helvetica, sans-serif;font-weight:400;font-size:25.97px;line-height:40.83px;letter-spacing:0.21px;color:#082A13">Delhi</div><div style="position:absolute;top:369.73px;right:0;text-align:right;font-family:'Marcellus', 'Cormorant Garamond', Georgia, serif;font-weight:400;font-size:33.58px;line-height:38.74px;letter-spacing:0.00px;color:#082A13">250 km</div></div>
+<div style="position:absolute;left:673.64px;top:1024.83px;width:484.92px;font-family:'Arimo', Arial, Helvetica, sans-serif;font-weight:400;font-size:18.98px;line-height:29.16px;letter-spacing:0.21px;color:rgba(8,42,19,0.65);text-align:left;white-space:pre-wrap">All distances approximate.</div>
+<div style="position:absolute;left:79.99px;top:1294.16px;width:340.57px;height:297.66px;overflow:hidden;background:#082A13"><div style="position:absolute;left:27.91px;right:27.91px;bottom:27.91px;display:flex;flex-direction:column;gap:8.33px"><div style="font-family:'Arimo', Arial, Helvetica, sans-serif;font-weight:700;font-size:18.98px;line-height:25.00px;letter-spacing:6.46px;color:#E0B257">A LANDMARK ALREADY KNOWN</div><div style="font-family:'Marcellus', 'Cormorant Garamond', Georgia, serif;font-weight:400;font-size:32.08px;line-height:38.54px;letter-spacing:0.00px;color:#FFFBE9">Near the revered Shakumbhari Devi Shakti Peeth.</div></div></div>
+<div style="position:absolute;left:448.47px;top:1294.16px;width:341.61px;height:297.66px;overflow:hidden;background:#082A13"><div style="position:absolute;left:27.91px;right:27.91px;bottom:27.91px;display:flex;flex-direction:column;gap:8.33px"><div style="font-family:'Arimo', Arial, Helvetica, sans-serif;font-weight:700;font-size:18.98px;line-height:25.00px;letter-spacing:6.46px;color:#E0B257">BUILT ON SOMETHING REAL</div><div style="font-family:'Marcellus', 'Cormorant Garamond', Georgia, serif;font-weight:400;font-size:32.08px;line-height:38.54px;letter-spacing:0.00px;color:#FFFBE9">Surveyed land. Master planning underway.</div></div></div>
+<div style="position:absolute;left:817.99px;top:1294.16px;width:340.57px;height:297.66px;overflow:hidden;background:#EFE9D2"><div style="position:absolute;left:27.91px;right:27.91px;top:50%;transform:translateY(-50%);text-align:center;font-family:'Courier New', 'Roboto Mono', ui-monospace, monospace;font-weight:400;font-size:14.98px;line-height:20.41px;letter-spacing:1.04px;color:rgba(8,42,19,0.45);white-space:pre-wrap">LOCAL INSET MAP
+ESTATE · BEHAT · DEVI</div></div>
+<div style="position:absolute;left:79.99px;top:1621.71px;width:1078.57px;font-family:'Marcellus', 'Cormorant Garamond', Georgia, serif;font-weight:400;font-size:47.91px;line-height:56.24px;letter-spacing:0.00px;color:#082A13;text-align:left;white-space:pre-wrap">Nature when you want distance. Connectivity when you need it.</div>
+<div style="position:absolute;left:79.99px;top:1656.39px;width:1078.57px;font-family:'Arimo', Arial, Helvetica, sans-serif;font-weight:700;font-size:16.98px;line-height:22.91px;letter-spacing:5.83px;color:#082A13;text-align:right;white-space:pre-wrap">06</div></div></div>
+</figure>
+
+<figure class="spread">
+  <figcaption>
+    <span class="folio">07</span>
+    <span class="sname">The Five Pillars</span>
+    <span class="sground">dark ground</span>
+  </figcaption>
+  <div class="stage"><div class="artboard" style="background:#082A13"><div style="position:absolute;left:79.99px;top:89.57px;width:1078.57px;font-family:'Arimo', Arial, Helvetica, sans-serif;font-weight:700;font-size:19.98px;line-height:27.08px;letter-spacing:6.87px;color:#E0B257;text-align:left;white-space:pre-wrap">THE FIVE PILLARS</div>
+<div style="position:absolute;left:79.99px;top:145.86px;width:1078.57px;font-family:'Marcellus', 'Cormorant Garamond', Georgia, serif;font-weight:400;font-size:86.44px;line-height:92.07px;letter-spacing:0.00px;color:#FFFBE9;text-align:left;white-space:pre-wrap">BUILT AROUND THE WAY
+YOU WANT TO LIVE.</div>
+<div style="position:absolute;left:79.99px;top:394.31px;width:525.33px;height:447.42px;overflow:hidden;background:#0B3319"><div style="position:absolute;left:27.91px;right:27.91px;top:27.91px;text-align:left;font-family:'Courier New', 'Roboto Mono', ui-monospace, monospace;font-weight:400;font-size:14.98px;line-height:20.41px;letter-spacing:1.04px;color:rgba(255,251,233,0.45);white-space:pre-wrap">SCENIC APPROACH ROAD</div></div>
+<div style="position:absolute;left:633.23px;top:394.31px;width:525.33px;height:411.39px;overflow:hidden;background:#0B3319"><div style="position:absolute;left:27.91px;right:27.91px;top:27.91px;text-align:left;font-family:'Courier New', 'Roboto Mono', ui-monospace, monospace;font-weight:400;font-size:14.98px;line-height:20.41px;letter-spacing:1.04px;color:rgba(255,251,233,0.45);white-space:pre-wrap">YOGA · POOL · NATURE</div></div>
+<div style="position:absolute;left:79.99px;top:1020.66px;width:525.33px;height:406.39px;overflow:hidden;background:#0B3319"><div style="position:absolute;left:27.91px;right:27.91px;top:27.91px;text-align:left;font-family:'Courier New', 'Roboto Mono', ui-monospace, monospace;font-weight:400;font-size:14.98px;line-height:20.41px;letter-spacing:1.04px;color:rgba(255,251,233,0.45);white-space:pre-wrap">RESIDENTS · COMMON AREA</div></div>
+<div style="position:absolute;left:633.23px;top:1020.66px;width:525.33px;height:371.6px;overflow:hidden;background:#0B3319"><div style="position:absolute;left:27.91px;right:27.91px;top:27.91px;text-align:left;font-family:'Courier New', 'Roboto Mono', ui-monospace, monospace;font-weight:400;font-size:14.98px;line-height:20.41px;letter-spacing:1.04px;color:rgba(255,251,233,0.45);white-space:pre-wrap">OUTDOOR DINING · SPORT</div></div>
+<div style="position:absolute;left:79.99px;top:862.36px;width:525.33px;display:flex;flex-direction:column;gap:12.5px">
+    <div style="display:flex;align-items:center;gap:14.58px">
+      <span style="font-family:'Marcellus', 'Cormorant Garamond', Georgia, serif;font-weight:400;font-size:22.75px;line-height:26.25px;letter-spacing:0.00px;color:#E0B257">01</span>
+      <span style="font-family:'Arimo', Arial, Helvetica, sans-serif;font-weight:700;font-size:18.98px;line-height:25.00px;letter-spacing:6.46px;color:#FFFBE9">ACCESSIBILITY</span>
+    </div>
+    <div style="font-family:'Marcellus', 'Cormorant Garamond', Georgia, serif;font-weight:400;font-size:38.33px;line-height:45.83px;letter-spacing:0.00px;color:#FFFBE9">Escape without disappearing.</div>
+    <div style="font-family:'Arimo', Arial, Helvetica, sans-serif;font-weight:400;font-size:22.98px;line-height:34.99px;letter-spacing:0.21px;color:rgba(255,251,233,0.78)">Connected enough to return to regularly.</div>
+  </div>
+<div style="position:absolute;left:633.23px;top:826.94px;width:525.33px;display:flex;flex-direction:column;gap:12.5px">
+    <div style="display:flex;align-items:center;gap:14.58px">
+      <span style="font-family:'Marcellus', 'Cormorant Garamond', Georgia, serif;font-weight:400;font-size:22.75px;line-height:26.25px;letter-spacing:0.00px;color:#E0B257">02</span>
+      <span style="font-family:'Arimo', Arial, Helvetica, sans-serif;font-weight:700;font-size:18.98px;line-height:25.00px;letter-spacing:6.46px;color:#FFFBE9">WELLNESS</span>
+    </div>
+    <div style="font-family:'Marcellus', 'Cormorant Garamond', Georgia, serif;font-weight:400;font-size:38.33px;line-height:45.83px;letter-spacing:0.00px;color:#FFFBE9">Wellbeing becomes part of the environment.</div>
+    <div style="font-family:'Arimo', Arial, Helvetica, sans-serif;font-weight:400;font-size:22.98px;line-height:34.99px;letter-spacing:0.21px;color:rgba(255,251,233,0.78)">Nature, movement and curated wellness experiences.</div>
+  </div>
+<div style="position:absolute;left:79.99px;top:1447.67px;width:525.33px;display:flex;flex-direction:column;gap:12.5px">
+    <div style="display:flex;align-items:center;gap:14.58px">
+      <span style="font-family:'Marcellus', 'Cormorant Garamond', Georgia, serif;font-weight:400;font-size:22.75px;line-height:26.25px;letter-spacing:0.00px;color:#E0B257">03</span>
+      <span style="font-family:'Arimo', Arial, Helvetica, sans-serif;font-weight:700;font-size:18.98px;line-height:25.00px;letter-spacing:6.46px;color:#FFFBE9">COMMUNITY</span>
+    </div>
+    <div style="font-family:'Marcellus', 'Cormorant Garamond', Georgia, serif;font-weight:400;font-size:38.33px;line-height:45.83px;letter-spacing:0.00px;color:#FFFBE9">Privacy when you want it. Belonging when you seek it.</div>
+    <div style="font-family:'Arimo', Arial, Helvetica, sans-serif;font-weight:400;font-size:22.98px;line-height:34.99px;letter-spacing:0.21px;color:rgba(255,251,233,0.78)">A more intentional residential community.</div>
+  </div>
+<div style="position:absolute;left:633.23px;top:1412.26px;width:525.33px;display:flex;flex-direction:column;gap:12.5px">
+    <div style="display:flex;align-items:center;gap:14.58px">
+      <span style="font-family:'Marcellus', 'Cormorant Garamond', Georgia, serif;font-weight:400;font-size:22.75px;line-height:26.25px;letter-spacing:0.00px;color:#E0B257">04</span>
+      <span style="font-family:'Arimo', Arial, Helvetica, sans-serif;font-weight:700;font-size:18.98px;line-height:25.00px;letter-spacing:6.46px;color:#FFFBE9">LIFESTYLE</span>
+    </div>
+    <div style="font-family:'Marcellus', 'Cormorant Garamond', Georgia, serif;font-weight:400;font-size:38.33px;line-height:45.83px;letter-spacing:0.00px;color:#FFFBE9">There should always be something worth staying back for.</div>
+    <div style="font-family:'Arimo', Arial, Helvetica, sans-serif;font-weight:400;font-size:22.98px;line-height:34.99px;letter-spacing:0.21px;color:rgba(255,251,233,0.78)">Sports, trails, clubhouse life and outdoor experiences.</div>
+  </div>
+<div style="position:absolute;left:79.99px;top:1661.39px;width:1078.57px;font-family:'Arimo', Arial, Helvetica, sans-serif;font-weight:700;font-size:16.98px;line-height:22.91px;letter-spacing:5.83px;color:rgba(255,251,233,0.55);text-align:left;white-space:pre-wrap">AART ESTATE</div>
+<div style="position:absolute;left:79.99px;top:1661.39px;width:1078.57px;font-family:'Arimo', Arial, Helvetica, sans-serif;font-weight:700;font-size:16.98px;line-height:22.91px;letter-spacing:5.83px;color:#FFFBE9;text-align:right;white-space:pre-wrap">07</div></div></div>
+</figure>
+
+<figure class="spread">
+  <figcaption>
+    <span class="folio">08</span>
+    <span class="sname">Turnkey Asset Management</span>
+    <span class="sground">cream ground</span>
+  </figcaption>
+  <div class="stage"><div class="artboard" style="background:#FFFBE9"><div style="position:absolute;left:79.99px;top:89.57px;width:41.66px;font-family:'Arimo', Arial, Helvetica, sans-serif;font-weight:700;font-size:19.98px;line-height:27.08px;letter-spacing:6.87px;color:#E0B257;text-align:left;white-space:pre-wrap">05</div>
+<div style="position:absolute;left:120.4px;top:89.57px;width:1038.16px;font-family:'Arimo', Arial, Helvetica, sans-serif;font-weight:700;font-size:19.98px;line-height:27.08px;letter-spacing:6.87px;color:#005D30;text-align:left;white-space:pre-wrap">TURNKEY ASSET MANAGEMENT</div>
+<div style="position:absolute;left:79.99px;top:153.15px;width:1078.57px;font-family:'Marcellus', 'Cormorant Garamond', Georgia, serif;font-weight:400;font-size:86.44px;line-height:92.07px;letter-spacing:0.00px;color:#082A13;text-align:left;white-space:pre-wrap">ENJOY THE HOME.
+WE HELP TAKE
+CARE OF THE REST.</div>
+<div style="position:absolute;left:79.99px;top:464.51px;width:833.19px;font-family:'Arimo', Arial, Helvetica, sans-serif;font-weight:400;font-size:27.97px;line-height:44.99px;letter-spacing:0.21px;color:#082A13;text-align:left;white-space:pre-wrap">Property maintenance and housekeeping, with support to list and manage the home for short-term rentals when you are away.</div>
+<div style="position:absolute;left:79.99px;top:922.76px;width:427.01px"><div style="position:absolute;top:0px;left:0;width:100%;height:1px;background:rgba(8,42,19,0.18)"></div><div style="position:absolute;top:18.75px;left:0;font-family:'Arimo', Arial, Helvetica, sans-serif;font-weight:400;font-size:27.97px;line-height:44.99px;letter-spacing:0.21px;color:#082A13">Maintenance requests</div><div style="position:absolute;top:76.86px;left:0;width:100%;height:1px;background:rgba(8,42,19,0.18)"></div><div style="position:absolute;top:95.61px;left:0;font-family:'Arimo', Arial, Helvetica, sans-serif;font-weight:400;font-size:27.97px;line-height:44.99px;letter-spacing:0.21px;color:#082A13">Housekeeping status</div><div style="position:absolute;top:153.72px;left:0;width:100%;height:1px;background:rgba(8,42,19,0.18)"></div><div style="position:absolute;top:172.47px;left:0;font-family:'Arimo', Arial, Helvetica, sans-serif;font-weight:400;font-size:27.97px;line-height:44.99px;letter-spacing:0.21px;color:#082A13">Booking calendar</div><div style="position:absolute;top:230.59px;left:0;width:100%;height:1px;background:rgba(8,42,19,0.18)"></div><div style="position:absolute;top:249.34px;left:0;font-family:'Arimo', Arial, Helvetica, sans-serif;font-weight:400;font-size:27.97px;line-height:44.99px;letter-spacing:0.21px;color:#082A13">Occupancy</div><div style="position:absolute;top:307.45px;left:0;width:100%;height:1px;background:rgba(8,42,19,0.18)"></div><div style="position:absolute;top:326.2px;left:0;font-family:'Arimo', Arial, Helvetica, sans-serif;font-weight:400;font-size:27.97px;line-height:44.99px;letter-spacing:0.21px;color:#082A13">Rental earnings</div><div style="position:absolute;top:384.31px;left:0;width:100%;height:1px;background:rgba(8,42,19,0.18)"></div></div>
+<div style="position:absolute;left:628.23px;top:621.98px;width:530.33px;height:995.67px;overflow:hidden;background:#082A13"><div style="position:absolute;left:27.91px;right:27.91px;top:50%;transform:translateY(-50%);text-align:center;font-family:'Courier New', 'Roboto Mono', ui-monospace, monospace;font-weight:400;font-size:14.98px;line-height:20.41px;letter-spacing:1.04px;color:rgba(255,251,233,0.45);white-space:pre-wrap">OWNER APP DASHBOARD
+MOCKUP PLACEHOLDER</div></div>
+<div style="position:absolute;left:79.99px;top:1661.39px;width:1078.57px;font-family:'Arimo', Arial, Helvetica, sans-serif;font-weight:700;font-size:16.98px;line-height:22.91px;letter-spacing:5.83px;color:#082A13;text-align:right;white-space:pre-wrap">08</div></div></div>
+</figure>
+
+<figure class="spread">
+  <figcaption>
+    <span class="folio">09</span>
+    <span class="sname">The Offering</span>
+    <span class="sground">dark ground</span>
+  </figcaption>
+  <div class="stage"><div class="artboard" style="background:#082A13"><div style="position:absolute;left:79.99px;top:89.57px;width:1078.57px;font-family:'Arimo', Arial, Helvetica, sans-serif;font-weight:700;font-size:19.98px;line-height:27.08px;letter-spacing:6.87px;color:#E0B257;text-align:left;white-space:pre-wrap">THE OFFERING</div>
+<div style="position:absolute;left:79.99px;top:145.86px;width:1078.57px;font-family:'Marcellus', 'Cormorant Garamond', Georgia, serif;font-weight:400;font-size:86.44px;line-height:92.07px;letter-spacing:0.00px;color:#FFFBE9;text-align:left;white-space:pre-wrap">EIGHTY HOMESITES.
+ONE CONSIDERED WAY OF
+LIVING.</div>
+<div style="position:absolute;left:79.99px;top:467.42px;width:312.45px;font-family:'Marcellus', 'Cormorant Garamond', Georgia, serif;font-weight:400;font-size:91.65px;line-height:95.82px;letter-spacing:0.00px;color:#E0B257;text-align:left;white-space:pre-wrap">14</div>
+<div style="position:absolute;left:410.56px;top:467.42px;width:312.45px;font-family:'Marcellus', 'Cormorant Garamond', Georgia, serif;font-weight:400;font-size:91.65px;line-height:95.82px;letter-spacing:0.00px;color:#E0B257;text-align:left;white-space:pre-wrap">80</div>
+<div style="position:absolute;left:79.99px;top:585.32px;width:312.45px;font-family:'Arimo', Arial, Helvetica, sans-serif;font-weight:700;font-size:18.98px;line-height:25.00px;letter-spacing:6.46px;color:#FFFBE9;text-align:left;white-space:pre-wrap">ACRES (APPROX.)</div>
+<div style="position:absolute;left:410.56px;top:585.32px;width:333.28px;font-family:'Arimo', Arial, Helvetica, sans-serif;font-weight:700;font-size:18.98px;line-height:25.00px;letter-spacing:6.46px;color:#FFFBE9;text-align:left;white-space:pre-wrap">RESIDENTIAL PLOTS</div>
+<div style="position:absolute;left:79.99px;top:663.85px;width:1078.57px;height:1.04px;background:rgba(255,251,233,0.22)"></div>
+<div style="position:absolute;left:79.99px;top:689.68px;width:520.75px;font-family:'Marcellus', 'Cormorant Garamond', Georgia, serif;font-weight:400;font-size:54.16px;line-height:62.49px;letter-spacing:0.00px;color:#FFFBE9;text-align:left;white-space:pre-wrap">250 SQ YD</div>
+<div style="position:absolute;left:637.18px;top:689.68px;width:520.75px;font-family:'Marcellus', 'Cormorant Garamond', Georgia, serif;font-weight:400;font-size:54.16px;line-height:62.49px;letter-spacing:0.00px;color:#FFFBE9;text-align:left;white-space:pre-wrap">500 SQ YD</div>
+<div style="position:absolute;left:79.99px;top:772.79px;width:520.75px;font-family:'Arimo', Arial, Helvetica, sans-serif;font-weight:700;font-size:18.98px;line-height:25.00px;letter-spacing:6.46px;color:#E0B257;text-align:left;white-space:pre-wrap">45 PLOTS</div>
+<div style="position:absolute;left:637.18px;top:772.79px;width:520.75px;font-family:'Arimo', Arial, Helvetica, sans-serif;font-weight:700;font-size:18.98px;line-height:25.00px;letter-spacing:6.46px;color:#E0B257;text-align:left;white-space:pre-wrap">35 PLOTS</div>
+<div style="position:absolute;left:79.99px;top:816.53px;width:520.75px;font-family:'Arimo', Arial, Helvetica, sans-serif;font-weight:400;font-size:24.97px;line-height:42.91px;letter-spacing:0.21px;color:#FFFBE9;text-align:left;white-space:pre-wrap">Designed for compact luxury.</div>
+<div style="position:absolute;left:637.18px;top:816.53px;width:520.75px;font-family:'Arimo', Arial, Helvetica, sans-serif;font-weight:400;font-size:24.97px;line-height:42.91px;letter-spacing:0.21px;color:#FFFBE9;text-align:left;white-space:pre-wrap">More room to make it yours.</div>
+<div style="position:absolute;left:79.99px;top:902.76px;width:1078.57px;height:535.33px;overflow:hidden;background:#0B3319"><div style="position:absolute;left:27.91px;right:27.91px;top:50%;transform:translateY(-50%);text-align:center;font-family:'Courier New', 'Roboto Mono', ui-monospace, monospace;font-weight:400;font-size:14.98px;line-height:20.41px;letter-spacing:1.04px;color:rgba(255,251,233,0.45);white-space:pre-wrap">MASTER PLAN — WORKING VERSION
+250 SQ YD / 500 SQ YD DIFFERENTIATED</div></div>
+<div style="position:absolute;left:79.99px;top:1472.67px;width:1078.57px;font-family:'Arimo', Arial, Helvetica, sans-serif;font-weight:700;font-size:18.98px;line-height:25.00px;letter-spacing:6.46px;color:#E0B257;text-align:left;white-space:pre-wrap">BEYOND YOUR PLOT</div>
+<div style="position:absolute;left:79.99px;top:1512.25px;width:1078.57px;font-family:'Arimo', Arial, Helvetica, sans-serif;font-weight:400;font-size:24.97px;line-height:42.91px;letter-spacing:0.21px;color:#FFFBE9;text-align:left;white-space:pre-wrap">Clubhouse   ·   Sports &amp; Recreation   ·   Wellness Experiences   ·
+Landscaped Streets &amp; Trails   ·   Community Spaces</div>
+<div style="position:absolute;left:79.99px;top:1621.71px;width:1078.57px;font-family:'Marcellus', 'Cormorant Garamond', Georgia, serif;font-weight:400;font-size:47.91px;line-height:56.24px;letter-spacing:0.00px;color:#FFFBE9;text-align:left;white-space:pre-wrap">A home for now. An asset for what comes next.</div>
+<div style="position:absolute;left:79.99px;top:1656.39px;width:1078.57px;font-family:'Arimo', Arial, Helvetica, sans-serif;font-weight:700;font-size:16.98px;line-height:22.91px;letter-spacing:5.83px;color:#FFFBE9;text-align:right;white-space:pre-wrap">09</div></div></div>
+</figure>
+
+<figure class="spread">
+  <figcaption>
+    <span class="folio">10</span>
+    <span class="sname">Closing</span>
+    <span class="sground">dark ground</span>
+  </figcaption>
+  <div class="stage"><div class="artboard" style="background:#082A13"><div style="position:absolute;left:0px;top:0px;width:1238.33px;height:519.29px;overflow:hidden;background:#0B3319"><div style="position:absolute;left:27.91px;right:27.91px;top:50%;transform:translateY(-50%);text-align:center;font-family:'Courier New', 'Roboto Mono', ui-monospace, monospace;font-weight:400;font-size:14.98px;line-height:20.41px;letter-spacing:1.04px;color:rgba(255,251,233,0.45);white-space:pre-wrap">DUSK IMAGE
+ESTATE ENTRANCE / CLUBHOUSE</div></div>
+<div style="position:absolute;left:79.99px;top:584.36px;width:1078.57px;font-family:'Marcellus', 'Cormorant Garamond', Georgia, serif;font-weight:400;font-size:73.74px;line-height:86.86px;letter-spacing:0.00px;color:#FFFBE9;text-align:center;white-space:pre-wrap">A PLACE TO RETURN TO.
+A LIFE TO GROW INTO.</div>
+<div style="position:absolute;left:79.99px;top:804.33px;width:1078.57px;font-family:'Marcellus', 'Cormorant Garamond', Georgia, serif;font-weight:400;font-size:68.45px;line-height:72.32px;letter-spacing:30.61px;color:#FFFBE9;text-align:center;white-space:pre-wrap">AART</div>
+<div style="position:absolute;left:79.99px;top:862.41px;width:1078.57px;font-family:'Marcellus', 'Cormorant Garamond', Georgia, serif;font-weight:400;font-size:83.94px;line-height:87.82px;letter-spacing:7.49px;color:#FFFBE9;text-align:center;white-space:pre-wrap">ESTATE</div>
+<div style="position:absolute;left:427.01px;top:962.34px;width:385.35px;height:3.75px;background:#FFFBE9"></div>
+<div style="position:absolute;left:79.99px;top:983.58px;width:1078.57px;font-family:'Marcellus', 'Cormorant Garamond', Georgia, serif;font-weight:400;font-size:30.76px;line-height:37.37px;letter-spacing:6.18px;color:#FFFBE9;text-align:center;white-space:pre-wrap">SHAKUMBHARI HILLS</div>
+<div style="position:absolute;left:79.99px;top:1078.99px;width:1078.57px;font-family:'Arimo', Arial, Helvetica, sans-serif;font-weight:400;font-size:25.97px;line-height:40.83px;letter-spacing:0.21px;color:#FFFBE9;text-align:center;white-space:pre-wrap">Discover the estate. Explore the vision.
+Begin the conversation.</div>
+<div style="position:absolute;left:514.29px;top:1221.25px;width:209.76px;height:209.76px;overflow:hidden;background:#FFFBE9"><div style="position:absolute;left:27.91px;right:27.91px;top:50%;transform:translateY(-50%);text-align:center;font-family:'Courier New', 'Roboto Mono', ui-monospace, monospace;font-weight:400;font-size:14.98px;line-height:20.41px;letter-spacing:1.04px;color:rgba(8,42,19,0.45);white-space:pre-wrap">QR CODE</div></div>
+<div style="position:absolute;left:79.99px;top:1447.67px;width:1078.57px;font-family:'Arimo', Arial, Helvetica, sans-serif;font-weight:700;font-size:18.98px;line-height:25.00px;letter-spacing:6.46px;color:#E0B257;text-align:center;white-space:pre-wrap">SCAN TO EXPLORE AART ESTATE</div>
+<div style="position:absolute;left:79.99px;top:1501.83px;width:1078.57px;font-family:'Arimo', Arial, Helvetica, sans-serif;font-weight:400;font-size:24.97px;line-height:42.91px;letter-spacing:0.21px;color:#FFFBE9;text-align:center;white-space:pre-wrap">www.aartestate.com</div>
+<div style="position:absolute;left:517.2px;top:1578.9px;width:204.13px;height:58.32px;display:flex;align-items:center;justify-content:center;font-family:'Arimo', Arial, Helvetica, sans-serif;font-weight:700;font-size:18.98px;line-height:25.00px;letter-spacing:6.46px;color:rgba(255,251,233,0.55)">AART GROUP</div>
+<div style="position:absolute;left:79.99px;top:1653.89px;width:1078.57px;font-family:'Arimo', Arial, Helvetica, sans-serif;font-weight:700;font-size:18.98px;line-height:25.00px;letter-spacing:6.46px;color:rgba(255,251,233,0.7);text-align:center;white-space:pre-wrap">A DEVELOPMENT BY AART GROUP</div></div></div>
+</figure></div>
+  </section>
+</div>
+
+<script>
+  // Scale each 1240px artboard to whatever width its column got.
+  const fitAll = () => {
+    for (const stage of document.querySelectorAll('.stage')) {
+      const board = stage.firstElementChild;
+      if (board) board.style.transform = 'scale(' + stage.clientWidth / 1240 + ')';
+    }
+  };
+  fitAll();
+  addEventListener('resize', fitAll);
+  if (document.fonts && document.fonts.ready) document.fonts.ready.then(fitAll);
+</script>

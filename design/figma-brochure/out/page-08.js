@@ -11,7 +11,8 @@ const STYLES  = {
     ],
     "size": 110.4,
     "lh": 116.65,
-    "ls": 49.37
+    "ls": 49.37,
+    "anchor": "cap"
   },
   "wordmarkMain": {
     "font": [
@@ -20,7 +21,8 @@ const STYLES  = {
     ],
     "size": 135.39,
     "lh": 141.64,
-    "ls": 12.08
+    "ls": 12.08,
+    "anchor": "cap"
   },
   "locality": {
     "font": [
@@ -29,7 +31,8 @@ const STYLES  = {
     ],
     "size": 44.58,
     "lh": 54.16,
-    "ls": 8.96
+    "ls": 8.96,
+    "anchor": "cap"
   },
   "tagline": {
     "font": [
@@ -38,7 +41,8 @@ const STYLES  = {
     ],
     "size": 39.58,
     "lh": 54.99,
-    "ls": 0
+    "ls": 0,
+    "anchor": "cap"
   },
   "headline": {
     "font": [
@@ -47,7 +51,8 @@ const STYLES  = {
     ],
     "size": 86.44,
     "lh": 92.07,
-    "ls": 0
+    "ls": 0,
+    "anchor": "cap"
   },
   "headlineSm": {
     "font": [
@@ -56,7 +61,8 @@ const STYLES  = {
     ],
     "size": 73.74,
     "lh": 86.86,
-    "ls": 0
+    "ls": 0,
+    "anchor": "cap"
   },
   "statNumber": {
     "font": [
@@ -65,7 +71,8 @@ const STYLES  = {
     ],
     "size": 91.65,
     "lh": 95.82,
-    "ls": 0
+    "ls": 0,
+    "anchor": "cap"
   },
   "statUnit": {
     "font": [
@@ -74,7 +81,8 @@ const STYLES  = {
     ],
     "size": 54.16,
     "lh": 62.49,
-    "ls": 0
+    "ls": 0,
+    "anchor": "cap"
   },
   "promise": {
     "font": [
@@ -83,7 +91,18 @@ const STYLES  = {
     ],
     "size": 38.33,
     "lh": 45.83,
-    "ls": 0
+    "ls": 0,
+    "anchor": "cap"
+  },
+  "mosaicDesc": {
+    "font": [
+      "Marcellus",
+      "Regular"
+    ],
+    "size": 32.08,
+    "lh": 38.54,
+    "ls": 0,
+    "anchor": "cap"
   },
   "closingLine": {
     "font": [
@@ -92,7 +111,8 @@ const STYLES  = {
     ],
     "size": 47.91,
     "lh": 56.24,
-    "ls": 0
+    "ls": 0,
+    "anchor": "cap"
   },
   "cardTitle": {
     "font": [
@@ -101,7 +121,8 @@ const STYLES  = {
     ],
     "size": 35.41,
     "lh": 43.74,
-    "ls": 0
+    "ls": 0,
+    "anchor": "cap"
   },
   "kicker": {
     "font": [
@@ -323,6 +344,17 @@ const PAGE_SPEC = {
 const S = 1240 / 595.3;
 const px = (v) => v * S;
 
+// Cap height as a fraction of em, per family. Display copy in the reference is
+// outlined vector, so its measured y is the CAP TOP; Figma positions by box top.
+const CAP_RATIO = { Marcellus: 0.70, Arimo: 0.716, 'Courier New': 0.571 };
+
+/** How far the box top sits above the cap top for a given style. */
+function capOffset(st, scale) {
+  if (st.anchor !== 'cap') return 0;
+  const ratio = CAP_RATIO[st.font[0]] || 0.7;
+  return (st.lh * scale - ratio * st.size * scale) / 2;
+}
+
 function solid(hexStr, opacity) {
   const n = parseInt(hexStr.slice(1), 16);
   const p = { type: 'SOLID', color: { r: ((n >> 16) & 255) / 255, g: ((n >> 8) & 255) / 255, b: (n & 255) / 255 } };
@@ -386,7 +418,7 @@ function makeText(spec, styles, palette, fonts) {
 
   t.fills = [solid(palette[spec.fill] || spec.fill, spec.opacity)];
   t.x = px(spec.x);
-  t.y = px(spec.y);
+  t.y = px(spec.y) - capOffset(st, scale);
   t.name = spec.style;
   return t;
 }
@@ -406,15 +438,18 @@ function makePlate(spec, styles, palette, fonts, images) {
   const pad = px(13.4);
 
   // Placeholder caption — only when no photograph landed in this slot.
+  // Tiles that also carry a label or title park the caption at the top so the two
+  // never collide; standalone plates centre it, as the reference does.
   if (!hash && spec.cap && spec.cap.length) {
+    const top = spec.capTop || spec.label || spec.title;
     const cap = makeText(
       { x: 0, y: 0, w: spec.w - 26.8, style: 'caption', text: spec.cap.join('\n'),
         fill: spec.capFill || (spec.fill === 'sand' || spec.fill === 'cream' ? 'ink' : 'cream'),
-        opacity: 0.45, align: 'CENTER' },
+        opacity: 0.45, align: top ? 'LEFT' : 'CENTER' },
       styles, palette, fonts
     );
     cap.x = pad;
-    cap.y = px(spec.h) / 2 - cap.height / 2;
+    cap.y = top ? pad : px(spec.h) / 2 - cap.height / 2;
     f.appendChild(cap);
   }
 
@@ -424,7 +459,7 @@ function makePlate(spec, styles, palette, fonts, images) {
     stack.fills = [];
     f.appendChild(stack);
     if (spec.label) stack.appendChild(makeText({ x: 0, y: 0, w: spec.w - 26.8, style: 'label', text: spec.label.text, fill: spec.label.fill }, styles, palette, fonts));
-    if (spec.desc)  stack.appendChild(makeText({ x: 0, y: 0, w: spec.w - 26.8, style: 'promise', text: spec.desc.text,  fill: spec.desc.fill  }, styles, palette, fonts));
+    if (spec.desc)  stack.appendChild(makeText({ x: 0, y: 0, w: spec.w - 26.8, style: 'mosaicDesc', text: spec.desc.text, fill: spec.desc.fill }, styles, palette, fonts));
     stack.x = pad;
     stack.y = px(spec.h) - stack.height - pad;
   }
