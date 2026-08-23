@@ -3,7 +3,6 @@ import {
   expectGalleryRestored,
   galleryDrift,
   galleryMoves,
-  isNarrowNav,
   isTouch,
   openNearestProject,
   rootClasses,
@@ -84,14 +83,7 @@ for (const view of ["slider", "grid"] as const) {
 
       await openNearestProject(page);
 
-      if (isNarrowNav()) {
-        // Below the nav breakpoint WORK has no BACK state; the menu owns it.
-        await page.evaluate(() =>
-          window.dispatchEvent(new CustomEvent("work:close")),
-        );
-      } else {
-        await page.locator('.nav_grid a[href="/work"]').click();
-      }
+      await page.locator('.nav_grid a[href="/work"]').click();
 
       await expectGalleryRestored(page);
       expect(await galleryMoves(page, cdp, touch)).toBe(true);
@@ -185,20 +177,7 @@ test.describe("returning from a hard-loaded project page", () => {
     await page.goto("/work/money-me");
     await expect.poll(() => rootClasses(page)).toContain("page-work-project");
 
-    if (isNarrowNav()) {
-      // The nav link is the same element at every width; below the breakpoint
-      // it is the menu that normally surfaces it.
-      await page.evaluate(() => {
-        try {
-          sessionStorage.setItem("work:return", "money-me");
-        } catch {
-          /* private mode */
-        }
-      });
-      await page.goto("/work");
-    } else {
-      await page.locator('.nav_grid a[href="/work"]').click();
-    }
+    await page.locator('.nav_grid a[href="/work"]').click();
 
     await expect
       .poll(() => new URL(page.url()).pathname, { timeout: 30_000 })
@@ -210,40 +189,6 @@ test.describe("returning from a hard-loaded project page", () => {
       .not.toContain("work-returning");
     await expect(page.locator(".gallery")).toHaveCSS("opacity", "1");
 
-    expect(await galleryMoves(page, cdp, isTouch())).toBe(true);
-  });
-});
-
-test.describe("the mobile menu", () => {
-  test.skip(
-    () => !isNarrowNav(),
-    "the overlay menu only exists below the nav breakpoint",
-  );
-
-  test("reaching WORK through the menu closes the project and frees the scroll", async ({
-    page,
-    context,
-  }) => {
-    const cdp = await context.newCDPSession(page);
-
-    await stubWebGL(page);
-    await skipPreloader(page);
-    await page.goto("/work");
-    await expect(page.locator(".work_wrap")).not.toHaveClass(/is-loading/);
-
-    await openNearestProject(page);
-
-    await page.locator(".nav_menu_toggle").first().click();
-    await expect.poll(() => rootClasses(page)).toContain("menu-open");
-
-    await page.locator('.menu_wrap a[href="/work"]').first().click();
-
-    // `menu-open` is one of `engineEnabled()`'s gates, and it comes off at the
-    // end of a 0.9s close — well after `work:close` has already fired.
-    await expect
-      .poll(() => rootClasses(page), { timeout: 30_000 })
-      .not.toContain("menu-open");
-    await expectGalleryRestored(page);
     expect(await galleryMoves(page, cdp, isTouch())).toBe(true);
   });
 });

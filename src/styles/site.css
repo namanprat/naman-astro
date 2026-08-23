@@ -284,11 +284,11 @@
      `gooeyReveal.ts` for the second — and the two lists differ on purpose:
      `.manifesto_wrap` opts out of the line reveal but not the gooey. */
 
-  html.is-line-revealing .text-style-main:not(:is(.nav_wrap, .footer_wrap, .menu_wrap, .about_panel, .manifesto_wrap, .content_group, .transition_panel, [data-no-reveal]) *) {
+  html.is-line-revealing .text-style-main:not(:is(.nav_wrap, .footer_wrap, .about_panel, .manifesto_wrap, .content_group, .transition_panel, [data-no-reveal]) *) {
     visibility: hidden;
   }
 
-  html.is-gooey-arming :is(h1, h2, h3):not(:is(.nav_wrap, .footer_wrap, .menu_wrap, .about_panel, .content_group, .transition_panel, [data-no-reveal]) *) {
+  html.is-gooey-arming :is(h1, h2, h3):not(:is(.nav_wrap, .footer_wrap, .about_panel, .content_group, .transition_panel, [data-no-reveal]) *) {
     visibility: hidden;
   }
 

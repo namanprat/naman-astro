@@ -113,90 +113,9 @@ html.theme-dark .about_panel_surface {
   padding-top: calc(var(--nav-offset, var(--site--nav-offset)) + var(--site-gutter));
 }
 
-.about_panel.is-in-menu {
-  z-index: var(--z--menu);
-  inset: 0;
-  width: 100%;
-  height: 100dvh;
-  /* Overlay is the field — no floating card gutter. Inline padding is
-     the gutter, not the margin, so the surface sits where it does in the card
-     modes and `--about--inset` resolves to the same number in all three. The
-     band inside is still `--site--grid-width`, so content lands on the same
-     grid line either way — only the (transparent) surface edge moves. */
-  padding: 0;
-  padding-top: var(--nav-offset, var(--site--nav-offset));
-  padding-inline: var(--site-gutter);
-  padding-bottom: calc(var(--site-margin) + var(--site--safe-area-bottom));
-  overflow: clip;
-  /* Overlay ink: black on accent (dark), white on frost (light). */
-  --panel-ink: var(--menu-ink, var(--dark-900));
-  --text: var(--menu-ink, var(--dark-900));
-}
-
-html.theme-light .about_panel.is-in-menu {
-  --panel-ink: var(--menu-ink, var(--light-100));
-  --text: var(--menu-ink, var(--light-100));
-}
-
-.about_panel.is-in-menu .about_panel_backdrop {
-  pointer-events: none;
-  visibility: hidden;
-}
-
-.about_panel.is-in-menu .about_panel_surface {
-  background-color: transparent;
-  backdrop-filter: none;
-  border-radius: 0;
-  max-height: none;
-  height: 100%;
-  overflow: visible;
-}
-
-.about_panel.is-in-menu .about_panel_scroll {
-  max-height: none;
-  height: 100%;
-}
-
-/* No width/padding override — inMenu uses the same grid band and the same
-   `--about--inset` as the card modes. */
-
-.about_panel.is-in-menu .about_panel_reveal:not(.about_panel_intro) {
-  overflow: clip;
-  clip-path: polygon(0 0, 100% 0, 100% 100%, 0% 100%);
-}
-
 /* Desktop: inner is transparent to the parent grid. inMenu: a real box GSAP can move. */
 .about_panel_reveal_inner {
   display: contents;
-}
-
-.about_panel.is-in-menu .about_panel_reveal_inner {
-  display: block;
-  will-change: transform, opacity;
-}
-
-.about_panel.is-in-menu .about_panel_intro .about_panel_reveal_inner {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  min-width: 0;
-}
-
-.about_panel.is-in-menu .about_panel_col.is-services .about_panel_reveal_inner,
-.about_panel.is-in-menu .about_panel_col.is-clients .about_panel_reveal_inner {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-3);
-}
-
-.about_panel.is-in-menu .about_panel_media {
-  background-color: transparent;
-}
-
-.about_panel.is-in-menu .about_panel_media .about_panel_reveal_inner {
-  width: 100%;
-  height: 100%;
-  background-color: var(--dark-900);
 }
 
 .about_panel.is-open {
@@ -250,7 +169,7 @@ html.theme-light .about_panel.is-in-menu {
 }
 
 @media (width >= 64rem) {
-  .about_panel:not(.is-in-menu) {
+  .about_panel {
     padding: 0;
     /* Ride mode (desktop About) is not --padded. Side gap is --about--inset
        (margin − gutter); mirror it on top. Do not use --nav-offset here: it
@@ -258,28 +177,28 @@ html.theme-light .about_panel.is-in-menu {
     padding-top: var(--about--inset);
   }
 
-  .about_panel.is-padded:not(.is-in-menu) {
+  .about_panel.is-padded {
     padding-top: calc(var(--nav-offset, var(--site--nav-offset)) + var(--about--inset));
   }
 
-  .about_panel:not(.is-in-menu) .about_panel_surface {
+  .about_panel .about_panel_surface {
     width: calc(var(--site--grid-width) + var(--site-gutter) * 2);
     margin-inline: auto;
     max-height: 85vh;
   }
 
-  .about_panel:not(.is-in-menu) .about_panel_scroll {
+  .about_panel .about_panel_scroll {
     max-height: 85vh;
   }
 
-  .about_panel:not(.is-in-menu) .about_panel_inner.container {
+  .about_panel .about_panel_inner.container {
     width: 100%;
     max-width: none;
     margin-inline: 0;
     padding: var(--site-gutter);
   }
 
-  .about_panel:not(.is-in-menu) .about_panel_grid {
+  .about_panel .about_panel_grid {
     width: 100%;
     max-width: none;
     margin-inline: 0;
@@ -393,10 +312,6 @@ html.theme-light .about_panel.is-in-menu {
   width: max-content;
 }
 
-.about_panel.is-in-menu .about_panel_cv_clip {
-  overflow: clip;
-}
-
 /* `line-height: 1` so the box hugs the glyphs. Inheriting the 1.5 body leading
    left the rule floating ~10px under the word, reading as a detached line. */
 .about_panel_cv_label {
@@ -498,73 +413,6 @@ html.theme-light .about_panel.is-in-menu {
   display: contents;
 }
 
-/*
-  Stacked card: h3, then canvas, then Services | Clients (side by side).
-  Below 48rem the lists stack with Clients above Services.
-  inMenu always; standalone padded About below 48rem.
-*/
-.about_panel.is-in-menu .about_panel_grid {
-  grid-template-rows: auto auto auto;
-}
-
-.about_panel.is-in-menu .about_panel_intro {
-  grid-column: 1 / -1;
-  grid-row: 1;
-  --about--indent-cols: 0;
-  --about--lead-cols: 1;
-  --about--indent: 0;
-}
-
-.about_panel.is-in-menu .about_panel_lead {
-  text-indent: 0;
-}
-
-.about_panel.is-in-menu .about_panel_media {
-  grid-column: 1 / -1;
-  grid-row: 2;
-  width: 100%;
-  max-width: none;
-}
-
-.about_panel.is-in-menu .about_panel_lists {
-  display: grid;
-  grid-column: 1 / -1;
-  grid-row: 3;
-  grid-template-columns: minmax(0, 1fr) minmax(0, 1.4fr);
-  gap: var(--space-8) var(--site-gutter);
-  align-items: start;
-}
-
-.about_panel.is-in-menu .about_panel_col.is-services,
-.about_panel.is-in-menu .about_panel_col.is-clients {
-  grid-column: auto;
-  grid-row: auto;
-  align-self: start;
-}
-
-.about_panel.is-in-menu .about_panel_col.is-clients {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-3);
-}
-
-.about_panel.is-in-menu .about_panel_clients_cols {
-  display: grid;
-  grid-template-columns: repeat(2, max-content);
-  grid-column: auto;
-  grid-row: auto;
-  gap: var(--space-3) var(--site-gutter);
-}
-
-.about_panel.is-in-menu .about_panel_clients_cols > *:nth-child(2) {
-  grid-column: auto;
-}
-
-.about_panel.is-in-menu .about_panel_col.is-clients .about_panel_col_label {
-  grid-column: auto;
-  grid-row: auto;
-}
-
 /* 8-col band (Lumos medium) */
 @media (width < 64rem) {
   /* Run-off room under the last row. On the content, not the panel — padding on
@@ -574,43 +422,43 @@ html.theme-light .about_panel.is-in-menu {
     padding-bottom: 20vh;
   }
 
-  .about_panel:not(.is-in-menu) .about_panel_media {
+  .about_panel .about_panel_media {
     grid-column: 1 / span 3;
   }
 
-  .about_panel:not(.is-in-menu) .about_panel_intro {
+  .about_panel .about_panel_intro {
     grid-column: 4 / -1;
     --about--indent-cols: 1;
     --about--lead-cols: 5;
   }
 
-  .about_panel:not(.is-in-menu) .about_panel_col.is-services {
+  .about_panel .about_panel_col.is-services {
     grid-column: 5 / span 2;
   }
 
-  .about_panel:not(.is-in-menu) .about_panel_col.is-clients {
+  .about_panel .about_panel_col.is-clients {
     grid-column: 7 / -1;
   }
 
   /* Only 2 tracks here, so the two-track offset above would push the second
      column into an implicit track. */
-  .about_panel:not(.is-in-menu) .about_panel_clients_cols > *:nth-child(2) {
+  .about_panel .about_panel_clients_cols > *:nth-child(2) {
     grid-column: auto;
   }
 }
 
 /* Stack on 6/4-col (standalone padded About + in-menu on small screens) */
 @media (width < 48rem) {
-  .about_panel:not(.is-in-menu) .about_panel_surface,
-  .about_panel:not(.is-in-menu) .about_panel_scroll {
+  .about_panel .about_panel_surface,
+  .about_panel .about_panel_scroll {
     max-height: calc(90vh - var(--site-gutter) * 2);
   }
 
-  .about_panel:not(.is-in-menu) .about_panel_grid {
+  .about_panel .about_panel_grid {
     grid-template-rows: auto auto auto;
   }
 
-  .about_panel:not(.is-in-menu) .about_panel_intro {
+  .about_panel .about_panel_intro {
     grid-column: 1 / -1;
     grid-row: 1;
     --about--indent-cols: 0;
@@ -618,61 +466,43 @@ html.theme-light .about_panel.is-in-menu {
     --about--indent: 0;
   }
 
-  .about_panel:not(.is-in-menu) .about_panel_lead {
+  .about_panel .about_panel_lead {
     text-indent: 0;
   }
 
-  .about_panel:not(.is-in-menu) .about_panel_media {
+  .about_panel .about_panel_media {
     grid-column: 1 / -1;
     grid-row: 2;
     width: 100%;
     max-width: none;
-  }
-
-  .about_panel.is-in-menu .about_panel_lists,
-  .about_panel:not(.is-in-menu) .about_panel_lists {
+  }.about_panel .about_panel_lists {
     display: grid;
     grid-column: 1 / -1;
     grid-row: 3;
     grid-template-columns: minmax(0, 1fr);
     gap: var(--space-8) 0;
     align-items: start;
-  }
-
-  .about_panel.is-in-menu .about_panel_col.is-services,
-  .about_panel.is-in-menu .about_panel_col.is-clients,
-  .about_panel:not(.is-in-menu) .about_panel_col.is-services,
-  .about_panel:not(.is-in-menu) .about_panel_col.is-clients {
+  }.about_panel .about_panel_col.is-services,
+.about_panel .about_panel_col.is-clients {
     grid-column: auto;
     grid-row: auto;
     align-self: start;
   }
 
-  /* Clients above Services on small screens (DOM order is Services, Clients). */
-  .about_panel.is-in-menu .about_panel_col.is-clients,
-  .about_panel:not(.is-in-menu) .about_panel_col.is-clients {
+  /* Clients above Services on small screens (DOM order is Services, Clients). */.about_panel .about_panel_col.is-clients {
     order: -1;
     display: flex;
     flex-direction: column;
     gap: var(--space-3);
-  }
-
-  .about_panel.is-in-menu .about_panel_clients_cols,
-  .about_panel:not(.is-in-menu) .about_panel_clients_cols {
+  }.about_panel .about_panel_clients_cols {
     display: grid;
     grid-template-columns: repeat(2, max-content);
     grid-column: auto;
     grid-row: auto;
     gap: var(--space-3) var(--site-gutter);
-  }
-
-  .about_panel.is-in-menu .about_panel_clients_cols > *:nth-child(2),
-  .about_panel:not(.is-in-menu) .about_panel_clients_cols > *:nth-child(2) {
+  }.about_panel .about_panel_clients_cols > *:nth-child(2) {
     grid-column: auto;
-  }
-
-  .about_panel.is-in-menu .about_panel_col.is-clients .about_panel_col_label,
-  .about_panel:not(.is-in-menu) .about_panel_col.is-clients .about_panel_col_label {
+  }.about_panel .about_panel_col.is-clients .about_panel_col_label {
     grid-column: auto;
     grid-row: auto;
   }

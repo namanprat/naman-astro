@@ -17,7 +17,7 @@ const TARGETS = ".text-style-main";
 
 /** Text that already belongs to another animation, plus a per-page opt-out. */
 const SKIP =
-  ".transition_panel, .menu_wrap, .nav_wrap, .footer_wrap, .about_panel, .manifesto_wrap, .content_group, [data-no-reveal]";
+  ".transition_panel, .nav_wrap, .footer_wrap, .about_panel, .manifesto_wrap, .content_group, [data-no-reveal]";
 
 /** Everything in the document that this module is allowed to animate. */
 function queryTargets(): HTMLElement[] {

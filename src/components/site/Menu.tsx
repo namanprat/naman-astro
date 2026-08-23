@@ -1,11 +1,8 @@
 import "./Menu.css";
 import { useRef, useState, useEffect } from "react";
-import { flushSync } from "react-dom";
 import { useLenis } from "lenis/react";
 import type Lenis from "lenis";
 import gsap from "gsap";
-import { SplitText } from "gsap/SplitText";
-import { useGSAP } from "@gsap/react";
 import { go, type GoOptions } from "@/lib/site/navigate";
 import { hashId, scrollToSection } from "@/lib/site/scrollToSection";
 import { LINE_PARK_PERCENT, parkLines } from "@/lib/site/lineMask";
@@ -14,31 +11,16 @@ import { markWorkReturn } from "@/lib/site/workSession";
 import {
   registerAboutPanel,
   toggleAboutPanel,
-  openAboutPanel,
   closeAboutPanel,
   installAboutInterceptors,
 } from "@/lib/site/aboutPanel";
 import { getSiteLenis, subscribeSiteLenis } from "@/lib/site/lenisBridge";
 import { bootHomeIntro, replayHomeIntro } from "@/lib/site/heroIntro";
 import { useCopyEmail } from "@/lib/site/copyEmail";
-import {
-  addGooeyReveal,
-  addGooeyUnreveal,
-  armGooey,
-  parkGooey,
-  prepareGooey,
-  prepareGooeyAll,
-  settleGooey,
-  type GooeyTarget,
-} from "@/lib/site/gooeyReveal";
 import AboutPanel, { type AboutPanelMode } from "./AboutPanel";
 import RollingText from "./RollingText";
 import ThemeToggle from "./ThemeToggle";
 import "@/lib/site/eases";
-
-gsap.registerPlugin(SplitText);
-
-const PANEL_DURATION = 0.9;
 
 export const NAV_STACKS = [
   {
@@ -83,51 +65,7 @@ export const SOCIAL_LINKS: SocialLink[] = [
 export const socialLinkTabProps = (newTab?: boolean) =>
   newTab ? ({ target: "_blank", rel: "noreferrer noopener" } as const) : {};
 
-const OVERLAY_LINKS = [
-  { label: "Home", path: "/" },
-  { label: "About", path: "/#about" },
-  { label: "Work", path: "/work" },
-  { label: "Archive", path: "/archive" },
-  { label: "Contact", path: "/#contact" },
-];
-
 const SECTION_IDS = ["hero", "team", "contact"];
-
-const MENU_COPY = ".menu_overlay_items .revealer a";
-const MENU_FOOTER_COPY = ".menu_footer .revealer > *";
-/* The dither canvas has no lines to split, so it dissolves rather than melts —
-   same duration and start as the lead's gooey, so the two arrive as one. */
-const ABOUT_MEDIA =
-  ".about_panel.is-in-menu .about_panel_media .about_panel_reveal_inner";
-const ABOUT_MEDIA_S = 1.5;
-/* Lead melts in via gooey; lists still split into lines. */
-const ABOUT_HEAD = ".about_panel.is-in-menu .about_panel_lead";
-const ABOUT_LINES = [
-  ".about_panel.is-in-menu .about_panel_col_label",
-  ".about_panel.is-in-menu .about_panel_col_list h5",
-].join(", ");
-/* Rides with the lines but is never split — RollingText has already rewritten
-   it into per-character spans, and SplitText would re-wrap those. */
-const ABOUT_CV = ".about_panel.is-in-menu .about_panel_cv";
-
-/** In-page destinations close the overlay; everything else hands off to the cover. */
-function isInPageMenuNav(path: string): boolean {
-  const id = hashId(path);
-  const pathname = window.location.pathname;
-  const onHome = pathname === "/";
-
-  if (path === "/archive") return pathname === "/archive";
-  if (path === "/work") {
-    if (document.documentElement.classList.contains("work-project-open")) {
-      return true;
-    }
-    return pathname === "/work";
-  }
-  if (path === "/" || id === "hero") return onHome;
-  if (id === "about") return false;
-  if (id === "team" || id === "contact") return onHome;
-  return false;
-}
 
 type MenuProps = {
   /** Current path from Astro — must match SSR HTML to avoid hydration mismatch. */
@@ -135,7 +73,6 @@ type MenuProps = {
 };
 
 export default function Menu({ initialPathname = "/" }: MenuProps) {
-  const [isOpen, setIsOpen] = useState(false);
   const [aboutOpen, setAboutOpen] = useState(false);
   const [aboutMode, setAboutMode] = useState<AboutPanelMode>("padded");
   /** Home scroll section only — never used while About is open or on /work. */
@@ -164,36 +101,11 @@ export default function Menu({ initialPathname = "/" }: MenuProps) {
 
   useEffect(() => subscribeSiteLenis(setBridgedLenis), []);
 
-  const menuRef = useRef<HTMLDivElement>(null);
-  const navRef = useRef<HTMLDivElement>(null);
-  const menuOverlayRef = useRef<HTMLDivElement>(null);
-  const toggleTrackRef = useRef<HTMLSpanElement>(null);
-  const menuItemsRef = useRef<HTMLDivElement>(null);
-  const menuFooterColsRef = useRef<HTMLDivElement>(null);
   const navContainerRef = useRef<HTMLDivElement>(null);
   const heroChromeRef = useRef<HTMLDivElement>(null);
-  const overlayTlRef = useRef<gsap.core.Timeline | null>(null);
-  const closePromiseRef = useRef<Promise<void> | null>(null);
-  const pendingPathRef = useRef<string | null>(null);
-  const aboutModeRef = useRef(aboutMode);
-  aboutModeRef.current = aboutMode;
-  const aboutOpenRef = useRef(aboutOpen);
-  aboutOpenRef.current = aboutOpen;
-  const aboutMenuSeqRef = useRef(0);
   const contactClusterRef = useRef<HTMLDivElement>(null);
   const contactTlRef = useRef<gsap.core.Timeline | null>(null);
   const contactReadyRef = useRef(false);
-  const aboutSplitRef = useRef<SplitText | null>(null);
-  const menuHeadsRef = useRef<GooeyTarget[]>([]);
-  const aboutHeadRef = useRef<GooeyTarget | null>(null);
-  const phaseRef = useRef<
-    "closed" | "opening" | "open" | "closing" | "leaving"
-  >("closed");
-
-  const killOverlayTl = () => {
-    overlayTlRef.current?.kill();
-    overlayTlRef.current = null;
-  };
 
   useEffect(() => {
     const syncPath = () => setPathname(window.location.pathname);
@@ -237,9 +149,7 @@ export default function Menu({ initialPathname = "/" }: MenuProps) {
         const next = typeof value === "function" ? value(prev) : value;
         if (next && !prev) {
           const desktop = window.matchMedia("(width >= 64rem)").matches;
-          const menuOpen =
-            phaseRef.current === "open" || phaseRef.current === "opening";
-          setAboutMode(desktop ? "ride" : menuOpen ? "inMenu" : "padded");
+          setAboutMode(desktop ? "ride" : "padded");
         }
         return next;
       });
@@ -264,7 +174,7 @@ export default function Menu({ initialPathname = "/" }: MenuProps) {
         return;
       }
       if (!isDesktopNav && aboutMode === "ride") {
-        setAboutMode(isOpen ? "inMenu" : "padded");
+        setAboutMode("padded");
         return;
       }
     }
@@ -272,7 +182,7 @@ export default function Menu({ initialPathname = "/" }: MenuProps) {
     if (!aboutOpen || aboutMode !== "ride") {
       if (aboutNavTlRef.current) {
         aboutNavTlRef.current.reverse();
-      } else if (!isOpen) {
+      } else {
         gsap.set(nav, { clearProps: "transform" });
       }
       return;
@@ -326,7 +236,7 @@ export default function Menu({ initialPathname = "/" }: MenuProps) {
     return () => {
       ro.disconnect();
     };
-  }, [aboutOpen, aboutMode, isDesktopNav, isOpen]);
+  }, [aboutOpen, aboutMode, isDesktopNav]);
 
   useEffect(() => {
     const chrome = heroChromeRef.current;
@@ -383,12 +293,11 @@ export default function Menu({ initialPathname = "/" }: MenuProps) {
     setOffset();
     const ro = new ResizeObserver(setOffset);
     ro.observe(nav);
-    /* `html.menu-open` re-homes the nav from `sticky` to `fixed; top: 0`. The
-       box moves without resizing, so the ResizeObserver never sees it and the
-       offset would keep the closed-state bottom — over half the viewport on
-       mobile, which squeezed the About panel into the strip below it. Watch the
-       class rather than re-measuring on `isOpen`: the class lands a commit or
-       more after the state flips, so any rAF guess reads the stale position. */
+    /* Route classes on `<html>` (`page-archive`, `work-project-open`) re-home
+       the bar without resizing it, so the ResizeObserver never sees the move
+       and the offset keeps a stale bottom — the About panel reads this to size
+       its own top inset. Watch the class rather than a rAF guess: the class
+       lands a commit or more after the state that caused it. */
     const classMo = new MutationObserver(setOffset);
     classMo.observe(document.documentElement, {
       attributes: true,
@@ -415,17 +324,12 @@ export default function Menu({ initialPathname = "/" }: MenuProps) {
      Returning a cleanup only from the locking branch keeps stop and start
      paired to the same instance. */
   useEffect(() => {
-    if (!(isOpen || aboutOpen)) {
-      document.documentElement.classList.remove("menu-open");
-      return;
-    }
+    if (!aboutOpen) return;
     lenis?.stop();
-    if (isOpen) document.documentElement.classList.add("menu-open");
     return () => {
-      document.documentElement.classList.remove("menu-open");
       lenis?.start();
     };
-  }, [lenis, isOpen, aboutOpen]);
+  }, [lenis, aboutOpen]);
 
   useEffect(() => {
     const pickHomeSection = () => {
@@ -458,165 +362,13 @@ export default function Menu({ initialPathname = "/" }: MenuProps) {
     };
   }, [lenis, aboutOpen, pathname]);
 
-  const menuHeads = (): GooeyTarget[] => {
-    if (menuHeadsRef.current.length) return menuHeadsRef.current;
-    const root = menuItemsRef.current;
-    if (!root) return [];
-    menuHeadsRef.current = prepareGooeyAll(
-      root.querySelectorAll<HTMLElement>(".menu_overlay_title"),
-    );
-    return menuHeadsRef.current;
-  };
-
-  const aboutHead = (): GooeyTarget | null => {
-    const el = document.querySelector<HTMLElement>(ABOUT_HEAD);
-    if (!el) return null;
-    if (aboutHeadRef.current?.el === el) return aboutHeadRef.current;
-    aboutHeadRef.current = prepareGooey(el);
-    return aboutHeadRef.current;
-  };
-
-  const parkOverlayCopy = () => {
-    gsap.set(MENU_COPY, { y: "0%", autoAlpha: 1 });
-    parkGooey(menuHeads());
-    gsap.set(MENU_FOOTER_COPY, { y: "100%" });
-  };
-
-  const parkOverlay = () => {
-    gsap.set(menuOverlayRef.current, {
-      y: 0,
-      yPercent: 100,
-      pointerEvents: "none",
-    });
-    gsap.set(toggleTrackRef.current, { yPercent: 0 });
-    parkOverlayCopy();
-  };
-
-  const resetNavDock = () => {
-    const nav = navContainerRef.current;
-    if (!nav) return;
-    gsap.killTweensOf(nav);
-    if (aboutOpenRef.current && aboutModeRef.current === "ride") return;
-    gsap.set(nav, { clearProps: "transform" });
-  };
-
-  const unrevealCopy = (tl: gsap.core.Timeline) => {
-    const heads = menuHeads();
-    if (heads.length) {
-      addGooeyUnreveal(tl, heads);
-      tl.to(MENU_COPY, { autoAlpha: 0, duration: 0.2 }, "-=0.2");
-    } else {
-      tl.to(MENU_COPY, {
-        y: "-100%",
-        duration: 0.7,
-        stagger: { each: 0.075, from: "end" },
-        ease: "power3.in",
-      });
-    }
-    tl.to(
-      MENU_FOOTER_COPY,
-      {
-        y: "-100%",
-        duration: 0.7,
-        stagger: { each: 0.1, from: "end" },
-        ease: "power3.in",
-      },
-      "<",
-    );
-  };
-
-  /** Whatever is currently split — the close runs against the live wrappers. */
-  const aboutLineTargets = (): Element[] => {
-    const lines = aboutSplitRef.current?.lines ?? [];
-    const cv = document.querySelector(ABOUT_CV);
-    return cv ? [...lines, cv] : [...lines];
-  };
-
-  /* Re-split on every open: line breaks depend on the panel's width, and the
-     panel is only laid out once it is on screen. revert() before re-splitting
-     so the wrappers never nest. */
-  const splitAboutCopy = (): Element[] => {
-    aboutSplitRef.current?.revert();
-    const targets = document.querySelectorAll(ABOUT_LINES);
-    aboutSplitRef.current = targets.length
-      ? new SplitText(targets, { type: "lines", mask: "lines" })
-      : null;
-    return aboutLineTargets();
-  };
-
-  const revertAboutCopy = () => {
-    aboutSplitRef.current?.revert();
-    aboutSplitRef.current = null;
-  };
-
-  const parkAboutCopy = (): Element[] => {
-    const head = aboutHead();
-    if (head) parkGooey(head);
-    const lines = splitAboutCopy();
-    parkLines(lines);
-    return lines;
-  };
-
-  const revealAboutCopy = (tl: gsap.core.Timeline, lines: Element[]) => {
-    const head = aboutHead();
-    if (head) addGooeyReveal(tl, head);
-    tl.to(
-      ABOUT_MEDIA,
-      {
-        autoAlpha: 1,
-        duration: ABOUT_MEDIA_S,
-        ease: "power2.out",
-      },
-      head ? "<" : undefined,
-    );
-    tl.to(
-      lines,
-      {
-        yPercent: 0,
-        duration: 0.9,
-        stagger: 0.045,
-        ease: "power3.out",
-      },
-      "<",
-    );
-  };
-
-  /**
-   * Back from About reverses the open timeline — menu copy returns the same
-   * way it left, About lines and media rewind. A hand-written exit (surface
-   * slide, second reveal) drifted from the entrance ease.
-   *
-   * The lead's gooey settles on open complete (drops the threshold class); arm
-   * it again before reverse so the melt still has both filter halves.
-   */
-  const finishAboutInMenuClose = () => {
-    revertAboutCopy();
-    gsap.set(ABOUT_MEDIA, { clearProps: "opacity,visibility" });
-    const heads = menuHeads();
-    if (heads.length) settleGooey(heads);
-    overlayTlRef.current = null;
-    setAboutOpen(false);
-  };
-
-  const focusAboutPanel = () => {
-    document.getElementById("site-about-panel")?.focus({ preventScroll: true });
-  };
-
-  useGSAP(
-    () => {
-      parkOverlay();
-    },
-    { scope: menuRef },
-  );
-
-  /* Parks the wordmark + nav at mount and plays them once the preloader hands
-     over. Not scoped to menuRef — the lockup and nav_wrap are siblings of
-     .menu_wrap, not children. Runs at mount so nothing is unparked for a frame. */
+  /* Parks the wordmark + nav lines at mount and plays them once the preloader
+     hands over. Runs at mount so nothing is unparked for a frame. */
   useEffect(() => bootHomeIntro(), []);
 
   useEffect(() => {
-    if (aboutOpen || isOpen) setContactOpen(false);
-  }, [aboutOpen, isOpen]);
+    if (aboutOpen) setContactOpen(false);
+  }, [aboutOpen]);
 
   useEffect(() => {
     setContactOpen(false);
@@ -678,77 +430,6 @@ export default function Menu({ initialPathname = "/" }: MenuProps) {
       contactTlRef.current = null;
     };
   }, [contactOpen]);
-
-  const aboutInMenu = aboutOpen && aboutMode === "inMenu";
-
-  const openAboutInMenu = () => {
-    if (phaseRef.current !== "open") return;
-    if (aboutOpen && aboutMode === "inMenu") return;
-
-    aboutMenuSeqRef.current += 1;
-    flushSync(() => {
-      setAboutMode("inMenu");
-      openAboutPanel();
-    });
-
-    if (prefersReducedMotion()) {
-      gsap.set(MENU_COPY, { y: "-100%" });
-      gsap.set(MENU_FOOTER_COPY, { y: "-100%" });
-      gsap.set(ABOUT_MEDIA, { autoAlpha: 1 });
-      revertAboutCopy();
-      focusAboutPanel();
-      return;
-    }
-
-    killOverlayTl();
-    const lines = parkAboutCopy();
-    const tl = gsap.timeline({
-      onComplete: focusAboutPanel,
-    });
-    overlayTlRef.current = tl;
-    unrevealCopy(tl);
-    revealAboutCopy(tl, lines);
-  };
-
-  const closeAboutInMenu = () => {
-    aboutMenuSeqRef.current += 1;
-    toggleTrackRef.current?.closest("button")?.focus({ preventScroll: true });
-
-    if (prefersReducedMotion()) {
-      gsap.set(ABOUT_MEDIA, { autoAlpha: 0 });
-      revertAboutCopy();
-      gsap.set(MENU_COPY, { y: "0%", autoAlpha: 1 });
-      gsap.set(MENU_FOOTER_COPY, { y: "0%" });
-      setAboutOpen(false);
-      return;
-    }
-
-    const tl = overlayTlRef.current;
-    if (tl && tl.progress() > 0) {
-      const head = aboutHead();
-      if (head) armGooey(head);
-      tl.eventCallback("onComplete", null);
-      tl.eventCallback("onReverseComplete", finishAboutInMenuClose);
-      tl.reverse();
-      return;
-    }
-
-    gsap.set(ABOUT_MEDIA, { autoAlpha: 0 });
-    revertAboutCopy();
-    gsap.set(MENU_COPY, { y: "0%", autoAlpha: 1 });
-    gsap.set(MENU_FOOTER_COPY, { y: "0%" });
-    const heads = menuHeads();
-    if (heads.length) settleGooey(heads);
-    setAboutOpen(false);
-  };
-
-  const dismissAbout = () => {
-    if (aboutInMenu && isOpen) {
-      closeAboutInMenu();
-      return;
-    }
-    setAboutOpen(false);
-  };
 
   const goTo = (path: string, options?: GoOptions) => {
     const id = hashId(path);
@@ -816,239 +497,6 @@ export default function Menu({ initialPathname = "/" }: MenuProps) {
     }
   };
 
-  const finishClose = () => {
-    phaseRef.current = "closed";
-    closePromiseRef.current = null;
-    overlayTlRef.current = null;
-    setIsOpen(false);
-    navContainerRef.current?.classList.remove("is-menu-open");
-    parkOverlay();
-    resetNavDock();
-    if (
-      aboutModeRef.current === "inMenu" &&
-      !window.matchMedia("(width >= 64rem)").matches
-    ) {
-      setAboutOpen(false);
-    }
-  };
-
-  const closeMenu = (): Promise<void> => {
-    if (phaseRef.current === "closed" || phaseRef.current === "leaving") {
-      return Promise.resolve();
-    }
-    if (closePromiseRef.current) return closePromiseRef.current;
-
-    killOverlayTl();
-    phaseRef.current = "closing";
-    aboutMenuSeqRef.current += 1;
-    if (aboutModeRef.current === "inMenu") setAboutOpen(false);
-    const overlay = menuOverlayRef.current;
-    const nav = navContainerRef.current;
-
-    if (prefersReducedMotion()) {
-      finishClose();
-      return Promise.resolve();
-    }
-
-    const done = new Promise<void>((resolve) => {
-      const tl = gsap.timeline({
-        onComplete: () => {
-          finishClose();
-          resolve();
-        },
-      });
-      overlayTlRef.current = tl;
-
-      unrevealCopy(tl);
-      tl.to(
-        toggleTrackRef.current,
-        {
-          yPercent: 0,
-          duration: 0.45,
-          ease: "power3.out",
-        },
-        "-=0.45",
-      );
-      tl.to(overlay, {
-        y: 0,
-        yPercent: -100,
-        duration: PANEL_DURATION,
-        ease: "introHop",
-      });
-      if (nav) {
-        tl.to(
-          nav,
-          {
-            y: 0,
-            duration: PANEL_DURATION,
-            ease: "introHop",
-          },
-          "<",
-        );
-      }
-    });
-    closePromiseRef.current = done;
-    return done;
-  };
-
-  useEffect(() => {
-    if (!isDesktopNav) return;
-    if (phaseRef.current === "closed" || phaseRef.current === "leaving") return;
-    void closeMenu();
-    // Close on the desktop breakpoint flip only — closeMenu is the latest
-    // closure from this render.
-  }, [isDesktopNav]);
-
-  const unrevealMenuText = (): Promise<void> => {
-    if (prefersReducedMotion()) {
-      gsap.set(MENU_COPY, { y: "-100%" });
-      gsap.set(MENU_FOOTER_COPY, { y: "-100%" });
-      gsap.set(toggleTrackRef.current, { yPercent: 0 });
-      return Promise.resolve();
-    }
-
-    return new Promise((resolve) => {
-      const tl = gsap.timeline({ onComplete: resolve });
-      unrevealCopy(tl);
-      tl.to(
-        toggleTrackRef.current,
-        {
-          yPercent: 0,
-          duration: 0.45,
-          ease: "power3.out",
-        },
-        "-=0.45",
-      );
-    });
-  };
-
-  const navigateTo = async (path: string) => {
-    if (phaseRef.current === "closed" || phaseRef.current === "leaving") return;
-
-    if (hashId(path) === "about" && !isDesktopNav) {
-      openAboutInMenu();
-      return;
-    }
-
-    if (isInPageMenuNav(path) || phaseRef.current === "closing") {
-      pendingPathRef.current = path;
-      await closeMenu();
-      const dest = pendingPathRef.current;
-      if (dest == null) return;
-      pendingPathRef.current = null;
-      goTo(dest);
-      return;
-    }
-
-    phaseRef.current = "leaving";
-    killOverlayTl();
-    gsap.set(menuOverlayRef.current, {
-      y: 0,
-      yPercent: 0,
-      pointerEvents: "all",
-    });
-    gsap.set(MENU_COPY, { y: "0%" });
-    gsap.set(MENU_FOOTER_COPY, { y: "0%" });
-    await unrevealMenuText();
-    goTo(path, { alreadyCovered: true });
-  };
-
-  const openMenu = () => {
-    if (phaseRef.current !== "closed") return;
-
-    if (aboutOpen) closeAboutPanel();
-
-    /* Measured here, synchronously, before `menu-open` lands and pins these two
-       to `fixed`. Their height leaves the flow the moment it does, which shifts
-       the whole page up — the snap before the overlay animates. `.hero_chrome`
-       reserves this back (Menu.css). Not reusing `--hero-chrome-height`: it is
-       driven by a ResizeObserver for a different purpose and lags a generation
-       behind a webfont swap, which left the reserve tens of pixels short. */
-    const chrome = heroChromeRef.current;
-    if (chrome) {
-      let reserve = 0;
-      for (const child of chrome.children) {
-        reserve += (child as HTMLElement).offsetHeight;
-      }
-      document.documentElement.style.setProperty(
-        "--menu-chrome-reserve",
-        `${reserve}px`,
-      );
-    }
-
-    phaseRef.current = "opening";
-    setIsOpen(true);
-    navContainerRef.current?.classList.add("is-menu-open");
-
-    const overlay = menuOverlayRef.current;
-    const nav = navContainerRef.current;
-    parkOverlayCopy();
-    /* No dock translate: `html.menu-open .nav_wrap` pins the bar with
-       `position: fixed` below the pinned wordmark (Menu.css, <64rem). Nudging
-       it by its own offset as well drove it off the top by the hero's height. */
-    if (nav) gsap.set(nav, { clearProps: "transform" });
-
-    if (prefersReducedMotion()) {
-      gsap.set(overlay, { y: 0, yPercent: 0, pointerEvents: "all" });
-      gsap.set(MENU_COPY, { y: "0%" });
-      gsap.set(MENU_FOOTER_COPY, { y: "0%" });
-      gsap.set(toggleTrackRef.current, { yPercent: -50 });
-      phaseRef.current = "open";
-      return;
-    }
-
-    gsap.set(overlay, { pointerEvents: "all", y: 0, yPercent: 100 });
-
-    const tl = gsap.timeline({
-      onComplete: () => {
-        if (phaseRef.current !== "opening") return;
-        phaseRef.current = "open";
-      },
-    });
-    overlayTlRef.current = tl;
-
-    tl.to(
-      overlay,
-      {
-        yPercent: 0,
-        duration: PANEL_DURATION,
-        ease: "introHop",
-      },
-      0,
-    );
-
-    tl.to(
-      toggleTrackRef.current,
-      {
-        yPercent: -50,
-        duration: 0.45,
-        ease: "power3.out",
-      },
-      "-=0.75",
-    );
-
-    addGooeyReveal(tl, menuHeads(), "-=0.15");
-    tl.to(
-      MENU_FOOTER_COPY,
-      {
-        y: "0%",
-        duration: 1,
-        stagger: 0.1,
-        ease: "power3.out",
-      },
-      "<",
-    );
-  };
-
-  const onToggle = () => {
-    if (isOpen && aboutInMenu) {
-      closeAboutInMenu();
-      return;
-    }
-    if (isOpen) void closeMenu();
-    else openMenu();
-  };
-
   return (
     <>
       <div className="hero_chrome" ref={heroChromeRef}>
@@ -1102,12 +550,9 @@ export default function Menu({ initialPathname = "/" }: MenuProps) {
             </div>
           </div>
         </div>
-        <div
-          className={`nav_wrap${isOpen ? " is-menu-open" : ""}${aboutInMenu ? " is-about-open" : ""}`}
-          ref={navContainerRef}
-        >
+        <div className="nav_wrap" ref={navContainerRef}>
           <div className="nav_contain container gap-0">
-            <nav className="nav_grid grid is-12" ref={navRef} aria-label="Main">
+            <nav className="nav_grid grid is-12" aria-label="Main">
               <div className="nav_logo">
                 <div className="revealer">
                   <a
@@ -1131,7 +576,8 @@ export default function Menu({ initialPathname = "/" }: MenuProps) {
                   {links.map(({ label, path, id }) => {
                     const isActive = activeId === id;
                     if (id === "contact") {
-                      const text = contactOpen ? "Close" : label;
+                      const text =
+                        contactOpen && isDesktopNav ? "Close" : label;
                       return (
                         <div
                           key={path}
@@ -1141,9 +587,22 @@ export default function Menu({ initialPathname = "/" }: MenuProps) {
                           <button
                             type="button"
                             className="nav_link nav_contact_toggle"
-                            aria-expanded={contactOpen}
-                            aria-controls="nav_contact_dropdown"
-                            onClick={() => setContactOpen((open) => !open)}
+                            aria-expanded={
+                              isDesktopNav ? contactOpen : undefined
+                            }
+                            aria-controls={
+                              isDesktopNav ? "nav_contact_dropdown" : undefined
+                            }
+                            onClick={() => {
+                              /* The dropdown is `display: none` below 64rem —
+                                 toggling it there is a dead tap, so the label
+                                 goes straight to the section instead. */
+                              if (!isDesktopNav) {
+                                goTo("/#contact");
+                                return;
+                              }
+                              setContactOpen((open) => !open);
+                            }}
                           >
                             <h5 className="text-style-main">
                               <RollingText key={text}>{text}</RollingText>
@@ -1186,7 +645,7 @@ export default function Menu({ initialPathname = "/" }: MenuProps) {
                     const text =
                       id === "about" && aboutOpen
                         ? "Close"
-                        : id === "work" && workProjectOpen && isDesktopNav
+                        : id === "work" && workProjectOpen
                           ? "Back"
                           : label;
                     return (
@@ -1209,6 +668,11 @@ export default function Menu({ initialPathname = "/" }: MenuProps) {
                 </div>
               ))}
 
+              {/* Mobile only (see Menu.css): the word form of the switch, so
+                  the bar carries the theme itself now that there is no menu to
+                  hold it. Desktop keeps the SVG switch in the utility stack. */}
+              <ThemeToggle variant="words" />
+
               <div className="nav_utility_stack">
                 <a
                   href="/archive"
@@ -1225,112 +689,15 @@ export default function Menu({ initialPathname = "/" }: MenuProps) {
                 </a>
                 <ThemeToggle />
               </div>
-
-              <div className="nav_menu_toggle_open">
-                <button
-                  type="button"
-                  className="nav_menu_toggle"
-                  onClick={onToggle}
-                  aria-expanded={isOpen}
-                  aria-controls={
-                    aboutInMenu ? "site-about-panel" : "site-menu-overlay"
-                  }
-                  aria-label={
-                    aboutInMenu
-                      ? "Back to menu"
-                      : isOpen
-                        ? "Close menu"
-                        : "Open menu"
-                  }
-                >
-                  <span className="nav_menu_toggle_viewport">
-                    <span
-                      className="nav_menu_toggle_track"
-                      ref={toggleTrackRef}
-                    >
-                      <span className="nav_menu_toggle_line">
-                        <h5 className="text-style-main">
-                          <RollingText>Menu</RollingText>
-                        </h5>
-                      </span>
-                      <span className="nav_menu_toggle_line">
-                        <h5 className="text-style-main">
-                          <RollingText key={aboutInMenu ? "Back" : "Close"}>
-                            {aboutInMenu ? "Back" : "Close"}
-                          </RollingText>
-                        </h5>
-                      </span>
-                    </span>
-                  </span>
-                </button>
-              </div>
             </nav>
           </div>
         </div>
       </div>
-      <div className="menu_wrap" ref={menuRef}>
-        <div
-          className={`menu_overlay${aboutInMenu ? " is-about-open" : ""}`}
-          id="site-menu-overlay"
-          ref={menuOverlayRef}
-        >
-          <div
-            className="menu_overlay_items"
-            ref={menuItemsRef}
-            aria-hidden={aboutInMenu}
-          >
-            {OVERLAY_LINKS.map(({ label, path }) => (
-              <div className="revealer" key={path} data-overlay-link={path}>
-                <a
-                  href={path}
-                  tabIndex={aboutInMenu ? -1 : undefined}
-                  onClick={(e) => {
-                    if (phaseRef.current === "closed") return;
-                    e.preventDefault();
-                    void navigateTo(path);
-                  }}
-                >
-                  <span className="menu_overlay_title text-style-display">
-                    {label}
-                  </span>
-                </a>
-              </div>
-            ))}
-          </div>
-          <div
-            className="menu_footer"
-            ref={menuFooterColsRef}
-            aria-hidden={aboutInMenu}
-          >
-            <div className="revealer">
-              <p className="text-style-h5">&copy; 2026 All Rights Reserved</p>
-            </div>
-            <div className="menu_socials">
-              {SOCIAL_LINKS.map(({ label, href, newTab }) => {
-                const isMail = href.startsWith("mailto:");
-                const text = isMail ? emailCopy.label : label;
-                return (
-                  <div className="revealer" key={label}>
-                    <a
-                      className="text-style-h5"
-                      href={href}
-                      aria-live={isMail ? "polite" : undefined}
-                      onClick={isMail ? emailCopy.onClick : undefined}
-                      {...socialLinkTabProps(newTab)}
-                    >
-                      {text}
-                    </a>
-                  </div>
-                );
-              })}
-            </div>
-            <div className="revealer">
-              <ThemeToggle />
-            </div>
-          </div>
-        </div>
-      </div>
-      <AboutPanel open={aboutOpen} mode={aboutMode} onClose={dismissAbout} />
+      <AboutPanel
+        open={aboutOpen}
+        mode={aboutMode}
+        onClose={() => setAboutOpen(false)}
+      />
     </>
   );
 }

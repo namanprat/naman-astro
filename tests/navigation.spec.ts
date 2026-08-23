@@ -35,10 +35,9 @@ test("the homepage scrolls", async ({ page, context }) => {
  * Scroll the homepage with this device's own input, then get back to the top
  * through whichever surface the width actually offers.
  *
- * The nav stack and the overlay menu swap at exactly the 64rem breakpoint —
- * above it the menu toggle is hidden and the links live in `.nav_grid`, below
- * it the reverse — so Home has to be reached differently on each side. Both
- * ends land in `goTo("/")`, which does not navigate when already on `/`: it
+ * Every width reaches Home the same way now — the links live on `.nav_grid` on
+ * both sides of the 64rem breakpoint, only their column map differs. The click
+ * lands in `goTo("/")`, which does not navigate when already on `/`: it
  * replays the hero entrance and scrolls to the top, which is the path that
  * regressed.
  */
@@ -47,7 +46,6 @@ test("returning Home scrolls to the top and keeps the nav up", async ({
   context,
 }) => {
   const cdp = await context.newCDPSession(page);
-  const narrow = isNarrowNav();
 
   await page.goto("/");
   await expectRevealed(page);
@@ -57,21 +55,49 @@ test("returning Home scrolls to the top and keeps the nav up", async ({
     .poll(() => page.evaluate(() => window.scrollY), { timeout: 30_000 })
     .toBeGreaterThan(0);
 
-  if (narrow) {
-    await page.locator(".nav_menu_toggle").first().click();
-    await expect.poll(() => rootClasses(page)).toContain("menu-open");
-    await page.locator('.menu_wrap a[href="/"]').first().click();
-  } else {
-    await page.locator('.nav_stack a[href="/"]').first().click();
-  }
+  await page.locator('.nav_stack a[href="/"]').first().click();
 
   await expect
     .poll(() => page.evaluate(() => window.scrollY), { timeout: 30_000 })
     .toBe(0);
-  await expect
-    .poll(() => rootClasses(page), { timeout: 30_000 })
-    .not.toContain("menu-open");
   await expectNavVisible(page);
+});
+
+/**
+ * Every destination lives on the bar itself at every width — there is no menu
+ * to open. Below 64rem the four clusters re-anchor onto the narrow grid
+ * (1 · 2 · -2 · -1) and the SVG theme switch gives way to the word pair; above
+ * it the reverse. Both halves are asserted so a regression on either side of
+ * the breakpoint fails rather than silently hiding a link.
+ */
+test("every nav destination sits on the bar, at every width", async ({
+  page,
+}) => {
+  await page.goto("/");
+  await expectRevealed(page);
+
+  // Scoped to the clusters, not to any matching href: `.nav_logo` carries its
+  // own `a[href="/"]` and would answer for Home without proving the stack is
+  // on screen.
+  for (const href of ["/", "/work", "/#about"]) {
+    await expect(page.locator(`.nav_stack a[href="${href}"]`)).toBeVisible();
+  }
+  await expect(page.locator(".nav_stack .nav_contact_toggle")).toBeVisible();
+  await expect(page.locator(".nav_grid .nav_archive")).toBeVisible();
+
+  // The pill and its overlay are gone for good.
+  await expect(page.locator(".nav_menu_toggle")).toHaveCount(0);
+  await expect(page.locator(".menu_wrap")).toHaveCount(0);
+
+  const words = page.locator(".nav_grid .nav_theme_words");
+  const swtch = page.locator(".nav_grid .nav_utility_stack .nav_theme_toggle");
+  if (isNarrowNav()) {
+    await expect(words).toBeVisible();
+    await expect(swtch).toBeHidden();
+  } else {
+    await expect(words).toBeHidden();
+    await expect(swtch).toBeVisible();
+  }
 });
 
 test("About opens and closes without stranding its state", async ({ page }) => {
@@ -172,7 +198,7 @@ test("the frosted surfaces actually carry a backdrop filter", async ({
   await expect.poll(() => rootClasses(page)).toContain("about-open");
 
   const frost = await page.evaluate(() =>
-    [".about_panel_surface", ".footer_child", ".menu_overlay"]
+    [".about_panel_surface", ".footer_child"]
       .map((selector) => {
         const el = document.querySelector(selector);
         return {

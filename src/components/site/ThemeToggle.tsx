@@ -1,11 +1,19 @@
 import { useEffect, useRef, useState } from "react";
 import gsap from "gsap";
 import { prefersReducedMotion } from "@/lib/site/prefersReducedMotion";
+import RollingText from "./RollingText";
 import "@/lib/site/eases";
 
 /** Circle centres of the inlined switch artwork — filled-left is the dark state. */
 const THEME_CX = { left: 36.3018, right: 87.4512 } as const;
 const SITE_THEME_KEY = "site-theme";
+
+/** Word form of the switch — each button picks a theme outright, so both carry
+    their own `aria-pressed` rather than sharing one toggle's state. */
+const THEME_WORDS = [
+  { label: "Dark", light: false },
+  { label: "Light", light: true },
+] as const;
 
 /**
  * Nav + footer theme switch.
@@ -14,8 +22,17 @@ const SITE_THEME_KEY = "site-theme";
  * writes it and every mounted instance reads it back through a MutationObserver.
  * That keeps the two switches in step with each other and with the inline
  * FOUC script, without a store between them.
+ *
+ * Two shapes, one source of truth. `switch` is the sliding-circle artwork used
+ * by the desktop nav and the footer. `words` is the mobile nav's DARK / LIGHT
+ * pair — a `.nav_stack` in all but name, so it inherits the nav's roll hover
+ * and the `heroIntro` entrance without a second selector.
  */
-export default function ThemeToggle() {
+type ThemeToggleProps = {
+  variant?: "switch" | "words";
+};
+
+export default function ThemeToggle({ variant = "switch" }: ThemeToggleProps) {
   const [isLight, setIsLight] = useState(false);
   const filledRef = useRef<SVGCircleElement>(null);
   const strokeRef = useRef<SVGCircleElement>(null);
@@ -59,17 +76,41 @@ export default function ThemeToggle() {
     tweenRef.current = tl;
   }, [isLight]);
 
-  const onToggle = () => {
-    const next = !isLight;
+  const setTheme = (light: boolean) => {
     const root = document.documentElement;
     root.classList.remove("theme-dark", "theme-light");
-    root.classList.add(next ? "theme-light" : "theme-dark");
+    root.classList.add(light ? "theme-light" : "theme-dark");
     try {
-      localStorage.setItem(SITE_THEME_KEY, next ? "light" : "dark");
+      localStorage.setItem(SITE_THEME_KEY, light ? "light" : "dark");
     } catch {
       /* private mode */
     }
   };
+
+  const onToggle = () => setTheme(!isLight);
+
+  if (variant === "words") {
+    return (
+      <div className="nav_theme_words">
+        {THEME_WORDS.map(({ label, light }) => {
+          const active = isLight === light;
+          return (
+            <button
+              key={label}
+              type="button"
+              className={`nav_link nav_theme_word${active ? "" : " is-inactive"}`}
+              aria-pressed={active}
+              onClick={() => setTheme(light)}
+            >
+              <h5 className="text-style-main">
+                <RollingText>{label}</RollingText>
+              </h5>
+            </button>
+          );
+        })}
+      </div>
+    );
+  }
 
   return (
     <button

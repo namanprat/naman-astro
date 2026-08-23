@@ -74,8 +74,8 @@ export function installAboutInterceptors(): () => void {
     if (!(anchor instanceof HTMLAnchorElement)) return;
     if (!isAboutHref(anchor.getAttribute("href"))) return;
 
-    // Nav / overlay / footer already call toggleAboutPanel themselves.
-    if (anchor.closest(".nav_wrap, .menu_wrap, .footer_wrap")) return;
+    // Nav / footer already call toggleAboutPanel themselves.
+    if (anchor.closest(".nav_wrap, .footer_wrap")) return;
 
     event.preventDefault();
     event.stopPropagation();

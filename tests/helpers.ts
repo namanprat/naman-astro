@@ -11,7 +11,9 @@ export function isTouch(): boolean {
   return name === "tablet" || name === "phone";
 }
 
-/** True below the `(width >= 64rem)` nav breakpoint, where WORK has no BACK state. */
+/** True below the `(width >= 64rem)` nav breakpoint, where the bar re-anchors
+    its clusters onto the 4/6/8-column grid and swaps the SVG theme switch for
+    the DARK / LIGHT word pair. */
 export function isNarrowNav(): boolean {
   return (test.info().project.use.viewport?.width ?? 0) < 1024;
 }

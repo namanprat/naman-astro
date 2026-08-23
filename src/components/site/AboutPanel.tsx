@@ -26,7 +26,7 @@ const BUST_MOUNT_IDLE_MS = 350;
 const BUST_FADE_IN_S = 0.6;
 const BUST_FADE_FALLBACK_MS = 5000;
 
-export type AboutPanelMode = "ride" | "padded" | "inMenu";
+export type AboutPanelMode = "ride" | "padded";
 
 function aboutPanelClass(mode: AboutPanelMode): string {
   switch (mode) {
@@ -34,8 +34,6 @@ function aboutPanelClass(mode: AboutPanelMode): string {
       return "about_panel";
     case "padded":
       return "about_panel is-padded";
-    case "inMenu":
-      return "about_panel is-in-menu";
     default: {
       const _exhaustive: never = mode;
       return _exhaustive;
@@ -86,13 +84,7 @@ function hideChrome(
 ) {
   panel.classList.remove("is-open");
   backdrop.classList.remove("is-open");
-  /* inMenu lives on the already-visible overlay — don't park the surface
-     off-screen or the next open flashes a card slide. */
-  if (!panel.classList.contains("is-in-menu")) {
-    gsap.set(surface, { top: "-100vh" });
-  } else {
-    gsap.set(surface, { clearProps: "transform,top" });
-  }
+  gsap.set(surface, { top: "-100vh" });
   gsap.set(backdrop, { autoAlpha: 0 });
 }
 
@@ -140,18 +132,7 @@ export default function AboutPanel({ open, mode, onClose }: AboutPanelProps) {
       const leadGooey = lead ? prepareGooey(lead) : null;
       if (leadGooey) parkGooey(leadGooey);
     }
-
-    if (mode !== "inMenu") return;
-    panel.classList.add("is-open");
-    /* Media only. The copy blocks no longer slide as wholes — Menu splits them
-       into lines and parks those, so translating the block too would carry the
-       already-parked lines a second screen down. The canvas dissolves rather
-       than slides, so this parks alpha, not y. */
-    gsap.set(
-      panel.querySelectorAll(".about_panel_media .about_panel_reveal_inner"),
-      { autoAlpha: 0 },
-    );
-  }, [open, mode]);
+  }, [open]);
 
   useEffect(() => {
     const panel = panelRef.current;
@@ -169,23 +150,11 @@ export default function AboutPanel({ open, mode, onClose }: AboutPanelProps) {
       const leadGooey = lead ? prepareGooey(lead) : null;
       if (leadGooey) parkGooey(leadGooey);
 
-      if (mode === "inMenu") {
-        /* Orange overlay is the scrim — keep the page backdrop out of the way.
-           Copy reveal is owned by Menu (unreveal links → reveal About). */
-        backdrop.classList.remove("is-open");
-        gsap.set(backdrop, { autoAlpha: 0 });
-        gsap.set(surface, { clearProps: "transform,top" });
-        if (!wasOpen) {
-          tlRef.current?.kill();
-          tlRef.current = null;
-        }
-        return;
-      }
-
       backdrop.classList.add("is-open");
 
-      /* Entrance only on closed → open. Mode changes while open (resize) must
-         not teleport the card off-screen and slide it in again. */
+      /* Entrance only on closed → open. A re-run while open (a resize crossing
+         the ride/padded boundary) must not teleport the card off-screen and
+         slide it in again. */
       if (!wasOpen) {
         tlRef.current?.kill();
         const tl = gsap.timeline({
@@ -229,7 +198,7 @@ export default function AboutPanel({ open, mode, onClose }: AboutPanelProps) {
     } else {
       hideChrome(panel, surface, backdrop);
     }
-  }, [open, mode]);
+  }, [open]);
 
   /* Follows the prop, so the cleanup runs even when the exit animation does
      not complete. See ABOUT_OPEN_CLASS. */
@@ -298,7 +267,7 @@ export default function AboutPanel({ open, mode, onClose }: AboutPanelProps) {
         type="button"
         className="about_panel_backdrop"
         aria-label="Close about"
-        tabIndex={open && mode !== "inMenu" ? 0 : -1}
+        tabIndex={open ? 0 : -1}
         onClick={onClose}
       />
       <aside

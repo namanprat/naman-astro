@@ -65,13 +65,3 @@ for (const [name, path] of [
     });
   });
 }
-
-test("the menu overlay matches its baseline", async ({ page }) => {
-  await open(page, "/");
-  await page.getByRole("button", { name: /menu/i }).first().click();
-  await page.waitForTimeout(2000);
-  await expect(page).toHaveScreenshot("menu.png", {
-    ...SHOT,
-    mask: MASK(page),
-  });
-});

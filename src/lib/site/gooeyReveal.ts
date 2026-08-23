@@ -59,7 +59,6 @@ const TARGETS = "h1, h2, h3";
  */
 const SKIP = [
   ".nav_wrap",
-  ".menu_wrap",
   ".footer_wrap",
   ".about_panel",
   ".content_group",

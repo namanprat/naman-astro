@@ -177,7 +177,6 @@ export default function WorkGallery() {
     const engineEnabled = () =>
       transition?.state === "closed" &&
       !switchingRef.current &&
-      !document.documentElement.classList.contains("menu-open") &&
       !document.documentElement.classList.contains(ABOUT_OPEN_CLASS);
 
     /**
