@@ -19,8 +19,11 @@
 
   .process_card {
     position: relative;
+    width: 100%;
+    max-width: 100%;
     min-width: 0;
-    min-height: calc(60vh * var(--_responsive---small));
+    /* Height follows the column, not the other way around. A 60vh min-height
+       plus 4/5 transferred a ~48vh width and overflowed the mobile grid. */
     aspect-ratio: 4 / 5;
     padding: var(--space-4);
     display: flex;

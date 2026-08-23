@@ -176,7 +176,7 @@ html.theme-light .footer_box {
   visibility: hidden;
 }
 
-@media (width < 64rem), (prefers-reduced-motion: reduce) {
+@media (prefers-reduced-motion: reduce) {
   .footer_logo_source {
     visibility: visible;
   }
@@ -200,6 +200,11 @@ html.theme-light .footer_box {
 }
 
 @media (width < 48rem) {
+  .footer_wrap {
+    padding-inline: 0;
+    padding-bottom: var(--site--safe-area-bottom);
+  }
+
   .footer_tagline,
   .footer_col.is-nav,
   .footer_col.is-connect {

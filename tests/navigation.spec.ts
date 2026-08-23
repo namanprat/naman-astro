@@ -35,12 +35,10 @@ test("the homepage scrolls", async ({ page, context }) => {
  * Scroll the homepage with this device's own input, then get back to the top
  * through whichever surface the width actually offers.
  *
- * The nav stack and the overlay menu swap at exactly the 48rem breakpoint —
- * above it the menu toggle is hidden and the links live in `.nav_grid`, below
- * it the reverse — so Home has to be reached differently on each side. Both
- * ends land in `goTo("/")`, which does not navigate when already on `/`: it
- * replays the hero entrance and scrolls to the top, which is the path that
- * regressed.
+ * Home lives on the dedicated stack link above 48rem and on the SVG lockup
+ * below it. Both ends land in `goTo("/")`, which does not navigate when
+ * already on `/`: it replays the hero entrance and scrolls to the top, which
+ * is the path that regressed.
  */
 test("returning Home scrolls to the top and keeps the nav up", async ({
   page,
@@ -58,9 +56,7 @@ test("returning Home scrolls to the top and keeps the nav up", async ({
     .toBeGreaterThan(0);
 
   if (narrow) {
-    await page.locator(".nav_menu_toggle").first().click();
-    await expect.poll(() => rootClasses(page)).toContain("menu-open");
-    await page.locator('.menu_wrap a[href="/"]').first().click();
+    await page.locator(".name_hero_home").first().click();
   } else {
     await page.locator('.nav_stack a[href="/"]').first().click();
   }

@@ -611,15 +611,33 @@ html.theme-light .about_panel.is-in-menu {
   }
 }
 
-/* Stack on 6/4-col (standalone padded About + in-menu on small screens) */
+/* Stack on 6/4-col. Ride card is full-bleed (into the site margin) and
+   docks the nav underneath, same motion as desktop. */
 @media (width < 48rem) {
+  .about_panel:not(.is-in-menu) {
+    padding: 0;
+  }
+
   .about_panel:not(.is-in-menu) .about_panel_surface,
   .about_panel:not(.is-in-menu) .about_panel_scroll {
-    max-height: calc(90vh - var(--site-gutter) * 2);
+    width: 100%;
+    max-width: none;
+    margin-inline: 0;
+    max-height: 85vh;
+  }
+
+  .about_panel:not(.is-in-menu) .about_panel_inner.container {
+    /* Same top air as the name lockup; gutter at the bottom, not the 20vh runoff. */
+    padding-top: var(--lockup-top, calc(var(--site--safe-area-top) + var(--site-gutter)));
+    padding-bottom: var(--site-gutter);
+  }
+
+  .about_panel:not(.is-in-menu) .about_panel_media {
+    display: none;
   }
 
   .about_panel:not(.is-in-menu) .about_panel_grid {
-    grid-template-rows: auto auto auto;
+    grid-template-rows: auto auto;
   }
 
   .about_panel:not(.is-in-menu) .about_panel_intro {
@@ -634,13 +652,6 @@ html.theme-light .about_panel.is-in-menu {
     text-indent: 0;
   }
 
-  .about_panel:not(.is-in-menu) .about_panel_media {
-    grid-column: 1 / -1;
-    grid-row: 2;
-    width: 100%;
-    max-width: none;
-  }
-
   .about_panel.is-in-menu .about_panel_lists,
   .about_panel:not(.is-in-menu) .about_panel_lists {
     display: grid;
@@ -649,6 +660,10 @@ html.theme-light .about_panel.is-in-menu {
     grid-template-columns: minmax(0, 1fr);
     gap: var(--space-8) 0;
     align-items: start;
+  }
+
+  .about_panel:not(.is-in-menu) .about_panel_lists {
+    grid-row: 2;
   }
 
   .about_panel.is-in-menu .about_panel_col.is-services,
@@ -672,10 +687,13 @@ html.theme-light .about_panel.is-in-menu {
   .about_panel.is-in-menu .about_panel_clients_cols,
   .about_panel:not(.is-in-menu) .about_panel_clients_cols {
     display: grid;
-    grid-template-columns: repeat(2, max-content);
+    /* Track 1 is the Archive/Contact inset from the 3-col nav (Menu.tsx).
+       Names hug the left of that track; col 2 starts on the mid cluster. */
+    grid-template-columns: var(--nav-mid-inset, max-content) max-content;
     grid-column: auto;
     grid-row: auto;
-    gap: var(--space-3) var(--site-gutter);
+    gap: var(--space-3) 0;
+    width: 100%;
   }
 
   .about_panel.is-in-menu .about_panel_clients_cols > *:nth-child(2),

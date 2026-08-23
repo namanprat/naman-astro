@@ -32,7 +32,7 @@ const GOOEY_ARMED = "is-gooey-armed";
  * node corrupts it. Their `<a>` / wordmark parent is the mask.
  */
 const NAV_LINES =
-  ".nav_grid .nav_stack > .nav_link h5, .nav_grid .nav_contact_toggle h5, .nav_grid .nav_archive h5, .nav_grid .nav_logo_wordmark h5";
+  ".nav_grid .nav_stack > .nav_link h5, .nav_grid .nav_contact_toggle h5, .nav_grid .nav_archive h5, .nav_grid .nav_logo_wordmark h5, .nav_grid .nav_theme_toggle_label h5";
 
 /** codegrid's timing — the melt needs the full 1.5s to read as gooey. */
 const GOOEY_S = 1.5;
