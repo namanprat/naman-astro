@@ -1,12 +1,21 @@
 /**
- * Codrops Demo 1–style cylinder gallery behind Team copy.
- * Idle spin always runs; scroll velocity adds on top (no ease lag).
+ * Codrops Demo 1–style cylinder behind Team copy, as an R3F island.
+ * Mesh pose is fixed; Duforn glyphs scroll in the shader. Ink is `--text`.
  */
-import { useEffect, useRef } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { Canvas, useFrame, useThree } from "@react-three/fiber";
+import { folder, useControls } from "leva";
 import * as THREE from "three";
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import { workItems } from "@/content/work";
+import { prefersReducedMotion } from "@/lib/site/prefersReducedMotion";
+import {
+  ASCII_FRAG,
+  ASCII_VERT,
+  buildDufornAsciiAtlas,
+  readThemeInk,
+} from "./teamCylinderAscii";
 
 gsap.registerPlugin(ScrollTrigger);
 
@@ -24,10 +33,26 @@ const TILE_H = Math.round(TILE_W / TILE_ASPECT);
 /** Default gap between tiles as % of tile width. */
 const DEFAULT_GAP_PCT = 3.5;
 const RADIAL_SEGMENTS = 64;
-/** px/s scroll velocity → radians (instant, no easing). */
-const VELOCITY_SCALE = 0.000012;
-/** Continuous idle spin (rad/s) so the strip keeps moving off-scroll. */
-const IDLE_RAD_PER_SEC = 0.12;
+/** Full turn in radians — maps mesh spin constants onto UV 0–1. */
+const TAU = Math.PI * 2;
+/** px/s scroll velocity → UV (same feel as the old 0.000012 rad scale). */
+const VELOCITY_UV_SCALE = 0.000012 / TAU;
+/** Continuous idle crawl (UV/s) so the strip keeps moving off-scroll. */
+const IDLE_UV_PER_SEC = 0.12 / TAU;
+const ASCII_GRANULARITY = 24;
+
+/** Strip transform. Pose is fixed; only the shader UVs travel. */
+const STRIP = {
+  posX: 0,
+  posY: 1.1,
+  posZ: 0,
+  rotX: 0,
+  rotY: 0,
+  rotZ: -0.1,
+  scale: 1,
+  radius: 1.7,
+  gapPct: DEFAULT_GAP_PCT,
+};
 
 function drawImageCover(
   ctx: CanvasRenderingContext2D,
@@ -82,7 +107,6 @@ function buildAtlasFromImages(
   const atlas = document.createElement("canvas");
   atlas.width = Math.max(1, Math.floor(totalWidthOriginal * scale));
   atlas.height = Math.max(1, Math.floor(TILE_H * scale));
-  // Alpha so gap gutters stay see-through (section bg / page shows through).
   const ctx = atlas.getContext("2d", {
     alpha: true,
     willReadFrequently: false,
@@ -103,7 +127,7 @@ function buildAtlasFromImages(
 
   const texture = new THREE.CanvasTexture(atlas);
   texture.colorSpace = THREE.SRGBColorSpace;
-  texture.wrapS = THREE.ClampToEdgeWrapping;
+  texture.wrapS = THREE.RepeatWrapping;
   texture.wrapT = THREE.ClampToEdgeWrapping;
   texture.minFilter = THREE.LinearFilter;
   texture.magFilter = THREE.LinearFilter;
@@ -121,7 +145,6 @@ function getResponsiveDimensions(
   const isMobile = width < 768;
   const isTablet = width >= 768 && width < 1024;
   const radius = radiusOverride ?? (isMobile ? 1.4 : isTablet ? 1.55 : 1.7);
-  // Circumferential image width; cylinder height follows 5:4 landscape.
   const imageArc = ((2 * Math.PI * radius) / IMAGE_COUNT) * (1 - gapRatio);
   return {
     radius,
@@ -131,186 +154,264 @@ function getResponsiveDimensions(
   };
 }
 
-/** Strip transform. Was a leva panel; these are the values it was tuned to. */
-const STRIP = {
-  posX: 0,
-  posY: 1.1,
-  posZ: 0,
-  rotX: 0,
-  rotY: 0,
-  rotZ: -0.1,
-  scale: 1,
-  radius: 1.7,
-  gapPct: DEFAULT_GAP_PCT,
+type StripControls = {
+  granularity: number;
+  fontSize: number;
+  noise: number;
+  scrollSpeed: number;
+  idleSpeed: number;
+  scrollBoost: number;
+  moveCylinder: boolean;
+  posY: number;
+  rotZ: number;
+  scale: number;
+  radius: number;
+  gapPct: number;
 };
 
-export default function TeamCylinderCarousel() {
-  const canvasRef = useRef<HTMLCanvasElement>(null);
+function TeamCylinderScene({ controls }: { controls: StripControls }) {
+  const { camera, gl, size } = useThree();
+  const meshRef = useRef<THREE.Mesh>(null);
+  const materialRef = useRef<THREE.ShaderMaterial>(null);
+  const scrollUv = useRef(0);
+  const velocityUv = useRef(0);
+  const photoTex = useRef<THREE.CanvasTexture | null>(null);
+  const asciiTex = useRef<THREE.CanvasTexture | null>(null);
+  const imagesRef = useRef<HTMLImageElement[] | null>(null);
+  const velocityScaleRef = useRef(controls.scrollBoost);
+  velocityScaleRef.current = controls.scrollBoost;
+  const [imagesReady, setImagesReady] = useState(false);
+  const [ready, setReady] = useState(false);
+  const [gapRatio, setGapRatio] = useState(0);
+
+  const reducedMotion = useMemo(() => prefersReducedMotion(), []);
+  const baseDims = useMemo(
+    () => getResponsiveDimensions(size.width || 1024, 0, controls.radius),
+    [size.width, controls.radius],
+  );
+
+  const uniforms = useMemo(
+    () => ({
+      uTexture: { value: null as THREE.Texture | null },
+      uAsciiTexture: { value: null as THREE.Texture | null },
+      uGlyphCount: { value: 1 },
+      uGranularity: { value: ASCII_GRANULARITY },
+      uFontSize: { value: 1 },
+      uSurfaceAspect: { value: IMAGE_COUNT * TILE_ASPECT },
+      uColor: { value: new THREE.Color("#8b8b8b") },
+      uTime: { value: 0 },
+      uNoise: { value: reducedMotion ? 0 : 1 },
+      uScroll: { value: 0 },
+    }),
+    [reducedMotion],
+  );
 
   useEffect(() => {
-    const canvas = canvasRef.current;
-    const section = canvas?.closest(".team_wrap");
-    if (!canvas || !(section instanceof HTMLElement)) return;
-
-    const reducedMotion = window.matchMedia(
-      "(prefers-reduced-motion: reduce)",
-    ).matches;
-
     let disposed = false;
-    let rafId = 0;
-    let texture: THREE.CanvasTexture | null = null;
-    let st: ScrollTrigger | null = null;
-    let gapRatio = 0;
-    let scrollRotY = 0;
-    let lastTick = performance.now();
-    let images: HTMLImageElement[] | null = null;
-    let appliedGapPct = Number.NaN;
-
-    const scene = new THREE.Scene();
-    const camera = new THREE.PerspectiveCamera(45, 1, 0.1, 100);
-    const renderer = new THREE.WebGLRenderer({
-      canvas,
-      // Transparent, so .team_wrap's `background-color: var(--background)` is the surface
-      // you see. An opaque clear here covers the whole section and the theme
-      // toggle has nothing visible left to change.
-      alpha: true,
-      antialias: true,
-      powerPreference: "high-performance",
-    });
-    renderer.setClearColor(0x000000, 0);
-    renderer.outputColorSpace = THREE.SRGBColorSpace;
-
-    const dims = getResponsiveDimensions(window.innerWidth, 0, STRIP.radius);
-    const geometry = new THREE.CylinderGeometry(
-      dims.radius,
-      dims.radius,
-      dims.height,
-      RADIAL_SEGMENTS,
-      1,
-      true,
-    );
-
-    const material = new THREE.MeshBasicMaterial({
-      map: null,
-      side: THREE.DoubleSide,
-      transparent: true,
-      // Hard discard on gap pixels so you see cleanly through to .team_wrap bg
-      alphaTest: 0.5,
-      depthWrite: true,
-    });
-
-    const cylinder = new THREE.Mesh(geometry, material);
-    scene.add(cylinder);
-    camera.position.set(0, 0, dims.cameraZ);
-    camera.lookAt(0, 0, 0);
-
-    const applyStrip = () => {
-      const next = getResponsiveDimensions(
-        section.clientWidth || window.innerWidth,
-        gapRatio,
-        STRIP.radius,
-      );
-      const sx = next.radius / dims.radius;
-      const sy = next.height / dims.height;
-      cylinder.position.set(STRIP.posX, STRIP.posY, STRIP.posZ);
-      cylinder.rotation.set(STRIP.rotX, STRIP.rotY + scrollRotY, STRIP.rotZ);
-      cylinder.scale.set(sx * STRIP.scale, sy * STRIP.scale, sx * STRIP.scale);
-    };
-
-    const applyAtlas = (gapPct: number) => {
-      if (!images) return;
-      const gl = renderer.getContext() as WebGLRenderingContext;
-      const { texture: atlas, gapRatio: ratio } = buildAtlasFromImages(
-        gl,
-        images,
-        gapPct,
-      );
-      texture?.dispose();
-      texture = atlas;
-      gapRatio = ratio;
-      appliedGapPct = gapPct;
-      material.map = atlas;
-      material.needsUpdate = true;
-      resize();
-    };
-
-    const resize = () => {
-      const width = section.clientWidth;
-      const height = section.clientHeight;
-      if (!width || !height) return;
-
-      const next = getResponsiveDimensions(width, gapRatio, STRIP.radius);
-      renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
-      renderer.setSize(width, height, false);
-      camera.aspect = width / height;
-      camera.fov = next.fov;
-      camera.position.z = next.cameraZ;
-      camera.updateProjectionMatrix();
-      applyStrip();
-    };
-
-    const paint = () => {
-      renderer.render(scene, camera);
-    };
-
-    const tick = () => {
-      if (disposed) return;
-      rafId = requestAnimationFrame(tick);
-      const now = performance.now();
-      const dt = Math.min((now - lastTick) / 1000, 0.05);
-      lastTick = now;
-      if (!reducedMotion) scrollRotY += IDLE_RAD_PER_SEC * dt;
-
-      const nextGap = STRIP.gapPct;
-      if (images && nextGap !== appliedGapPct) applyAtlas(nextGap);
-
-      applyStrip();
-      paint();
-    };
-
-    const ro = new ResizeObserver(resize);
-    ro.observe(section);
-
-    Promise.all(IMAGE_SRCS.map(loadImage))
-      .then((loaded) => {
-        if (disposed) return;
-        images = loaded;
-        applyAtlas(STRIP.gapPct);
-        paint();
-        rafId = requestAnimationFrame(tick);
-
-        if (reducedMotion) return;
-
-        // Drive spin from any page scroll — not only while .team_wrap is on screen.
-        st = ScrollTrigger.create({
-          start: 0,
-          end: "max",
-          onUpdate(self) {
-            const v = self.getVelocity();
-            if (!v) return;
-            scrollRotY += v * VELOCITY_SCALE;
-          },
-        });
+    Promise.all([
+      Promise.all(IMAGE_SRCS.map(loadImage)),
+      buildDufornAsciiAtlas(),
+    ])
+      .then(([images, ascii]) => {
+        if (disposed) {
+          ascii.texture.dispose();
+          return;
+        }
+        imagesRef.current = images;
+        asciiTex.current = ascii.texture;
+        uniforms.uAsciiTexture.value = ascii.texture;
+        uniforms.uGlyphCount.value = ascii.glyphCount;
+        uniforms.uColor.value.set(readThemeInk());
+        setImagesReady(true);
       })
       .catch(() => {
-        // Atlas failed — leave black canvas; text still readable
+        /* Atlas failed — leave the canvas empty; copy stays readable. */
       });
-
-    resize();
 
     return () => {
       disposed = true;
-      cancelAnimationFrame(rafId);
-      ro.disconnect();
-      st?.kill();
-      texture?.dispose();
-      geometry.dispose();
-      material.dispose();
-      renderer.dispose();
+      photoTex.current?.dispose();
+      asciiTex.current?.dispose();
+      photoTex.current = null;
+      asciiTex.current = null;
+      imagesRef.current = null;
     };
-  }, []);
+  }, [uniforms]);
+
+  useEffect(() => {
+    if (!imagesReady || !imagesRef.current) return;
+    const ctx = gl.getContext() as WebGLRenderingContext;
+    const photo = buildAtlasFromImages(ctx, imagesRef.current, controls.gapPct);
+    photoTex.current?.dispose();
+    photoTex.current = photo.texture;
+    uniforms.uTexture.value = photo.texture;
+    setGapRatio(photo.gapRatio);
+    setReady(true);
+  }, [imagesReady, controls.gapPct, gl, uniforms]);
+
+  useEffect(() => {
+    if (reducedMotion) return;
+    const st = ScrollTrigger.create({
+      start: 0,
+      end: "max",
+      onUpdate(self) {
+        const v = self.getVelocity();
+        if (!v) return;
+        velocityUv.current += v * VELOCITY_UV_SCALE * velocityScaleRef.current;
+      },
+    });
+    return () => {
+      st.kill();
+    };
+  }, [reducedMotion]);
+
+  useEffect(() => {
+    if (!ready) return;
+    const color = uniforms.uColor.value;
+    const apply = () => {
+      color.set(readThemeInk());
+    };
+    apply();
+    const mo = new MutationObserver(apply);
+    mo.observe(document.documentElement, {
+      attributes: true,
+      attributeFilter: ["class"],
+    });
+    return () => mo.disconnect();
+  }, [ready, uniforms]);
+
+  useFrame((_, dt) => {
+    if (!reducedMotion) {
+      scrollUv.current +=
+        controls.idleSpeed * controls.scrollSpeed * dt + velocityUv.current;
+      velocityUv.current = 0;
+      scrollUv.current = ((scrollUv.current % 1) + 1) % 1;
+    }
+
+    const mesh = meshRef.current;
+    if (!mesh) return;
+
+    const next = getResponsiveDimensions(size.width, gapRatio, controls.radius);
+    const sx = next.radius / baseDims.radius;
+    const sy = next.height / baseDims.height;
+    mesh.position.set(STRIP.posX, controls.posY, STRIP.posZ);
+    const spinY =
+      !reducedMotion && controls.moveCylinder ? scrollUv.current * TAU : 0;
+    mesh.rotation.set(STRIP.rotX, STRIP.rotY + spinY, controls.rotZ);
+    mesh.scale.set(
+      sx * controls.scale,
+      sy * controls.scale,
+      sx * controls.scale,
+    );
+
+    if (camera instanceof THREE.PerspectiveCamera) {
+      camera.fov = next.fov;
+      camera.position.z = next.cameraZ;
+      camera.updateProjectionMatrix();
+    }
+
+    const mat = materialRef.current;
+    if (!mat) return;
+    mat.uniforms.uGranularity.value = controls.granularity;
+    mat.uniforms.uFontSize.value = controls.fontSize ?? 1;
+    mat.uniforms.uNoise.value = reducedMotion ? 0 : controls.noise;
+    mat.uniforms.uScroll.value = scrollUv.current;
+    if (!reducedMotion) mat.uniforms.uTime.value += dt;
+    const safeGap = Math.min(gapRatio, 0.95);
+    mat.uniforms.uSurfaceAspect.value =
+      (IMAGE_COUNT * TILE_ASPECT) / (1 - safeGap);
+  });
+
+  if (!ready) return null;
 
   return (
-    <canvas className="team_cylinder" ref={canvasRef} aria-hidden="true" />
+    <mesh ref={meshRef}>
+      <cylinderGeometry
+        args={[
+          baseDims.radius,
+          baseDims.radius,
+          baseDims.height,
+          RADIAL_SEGMENTS,
+          1,
+          true,
+        ]}
+      />
+      <shaderMaterial
+        ref={materialRef}
+        uniforms={uniforms}
+        vertexShader={ASCII_VERT}
+        fragmentShader={ASCII_FRAG}
+        side={THREE.DoubleSide}
+        transparent
+        depthWrite
+        toneMapped={false}
+      />
+    </mesh>
+  );
+}
+
+export default function TeamCylinderCarousel() {
+  const controls = useControls({
+    moveCylinder: { value: true, label: "Move cylinder" },
+    ASCII: folder({
+      granularity: {
+        value: ASCII_GRANULARITY,
+        min: 4,
+        max: 64,
+        step: 1,
+      },
+      fontSize: { value: 1, min: 0.4, max: 3, step: 0.05 },
+      noise: { value: 1, min: 0, max: 1, step: 0.01 },
+      scrollSpeed: { value: 1, min: 0, max: 4, step: 0.05 },
+    }),
+    Motion: folder({
+      idleSpeed: {
+        value: IDLE_UV_PER_SEC,
+        min: 0,
+        max: 0.12,
+        step: 0.001,
+      },
+      scrollBoost: {
+        value: 1,
+        min: 0,
+        max: 8,
+        step: 0.05,
+      },
+    }),
+    Strip: folder({
+      posY: { value: STRIP.posY, min: -1, max: 3, step: 0.05 },
+      rotZ: { value: STRIP.rotZ, min: -0.6, max: 0.6, step: 0.01 },
+      scale: { value: STRIP.scale, min: 0.4, max: 2, step: 0.05 },
+      radius: { value: STRIP.radius, min: 0.8, max: 3, step: 0.05 },
+      gapPct: { value: STRIP.gapPct, min: 0, max: 20, step: 0.5 },
+    }),
+  });
+
+  return (
+    <Canvas
+      className="team_cylinder"
+      dpr={[1, 1.5]}
+      gl={{
+        alpha: true,
+        antialias: true,
+        powerPreference: "high-performance",
+      }}
+      camera={{ position: [0, 0, 6.4], fov: 45, near: 0.1, far: 100 }}
+      resize={{ scroll: false }}
+      style={{
+        position: "absolute",
+        inset: 0,
+        width: "100%",
+        height: "100%",
+        display: "block",
+        pointerEvents: "none",
+      }}
+      onCreated={({ gl }) => {
+        gl.setClearColor(0x000000, 0);
+        gl.outputColorSpace = THREE.SRGBColorSpace;
+      }}
+    >
+      <TeamCylinderScene controls={controls} />
+    </Canvas>
   );
 }

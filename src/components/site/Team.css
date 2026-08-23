@@ -24,6 +24,12 @@
     pointer-events: none;
   }
 
+  .team_cylinder canvas {
+    display: block;
+    width: 100%;
+    height: 100%;
+  }
+
   .team_copy {
     position: relative;
     z-index: 1;
