@@ -1,11 +1,13 @@
 /**
- * What the home preloader actually waits on: webfonts, the grain texture, the
- * About-panel bust GLB, and the backdrop canvas' first rendered frame.
+ * What the home preloader actually waits on: webfonts, the grain texture (desktop
+ * only — the overlay is `display: none` below 48rem), the About-panel bust GLB,
+ * and the backdrop canvas' first rendered frame.
  *
  * Every segment fails open — a dead asset reports complete rather than trapping
  * the visitor behind the ENTER gate.
  */
 import { BUST_URL, shouldMountAboutBust } from "./aboutBust";
+import { isMobileLayout } from "./isMobileLayout";
 import { completeAll, register, report } from "./preloadProgress";
 
 const GRAIN_URL = "/main-assets/grain.webp";
@@ -102,9 +104,12 @@ async function loadBust(): Promise<void> {
 /** Kick off every segment. Resolves when all of them settle or the failsafe fires. */
 export function startPreload(): Promise<void> {
   const wantsBust = shouldMountAboutBust();
+  // Grain is `display: none` below 48rem — do not register it, so its weight
+  // redistributes the same way the bust does when it is not mounted.
+  const wantsGrain = !isMobileLayout();
 
   register("fonts", 10);
-  register("grain", 20);
+  if (wantsGrain) register("grain", 20);
   register("canvas", 20);
   if (wantsBust) register("bust", 50);
 
@@ -116,11 +121,11 @@ export function startPreload(): Promise<void> {
 
   const jobs = [
     settle("fonts", loadFonts()),
-    settle("grain", loadGrain()),
     new Promise<void>((resolve) => {
       canvasReady = resolve;
     }),
   ];
+  if (wantsGrain) jobs.push(settle("grain", loadGrain()));
   if (wantsBust) jobs.push(settle("bust", loadBust()));
 
   return Promise.race([

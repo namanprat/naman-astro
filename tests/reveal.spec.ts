@@ -2,7 +2,10 @@ import { expect, test } from "@playwright/test";
 import {
   expectNavVisible,
   expectRevealed,
+  isNarrowNav,
+  isTouch,
   rootClasses,
+  scrollDown,
   seedSession,
   skipPreloader,
   stubWebGL,
@@ -94,4 +97,89 @@ test("a project page reveals and keeps its nav", async ({ page }) => {
   await page.goto("/work/money-me");
   await expectRevealed(page);
   await expect.poll(() => rootClasses(page)).toContain("page-work-project");
+});
+
+/**
+ * Grain is a 200% overlay with an infinite step animation. Below the compact
+ * nav cut (`width < 48rem`) it is `display: none` and the texture is not
+ * preloaded — the phone layout must not paint it, and everything above that
+ * cut still must.
+ */
+test("grain is off on the phone layout and on above it", async ({ page }) => {
+  await skipPreloader(page);
+  await page.goto("/");
+  await expectRevealed(page);
+
+  const display = await page
+    .locator(".site-grain")
+    .evaluate((el) => getComputedStyle(el).display);
+
+  if (isNarrowNav()) {
+    expect(display).toBe("none");
+  } else {
+    expect(display).not.toBe("none");
+  }
+});
+
+/**
+ * Same headings, same `top 80%` ScrollTrigger, same SplitText lines. On the
+ * phone layout the melt is a clip-up of `.gooey_reveal_inner` from
+ * `yPercent: 110`; above that cut it is still the gooey.
+ */
+test("phone headings clip up from below on the heading scroll trigger", async ({
+  page,
+  context,
+}) => {
+  test.skip(!isNarrowNav(), "clip-up replaces the melt only below 48rem");
+
+  await skipPreloader(page);
+  await page.goto("/");
+  await expectRevealed(page);
+
+  const parked = () =>
+    page.evaluate(() => {
+      const el = document.querySelector<HTMLElement>(".manifesto_lead");
+      if (!el) return { ok: false, reason: "no manifesto lead" };
+      const inners = [
+        ...el.querySelectorAll<HTMLElement>(".gooey_reveal_inner"),
+      ];
+      if (!inners.length) return { ok: false, reason: "no split inners" };
+      const yOf = (node: HTMLElement) => {
+        const t = getComputedStyle(node).transform;
+        if (!t || t === "none") return 0;
+        return new DOMMatrix(t).f;
+      };
+      const parkedInners = inners.filter((inner) => {
+        const height = inner.getBoundingClientRect().height;
+        return height > 0 && yOf(inner) > height * 0.5;
+      });
+      return {
+        ok: true,
+        slide: el.classList.contains("gooey_reveal_slide"),
+        gooey: el.classList.contains("gooey_reveal"),
+        filter: getComputedStyle(inners[0]).filter,
+        parked: parkedInners.length,
+        total: inners.length,
+      };
+    });
+
+  await expect.poll(parked).toMatchObject({
+    ok: true,
+    slide: true,
+    gooey: false,
+    parked: expect.any(Number),
+  });
+  const before = await parked();
+  expect(before.filter === "none" || before.filter === "").toBe(true);
+  expect(before.parked).toBeGreaterThan(0);
+
+  const cdp = await context.newCDPSession(page);
+  await scrollDown(page, cdp, isTouch());
+
+  await expect
+    .poll(async () => {
+      const after = await parked();
+      return after.ok && after.parked === 0;
+    })
+    .toBe(true);
 });

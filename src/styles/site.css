@@ -198,6 +198,16 @@
     animation: site-grain-shift 0.45s steps(1) infinite;
   }
 
+  /* Same `(width < 48rem)` cut as `MOBILE_LAYOUT_MQ`. Hidden in CSS so it
+     never paints; `preloadAssets` also skips fetching the texture. */
+  @media (width < 48rem) {
+    .site-grain {
+      display: none;
+      background-image: none;
+      animation: none;
+    }
+  }
+
   @keyframes site-grain-shift {
     0% {
       transform: translate(0, 0);
@@ -363,6 +373,26 @@
     display: inline-block;
     /* Also a first-line box, nested inside one that already took the indent. */
     text-indent: 0;
+  }
+
+  /* Mobile clip-up: same inners, no filter. The host and each split line clip
+     the parked `yPercent` so a staggered line cannot leak into its neighbour.
+     Park/arm/settle toggle this class the way they toggle `.gooey_reveal`. */
+  .gooey_reveal_slide,
+  .gooey_reveal_slide .gooey_reveal_line {
+    overflow: clip;
+  }
+
+  /* Static `.gooey_reveal` (gallery label, Camille titles) still names the
+     filter in markup. Kill it on the phone layout so a morph cannot melt. */
+  @media (width < 48rem) {
+    .gooey_reveal .gooey_reveal_inner,
+    .gooey_reveal_soft .gooey_reveal_inner,
+    html.is-gooey-soft .gooey_reveal .gooey_reveal_inner,
+    html.is-gooey-soft .is-gooey-armed,
+    .is-gooey-armed {
+      filter: none;
+    }
   }
 
   html {
