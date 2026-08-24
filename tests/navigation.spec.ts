@@ -186,12 +186,13 @@ test("the frosted surfaces actually carry a backdrop filter", async ({
 });
 
 /**
- * iPhone Safari paints the Dynamic Island and home-indicator bands with
- * `theme-color` once `viewport-fit=cover` has extended the layout into them.
- * The meta has to follow the html theme class, or flipping the switch leaves
- * a stale chrome colour behind.
+ * Edge-to-edge on iPhone: `viewport-fit=cover` extends the layout into the
+ * Dynamic Island and home-indicator bands. A pinned `theme-color` would paint
+ * those as opaque Safari chrome and kill the bleed, so none is emitted — even
+ * after a theme flip, which used to rewrite the meta to match the page.
+ * `black-translucent` is the standalone (Add to Home Screen) equivalent.
  */
-test("theme-color follows the page theme so Safari chrome can match it", async ({
+test("Safari chrome bleeds the page ground instead of a pinned theme-color", async ({
   page,
 }) => {
   await seedTheme(page, "dark");
@@ -202,14 +203,11 @@ test("theme-color follows the page theme so Safari chrome can match it", async (
     "content",
     /viewport-fit=cover/,
   );
-  await expect(page.locator('meta[name="theme-color"]')).toHaveAttribute(
-    "content",
-    "#101010",
-  );
+  await expect(page.locator('meta[name="theme-color"]')).toHaveCount(0);
+  await expect(
+    page.locator('meta[name="apple-mobile-web-app-status-bar-style"]'),
+  ).toHaveAttribute("content", "black-translucent");
 
   await page.locator(".nav_wrap .nav_theme_toggle").first().click();
-  await expect(page.locator('meta[name="theme-color"]')).toHaveAttribute(
-    "content",
-    "#e2e2dd",
-  );
+  await expect(page.locator('meta[name="theme-color"]')).toHaveCount(0);
 });

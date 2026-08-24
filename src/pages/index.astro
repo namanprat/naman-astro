@@ -43,13 +43,6 @@ import Preloader from "@/components/site/Preloader.astro";
         ).matches;
         root.classList.remove("theme-light", "theme-dark");
         root.classList.add(prefersDark ? "theme-dark" : "theme-light");
-        var themeColor = document.querySelector('meta[name="theme-color"]');
-        if (themeColor) {
-          themeColor.setAttribute(
-            "content",
-            prefersDark ? "#101010" : "#e2e2dd",
-          );
-        }
       }
     } catch (e) {}
   </script>

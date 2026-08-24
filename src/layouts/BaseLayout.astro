@@ -58,13 +58,6 @@ const isArchive = Astro.url.pathname === "/archive";
           var root = document.documentElement;
           root.classList.remove("theme-light", "theme-dark");
           root.classList.add("theme-" + t);
-          var themeColor = document.querySelector('meta[name="theme-color"]');
-          if (themeColor) {
-            themeColor.setAttribute(
-              "content",
-              t === "light" ? "#e2e2dd" : "#101010",
-            );
-          }
         } catch (e) {}
       })();
     </script>
