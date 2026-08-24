@@ -188,10 +188,10 @@ test("the frosted surfaces actually carry a backdrop filter", async ({
 /**
  * Edge-to-edge on iPhone: `viewport-fit=cover` extends the layout into the
  * Dynamic Island and home-indicator bands. Safari 26 ignores `theme-color`
- * and tints those bands from the `background-color` of `fixed` / `sticky`
- * layers at the viewport edges, so none is emitted — even after a theme flip
- * — and the full-viewport wrap plus the closed About scrim stay transparent
- * / out of the render tree. `black-translucent` is the standalone equivalent.
+ * and tints those bands from the `background-color` of `html` / `body` and
+ * of `fixed` / `sticky` layers at the viewport edges. None of those may
+ * carry the page plate — it lives on `.page-plate_fill`, a descendant the
+ * sampler does not read. `black-translucent` is the standalone equivalent.
  */
 test("Safari chrome bleeds the page ground instead of a pinned theme-color", async ({
   page,
@@ -209,15 +209,33 @@ test("Safari chrome bleeds the page ground instead of a pinned theme-color", asy
     page.locator('meta[name="apple-mobile-web-app-status-bar-style"]'),
   ).toHaveAttribute("content", "black-translucent");
 
-  await expect(page.locator(".safari-chrome-sample--top")).toHaveCount(1);
-  await expect(page.locator(".safari-chrome-sample--bottom")).toHaveCount(1);
-
   const transparent = /^(transparent|rgba\(\s*0,\s*0,\s*0,\s*0\s*\))$/;
-  for (const selector of [
-    ".safari-chrome-sample--top",
-    ".safari-chrome-sample--bottom",
-    ".nav_wrap",
-  ]) {
+
+  const htmlBg = await page.evaluate(
+    () => getComputedStyle(document.documentElement).backgroundColor,
+  );
+  expect(htmlBg, "html must not tint Safari chrome").toMatch(transparent);
+
+  const bodyBg = await page.evaluate(
+    () => getComputedStyle(document.body).backgroundColor,
+  );
+  expect(bodyBg, "body must not tint Safari chrome").toMatch(transparent);
+
+  const plateBg = await page
+    .locator(".page-plate")
+    .evaluate((el) => getComputedStyle(el).backgroundColor);
+  expect(plateBg, "page-plate parent must not tint Safari chrome").toMatch(
+    transparent,
+  );
+
+  const fillBg = await page
+    .locator(".page-plate_fill")
+    .evaluate((el) => getComputedStyle(el).backgroundColor);
+  expect(fillBg, "page-plate fill is the visible ground").not.toMatch(
+    transparent,
+  );
+
+  for (const selector of [".nav_wrap"]) {
     const bg = await page
       .locator(selector)
       .first()

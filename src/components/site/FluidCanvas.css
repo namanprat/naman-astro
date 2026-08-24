@@ -14,7 +14,8 @@
      home-indicator chrome from the `background-color` of `fixed` / `sticky`
      layers at the viewport edges — `theme-color` is ignored. An opaque plate
      here painted those bands as a flat `--background` block, which is why
-     dropping the meta changed nothing. The page ground stays on `:root`. */
+     dropping the meta changed nothing. The page ground is `.page-plate_fill`,
+     a descendant Safari does not sample. */
   background-color: transparent;
 }
 

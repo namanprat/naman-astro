@@ -46,7 +46,7 @@ const socialImage = image ? new URL(image, Astro.site) : null;
     indicator. There is deliberately no `theme-color`: Safari 15–18 used it to
     paint those bands as opaque chrome. Safari 26 ignores it and samples the
     `background-color` of `fixed` / `sticky` layers at the viewport edges
-    instead — so those layers stay transparent and the plate lives on `:root`.
+    instead — so `html` stays unpainted and the fill lives on `.page-plate_fill`.
     `black-translucent` is the standalone (Add to Home Screen) equivalent. */}
 <meta name="mobile-web-app-capable" content="yes" />
 <meta name="apple-mobile-web-app-capable" content="yes" />
