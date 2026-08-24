@@ -42,15 +42,10 @@ const socialImage = image ? new URL(image, Astro.site) : null;
   name="viewport"
   content="width=device-width, initial-scale=1, viewport-fit=cover"
 />
-{/* `viewport-fit=cover` lets the layout fill the Dynamic Island and home
-    indicator. There is deliberately no `theme-color`: Safari 15–18 used it to
-    paint those bands as opaque chrome. Safari 26 ignores it and samples the
-    `background-color` of `fixed` / `sticky` layers at the viewport edges
-    instead — so `html` stays unpainted and the fill lives on `.page-plate_fill`.
-    `black-translucent` is the standalone (Add to Home Screen) equivalent. */}
+<meta name="theme-color" content="#101010" />
 <meta name="mobile-web-app-capable" content="yes" />
 <meta name="apple-mobile-web-app-capable" content="yes" />
-<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+<meta name="apple-mobile-web-app-status-bar-style" content="default" />
 <title>{pageTitle}</title>
 <meta name="description" content={description} />
 <link rel="canonical" href={canonical} />

@@ -62,18 +62,28 @@ const isArchive = Astro.url.pathname === "/archive";
       })();
     </script>
     <slot name="head" />
+    <script is:inline>
+      /* Hexes match THEME_COLOR_* in lib/site/themeColor.ts. Inline so the
+         bar is right before React hydrates. Archive is always dark. */
+      (function () {
+        var root = document.documentElement;
+        var meta = document.querySelector('meta[name="theme-color"]');
+        if (!meta) {
+          meta = document.createElement("meta");
+          meta.setAttribute("name", "theme-color");
+          document.head.appendChild(meta);
+        }
+        var color = root.classList.contains("page-archive")
+          ? "#101010"
+          : root.classList.contains("theme-light")
+            ? "#e2e2dd"
+            : "#101010";
+        meta.setAttribute("content", color);
+      })();
+    </script>
   </head>
   <body>
     <SkipLink />
-    {
-      /* iOS 26 Safari tints island / home-indicator chrome from the
-         `background-color` of this fixed node (not its descendants). Leave
-         the node itself unpainted so chrome is glass; the fill lives on the
-         child, which is what you actually see through the island. */
-    }
-    <div class="page-plate" aria-hidden="true">
-      <div class="page-plate_fill"></div>
-    </div>
     {
       /* Every route: headings and the work label both filter through it, and a
         `url()` pointing at a missing node blanks the element on WebKit. */

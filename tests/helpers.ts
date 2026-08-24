@@ -124,11 +124,10 @@ export async function expectRevealed(page: Page) {
  * - The hero lockup, held at `visibility: hidden` by
  *   `.name_hero_gooey:not(.is-gooey-parked)` until the melt is armed.
  *
- * Below the 48rem nav breakpoint the homepage renders *no* nav text at all —
- * the link stack is hidden and the wordmark lives in the hero lockup — so
- * unrendered lines are skipped rather than failed, and the lockup carries the
- * assertion instead. Requiring at least one of the two signals is what stops
- * the check passing on a page where neither exists.
+ * Below the 48rem nav breakpoint the homepage still paints the SVG lockup;
+ * the wordmark link also sits in the first nav column. Unrendered lines are
+ * skipped rather than failed. Requiring at least one of the two signals is
+ * what stops the check passing on a page where neither exists.
  */
 export async function expectNavVisible(page: Page) {
   await expect
@@ -307,9 +306,7 @@ export async function openNearestProject(page: Page) {
     const midX = window.innerWidth / 2;
     const midY = window.innerHeight / 2;
     let best: { x: number; y: number; d: number } | null = null;
-    for (const el of document.querySelectorAll<HTMLElement>(
-      ".gallery_slide",
-    )) {
+    for (const el of document.querySelectorAll<HTMLElement>(".gallery_slide")) {
       const box = el.getBoundingClientRect();
       const x = box.x + box.width / 2;
       const y = box.y + box.height / 2;

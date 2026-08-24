@@ -46,9 +46,7 @@ const SPACING_RATIO = 2.13;
 
 /**
  * Anchor sits at the top of the circle. Screen y grows downward, so that is
- * −90°. Nothing about a tile's appearance marks it — like the reference the
- * ring is uniform — it is only which project the label names and which one a
- * click opens.
+ * −90°. That tile is `.is-centered`; the rest sit desaturated behind it.
  */
 const ANCHOR_DEG = -90;
 
@@ -281,6 +279,10 @@ export default class WheelView {
       }
     });
 
+    this.tiles.forEach((el, i) => {
+      el.classList.toggle("is-centered", i === closestIndex);
+    });
+
     if (closestIndex !== this.centerIndex) {
       this.centerIndex = closestIndex;
       this.onCenterChange?.(this.projectAt(closestIndex));
@@ -448,6 +450,7 @@ export default class WheelView {
     this.killSnap();
     gsap.killTweensOf(this.rot);
     // The grid — and the Flip — must find exactly the six React slides again.
+    this.originals.forEach((el) => el.classList.remove("is-centered"));
     this.clones.forEach((el) => el.remove());
     this.clones = [];
   }

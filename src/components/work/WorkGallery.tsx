@@ -409,6 +409,12 @@ export default function WorkGallery() {
           if (switchingRef.current) return;
 
           if (viewRef.current === "grid") setHoverTitle(null);
+          if (viewRef.current === "slider") {
+            root
+              .querySelectorAll(".gallery_slide.is-centered")
+              .forEach((el) => el.classList.remove("is-centered"));
+            slide.classList.add("is-centered");
+          }
           engineRef.current?.stop();
           void transition.open(slide, index);
         };

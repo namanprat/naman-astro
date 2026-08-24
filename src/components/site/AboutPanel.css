@@ -17,13 +17,6 @@
   pointer-events: all;
 }
 
-/* iOS 26 Safari still samples `opacity: 0` / `visibility: hidden` fixed
-   layers for chrome tint. Take the scrim out of the render tree until it
-   actually covers, or the closed 20% dark mix tints the island. */
-.about_panel_backdrop:not(.is-open) {
-  display: none;
-}
-
 /* Soften the scrim in light mode so the frosted surface can read the page. */
 html.theme-light .about_panel_backdrop {
   background-color: transparent;

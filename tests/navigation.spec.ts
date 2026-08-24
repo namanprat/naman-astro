@@ -35,10 +35,11 @@ test("the homepage scrolls", async ({ page, context }) => {
  * Scroll the homepage with this device's own input, then get back to the top
  * through whichever surface the width actually offers.
  *
- * Home lives on the dedicated stack link above 48rem and on the SVG lockup
- * below it. Both ends land in `goTo("/")`, which does not navigate when
- * already on `/`: it replays the hero entrance and scrolls to the top, which
- * is the path that regressed.
+ * Home lives on the dedicated stack link above 48rem and on the nav logo
+ * below it — the SVG lockup scrolls away with the hero at every width now, so
+ * it is not a surface a scrolled page can offer. Both ends land in
+ * `goTo("/")`, which does not navigate when already on `/`: it replays the
+ * hero entrance and scrolls to the top, which is the path that regressed.
  */
 test("returning Home scrolls to the top and keeps the nav up", async ({
   page,
@@ -56,7 +57,7 @@ test("returning Home scrolls to the top and keeps the nav up", async ({
     .toBeGreaterThan(0);
 
   if (narrow) {
-    await page.locator(".name_hero_home").first().click();
+    await page.locator('.nav_logo a[href="/"]').first().click();
   } else {
     await page.locator('.nav_stack a[href="/"]').first().click();
   }
@@ -186,14 +187,10 @@ test("the frosted surfaces actually carry a backdrop filter", async ({
 });
 
 /**
- * Edge-to-edge on iPhone: `viewport-fit=cover` extends the layout into the
- * Dynamic Island and home-indicator bands. Safari 26 ignores `theme-color`
- * and tints those bands from the `background-color` of `html` / `body` and
- * of `fixed` / `sticky` layers at the viewport edges. None of those may
- * carry the page plate — it lives on `.page-plate_fill`, a descendant the
- * sampler does not read. `black-translucent` is the standalone equivalent.
+ * iPhone Safari chrome (status bar / home indicator) follows the page theme
+ * via `theme-color`. Archive is always the dark bar. Never the accent.
  */
-test("Safari chrome bleeds the page ground instead of a pinned theme-color", async ({
+test("theme-color follows the page theme so Safari chrome can match it", async ({
   page,
 }) => {
   await seedTheme(page, "dark");
@@ -204,52 +201,32 @@ test("Safari chrome bleeds the page ground instead of a pinned theme-color", asy
     "content",
     /viewport-fit=cover/,
   );
-  await expect(page.locator('meta[name="theme-color"]')).toHaveCount(0);
-  await expect(
-    page.locator('meta[name="apple-mobile-web-app-status-bar-style"]'),
-  ).toHaveAttribute("content", "black-translucent");
-
-  const transparent = /^(transparent|rgba\(\s*0,\s*0,\s*0,\s*0\s*\))$/;
-
-  const htmlBg = await page.evaluate(
-    () => getComputedStyle(document.documentElement).backgroundColor,
-  );
-  expect(htmlBg, "html must not tint Safari chrome").toMatch(transparent);
-
-  const bodyBg = await page.evaluate(
-    () => getComputedStyle(document.body).backgroundColor,
-  );
-  expect(bodyBg, "body must not tint Safari chrome").toMatch(transparent);
-
-  const plateBg = await page
-    .locator(".page-plate")
-    .evaluate((el) => getComputedStyle(el).backgroundColor);
-  expect(plateBg, "page-plate parent must not tint Safari chrome").toMatch(
-    transparent,
-  );
-
-  const fillBg = await page
-    .locator(".page-plate_fill")
-    .evaluate((el) => getComputedStyle(el).backgroundColor);
-  expect(fillBg, "page-plate fill is the visible ground").not.toMatch(
-    transparent,
-  );
-
-  for (const selector of [".nav_wrap"]) {
-    const bg = await page
-      .locator(selector)
-      .first()
-      .evaluate((el) => getComputedStyle(el).backgroundColor);
-    expect(bg, `${selector} must not tint Safari chrome`).toMatch(transparent);
-  }
-
-  const backdropDisplay = await page
-    .locator(".about_panel_backdrop")
-    .evaluate((el) => getComputedStyle(el).display);
-  expect(backdropDisplay, "closed About scrim must leave the sample tree").toBe(
-    "none",
+  await expect(page.locator('meta[name="theme-color"]')).toHaveAttribute(
+    "content",
+    "#101010",
   );
 
   await page.locator(".nav_wrap .nav_theme_toggle").first().click();
-  await expect(page.locator('meta[name="theme-color"]')).toHaveCount(0);
+  await expect(page.locator('meta[name="theme-color"]')).toHaveAttribute(
+    "content",
+    "#e2e2dd",
+  );
+});
+
+test("archive theme-color stays dark regardless of the stored theme", async ({
+  page,
+}) => {
+  await seedTheme(page, "light");
+  await page.goto("/archive");
+  await expect(page.locator("html")).toHaveClass(/page-archive/);
+  await expect(page.locator('meta[name="theme-color"]')).toHaveAttribute(
+    "content",
+    "#101010",
+  );
+
+  await page.locator(".nav_wrap .nav_theme_toggle").first().click();
+  await expect(page.locator('meta[name="theme-color"]')).toHaveAttribute(
+    "content",
+    "#101010",
+  );
 });

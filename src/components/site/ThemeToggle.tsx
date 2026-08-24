@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import gsap from "gsap";
 import { prefersReducedMotion } from "@/lib/site/prefersReducedMotion";
+import { syncThemeColor } from "@/lib/site/themeColor";
 import "@/lib/site/eases";
 
 /** Circle centres of the inlined switch artwork — filled-left is the dark state. */
@@ -25,7 +26,10 @@ export default function ThemeToggle() {
 
   useEffect(() => {
     const root = document.documentElement;
-    const sync = () => setIsLight(root.classList.contains("theme-light"));
+    const sync = () => {
+      setIsLight(root.classList.contains("theme-light"));
+      syncThemeColor(root);
+    };
     sync();
     const mo = new MutationObserver(sync);
     mo.observe(root, { attributes: true, attributeFilter: ["class"] });

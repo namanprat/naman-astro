@@ -201,24 +201,10 @@ html.theme-light .footer_box {
 }
 
 @media (width < 48rem) {
-  /* Full-bleed on the phone, so the fill has to reach the physical bottom
-     edge. `.footer_wrap` is `background-color: transparent` and the orange
-     lives on `.footer_child` inside it — a safe-area pad here stops the fill
-     short of the home indicator and leaves a bare `--background` block in that
-     band. The inset moves onto `.footer_box`, which is inside the fill, so the
-     colour runs edge to edge and only the type is held clear.
-
-     Card modes (>= 48rem) keep the pad on the wrap: there the footer floats on
-     the page ground, so holding the whole card off the indicator is correct. */
+  /* Full-width on the phone. Safe-area stays on the wrap so the orange fill
+     sits above the home indicator and the bar keeps the page theme, not accent. */
   .footer_wrap {
     padding-inline: 0;
-    padding-bottom: 0;
-  }
-
-  /* Mirrors `.footer_box`'s `padding-block` — `--_responsive---large` is 0
-     here, so that resolves to `--space-6`. */
-  .footer_box {
-    padding-bottom: calc(var(--space-6) + var(--site--safe-area-bottom));
   }
 
   .footer_tagline,

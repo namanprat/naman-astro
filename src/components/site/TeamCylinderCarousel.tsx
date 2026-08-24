@@ -4,7 +4,6 @@
  */
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Canvas, useFrame, useThree } from "@react-three/fiber";
-import { folder, Leva, useControls } from "leva";
 import * as THREE from "three";
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
@@ -41,6 +40,9 @@ const VELOCITY_UV_SCALE = 0.000012 / TAU;
 const IDLE_UV_PER_SEC = 0.12 / TAU;
 const ASCII_GRANULARITY = 35;
 const ASCII_FONT_SIZE = 1.95;
+const ASCII_NOISE = 1;
+/** Extra mesh scale below 768px so the oval fits a phone viewport. */
+const MOBILE_SCALE = 0.75;
 
 /** Strip transform. Pose is fixed; only the shader UVs travel. */
 const STRIP = {
@@ -155,22 +157,7 @@ function getResponsiveDimensions(
   };
 }
 
-type StripControls = {
-  granularity: number;
-  fontSize: number;
-  noise: number;
-  scrollSpeed: number;
-  idleSpeed: number;
-  scrollBoost: number;
-  moveCylinder: boolean;
-  posY: number;
-  rotZ: number;
-  scale: number;
-  radius: number;
-  gapPct: number;
-};
-
-function TeamCylinderScene({ controls }: { controls: StripControls }) {
+function TeamCylinderScene() {
   const { camera, gl, size } = useThree();
   const meshRef = useRef<THREE.Mesh>(null);
   const materialRef = useRef<THREE.ShaderMaterial>(null);
@@ -179,16 +166,14 @@ function TeamCylinderScene({ controls }: { controls: StripControls }) {
   const photoTex = useRef<THREE.CanvasTexture | null>(null);
   const asciiTex = useRef<THREE.CanvasTexture | null>(null);
   const imagesRef = useRef<HTMLImageElement[] | null>(null);
-  const velocityScaleRef = useRef(controls.scrollBoost);
-  velocityScaleRef.current = controls.scrollBoost;
   const [imagesReady, setImagesReady] = useState(false);
   const [ready, setReady] = useState(false);
   const [gapRatio, setGapRatio] = useState(0);
 
   const reducedMotion = useMemo(() => prefersReducedMotion(), []);
   const baseDims = useMemo(
-    () => getResponsiveDimensions(size.width || 1024, 0, controls.radius),
-    [size.width, controls.radius],
+    () => getResponsiveDimensions(size.width || 1024, 0, STRIP.radius),
+    [size.width],
   );
 
   const uniforms = useMemo(
@@ -201,7 +186,7 @@ function TeamCylinderScene({ controls }: { controls: StripControls }) {
       uSurfaceAspect: { value: IMAGE_COUNT * TILE_ASPECT },
       uColor: { value: new THREE.Color("#8b8b8b") },
       uTime: { value: 0 },
-      uNoise: { value: reducedMotion ? 0 : 1 },
+      uNoise: { value: reducedMotion ? 0 : ASCII_NOISE },
       uScroll: { value: 0 },
     }),
     [reducedMotion],
@@ -242,13 +227,13 @@ function TeamCylinderScene({ controls }: { controls: StripControls }) {
   useEffect(() => {
     if (!imagesReady || !imagesRef.current) return;
     const ctx = gl.getContext() as WebGLRenderingContext;
-    const photo = buildAtlasFromImages(ctx, imagesRef.current, controls.gapPct);
+    const photo = buildAtlasFromImages(ctx, imagesRef.current, STRIP.gapPct);
     photoTex.current?.dispose();
     photoTex.current = photo.texture;
     uniforms.uTexture.value = photo.texture;
     setGapRatio(photo.gapRatio);
     setReady(true);
-  }, [imagesReady, controls.gapPct, gl, uniforms]);
+  }, [imagesReady, gl, uniforms]);
 
   useEffect(() => {
     if (reducedMotion) return;
@@ -258,7 +243,7 @@ function TeamCylinderScene({ controls }: { controls: StripControls }) {
       onUpdate(self) {
         const v = self.getVelocity();
         if (!v) return;
-        velocityUv.current += v * VELOCITY_UV_SCALE * velocityScaleRef.current;
+        velocityUv.current += v * VELOCITY_UV_SCALE;
       },
     });
     return () => {
@@ -283,8 +268,7 @@ function TeamCylinderScene({ controls }: { controls: StripControls }) {
 
   useFrame((_, dt) => {
     if (!reducedMotion) {
-      scrollUv.current +=
-        controls.idleSpeed * controls.scrollSpeed * dt + velocityUv.current;
+      scrollUv.current += IDLE_UV_PER_SEC * dt + velocityUv.current;
       velocityUv.current = 0;
       scrollUv.current = ((scrollUv.current % 1) + 1) % 1;
     }
@@ -292,17 +276,17 @@ function TeamCylinderScene({ controls }: { controls: StripControls }) {
     const mesh = meshRef.current;
     if (!mesh) return;
 
-    const next = getResponsiveDimensions(size.width, gapRatio, controls.radius);
+    const next = getResponsiveDimensions(size.width, gapRatio, STRIP.radius);
     const sx = next.radius / baseDims.radius;
     const sy = next.height / baseDims.height;
-    mesh.position.set(STRIP.posX, controls.posY, STRIP.posZ);
-    const spinY =
-      !reducedMotion && controls.moveCylinder ? scrollUv.current * TAU : 0;
-    mesh.rotation.set(STRIP.rotX, STRIP.rotY + spinY, controls.rotZ);
+    mesh.position.set(STRIP.posX, STRIP.posY, STRIP.posZ);
+    const spinY = !reducedMotion ? scrollUv.current * TAU : 0;
+    mesh.rotation.set(STRIP.rotX, STRIP.rotY + spinY, STRIP.rotZ);
+    const viewportScale = size.width < 768 ? MOBILE_SCALE : 1;
     mesh.scale.set(
-      sx * controls.scale,
-      sy * controls.scale,
-      sx * controls.scale,
+      sx * STRIP.scale * viewportScale,
+      sy * STRIP.scale * viewportScale,
+      sx * STRIP.scale * viewportScale,
     );
 
     if (camera instanceof THREE.PerspectiveCamera) {
@@ -313,9 +297,6 @@ function TeamCylinderScene({ controls }: { controls: StripControls }) {
 
     const mat = materialRef.current;
     if (!mat) return;
-    mat.uniforms.uGranularity.value = controls.granularity;
-    mat.uniforms.uFontSize.value = controls.fontSize ?? ASCII_FONT_SIZE;
-    mat.uniforms.uNoise.value = reducedMotion ? 0 : controls.noise;
     mat.uniforms.uScroll.value = scrollUv.current;
     if (!reducedMotion) mat.uniforms.uTime.value += dt;
     const safeGap = Math.min(gapRatio, 0.95);
@@ -365,71 +346,32 @@ export default function TeamCylinderCarousel() {
     return () => io.disconnect();
   }, []);
 
-  const controls = useControls({
-    moveCylinder: { value: true, label: "Move cylinder" },
-    ASCII: folder({
-      granularity: {
-        value: ASCII_GRANULARITY,
-        min: 4,
-        max: 64,
-        step: 1,
-      },
-      fontSize: { value: ASCII_FONT_SIZE, min: 0.4, max: 3, step: 0.05 },
-      noise: { value: 1, min: 0, max: 1, step: 0.01 },
-      scrollSpeed: { value: 1, min: 0, max: 4, step: 0.05 },
-    }),
-    Motion: folder({
-      idleSpeed: {
-        value: IDLE_UV_PER_SEC,
-        min: 0,
-        max: 0.12,
-        step: 0.001,
-      },
-      scrollBoost: {
-        value: 1,
-        min: 0,
-        max: 8,
-        step: 0.05,
-      },
-    }),
-    Strip: folder({
-      posY: { value: STRIP.posY, min: -1, max: 3, step: 0.05 },
-      rotZ: { value: STRIP.rotZ, min: -0.6, max: 0.6, step: 0.01 },
-      scale: { value: STRIP.scale, min: 0.4, max: 2, step: 0.05 },
-      radius: { value: STRIP.radius, min: 0.8, max: 3, step: 0.05 },
-      gapPct: { value: STRIP.gapPct, min: 0, max: 20, step: 0.5 },
-    }),
-  });
-
   return (
-    <>
-      <Leva hidden={import.meta.env.PROD} />
-      <Canvas
-        className="team_cylinder"
-        frameloop={inView ? "always" : "never"}
-        dpr={[1, 1.5]}
-        gl={{
-          alpha: true,
-          antialias: true,
-          powerPreference: "high-performance",
-        }}
-        camera={{ position: [0, 0, 6.4], fov: 45, near: 0.1, far: 100 }}
-        resize={{ scroll: false }}
-        style={{
-          position: "absolute",
-          inset: 0,
-          width: "100%",
-          height: "100%",
-          display: "block",
-          pointerEvents: "none",
-        }}
-        onCreated={({ gl }) => {
-          gl.setClearColor(0x000000, 0);
-          gl.outputColorSpace = THREE.SRGBColorSpace;
-        }}
-      >
-        <TeamCylinderScene controls={controls} />
-      </Canvas>
-    </>
+    <Canvas
+      className="team_cylinder"
+      frameloop={inView ? "always" : "never"}
+      dpr={[1, 1.5]}
+      gl={{
+        alpha: true,
+        antialias: true,
+        powerPreference: "high-performance",
+      }}
+      camera={{ position: [0, 0, 6.4], fov: 45, near: 0.1, far: 100 }}
+      resize={{ scroll: false }}
+      style={{
+        position: "absolute",
+        inset: 0,
+        width: "100%",
+        height: "100%",
+        display: "block",
+        pointerEvents: "none",
+      }}
+      onCreated={({ gl }) => {
+        gl.setClearColor(0x000000, 0);
+        gl.outputColorSpace = THREE.SRGBColorSpace;
+      }}
+    >
+      <TeamCylinderScene />
+    </Canvas>
   );
 }

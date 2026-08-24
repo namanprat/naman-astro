@@ -13,11 +13,8 @@ export default function Manifesto() {
         <div className="manifesto_layout grid is-12">
           <h1 className="manifesto_lead text-style-h2">
             I&apos;m a digital designer with a simple goal: close the gap
-            between who you are and how the world sees you. I spend most of my
-            time designing websites, obsessing over details, and turning ideas
-            into experiences that feel clear, intuitive, and visually
-            compelling. Good design isn&apos;t about adding more — it&apos;s
-            knowing what to leave out.
+            between who you are and how the world sees you. Good design
+            isn&apos;t about adding more — it&apos;s knowing what to leave out.
           </h1>
         </div>
       </div>

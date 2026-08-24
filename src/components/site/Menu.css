@@ -17,8 +17,6 @@ html.theme-light.menu-open {
   height: 100dvh;
   pointer-events: none;
   z-index: var(--z--menu);
-  /* Explicit so iOS 26 Safari samples glass, not a fallback body tint. */
-  background-color: transparent;
 }
 
 .menu_wrap a,
@@ -149,9 +147,6 @@ html.about-open .nav_wrap {
   pointer-events: none;
   padding-top: var(--site--safe-area-top);
   box-sizing: border-box;
-  /* Sticky at the top edge: Safari 26 would tint the island from any opaque
-     fill here. Keep it clear so the page (and the fluid) show through. */
-  background-color: transparent;
 }
 
 .nav_contain {
@@ -450,7 +445,7 @@ html.about-open .nav_wrap {
 }
 
 /* Inner pages carry the wordmark in `.nav_logo` on desktop. Below 48rem the
-   SVG lockup comes back and the 3-col nav sits where the Menu pill was. */
+   SVG lockup comes back and the wordmark sits in the first nav column. */
 html:not(:has(.hero)) .name_hero {
   display: none;
 }
@@ -463,11 +458,10 @@ html:not(:has(.hero)) .name_hero {
   white-space: nowrap;
 }
 
-/* Phones: SVG lockup + the menu's 3-col links in the pill's slot. Tablet
-   portrait and up keeps the desktop stacks, so this cut is 48rem. */
+/* Phones: SVG lockup + wordmark in the first column, then Work/About,
+   Archive/Contact, theme. Tablet portrait and up keeps the desktop stacks. */
 @media (width < 48rem) {
   .nav_menu_toggle_open,
-  .nav_logo,
   .nav_home {
     display: none;
   }
@@ -483,7 +477,7 @@ html:not(:has(.hero)) .name_hero {
   }
 
   .nav_grid.grid {
-    grid-template-columns: repeat(3, max-content);
+    grid-template-columns: repeat(4, max-content);
     justify-content: space-between;
     align-items: start;
     column-gap: var(--site-gutter);
@@ -496,29 +490,35 @@ html:not(:has(.hero)) .name_hero {
     display: contents;
   }
 
-  .nav_work {
+  .nav_logo {
     grid-column: 1;
     grid-row: 1;
+    display: block;
   }
 
-  .nav_about {
-    grid-column: 1;
-    grid-row: 2;
-  }
-
-  .nav_archive {
+  .nav_work {
     grid-column: 2;
     grid-row: 1;
   }
 
-  .nav_theme_toggle {
+  .nav_about {
+    grid-column: 2;
+    grid-row: 2;
+  }
+
+  .nav_archive {
     grid-column: 3;
+    grid-row: 1;
+  }
+
+  .nav_theme_toggle {
+    grid-column: 4;
     grid-row: 1;
     justify-self: end;
   }
 
   .nav_contact {
-    grid-column: 2;
+    grid-column: 3;
     grid-row: 2;
   }
 
@@ -526,21 +526,10 @@ html:not(:has(.hero)) .name_hero {
     grid-column: 1 / -1;
   }
 
-  /* SVG + 3-col nav stick as one lockup. Negative top eats the hero centering
-     pad so only the wordmark remains in the viewport; the links stick to the
-     mark's bottom edge. Gap below the mark is .nav_grid padding-block. */
-  .name_hero {
-    position: sticky;
-    top: calc(-1 * var(--hero-chrome-pad) + var(--lockup-top));
-    z-index: calc(var(--z--nav) + 1);
-  }
-
-  .nav_wrap {
-    position: sticky;
-    top: calc(var(--lockup-top) + var(--mark-h));
-    padding-top: 0;
-    overflow: visible;
-  }
+  /* No phone-only sticky lockup. The SVG scrolls away with the hero and the
+     bar sticks on its own — the base `.name_hero` (relative) and `.nav_wrap`
+     (sticky, `top: 0`) rules already do that, so every breakpoint now shares
+     one hero/nav interaction and there is nothing to override here. */
 
   /* Inner pages: same stuck lockup (SVG + links), overlaying the stage so
      overflow-hidden routes don't get pushed down. */

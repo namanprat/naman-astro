@@ -382,25 +382,13 @@
 
 /* Named, not `[class*="theme-"]` — that substring also caught
    `nav_theme_toggle` and `nav_theme_toggle_svg`, repainting the switch in
-   `--text` wherever it sits on a surface that isn't the page background.
-   Background stays off `html` / `body` / `.theme-dark` / `.theme-light`:
-   iOS 26 Safari tints the Dynamic Island and home-indicator chrome from
-   those, which is why a `--background` plate here looked like a flat bar
-   even after `theme-color` was removed. The fill is `.page-plate_fill`. */
+   `--text` wherever it sits on a surface that isn't the page background. */
 :root,
 .theme-dark,
-.theme-light {
-  color: var(--text);
-}
-
+.theme-light,
 .theme-invert {
   background-color: var(--background);
   color: var(--text);
-}
-
-html,
-body {
-  background-color: transparent;
 }
 
 /* ==========================================================================
