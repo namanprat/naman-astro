@@ -184,3 +184,32 @@ test("the frosted surfaces actually carry a backdrop filter", async ({
     expect(value, `${selector} backdrop-filter`).toMatch(/blur\(\d/);
   }
 });
+
+/**
+ * iPhone Safari paints the Dynamic Island and home-indicator bands with
+ * `theme-color` once `viewport-fit=cover` has extended the layout into them.
+ * The meta has to follow the html theme class, or flipping the switch leaves
+ * a stale chrome colour behind.
+ */
+test("theme-color follows the page theme so Safari chrome can match it", async ({
+  page,
+}) => {
+  await seedTheme(page, "dark");
+  await page.goto("/");
+  await expectRevealed(page);
+
+  await expect(page.locator('meta[name="viewport"]')).toHaveAttribute(
+    "content",
+    /viewport-fit=cover/,
+  );
+  await expect(page.locator('meta[name="theme-color"]')).toHaveAttribute(
+    "content",
+    "#101010",
+  );
+
+  await page.locator(".nav_wrap .nav_theme_toggle").first().click();
+  await expect(page.locator('meta[name="theme-color"]')).toHaveAttribute(
+    "content",
+    "#e2e2dd",
+  );
+});
