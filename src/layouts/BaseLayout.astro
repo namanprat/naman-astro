@@ -66,6 +66,14 @@ const isArchive = Astro.url.pathname === "/archive";
   <body>
     <SkipLink />
     {
+      /* iOS 26 Safari tints island / home-indicator chrome from the nearest
+         fixed layer at each edge. Transparent samples = Liquid Glass over the
+         page. These two strips exist so pages without a full-viewport wrap
+         still win over the opaque `:root` plate. */
+    }
+    <div class="safari-chrome-sample safari-chrome-sample--top" aria-hidden="true"></div>
+    <div class="safari-chrome-sample safari-chrome-sample--bottom" aria-hidden="true"></div>
+    {
       /* Every route: headings and the work label both filter through it, and a
         `url()` pointing at a missing node blanks the element on WebKit. */
     }

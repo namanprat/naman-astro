@@ -17,6 +17,8 @@ html.theme-light.menu-open {
   height: 100dvh;
   pointer-events: none;
   z-index: var(--z--menu);
+  /* Explicit so iOS 26 Safari samples glass, not a fallback body tint. */
+  background-color: transparent;
 }
 
 .menu_wrap a,
@@ -147,6 +149,9 @@ html.about-open .nav_wrap {
   pointer-events: none;
   padding-top: var(--site--safe-area-top);
   box-sizing: border-box;
+  /* Sticky at the top edge: Safari 26 would tint the island from any opaque
+     fill here. Keep it clear so the page (and the fluid) show through. */
+  background-color: transparent;
 }
 
 .nav_contain {

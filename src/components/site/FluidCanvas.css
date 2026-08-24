@@ -10,8 +10,12 @@
   z-index: 0;
   overflow: clip;
   flex-shrink: 0;
-  /* Under the sim — matches theme toggle; never paints over the logo. */
-  background-color: var(--background);
+  /* Transparent on purpose. iOS 26 Safari tints the Dynamic Island and
+     home-indicator chrome from the `background-color` of `fixed` / `sticky`
+     layers at the viewport edges — `theme-color` is ignored. An opaque plate
+     here painted those bands as a flat `--background` block, which is why
+     dropping the meta changed nothing. The page ground stays on `:root`. */
+  background-color: transparent;
 }
 
 /* Homepage: viewport backdrop so manifesto / team / footer read the sim

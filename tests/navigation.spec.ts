@@ -187,10 +187,11 @@ test("the frosted surfaces actually carry a backdrop filter", async ({
 
 /**
  * Edge-to-edge on iPhone: `viewport-fit=cover` extends the layout into the
- * Dynamic Island and home-indicator bands. A pinned `theme-color` would paint
- * those as opaque Safari chrome and kill the bleed, so none is emitted — even
- * after a theme flip, which used to rewrite the meta to match the page.
- * `black-translucent` is the standalone (Add to Home Screen) equivalent.
+ * Dynamic Island and home-indicator bands. Safari 26 ignores `theme-color`
+ * and tints those bands from the `background-color` of `fixed` / `sticky`
+ * layers at the viewport edges, so none is emitted — even after a theme flip
+ * — and the full-viewport wrap plus the closed About scrim stay transparent
+ * / out of the render tree. `black-translucent` is the standalone equivalent.
  */
 test("Safari chrome bleeds the page ground instead of a pinned theme-color", async ({
   page,
@@ -207,6 +208,29 @@ test("Safari chrome bleeds the page ground instead of a pinned theme-color", asy
   await expect(
     page.locator('meta[name="apple-mobile-web-app-status-bar-style"]'),
   ).toHaveAttribute("content", "black-translucent");
+
+  await expect(page.locator(".safari-chrome-sample--top")).toHaveCount(1);
+  await expect(page.locator(".safari-chrome-sample--bottom")).toHaveCount(1);
+
+  const transparent = /^(transparent|rgba\(\s*0,\s*0,\s*0,\s*0\s*\))$/;
+  for (const selector of [
+    ".safari-chrome-sample--top",
+    ".safari-chrome-sample--bottom",
+    ".nav_wrap",
+  ]) {
+    const bg = await page
+      .locator(selector)
+      .first()
+      .evaluate((el) => getComputedStyle(el).backgroundColor);
+    expect(bg, `${selector} must not tint Safari chrome`).toMatch(transparent);
+  }
+
+  const backdropDisplay = await page
+    .locator(".about_panel_backdrop")
+    .evaluate((el) => getComputedStyle(el).display);
+  expect(backdropDisplay, "closed About scrim must leave the sample tree").toBe(
+    "none",
+  );
 
   await page.locator(".nav_wrap .nav_theme_toggle").first().click();
   await expect(page.locator('meta[name="theme-color"]')).toHaveCount(0);
