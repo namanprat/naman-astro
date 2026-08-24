@@ -34,10 +34,17 @@
  * thin to survive the cut, as the automatic fallback when `#blur-matrix` is
  * missing, and as the site-wide escape hatch if a browser turns out not to
  * manage the threshold at all. It is not armed by UA detection.
+ *
+ * Below `(width < 48rem)` the melt is replaced by a clip-up of the same
+ * inners: same SplitText lines, same ScrollTrigger (`top 80%`, once), same
+ * park / arm / settle. The filter never runs — `.gooey_reveal_slide` clips
+ * each line and GSAP tweens `yPercent` from `LINE_PARK_PERCENT` to 0.
  */
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import { SplitText } from "gsap/SplitText";
+import { LINE_PARK_PERCENT } from "./lineMask";
+import { isMobileLayout } from "./isMobileLayout";
 import { prefersReducedMotion } from "./prefersReducedMotion";
 import { pollUntil, REVEAL_FAILSAFE_MS, REVEAL_POLL_MS } from "./pollUntil";
 
@@ -74,8 +81,12 @@ export const GOOEY_BLUR_VAR = "--gooey-blur";
 const BLUR_START_EM = 0.35;
 const BLUR_END = "0px";
 const REVEAL_S = 1.5;
+/** Clip-up duration. The melt's 1.5s is the time the threshold needs to read;
+ *  a slide uses the same beat as `lineReveal` / the nav mask-up. */
+const SLIDE_S = 0.9;
 const REVEAL_STAGGER = 0.1;
 const REVEAL_START = "top 80%";
+const SLIDE = "gooey_reveal_slide";
 
 /** Blur peak for a swap. Lower than the entrance — it is a shorter beat. */
 const MORPH_BLUR_EM = 0.3;
@@ -92,6 +103,11 @@ const SOFT = "is-gooey-soft";
 export function usesSoftGooey(): boolean {
   if (typeof document === "undefined") return false;
   return document.documentElement.classList.contains(SOFT);
+}
+
+/** Phone layout: clip-up instead of the melt. Same trigger, same split. */
+export function usesSlideReveal(): boolean {
+  return isMobileLayout();
 }
 
 /**
@@ -136,7 +152,7 @@ function hasThreshold(): boolean {
 /**
  * Route the whole document to the soft chain when `#blur-matrix` is missing.
  *
- * The per-target fallback in `gooeyClass` only covers targets that go through
+ * The per-target fallback in `revealClass` only covers targets that go through
  * park/arm. `.gallery_label` carries `.gooey_reveal` statically in JSX, so
  * without this its filter list would still name a `url()` that resolves to
  * nothing — which on WebKit blanks the element rather than degrading. One class
@@ -148,6 +164,8 @@ function markGooeySupport(): void {
 
 function canPrepareGooey(): boolean {
   if (prefersReducedMotion()) return false;
+  // Slide path only needs overflow clip — no filter, no SVG node.
+  if (usesSlideReveal()) return true;
   // Soft path only needs CSS blur — the SVG node is optional.
   if (usesSoftGooey()) return true;
   return hasThreshold();
@@ -157,8 +175,8 @@ function wait(ms: number): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
-/** Move a line's children into a span. The inner is what carries the filter
- *  chain and the animated blur; the line itself stays unfiltered. */
+/** Move a line's children into a span. The inner is what the entrance tweens
+ *  — blur on desktop, yPercent on mobile — and the line stays the clip. */
 function wrapInner(line: Element): HTMLElement {
   const inner = document.createElement("span");
   inner.className = "gooey_reveal_inner";
@@ -175,32 +193,39 @@ export type GooeyTarget = {
 const registry = new WeakMap<HTMLElement, GooeyTarget>();
 
 /**
- * The one place that decides whether a target gets the threshold or just the
- * blur. A missing `#blur-matrix` routes here rather than cancelling the reveal,
+ * The one place that decides whether a target melts, blurs, or clips up.
+ * A missing `#blur-matrix` routes here rather than cancelling the reveal,
  * so the entrance still runs — soft — instead of not running at all. Any future
  * capability bail-out belongs here too.
  */
-function gooeyClass(el: HTMLElement): "gooey_reveal" | "gooey_reveal_soft" {
+type RevealClass = "gooey_reveal" | "gooey_reveal_soft" | typeof SLIDE;
+
+function revealClass(el: HTMLElement): RevealClass {
+  if (usesSlideReveal()) return SLIDE;
   if (usesSoftGooey() || el.dataset.reveal === "soft" || !hasThreshold()) {
     return "gooey_reveal_soft";
   }
   return "gooey_reveal";
 }
 
+const REVEAL_CLASSES = ["gooey_reveal", "gooey_reveal_soft", SLIDE] as const;
+
 function innersOf(target: GooeyTarget | GooeyTarget[]): HTMLElement[] {
   return (Array.isArray(target) ? target : [target]).flatMap((t) => t.inners);
 }
 
-/** Drop the threshold class and clear blur once a reveal has landed sharp.
- *  Explicit `removeProperty` rather than `clearProps`: no ambiguity about how
- *  GSAP clears a custom property, and it sweeps the inline `filter` too. */
+/** Drop the marker class and clear blur / y once a reveal has landed.
+ *  Explicit `removeProperty` rather than `clearProps` for the custom property:
+ *  no ambiguity about how GSAP clears it, and it sweeps the inline `filter`
+ *  too. `yPercent` is a GSAP property, so that one does go through clearProps. */
 export function settleGooey(target: GooeyTarget | GooeyTarget[]): void {
   const list = Array.isArray(target) ? target : [target];
   for (const t of list) {
-    t.el.classList.remove("gooey_reveal", "gooey_reveal_soft");
+    t.el.classList.remove(...REVEAL_CLASSES);
     for (const inner of t.inners) {
       inner.style.removeProperty(GOOEY_BLUR_VAR);
       inner.style.removeProperty("filter");
+      gsap.set(inner, { clearProps: "y,yPercent" });
     }
   }
 }
@@ -210,7 +235,7 @@ export function settleGooey(target: GooeyTarget | GooeyTarget[]): void {
 export function armGooey(target: GooeyTarget | GooeyTarget[]): void {
   const list = Array.isArray(target) ? target : [target];
   for (const t of list) {
-    t.el.classList.add(gooeyClass(t.el));
+    t.el.classList.add(revealClass(t.el));
   }
 }
 
@@ -218,9 +243,9 @@ export function armGooey(target: GooeyTarget | GooeyTarget[]): void {
 export function prepareGooey(el: HTMLElement): GooeyTarget | null {
   const cached = registry.get(el);
   if (cached) return cached;
-  // `canPrepareGooey` allows a missing `#blur-matrix` through when soft mode is
-  // on, because `gooeyClass` then falls back to the blur-only variant and the
-  // entrance still runs rather than being cancelled.
+  // `canPrepareGooey` allows a missing `#blur-matrix` through when soft mode or
+  // the mobile clip-up is on, because `revealClass` then skips the threshold
+  // chain and the entrance still runs rather than being cancelled.
   if (!canPrepareGooey()) return null;
 
   el.dataset.gooey = "";
@@ -245,10 +270,31 @@ export function prepareGooeyAll(els: Iterable<HTMLElement>): GooeyTarget[] {
 
 export function parkGooey(target: GooeyTarget | GooeyTarget[]): void {
   const list = Array.isArray(target) ? target : [target];
+  const slide = usesSlideReveal();
   for (const t of list) {
-    t.el.classList.add(gooeyClass(t.el));
-    gsap.set(t.inners, { [GOOEY_BLUR_VAR]: BLUR_START });
+    t.el.classList.add(revealClass(t.el));
+    if (slide) gsap.set(t.inners, { yPercent: LINE_PARK_PERCENT });
+    else gsap.set(t.inners, { [GOOEY_BLUR_VAR]: BLUR_START });
   }
+}
+
+function revealTweenVars(onComplete: () => void): gsap.TweenVars {
+  if (usesSlideReveal()) {
+    return {
+      yPercent: 0,
+      duration: SLIDE_S,
+      ease: "power3.out",
+      stagger: REVEAL_STAGGER,
+      onComplete,
+    };
+  }
+  return {
+    [GOOEY_BLUR_VAR]: BLUR_END,
+    duration: REVEAL_S,
+    ease: "power3.out",
+    stagger: REVEAL_STAGGER,
+    onComplete,
+  };
 }
 
 export function addGooeyReveal(
@@ -259,19 +305,7 @@ export function addGooeyReveal(
   const list = Array.isArray(target) ? target : [target];
   const inners = innersOf(target);
   if (!inners.length) return;
-  tl.to(
-    inners,
-    {
-      [GOOEY_BLUR_VAR]: BLUR_END,
-      duration: REVEAL_S,
-      ease: "power3.out",
-      stagger: REVEAL_STAGGER,
-      onComplete: () => {
-        settleGooey(list);
-      },
-    },
-    position,
-  );
+  tl.to(inners, revealTweenVars(() => settleGooey(list)), position);
 }
 
 export function addGooeyUnreveal(
@@ -282,18 +316,27 @@ export function addGooeyUnreveal(
   const list = Array.isArray(target) ? target : [target];
   const inners = innersOf(target);
   if (!inners.length) return;
+  const slide = usesSlideReveal();
   for (const t of list) {
-    t.el.classList.add(gooeyClass(t.el));
-    gsap.set(t.inners, { [GOOEY_BLUR_VAR]: BLUR_END });
+    t.el.classList.add(revealClass(t.el));
+    if (slide) gsap.set(t.inners, { yPercent: 0 });
+    else gsap.set(t.inners, { [GOOEY_BLUR_VAR]: BLUR_END });
   }
   tl.to(
     inners,
-    {
-      [GOOEY_BLUR_VAR]: BLUR_START,
-      duration: 0.7,
-      ease: "power3.in",
-      stagger: { each: REVEAL_STAGGER, from: "end" },
-    },
+    slide
+      ? {
+          yPercent: LINE_PARK_PERCENT,
+          duration: 0.7,
+          ease: "power3.in",
+          stagger: { each: REVEAL_STAGGER, from: "end" },
+        }
+      : {
+          [GOOEY_BLUR_VAR]: BLUR_START,
+          duration: 0.7,
+          ease: "power3.in",
+          stagger: { each: REVEAL_STAGGER, from: "end" },
+        },
     position,
   );
 }
@@ -309,12 +352,8 @@ function armHeading(el: HTMLElement): void {
   if (!target) return;
   parkGooey(target);
   gsap.to(target.inners, {
-    [GOOEY_BLUR_VAR]: BLUR_END,
-    duration: REVEAL_S,
-    ease: "power3.out",
-    stagger: REVEAL_STAGGER,
+    ...revealTweenVars(() => settleGooey(target)),
     scrollTrigger: { trigger: el, start: REVEAL_START, once: true },
-    onComplete: () => settleGooey(target),
   });
 }
 
@@ -349,8 +388,8 @@ export async function bootGooeyHeadings(): Promise<void> {
       intervalMs: REVEAL_POLL_MS,
     });
 
-    // Past the deadline the headings are already on screen; parking them at a
-    // blur now would melt copy the reader has been looking at.
+    // Past the deadline the headings are already on screen; parking them now
+    // would yank copy the reader has been looking at.
     if (!heads.length || expired) return done();
 
     for (const el of heads) armHeading(el);
@@ -373,7 +412,7 @@ export function gooeyMorph(
   inner: HTMLElement,
   swap: () => void,
 ): gsap.core.Timeline | null {
-  if (prefersReducedMotion() || !canPrepareGooey()) {
+  if (prefersReducedMotion() || !canPrepareGooey() || usesSlideReveal()) {
     swap();
     return null;
   }

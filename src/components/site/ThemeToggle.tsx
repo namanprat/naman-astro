@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import gsap from "gsap";
 import { prefersReducedMotion } from "@/lib/site/prefersReducedMotion";
+import { syncThemeColor } from "@/lib/site/themeColor";
 import "@/lib/site/eases";
 
 /** Circle centres of the inlined switch artwork — filled-left is the dark state. */
@@ -64,6 +65,7 @@ export default function ThemeToggle() {
     const root = document.documentElement;
     root.classList.remove("theme-dark", "theme-light");
     root.classList.add(next ? "theme-light" : "theme-dark");
+    syncThemeColor();
     try {
       localStorage.setItem(SITE_THEME_KEY, next ? "light" : "dark");
     } catch {

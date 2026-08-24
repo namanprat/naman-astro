@@ -42,6 +42,15 @@ const socialImage = image ? new URL(image, Astro.site) : null;
   name="viewport"
   content="width=device-width, initial-scale=1, viewport-fit=cover"
 />
+{/* `viewport-fit=cover` lets the layout fill the Dynamic Island and home
+    indicator; `theme-color` tints Safari's chrome to the page ground so those
+    bands don't read as a separate bar. `black-translucent` is the standalone
+    (Add to Home Screen) equivalent. The FOUC script and ThemeToggle keep
+    theme-color in sync when the visitor flips light/dark. */}
+<meta name="theme-color" content="#101010" />
+<meta name="mobile-web-app-capable" content="yes" />
+<meta name="apple-mobile-web-app-capable" content="yes" />
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
 <title>{pageTitle}</title>
 <meta name="description" content={description} />
 <link rel="canonical" href={canonical} />

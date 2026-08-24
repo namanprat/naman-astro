@@ -103,8 +103,9 @@ html.theme-light .footer_box {
 
 /* Gooey reveal host — .footer_text_content inside it also carries
    `.gooey_reveal_inner`, which is what the filter chain hangs off.
-   No `overflow: clip` here: it was the mask for the old slide-up, and it
-   would now crop the blur bleed off the top and bottom of every link. */
+   No `overflow: clip` here on the desktop melt: it would crop the blur bleed.
+   The mobile clip-up hangs `overflow: clip` off `.gooey_reveal_slide` in
+   site.css instead, and only while the entrance is parked / running. */
 .footer_text {
   display: block;
 }
