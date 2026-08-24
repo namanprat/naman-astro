@@ -2,6 +2,7 @@ import { expect, test } from "@playwright/test";
 import {
   expectNavVisible,
   expectRevealed,
+  isNarrowNav,
   rootClasses,
   seedSession,
   skipPreloader,
@@ -47,7 +48,9 @@ test("cold session: the preloader hands over and the nav appears", async ({
   await expect(cta).toHaveAttribute("data-ready", "1", { timeout: 60_000 });
   await cta.click();
 
-  await expect(page.locator(".preloader_wrap")).toHaveCount(0, { timeout: 90_000 });
+  await expect(page.locator(".preloader_wrap")).toHaveCount(0, {
+    timeout: 90_000,
+  });
   await expectRevealed(page);
   await expectNavVisible(page);
 });
@@ -94,4 +97,78 @@ test("a project page reveals and keeps its nav", async ({ page }) => {
   await page.goto("/work/money-me");
   await expectRevealed(page);
   await expect.poll(() => rootClasses(page)).toContain("page-work-project");
+});
+
+/**
+ * The heading entrance runs one of two ways, and which one is a width decision
+ * `gooeyReveal.ts` makes at park time: the melt above the 48rem cutoff, a
+ * mask-clipped slide below it. Both share the split, the `top 80%` trigger and
+ * the settle, so the only thing worth pinning is that each viewport parks in
+ * its own mode and that both land clean — no marker class, no filter, no
+ * transform, nothing left clipped.
+ *
+ * Reduced motion is exempt: nothing splits there, so there is no mode to check.
+ */
+test("headings park in this width's mode and settle clean", async ({
+  page,
+}) => {
+  test.skip(
+    test.info().project.name === "reduced-motion",
+    "no entrance runs, so no mode is chosen",
+  );
+
+  await skipPreloader(page);
+  await page.goto("/");
+  await expectRevealed(page);
+
+  // Well below the fold on every project, so it is still parked on arrival.
+  const head = page.locator(".team_title");
+  const read = () =>
+    head.evaluate((el) => {
+      const inner = el.querySelector<HTMLElement>(".gooey_reveal_inner");
+      const line = inner?.closest<HTMLElement>(".gooey_reveal_line") ?? null;
+      return {
+        cls: el.className,
+        filter: inner ? getComputedStyle(inner).filter : "",
+        transform: inner ? getComputedStyle(inner).transform : "",
+        lineOverflow: line ? getComputedStyle(line).overflow : "",
+      };
+    });
+
+  await expect
+    .poll(async () => (await read()).cls)
+    .toMatch(isNarrowNav() ? /gooey_reveal_slide/ : /gooey_reveal(_soft)?\b/);
+
+  const parked = await read();
+  if (isNarrowNav()) {
+    // Held below its own clip, with no filter of either kind in the chain.
+    expect(parked.transform).not.toBe("none");
+    expect(parked.filter).toBe("none");
+    expect(parked.lineOverflow).toBe("clip");
+  } else {
+    expect(parked.filter).toContain("blur(");
+    expect(parked.filter).not.toContain("blur(0px)");
+    expect(parked.transform).toBe("none");
+  }
+
+  /* Read down a screen at a time rather than jumping straight to the heading.
+     ScrollTrigger caches each start as a scroll offset, and this page is still
+     growing when the triggers are built — the team canvas and the footer's
+     scaled block both settle late — so a single jump can land past a start that
+     has since moved and never cross it. A reader's own descent crosses it
+     wherever it ended up, in either mode. */
+  await expect
+    .poll(
+      async () => {
+        await page.evaluate(() => window.scrollBy(0, window.innerHeight));
+        await page.waitForTimeout(150);
+        return (await read()).cls;
+      },
+      { timeout: 30_000 },
+    )
+    .not.toMatch(/gooey_reveal/);
+  const settled = await read();
+  expect(settled.filter).toBe("none");
+  expect(settled.transform).toBe("none");
+  expect(settled.lineOverflow).toBe("visible");
 });

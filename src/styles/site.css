@@ -342,6 +342,24 @@
     filter: blur(var(--gooey-blur, 0px));
   }
 
+  /* The mobile entrance: same split, same triggers, no filter — the lines slide
+     up from behind a clip instead of melting. `gooeyReveal.ts` explains why the
+     melt stops earning its cost at this width; `usesSlideReveal` is what adds
+     this class, so there is no breakpoint restated here to drift from it.
+
+     Two selectors because the clip has to sit on whatever plays the part of the
+     line box: `.gooey_reveal_line` for a split heading, and the element itself
+     for the hand-built targets in `Footer`, which pair `.footer_text` straight
+     with a `.gooey_reveal_inner` and have no split line in between. Clipping
+     both is harmless — each line's own clip is the tighter of the two.
+
+     `settleGooey` drops the class as the reveal lands, so the clip is only ever
+     up while text is travelling and no descender is cropped at rest. */
+  .gooey_reveal_slide,
+  .gooey_reveal_slide .gooey_reveal_line {
+    overflow: clip;
+  }
+
   .gooey_reveal_line {
     display: block;
   }

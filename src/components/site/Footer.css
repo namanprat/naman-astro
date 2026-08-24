@@ -1,214 +1,217 @@
 @layer components {
-.footer_wrap {
-  position: relative;
-  z-index: 2;
-  width: 100%;
-  /* Same identity as .about_panel: leftover after the orange is grid + 2*gutter. */
-  --about--inset: calc(var(--site-margin) - var(--site-gutter));
-  /* Outer float — gutter air on all four sides; child is width 100% inside. */
-  padding-inline: calc(var(--site-gutter) * (1 - var(--_responsive---large)));
-  padding-top: calc(var(--site-gutter) * (1 - var(--_responsive---large)) + var(--about--inset) * var(--_responsive---large));
-  padding-bottom: calc(var(--site-gutter) * (1 - var(--_responsive---large)) + var(--about--inset) * var(--_responsive---large) + var(--site--safe-area-bottom));
-  /* Visible, not hidden: overflow other than visible makes this a backdrop
+  .footer_wrap {
+    position: relative;
+    z-index: 2;
+    width: 100%;
+    /* Same identity as .about_panel: leftover after the orange is grid + 2*gutter. */
+    --about--inset: calc(var(--site-margin) - var(--site-gutter));
+    /* Outer float — gutter air on all four sides; child is width 100% inside. */
+    padding-inline: calc(var(--site-gutter) * (1 - var(--_responsive---large)));
+    padding-top: calc(var(--site-gutter) * (1 - var(--_responsive---large)) + var(--about--inset) * var(--_responsive---large));
+    padding-bottom: calc(var(--site-gutter) * (1 - var(--_responsive---large)) + var(--about--inset) * var(--_responsive---large) + var(--site--safe-area-bottom));
+    /* Visible, not hidden: overflow other than visible makes this a backdrop
      root, so frost on `.footer_child` would sample this padding (empty)
      instead of the liquid behind the card. */
-  overflow: visible;
-  display: flex;
-  flex-direction: column;
-  box-sizing: border-box;
-  background-color: transparent;
-}
+    overflow: visible;
+    display: flex;
+    flex-direction: column;
+    box-sizing: border-box;
+    background-color: transparent;
+  }
 
-/*
+  /*
   Fill + frost live on this node. Scale is on `.footer_scale` inside — a
   transform on the frost box itself (or an ancestor) makes a backdrop root
   and the filter samples empty padding instead of the liquid behind the card.
 */
-.footer_child {
-  position: relative;
-  display: flex;
-  flex-direction: column;
-  width: calc(100% * (1 - var(--_responsive---large)) + (var(--site--grid-width) + var(--site-gutter) * 2) * var(--_responsive---large));
-  margin-inline: auto;
-  background-color: var(--surface-accent);
-  backdrop-filter: blur(var(--surface-frost-blur));
-}
+  .footer_child {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    width: calc(100% * (1 - var(--_responsive---large)) + (var(--site--grid-width) + var(--site-gutter) * 2) * var(--_responsive---large));
+    margin-inline: auto;
+    background-color: var(--surface-accent);
+    backdrop-filter: blur(var(--surface-frost-blur));
+  }
 
-.footer_scale {
-  display: flex;
-  flex-direction: column;
-  width: 100%;
-  transform-origin: center bottom;
-}
+  .footer_scale {
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    transform-origin: center bottom;
+  }
 
-/* Dark mode: fully opaque orange; disable blur for crisp edges. */
-html.theme-dark .footer_child {
-  background-color: var(--brand-500);
-  backdrop-filter: none;
-}
+  /* Dark mode: fully opaque orange; disable blur for crisp edges. */
+  html.theme-dark .footer_child {
+    background-color: var(--brand-500);
+    backdrop-filter: none;
+  }
 
-.footer_box {
-  position: relative;
-  width: 100%;
-  background-color: transparent;
-  /* Dark mode: black on accent. Light mode: white on frost. */
-  color: var(--dark-900);
-  box-sizing: border-box;
-  /* Gutter on all sides — same inner pad as desktop. Below 64rem the contain
+  .footer_box {
+    position: relative;
+    width: 100%;
+    background-color: transparent;
+    /* Dark mode: black on accent. Light mode: white on frost. */
+    color: var(--dark-900);
+    box-sizing: border-box;
+    /* Gutter on all sides — same inner pad as desktop. Below 64rem the contain
      is width 100% so this inset is real air inside the orange card, not a
      second pass over a vw-sized grid band. */
-  --text: var(--dark-900);
-  padding: var(--site-gutter);
-  padding-block: calc(var(--space-6) * (1 - var(--_responsive---large)) + var(--site-gutter) * var(--_responsive---large));
-}
-
-html.theme-light .footer_box {
-  --text: var(--light-100);
-  color: var(--light-100);
-}
-
-@media (width >= 64rem) and (hover: hover) and (pointer: fine) {
-  .footer_box.is-ascii-hover {
-    cursor: none;
+    --text: var(--dark-900);
+    padding: var(--site-gutter);
+    padding-block: calc(var(--space-6) * (1 - var(--_responsive---large)) + var(--site-gutter) * var(--_responsive---large));
   }
 
-  .footer_box.is-ascii-hover :is(a, button) {
-    cursor: pointer;
+  html.theme-light .footer_box {
+    --text: var(--light-100);
+    color: var(--light-100);
   }
-}
 
-/* Full-width content shell inside the padded box. */
-.footer_contain.container {
-  position: relative;
-  z-index: 1;
-  gap: 0;
-  width: 100%;
-  max-width: none;
-  margin-inline: 0;
-  padding: 0;
-}
+  @media (width >= 64rem) and (hover: hover) and (pointer: fine) {
+    .footer_box.is-ascii-hover {
+      cursor: none;
+    }
 
-/*
+    .footer_box.is-ascii-hover :is(a, button) {
+      cursor: pointer;
+    }
+  }
+
+  /* Full-width content shell inside the padded box. */
+  .footer_contain.container {
+    position: relative;
+    z-index: 1;
+    gap: 0;
+    width: 100%;
+    max-width: none;
+    margin-inline: 0;
+    padding: 0;
+  }
+
+  /*
   base.css sets `body, h1..h6, p, a, time { color: var(--text) }` — a direct
   type-selector hit, which beats the panel's colour arriving by inheritance. So
   every typographic element in here has to opt back in explicitly.
 */
-.footer_wrap :is(h1, h2, h3, h4, h5, h6, p, a, time) {
-  color: inherit;
-}
+  .footer_wrap :is(h1, h2, h3, h4, h5, h6, p, a, time) {
+    color: inherit;
+  }
 
-.footer_wrap a {
-  text-decoration: none;
-}
+  .footer_wrap a {
+    text-decoration: none;
+  }
 
-/* Gooey reveal host — .footer_text_content inside it also carries
+  /* Gooey reveal host — .footer_text_content inside it also carries
    `.gooey_reveal_inner`, which is what the filter chain hangs off.
-   No `overflow: clip` here: it was the mask for the old slide-up, and it
-   would now crop the blur bleed off the top and bottom of every link. */
-.footer_text {
-  display: block;
-}
+   No unconditional `overflow: clip` here: it would crop the blur bleed off the
+   top and bottom of every link. Below the mobile cutoff there is no blur to
+   bleed, and `gooeyReveal.ts` puts the clip back for the duration of the slide
+   via `.gooey_reveal_slide` — which lands on this element, since these targets
+   are hand-built and have no `.gooey_reveal_line` inside them. */
+  .footer_text {
+    display: block;
+  }
 
-/* Beats `.gooey_reveal_inner { display: inline-block }` in site.css —
+  /* Beats `.gooey_reveal_inner { display: inline-block }` in site.css —
    same layer, later source. */
-.footer_text_content {
-  display: block;
-}
+  .footer_text_content {
+    display: block;
+  }
 
-/* ─── Main block ────────────────────────────────────────────────────────────
+  /* ─── Main block ────────────────────────────────────────────────────────────
    12-col map, on the navbar's own tracks: tagline 1–5, Navigation 8–9
    (.nav_stack.is-home), Connect 10–12 (.nav_stack.is-about + .nav_utility_stack).
    Columns 6–7 stay empty. */
-.footer_layout {
-  width: 100%;
-  align-items: start;
-  row-gap: var(--space-6);
-}
-
-.footer_tagline {
-  grid-column: 1 / span 5;
-  margin: 0;
-  text-wrap: balance;
-}
-
-.footer_col.is-nav {
-  grid-column: 8 / span 2;
-}
-
-.footer_col.is-connect {
-  grid-column: 10 / -1;
-}
-
-.footer_list {
-  list-style: none;
-  margin: 0;
-  padding: 0;
-}
-
-/* Hover is the navbar's rolling-char effect (RollingText), not a fade — the
-   roll clips per character, so it nests inside the reveal mask safely. */
-.footer_link {
-  display: inline-block;
-  line-height: 1.05;
-}
-
-.footer_link_icon {
-  display: inline-block;
-  margin-left: 0.25em;
-  font-size: 0.45em;
-  vertical-align: super;
-}
-
-/* Full width of the padded box. Section space separates the top block from
-   the wordmark. */
-.footer_logo {
-  width: 100%;
-  min-width: 0;
-  margin-top: var(--section-space-large);
-  box-sizing: border-box;
-}
-
-.footer_logo_source {
-  width: 100%;
-  height: auto;
-  display: block;
-  /* In flow so the SVG sizes the slot; canvas paints the ASCII over the card. */
-  visibility: hidden;
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .footer_logo_source {
-    visibility: visible;
+  .footer_layout {
+    width: 100%;
+    align-items: start;
+    row-gap: var(--space-6);
   }
-}
 
-/* ─── Bands ─────────────────────────────────────────────────────────────────
-   12-col anchors only exist at large. Re-anchor on 8-col, then stack. */
-
-@media (width < 64rem) {
   .footer_tagline {
-    grid-column: 1 / -1;
+    grid-column: 1 / span 5;
+    margin: 0;
+    text-wrap: balance;
   }
 
   .footer_col.is-nav {
-    grid-column: 1 / span 4;
+    grid-column: 8 / span 2;
   }
 
   .footer_col.is-connect {
-    grid-column: 5 / span 4;
-  }
-}
-
-@media (width < 48rem) {
-  .footer_wrap {
-    padding-inline: 0;
-    padding-bottom: var(--site--safe-area-bottom);
+    grid-column: 10 / -1;
   }
 
-  .footer_tagline,
-  .footer_col.is-nav,
-  .footer_col.is-connect {
-    grid-column: 1 / -1;
+  .footer_list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
   }
-}
+
+  /* Hover is the navbar's rolling-char effect (RollingText), not a fade — the
+   roll clips per character, so it nests inside the reveal mask safely. */
+  .footer_link {
+    display: inline-block;
+    line-height: 1.05;
+  }
+
+  .footer_link_icon {
+    display: inline-block;
+    margin-left: 0.25em;
+    font-size: 0.45em;
+    vertical-align: super;
+  }
+
+  /* Full width of the padded box. Section space separates the top block from
+   the wordmark. */
+  .footer_logo {
+    width: 100%;
+    min-width: 0;
+    margin-top: var(--section-space-large);
+    box-sizing: border-box;
+  }
+
+  .footer_logo_source {
+    width: 100%;
+    height: auto;
+    display: block;
+    /* In flow so the SVG sizes the slot; canvas paints the ASCII over the card. */
+    visibility: hidden;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .footer_logo_source {
+      visibility: visible;
+    }
+  }
+
+  /* ─── Bands ─────────────────────────────────────────────────────────────────
+   12-col anchors only exist at large. Re-anchor on 8-col, then stack. */
+
+  @media (width < 64rem) {
+    .footer_tagline {
+      grid-column: 1 / -1;
+    }
+
+    .footer_col.is-nav {
+      grid-column: 1 / span 4;
+    }
+
+    .footer_col.is-connect {
+      grid-column: 5 / span 4;
+    }
+  }
+
+  @media (width < 48rem) {
+    .footer_wrap {
+      padding-inline: 0;
+      padding-bottom: var(--site--safe-area-bottom);
+    }
+
+    .footer_tagline,
+    .footer_col.is-nav,
+    .footer_col.is-connect {
+      grid-column: 1 / -1;
+    }
+  }
 }

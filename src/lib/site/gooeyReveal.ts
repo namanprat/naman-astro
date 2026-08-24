@@ -34,10 +34,17 @@
  * thin to survive the cut, as the automatic fallback when `#blur-matrix` is
  * missing, and as the site-wide escape hatch if a browser turns out not to
  * manage the threshold at all. It is not armed by UA detection.
+ *
+ * Below the mobile cutoff there is a third mode, and it is not a filter at all:
+ * the same split lines slide up from behind a clip instead of melting. See
+ * `usesSlideReveal` for why, and `parkVars`/`revealVars` for the one place the
+ * two entrances diverge — everything above that seam (the split, the wrapping,
+ * the triggers, the timeline positions, the settle) is shared.
  */
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import { SplitText } from "gsap/SplitText";
+import { LINE_PARK_PERCENT } from "./lineMask";
 import { prefersReducedMotion } from "./prefersReducedMotion";
 import { pollUntil, REVEAL_FAILSAFE_MS, REVEAL_POLL_MS } from "./pollUntil";
 
@@ -84,6 +91,23 @@ const MORPH_S = 0.22;
 const ARMING = "is-gooey-arming";
 const SOFT = "is-gooey-soft";
 
+/** Marker for the slide entrance. `site.css` hangs the clip off it. */
+const SLIDE = "gooey_reveal_slide";
+
+/**
+ * The site's mobile cutoff, the same one Menu, Work and AboutPanel switch their
+ * layouts on. Stated here rather than imported from a layout module so this
+ * file keeps no dependency on one.
+ */
+const SLIDE_MQ = "(width < 48rem)";
+
+/** The slide's own timing — the site's existing one, shared with `lineReveal`
+ *  and the nav lines in `heroIntro`. The gooey's 1.5s is the length the *melt*
+ *  needs to read as a melt; a slide held that long just reads as slow. */
+const SLIDE_S = 0.9;
+const SLIDE_STAGGER = 0.06;
+const SLIDE_OUT_S = 0.5;
+
 /**
  * Soft mode: blur-to-sharp only, no SVG threshold. Set by `BaseLayout`'s
  * pre-paint script as an explicit opt-out, and by `markGooeySupport` when the
@@ -92,6 +116,31 @@ const SOFT = "is-gooey-soft";
 export function usesSoftGooey(): boolean {
   if (typeof document === "undefined") return false;
   return document.documentElement.classList.contains(SOFT);
+}
+
+/**
+ * Below the mobile cutoff, headings slide up from behind a clip rather than
+ * melting.
+ *
+ * The gooey is a blur feeding an SVG reference filter, and a `url()` filter is
+ * never GPU-accelerated — so a phone rasterises the whole chain on the CPU,
+ * once per frame, across a heading that at this width spans the full viewport.
+ * That is the one place the effect costs more than it reads: the melt is only
+ * legible when the glyphs are big enough for neighbours to fuse, which is the
+ * same reason `heroIntro` already refuses the wordmark's melt below 64rem.
+ *
+ * Read per call rather than cached: an orientation change can cross 48rem, and
+ * `settleGooey` clears every mode's marker, so a target parked in one mode and
+ * settled in the other still lands clean.
+ */
+function usesSlideReveal(): boolean {
+  if (
+    typeof window === "undefined" ||
+    typeof window.matchMedia !== "function"
+  ) {
+    return false;
+  }
+  return window.matchMedia(SLIDE_MQ).matches;
 }
 
 /**
@@ -146,11 +195,19 @@ function markGooeySupport(): void {
   if (!hasThreshold()) document.documentElement.classList.add(SOFT);
 }
 
+/**
+ * Whether the filter chain can run at all. Soft mode only needs CSS blur, so
+ * the SVG node is optional there; the full chain needs the node to exist.
+ */
+function canRunFilter(): boolean {
+  return usesSoftGooey() || hasThreshold();
+}
+
 function canPrepareGooey(): boolean {
   if (prefersReducedMotion()) return false;
-  // Soft path only needs CSS blur — the SVG node is optional.
-  if (usesSoftGooey()) return true;
-  return hasThreshold();
+  // The slide is a transform behind a clip — no filter of either kind.
+  if (usesSlideReveal()) return true;
+  return canRunFilter();
 }
 
 function wait(ms: number): Promise<void> {
@@ -175,38 +232,102 @@ export type GooeyTarget = {
 const registry = new WeakMap<HTMLElement, GooeyTarget>();
 
 /**
- * The one place that decides whether a target gets the threshold or just the
- * blur. A missing `#blur-matrix` routes here rather than cancelling the reveal,
- * so the entrance still runs — soft — instead of not running at all. Any future
- * capability bail-out belongs here too.
+ * The one place that decides which entrance a target gets. A missing
+ * `#blur-matrix` routes here rather than cancelling the reveal, so the entrance
+ * still runs — soft — instead of not running at all. Any future capability
+ * bail-out belongs here too.
  */
-function gooeyClass(el: HTMLElement): "gooey_reveal" | "gooey_reveal_soft" {
+function gooeyClass(
+  el: HTMLElement,
+): "gooey_reveal" | "gooey_reveal_soft" | typeof SLIDE {
+  if (usesSlideReveal()) return SLIDE;
   if (usesSoftGooey() || el.dataset.reveal === "soft" || !hasThreshold()) {
     return "gooey_reveal_soft";
   }
   return "gooey_reveal";
 }
 
+/**
+ * The seam between the two entrances, and the only place they differ. Every
+ * caller below builds its tween from these, so the melt and the slide share one
+ * set of triggers, timeline positions and settle rules.
+ */
+
+/** Hidden: melted flat, or held below its own clip. */
+function parkVars(): gsap.TweenVars {
+  return usesSlideReveal()
+    ? { yPercent: LINE_PARK_PERCENT }
+    : { [GOOEY_BLUR_VAR]: BLUR_START };
+}
+
+/** Landed: sharp, and back on the baseline. */
+function landedVars(): gsap.TweenVars {
+  return usesSlideReveal() ? { yPercent: 0 } : { [GOOEY_BLUR_VAR]: BLUR_END };
+}
+
+/** Park → landed, with each entrance's own timing. */
+function revealVars(): gsap.TweenVars {
+  return usesSlideReveal()
+    ? {
+        yPercent: 0,
+        duration: SLIDE_S,
+        ease: "power3.out",
+        stagger: SLIDE_STAGGER,
+      }
+    : {
+        [GOOEY_BLUR_VAR]: BLUR_END,
+        duration: REVEAL_S,
+        ease: "power3.out",
+        stagger: REVEAL_STAGGER,
+      };
+}
+
+/** Landed → park, last line first. */
+function unrevealVars(): gsap.TweenVars {
+  return usesSlideReveal()
+    ? {
+        yPercent: LINE_PARK_PERCENT,
+        duration: SLIDE_OUT_S,
+        ease: "power3.in",
+        stagger: { each: SLIDE_STAGGER, from: "end" },
+      }
+    : {
+        [GOOEY_BLUR_VAR]: BLUR_START,
+        duration: 0.7,
+        ease: "power3.in",
+        stagger: { each: REVEAL_STAGGER, from: "end" },
+      };
+}
+
 function innersOf(target: GooeyTarget | GooeyTarget[]): HTMLElement[] {
   return (Array.isArray(target) ? target : [target]).flatMap((t) => t.inners);
 }
 
-/** Drop the threshold class and clear blur once a reveal has landed sharp.
- *  Explicit `removeProperty` rather than `clearProps`: no ambiguity about how
- *  GSAP clears a custom property, and it sweeps the inline `filter` too. */
+/** Drop the marker class and clear whatever the entrance left behind, once a
+ *  reveal has landed. Explicit `removeProperty` for the blur rather than
+ *  `clearProps`: no ambiguity about how GSAP clears a custom property, and it
+ *  sweeps the inline `filter` too. The slide's transform goes through GSAP so
+ *  its transform cache is dropped with it.
+ *
+ *  All three markers come off regardless of the current mode, so a target
+ *  parked before an orientation change still settles clean. Dropping the slide
+ *  marker is also what releases its clip — nothing on the page stays clipped
+ *  once the text is home. */
 export function settleGooey(target: GooeyTarget | GooeyTarget[]): void {
   const list = Array.isArray(target) ? target : [target];
   for (const t of list) {
-    t.el.classList.remove("gooey_reveal", "gooey_reveal_soft");
+    t.el.classList.remove("gooey_reveal", "gooey_reveal_soft", SLIDE);
     for (const inner of t.inners) {
       inner.style.removeProperty(GOOEY_BLUR_VAR);
       inner.style.removeProperty("filter");
     }
+    if (t.inners.length) gsap.set(t.inners, { clearProps: "transform" });
   }
 }
 
-/** Put the threshold class back without parking blur — used before reversing a
- *  settled reveal so the melt still has both filter halves. */
+/** Put the marker class back without parking — used before reversing a settled
+ *  reveal, so the melt still has both filter halves and the slide still has its
+ *  clip to travel behind. */
 export function armGooey(target: GooeyTarget | GooeyTarget[]): void {
   const list = Array.isArray(target) ? target : [target];
   for (const t of list) {
@@ -245,9 +366,10 @@ export function prepareGooeyAll(els: Iterable<HTMLElement>): GooeyTarget[] {
 
 export function parkGooey(target: GooeyTarget | GooeyTarget[]): void {
   const list = Array.isArray(target) ? target : [target];
+  const park = parkVars();
   for (const t of list) {
     t.el.classList.add(gooeyClass(t.el));
-    gsap.set(t.inners, { [GOOEY_BLUR_VAR]: BLUR_START });
+    gsap.set(t.inners, park);
   }
 }
 
@@ -262,10 +384,7 @@ export function addGooeyReveal(
   tl.to(
     inners,
     {
-      [GOOEY_BLUR_VAR]: BLUR_END,
-      duration: REVEAL_S,
-      ease: "power3.out",
-      stagger: REVEAL_STAGGER,
+      ...revealVars(),
       onComplete: () => {
         settleGooey(list);
       },
@@ -282,20 +401,12 @@ export function addGooeyUnreveal(
   const list = Array.isArray(target) ? target : [target];
   const inners = innersOf(target);
   if (!inners.length) return;
+  const landed = landedVars();
   for (const t of list) {
     t.el.classList.add(gooeyClass(t.el));
-    gsap.set(t.inners, { [GOOEY_BLUR_VAR]: BLUR_END });
+    gsap.set(t.inners, landed);
   }
-  tl.to(
-    inners,
-    {
-      [GOOEY_BLUR_VAR]: BLUR_START,
-      duration: 0.7,
-      ease: "power3.in",
-      stagger: { each: REVEAL_STAGGER, from: "end" },
-    },
-    position,
-  );
+  tl.to(inners, unrevealVars(), position);
 }
 
 function queryHeadings(): HTMLElement[] {
@@ -309,10 +420,7 @@ function armHeading(el: HTMLElement): void {
   if (!target) return;
   parkGooey(target);
   gsap.to(target.inners, {
-    [GOOEY_BLUR_VAR]: BLUR_END,
-    duration: REVEAL_S,
-    ease: "power3.out",
-    stagger: REVEAL_STAGGER,
+    ...revealVars(),
     scrollTrigger: { trigger: el, start: REVEAL_START, once: true },
     onComplete: () => settleGooey(target),
   });
@@ -368,12 +476,17 @@ export async function bootGooeyHeadings(): Promise<void> {
  * then blur back down onto the new one.
  *
  * Returns the timeline so the caller can kill an in-flight morph and retarget.
+ *
+ * Unaffected by the mobile slide: this is a swap in place, not an entrance, and
+ * its targets (`.gallery_label`, the slider title) carry `.gooey_reveal`
+ * statically in markup. It guards on the filter directly rather than through
+ * `canPrepareGooey`, which now says yes on mobile for the slide's sake.
  */
 export function gooeyMorph(
   inner: HTMLElement,
   swap: () => void,
 ): gsap.core.Timeline | null {
-  if (prefersReducedMotion() || !canPrepareGooey()) {
+  if (prefersReducedMotion() || !canRunFilter()) {
     swap();
     return null;
   }
