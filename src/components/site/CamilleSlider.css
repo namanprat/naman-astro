@@ -190,6 +190,25 @@
     color: var(--dark-900);
   }
 
+  /* Phone: full-bleed frame, portrait crop 5% taller than the 4:5 rest ratio. */
+  @media (width < 48rem) {
+    .camille_slider_contain.container {
+      width: 100%;
+      max-width: none;
+      padding-inline: 0;
+    }
+
+    .camille_slider_stage {
+      grid-column: 1 / -1;
+      width: 100%;
+    }
+
+    .camille_slider_frame {
+      width: 100%;
+      aspect-ratio: calc(4 / 5 * 0.95);
+    }
+  }
+
   @container camille (width >= 40rem) {
     .camille_slider_frame {
       aspect-ratio: 16 / 10;

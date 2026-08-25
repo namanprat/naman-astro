@@ -570,9 +570,9 @@ export default function Menu({ initialPathname = "/" }: MenuProps) {
     { scope: menuRef },
   );
 
-  /* Parks the wordmark + nav at mount and plays them once the preloader hands
-     over. Not scoped to menuRef — the lockup and nav_wrap are siblings of
-     .menu_wrap, not children. Runs at mount so nothing is unparked for a frame. */
+  /* Parks the wordmark at mount and plays it once the page is visible. Nav
+     copy only masks up on the first load of this tab. Not scoped to menuRef —
+     the lockup and nav_wrap are siblings of .menu_wrap, not children. */
   useEffect(() => bootHomeIntro(), []);
 
   useEffect(() => {

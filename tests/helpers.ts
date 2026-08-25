@@ -93,11 +93,12 @@ export const rootClasses = (page: Page) =>
 /**
  * The page is visible and nothing is still holding copy hidden.
  *
- * `is-revealed` is what `heroIntro` waits on before it unparks the nav, and the
- * two hold classes are what keep every heading and paragraph at
- * `visibility: hidden` until their modules boot. All three come off the same
- * `bootIfCovered()` promise, so a page that never resolves it stays blank with
- * no error anywhere — the failure this suite exists to catch.
+ * `is-revealed` is what `heroIntro` waits on before it unparks the nav on the
+ * first load of a tab. Later navigations leave the nav unparked. The two hold
+ * classes keep every heading and paragraph at `visibility: hidden` until their
+ * modules boot. All three come off the same `bootIfCovered()` promise, so a
+ * page that never resolves it stays blank with no error anywhere — the failure
+ * this suite exists to catch.
  */
 export async function expectRevealed(page: Page) {
   await expect
