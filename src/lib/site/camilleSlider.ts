@@ -1,14 +1,28 @@
 /**
  * Featured carousel: clip-path hops + gooey titles.
  * Pre-rendered layers; pendingIndex queues nav while a hop runs.
+ *
+ * Title and kicker are owned gooey targets — same park / arm / settle /
+ * addGooeyReveal / gooeyMorph path as every other heading. The inners are
+ * hand-built (Footer-style) rather than SplitText, because a hop swaps
+ * `textContent` and a second split would fight that.
  */
 import gsap from "gsap";
 import CustomEase from "gsap/CustomEase";
-import { gooeyMorph } from "./gooeyReveal";
+import { ScrollTrigger } from "gsap/ScrollTrigger";
+import {
+  addGooeyReveal,
+  armGooey,
+  gooeyMorph,
+  parkGooey,
+  REVEAL_START,
+  settleGooey,
+  type GooeyTarget,
+} from "./gooeyReveal";
 import { go } from "./navigate";
 import { prefersReducedMotion } from "./prefersReducedMotion";
 
-gsap.registerPlugin(CustomEase);
+gsap.registerPlugin(CustomEase, ScrollTrigger);
 if (!CustomEase.get("camilleHop")) {
   CustomEase.create(
     "camilleHop",
@@ -36,9 +50,11 @@ export function initCamilleSlider(root: HTMLElement): CamilleSliderHandle {
   const prevBtn = root.querySelector<HTMLElement>(".camille_slider_prev");
   const nextBtn = root.querySelector<HTMLElement>(".camille_slider_next");
   const indexEl = root.querySelector<HTMLElement>(".camille_slider_index");
+  const titleEl = root.querySelector<HTMLElement>(".camille_slider_title");
   const titleInner = root.querySelector<HTMLElement>(
     ".camille_slider_title_inner",
   );
+  const kickerEl = root.querySelector<HTMLElement>(".camille_slider_kicker");
   const kickerInner = root.querySelector<HTMLElement>(
     ".camille_slider_kicker_inner",
   );
@@ -73,9 +89,51 @@ export function initCamilleSlider(root: HTMLElement): CamilleSliderHandle {
   let pendingIndex: number | null = null;
   let morphTl: gsap.core.Timeline | null = null;
   let kickerTl: gsap.core.Timeline | null = null;
+  let revealTl: gsap.core.Timeline | null = null;
+  let revealSt: ScrollTrigger | null = null;
   let autoplayTimer = 0;
 
   const reduced = prefersReducedMotion();
+
+  /* Hand-built: the inner already sits in markup, same as Footer links.
+     `prepareGooey` would SplitText the heading and then a hop's textContent
+     swap would leave the split pointing at the old string. */
+  const titleTarget: GooeyTarget | null =
+    !reduced && titleEl && titleInner
+      ? { el: titleEl, inners: [titleInner] }
+      : null;
+  const kickerTarget: GooeyTarget | null =
+    !reduced && kickerEl && kickerInner
+      ? { el: kickerEl, inners: [kickerInner] }
+      : null;
+  const gooeyTargets = [titleTarget, kickerTarget].filter(
+    (t): t is GooeyTarget => t !== null,
+  );
+
+  if (gooeyTargets.length) {
+    parkGooey(gooeyTargets);
+    revealSt = ScrollTrigger.create({
+      trigger: titleEl ?? root,
+      start: REVEAL_START,
+      once: true,
+      onEnter: () => {
+        revealTl = gsap.timeline();
+        addGooeyReveal(revealTl, gooeyTargets);
+      },
+    });
+  }
+
+  const cancelEntrance = () => {
+    const inFlight = revealTl?.isActive() ?? false;
+    const notYetEntered = !!revealSt && !revealTl;
+    revealTl?.kill();
+    revealTl = null;
+    revealSt?.kill();
+    revealSt = null;
+    if ((inFlight || notYetEntered) && gooeyTargets.length) {
+      settleGooey(gooeyTargets);
+    }
+  };
 
   const wrap = (index: number) => ((index % total) + total) % total;
 
@@ -121,21 +179,28 @@ export function initCamilleSlider(root: HTMLElement): CamilleSliderHandle {
     const nextTitle = titles[current] ?? "";
     const nextKicker = kickers[current] ?? "";
     const instant = reduced;
+    const titleChanged = !!titleInner && titleInner.textContent !== nextTitle;
+    const kickerChanged =
+      !!kickerInner && kickerInner.textContent !== nextKicker;
 
-    if (titleInner && titleInner.textContent !== nextTitle) {
+    if (titleChanged || kickerChanged) cancelEntrance();
+
+    if (titleChanged && titleInner) {
       morphTl?.kill();
       if (instant) titleInner.textContent = nextTitle;
       else {
+        if (titleTarget) armGooey(titleTarget);
         morphTl = gooeyMorph(titleInner, () => {
           titleInner.textContent = nextTitle;
         });
       }
     }
 
-    if (kickerInner && kickerInner.textContent !== nextKicker) {
+    if (kickerChanged && kickerInner) {
       kickerTl?.kill();
       if (instant) kickerInner.textContent = nextKicker;
       else {
+        if (kickerTarget) armGooey(kickerTarget);
         kickerTl = gooeyMorph(kickerInner, () => {
           kickerInner.textContent = nextKicker;
         });
@@ -268,6 +333,7 @@ export function initCamilleSlider(root: HTMLElement): CamilleSliderHandle {
     destroy: () => {
       morphTl?.kill();
       kickerTl?.kill();
+      cancelEntrance();
       stopAutoplay();
       prevBtn?.removeEventListener("click", onPrev);
       nextBtn?.removeEventListener("click", onNext);

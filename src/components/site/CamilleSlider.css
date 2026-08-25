@@ -121,12 +121,6 @@
     margin: 0;
     text-align: start;
     color: inherit;
-    text-shadow: 0 0.05em 0.35em color-mix(in lab, var(--dark-900) 55%, transparent);
-  }
-
-  .camille_slider_title_inner,
-  .camille_slider_kicker_inner {
-    display: inline-block;
   }
 
   .camille_slider_kicker {

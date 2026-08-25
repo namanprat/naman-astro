@@ -312,7 +312,7 @@
     visibility: hidden;
   }
 
-  html.is-gooey-arming :is(h1, h2, h3):not(:is(.nav_wrap, .footer_wrap, .menu_wrap, .about_panel, .content_group, .transition_panel, [data-no-reveal]) *) {
+  html.is-gooey-arming :is(h1, h2, h3):not(:is(.nav_wrap, .footer_wrap, .menu_wrap, .about_panel, .camille_slider_wrap, .content_group, .transition_panel, [data-no-reveal]) *) {
     visibility: hidden;
   }
 
@@ -383,8 +383,8 @@
     overflow: clip;
   }
 
-  /* Static `.gooey_reveal` (gallery label, Camille titles) still names the
-     filter in markup. Kill it on the phone layout so a morph cannot melt. */
+  /* Static `.gooey_reveal` (gallery label) still names the filter in markup.
+     Kill it on the phone layout so a morph cannot melt. */
   @media (width < 48rem) {
     .gooey_reveal .gooey_reveal_inner,
     .gooey_reveal_soft .gooey_reveal_inner,

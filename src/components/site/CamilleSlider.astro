@@ -86,18 +86,16 @@ const first = SLIDES[0];
             </div>
 
             <div class="camille_slider_copy">
-              <h2
-                class="camille_slider_title gooey_reveal text-style-h2"
-                data-no-reveal
-              >
+              {
+                /* Host class is parked by initCamilleSlider via revealClass(),
+                  not hardcoded — same hand-built inner as Footer. */
+              }
+              <h2 class="camille_slider_title text-style-h2">
                 <span class="camille_slider_title_inner gooey_reveal_inner"
                   >{first?.title ?? ""}</span
                 >
               </h2>
-              <p
-                class="camille_slider_kicker gooey_reveal text-style-small"
-                data-no-reveal
-              >
+              <p class="camille_slider_kicker text-style-small">
                 <span class="camille_slider_kicker_inner gooey_reveal_inner"
                   >{first?.kicker ? `[ ${first.kicker} ]` : ""}</span
                 >
