@@ -9,6 +9,7 @@ import {
 import gsap from "gsap";
 import { shouldMountAboutBust } from "@/lib/site/aboutBust";
 import { ABOUT_OPEN_CLASS } from "@/lib/site/aboutPanel";
+import { getSiteLenis } from "@/lib/site/lenisBridge";
 import { prefersReducedMotion } from "@/lib/site/prefersReducedMotion";
 import {
   addGooeyReveal,
@@ -198,12 +199,18 @@ export default function AboutPanel({ open, mode, onClose }: AboutPanelProps) {
   }, [open, mode]);
 
   /* Follows the prop, so the cleanup runs even when the exit animation does
-     not complete. See ABOUT_OPEN_CLASS. */
+     not complete. See ABOUT_OPEN_CLASS. Lenis hijacks wheel independently of
+     `overflow: hidden`, so it has to be stopped here or the page behind the
+     overlay keeps moving. */
   useEffect(() => {
     if (!open) return;
     const root = document.documentElement;
     root.classList.add(ABOUT_OPEN_CLASS);
-    return () => root.classList.remove(ABOUT_OPEN_CLASS);
+    getSiteLenis()?.stop();
+    return () => {
+      root.classList.remove(ABOUT_OPEN_CLASS);
+      getSiteLenis()?.start();
+    };
   }, [open]);
 
   useEffect(() => {

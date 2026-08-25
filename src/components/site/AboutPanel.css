@@ -1,4 +1,15 @@
 @layer components {
+/* Desktop overlay only — the mobile `/about` route never sets `about-open`.
+   Lenis is stopped in AboutPanel; this is the native-scroll backup so a
+   wheel that leaks past still has nowhere to go. */
+@media (width >= 48rem) {
+  html.about-open,
+  html.about-open body {
+    overflow: hidden;
+    overscroll-behavior: none;
+  }
+}
+
 .about_panel_backdrop {
   position: fixed;
   inset: 0;

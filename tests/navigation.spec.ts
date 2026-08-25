@@ -96,6 +96,34 @@ test("About opens and closes without stranding its state", async ({ page }) => {
     .not.toContain("about-open");
 });
 
+test("opening About on desktop locks scroll behind the overlay", async ({
+  page,
+}) => {
+  test.skip(
+    isNarrowNav(),
+    "About is a route at this width — the document is meant to scroll",
+  );
+
+  await page.goto("/");
+  await expectRevealed(page);
+
+  await page.evaluate(() => {
+    window.location.hash = "#about";
+  });
+  await expect.poll(() => rootClasses(page)).toContain("about-open");
+
+  const overflow = await page.evaluate(
+    () => getComputedStyle(document.documentElement).overflow,
+  );
+  expect(overflow).toBe("hidden");
+
+  const y0 = await page.evaluate(() => window.scrollY);
+  await page.mouse.wheel(0, 1200);
+  await expect
+    .poll(async () => page.evaluate(() => window.scrollY))
+    .toBe(y0);
+});
+
 /**
  * Opening the Contact dropdown must not move the rest of the nav.
  *

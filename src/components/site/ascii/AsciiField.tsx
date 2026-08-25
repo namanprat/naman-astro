@@ -13,7 +13,6 @@ import { createPortal, useFrame, useThree } from "@react-three/fiber";
 import type { ReactNode } from "react";
 import * as THREE from "three";
 import { shaderColor } from "@/lib/site/cssColor";
-import { FINE_HOVER_QUERY } from "@/lib/site/hasFinePointerHover";
 import { prefersReducedMotion } from "@/lib/site/prefersReducedMotion";
 import { getDufornAsciiAtlas } from "@/lib/site/ascii/asciiAtlas";
 import {
@@ -26,6 +25,10 @@ import {
   subscribeAsciiTuning,
   type AsciiSurface,
 } from "@/lib/site/ascii/asciiTuning";
+import gsap from "gsap";
+import { ScrollTrigger } from "gsap/ScrollTrigger";
+
+gsap.registerPlugin(ScrollTrigger);
 
 type AsciiFieldProps = {
   /** Which entry of `asciiTuning` drives the look, and which GUI folder. */
@@ -53,6 +56,8 @@ const CLUSTER_RADIUS = 22;
 /** Extra random-walk steps off the disk edge, so the stamp is not a clean circle. */
 const CLUSTER_WALK = 28;
 const HIGHLIGHT_LIFETIME = 1100;
+/** px of scroll → 0–1 of a sweep across the grid. */
+const SCROLL_TRAIL_SCALE = 0.00008;
 
 const blankHighlight = (() => {
   const tex = new THREE.DataTexture(new Uint8Array([0, 0, 0, 255]), 1, 1);
@@ -277,12 +282,13 @@ export default function AsciiField({
     };
   }, [uniforms]);
 
-  const hoverOn = Boolean(hoverHighlight) && !reducedMotion;
+  const trailOn = Boolean(hoverHighlight) && !reducedMotion;
   const hoveringRef = useRef(false);
-  const fineHoverRef = useRef(false);
   const lastPointer = useRef({ x: 999, y: 999 });
   const highlightUntil = useRef<Float32Array>(new Float32Array(0));
   const highlightPixels = useRef<Uint8Array>(new Uint8Array(4));
+  const scrollSweep = useRef(0);
+  const scrollVel = useRef(0);
 
   const highlightTex = useMemo(() => {
     const data = new Uint8Array(grid.cols * grid.rows * 4);
@@ -303,12 +309,12 @@ export default function AsciiField({
   useEffect(() => () => highlightTex.dispose(), [highlightTex]);
 
   useEffect(() => {
-    uniforms.uHighlight.value = hoverOn ? highlightTex : blankHighlight;
-    uniforms.uHasHighlight.value = hoverOn ? 1 : 0;
-  }, [uniforms, hoverOn, highlightTex]);
+    uniforms.uHighlight.value = trailOn ? highlightTex : blankHighlight;
+    uniforms.uHasHighlight.value = trailOn ? 1 : 0;
+  }, [uniforms, trailOn, highlightTex]);
 
   useEffect(() => {
-    if (!hoverOn) return;
+    if (!trailOn) return;
     const el = (events.connected as HTMLElement | null) ?? gl.domElement;
     const onEnter = () => {
       hoveringRef.current = true;
@@ -316,26 +322,48 @@ export default function AsciiField({
     const onLeave = () => {
       hoveringRef.current = false;
     };
+    const onDown = () => {
+      hoveringRef.current = true;
+    };
+    const onUp = (event: PointerEvent) => {
+      if (event.pointerType !== "mouse") hoveringRef.current = false;
+    };
     el.addEventListener("pointerenter", onEnter);
     el.addEventListener("pointerleave", onLeave);
+    el.addEventListener("pointerdown", onDown);
+    window.addEventListener("pointerup", onUp);
+    window.addEventListener("pointercancel", onUp);
     return () => {
       el.removeEventListener("pointerenter", onEnter);
       el.removeEventListener("pointerleave", onLeave);
+      el.removeEventListener("pointerdown", onDown);
+      window.removeEventListener("pointerup", onUp);
+      window.removeEventListener("pointercancel", onUp);
       hoveringRef.current = false;
     };
-  }, [hoverOn, gl, events]);
+  }, [trailOn, gl, events]);
 
   useEffect(() => {
-    if (!hoverOn) return;
-    const mq = window.matchMedia(FINE_HOVER_QUERY);
-    const sync = () => {
-      fineHoverRef.current = mq.matches;
-      if (!mq.matches) hoveringRef.current = false;
+    if (!trailOn) return;
+    const panel = gl.domElement.closest(".about_panel_scroll");
+    const scroller =
+      panel instanceof HTMLElement && panel.scrollHeight > panel.clientHeight + 1
+        ? panel
+        : undefined;
+    const st = ScrollTrigger.create({
+      scroller,
+      start: 0,
+      end: "max",
+      onUpdate(self) {
+        const v = self.getVelocity();
+        if (!v) return;
+        scrollVel.current += v;
+      },
+    });
+    return () => {
+      st.kill();
     };
-    sync();
-    mq.addEventListener("change", sync);
-    return () => mq.removeEventListener("change", sync);
-  }, [hoverOn]);
+  }, [trailOn, gl]);
 
   // ponytail: a non-zero priority takes R3F's automatic render away, so this
   // callback owns both passes — offscreen first, then the glyph grid to screen.
@@ -364,13 +392,12 @@ export default function AsciiField({
       if (!reducedMotion) u.uTime.value += dt;
     }
 
-    if (hoverOn) {
+    if (trailOn) {
       const now = performance.now();
       const { cols, rows } = grid;
       const until = highlightUntil.current;
       const pixels = highlightPixels.current;
-      const fine = fineHoverRef.current;
-      if (hoveringRef.current && fine) {
+      if (hoveringRef.current) {
         if (
           pointer.x !== lastPointer.current.x ||
           pointer.y !== lastPointer.current.y
@@ -381,6 +408,18 @@ export default function AsciiField({
           if (col >= 0 && row >= 0 && col < cols && row < rows) {
             highlightCluster(until, cols, rows, col, row, now);
           }
+        }
+      }
+      const vel = scrollVel.current;
+      if (vel !== 0) {
+        scrollVel.current = 0;
+        scrollSweep.current =
+          ((scrollSweep.current + vel * SCROLL_TRAIL_SCALE) % 1 + 1) % 1;
+        const t = scrollSweep.current;
+        const col = Math.floor((0.3 + 0.4 * Math.sin(t * Math.PI * 2)) * cols);
+        const row = Math.floor((0.2 + 0.6 * t) * rows);
+        if (col >= 0 && row >= 0 && col < cols && row < rows) {
+          highlightCluster(until, cols, rows, col, row, now);
         }
       }
       let dirty = false;
