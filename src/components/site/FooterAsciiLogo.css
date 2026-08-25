@@ -14,55 +14,8 @@
   height: 100%;
 }
 
-.footer_ascii_cursor {
-  position: absolute;
-  top: 0;
-  left: 0;
-  z-index: 2;
-  display: none;
-  align-items: center;
-  justify-content: center;
-  padding: 0.5rem 0.75rem;
-  pointer-events: none;
-  /* Orange over the light-mode footer, which is grey frost. Dark mode inverts
-     below, where the card itself is already orange. */
-  background: var(--brand-500);
-  color: var(--brand-text);
-  opacity: 0;
-  transform: translate3d(-50%, -50%, 0);
-  transition: opacity 0.15s ease;
-}
-
-html.theme-dark .footer_ascii_cursor {
-  background: var(--dark-900);
-  color: var(--light-100);
-}
-
-.footer_ascii_cursor.is-visible {
-  opacity: 1;
-}
-
-.footer_ascii_cursor_label {
-  font-family: var(--mono-family);
-  font-size: 0.6875rem;
-  font-weight: var(--primary-regular);
-  line-height: 1;
-  text-transform: uppercase;
-  letter-spacing: 0;
-}
-
-@media (width >= 64rem) and (hover: hover) and (pointer: fine) {
-  .footer_ascii_cursor {
-    display: flex;
-  }
-}
-
 @media (prefers-reduced-motion: reduce) {
   .footer_ascii {
-    display: none;
-  }
-
-  .footer_ascii_cursor {
     display: none;
   }
 }

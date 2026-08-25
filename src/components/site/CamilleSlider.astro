@@ -1,33 +1,33 @@
 ---
 /**
- * Camille-style slider. 8-col stage; frame + thumbs share `--camille-ratio`.
- * Slides come from work items tagged `featured`.
+ * Featured-work carousel. 8-col Lumos stage; clip-path hop + gooey titles.
+ * Overlay chrome matches the dashed-control / pill format; slides stay
+ * `featuredWorkItems`.
  */
 import { featuredWorkItems } from "@/content/work";
 import "./CamilleSlider.css";
 
-const SLIDES = featuredWorkItems.map((item) => ({
+// ponytail: placeholder art from the cg-yzavoku slider stands in for the real
+// covers. Swap `src`/`alt` back to `item.image`/`item.alt` to restore them.
+const SLIDES = featuredWorkItems.map((item, i) => ({
   title: item.title,
-  src: item.image,
+  kicker: item.services[0] ?? "",
+  href: `/work/${item.slug}`,
+  src: `/slider/slide-${i + 1}.jpg`,
   alt: item.alt,
 }));
 
-const TOTAL = String(SLIDES.length).padStart(2, "0");
-const LINES = Array.from({ length: 80 }, (_, i) => i);
+const first = SLIDES[0];
 ---
 
-<section class="camille_slider_wrap studio_section" id="series" aria-label="Featured work">
+<section
+  class="camille_slider_wrap studio_section"
+  id="series"
+  aria-label="Featured work"
+>
   <div class="camille_slider_contain container gap-0">
     <div class="camille_slider_layout studio_layout grid is-12">
       <div class="camille_slider_stage">
-        <button
-          type="button"
-          class="camille_slider_prev text-style-h1"
-          aria-label="Previous slide"
-        >
-          ‹
-        </button>
-
         <div class="camille_slider_frame">
           <div class="camille_slider_images">
             {
@@ -35,6 +35,9 @@ const LINES = Array.from({ length: 80 }, (_, i) => i);
                 <div
                   class:list={["camille_slider_img", { "is-active": i === 0 }]}
                   data-slide-index={i}
+                  data-slide-title={slide.title}
+                  data-slide-kicker={slide.kicker}
+                  data-slide-href={slide.href}
                 >
                   <img
                     class="camille_slider_photo"
@@ -49,64 +52,105 @@ const LINES = Array.from({ length: 80 }, (_, i) => i);
             }
           </div>
 
-          <div class="camille_slider_title_wrap">
-            <h2
-              class="camille_slider_title gooey_reveal text-style-h2"
+          <div class="camille_slider_overlay">
+            <div class="camille_slider_rail">
+              <button
+                type="button"
+                class="camille_slider_prev padding-4"
+                aria-label="Previous slide"
+              >
+                <svg
+                  class="camille_slider_icon"
+                  xmlns="http://www.w3.org/2000/svg"
+                  viewBox="0 -960 960 960"
+                  aria-hidden="true"
+                >
+                  <path d="M640-200 200-480l440-280v560Z"></path>
+                </svg>
+              </button>
+              <span class="camille_slider_index text-style-small">01</span>
+              <button
+                type="button"
+                class="camille_slider_next padding-4"
+                aria-label="Next slide"
+              >
+                <svg
+                  class="camille_slider_icon"
+                  xmlns="http://www.w3.org/2000/svg"
+                  viewBox="0 -960 960 960"
+                  aria-hidden="true"
+                >
+                  <path d="M320-200v-560l440 280-440 280Z"></path>
+                </svg>
+              </button>
+            </div>
+
+            <div class="camille_slider_copy">
+              <h2
+                class="camille_slider_title gooey_reveal text-style-h2"
+                data-no-reveal
+              >
+                <span class="camille_slider_title_inner gooey_reveal_inner"
+                  >{first?.title ?? ""}</span
+                >
+              </h2>
+              <p
+                class="camille_slider_kicker gooey_reveal text-style-small"
+                data-no-reveal
+              >
+                <span class="camille_slider_kicker_inner gooey_reveal_inner"
+                  >{first?.kicker ? `[ ${first.kicker} ]` : ""}</span
+                >
+              </p>
+            </div>
+
+            <a
+              class="camille_slider_view"
+              href={first?.href ?? "/work"}
               data-no-reveal
             >
-              <span class="camille_slider_title_inner gooey_reveal_inner"
-                >{SLIDES[0]?.title ?? ""}</span
+              <span class="camille_slider_view_box padding-4">
+                <svg
+                  class="camille_slider_icon"
+                  xmlns="http://www.w3.org/2000/svg"
+                  viewBox="0 -960 960 960"
+                  aria-hidden="true"
+                >
+                  <path
+                    d="M647-440H160v-80h487L423-744l57-56 320 320-320 320-57-56 224-224Z"
+                  ></path>
+                </svg>
+              </span>
+              <span class="camille_slider_view_label text-style-small"
+                >View project</span
               >
-            </h2>
-          </div>
+            </a>
 
-          <div class="camille_slider_chrome">
-            <div class="camille_slider_counter">
-              <div class="camille_slider_count">
-                <div class="camille_slider_current">01</div>
-                <div class="camille_slider_divider">//</div>
-                <div class="camille_slider_total">{TOTAL}</div>
-              </div>
-            </div>
-
-            <div class="camille_slider_lines" aria-hidden="true">
-              {LINES.map((i) => <div class="camille_slider_line" data-i={i}></div>)}
-            </div>
-
-            <div class="camille_slider_thumbs" role="tablist" aria-label="Slides">
+            <div
+              class="camille_slider_pills"
+              role="tablist"
+              aria-label="Featured projects"
+            >
               {
                 SLIDES.map((slide, i) => (
                   <button
                     type="button"
-                    class:list={["camille_slider_thumb", { "is-active": i === 0 }]}
+                    class:list={[
+                      "camille_slider_pill",
+                      "text-style-small",
+                      { "is-active": i === 0 },
+                    ]}
                     role="tab"
                     aria-selected={i === 0 ? "true" : "false"}
-                    aria-label={slide.title}
                     data-slide-index={i}
-                    data-slide-title={slide.title}
                   >
-                    <img
-                      class="camille_slider_thumb_img"
-                      src={slide.src}
-                      alt=""
-                      draggable="false"
-                      loading="eager"
-                      decoding="async"
-                    />
+                    {slide.title}
                   </button>
                 ))
               }
             </div>
           </div>
         </div>
-
-        <button
-          type="button"
-          class="camille_slider_next text-style-h1"
-          aria-label="Next slide"
-        >
-          ›
-        </button>
       </div>
     </div>
   </div>
@@ -116,7 +160,8 @@ const LINES = Array.from({ length: 80 }, (_, i) => i);
   import { initCamilleSlider } from "@/lib/site/camilleSlider";
 
   document.querySelectorAll(".camille_slider_wrap").forEach((node) => {
-    if (!(node instanceof HTMLElement) || node.dataset.scriptInitialized) return;
+    if (!(node instanceof HTMLElement) || node.dataset.scriptInitialized)
+      return;
     node.dataset.scriptInitialized = "true";
     initCamilleSlider(node);
   });

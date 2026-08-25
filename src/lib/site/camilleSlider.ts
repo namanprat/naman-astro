@@ -1,10 +1,11 @@
 /**
- * Camille slider: clip-path hops + gooey titles + n-3 chrome.
+ * Featured carousel: clip-path hops + gooey titles.
  * Pre-rendered layers; pendingIndex queues nav while a hop runs.
  */
 import gsap from "gsap";
 import CustomEase from "gsap/CustomEase";
 import { gooeyMorph } from "./gooeyReveal";
+import { go } from "./navigate";
 import { prefersReducedMotion } from "./prefersReducedMotion";
 
 gsap.registerPlugin(CustomEase);
@@ -15,51 +16,81 @@ if (!CustomEase.get("camilleHop")) {
   );
 }
 
+const AUTOPLAY_MS = 5000;
+
 export type CamilleSliderHandle = { destroy: () => void };
+
+function kickerLabel(raw: string): string {
+  const trimmed = raw.trim();
+  return trimmed ? `[ ${trimmed} ]` : "";
+}
+
+function padIndex(index: number): string {
+  return String(index + 1).padStart(2, "0");
+}
 
 export function initCamilleSlider(root: HTMLElement): CamilleSliderHandle {
   const stage = root.querySelector<HTMLElement>(".camille_slider_stage");
   const frame = root.querySelector<HTMLElement>(".camille_slider_frame");
   const images = root.querySelector<HTMLElement>(".camille_slider_images");
-  const chrome = root.querySelector<HTMLElement>(".camille_slider_chrome");
-  const thumbsWrap = root.querySelector<HTMLElement>(".camille_slider_thumbs");
-  const currentEl = root.querySelector<HTMLElement>(".camille_slider_current");
   const prevBtn = root.querySelector<HTMLElement>(".camille_slider_prev");
   const nextBtn = root.querySelector<HTMLElement>(".camille_slider_next");
+  const indexEl = root.querySelector<HTMLElement>(".camille_slider_index");
   const titleInner = root.querySelector<HTMLElement>(
     ".camille_slider_title_inner",
   );
+  const kickerInner = root.querySelector<HTMLElement>(
+    ".camille_slider_kicker_inner",
+  );
+  const viewLink = root.querySelector<HTMLAnchorElement>(
+    ".camille_slider_view",
+  );
+  const pills = [
+    ...root.querySelectorAll<HTMLButtonElement>(".camille_slider_pill"),
+  ];
   const layers = [
     ...root.querySelectorAll<HTMLElement>(
       ".camille_slider_images .camille_slider_img",
     ),
   ];
-  const thumbs = [
-    ...root.querySelectorAll<HTMLElement>(
-      ".camille_slider_thumbs .camille_slider_thumb",
-    ),
-  ];
-  const lines = [...root.querySelectorAll<HTMLElement>(".camille_slider_line")];
 
-  if (!stage || !frame || !images || !layers.length || !thumbs.length) {
+  if (!stage || !frame || !images || !layers.length) {
     return { destroy: () => {} };
   }
 
-  const titles = thumbs.map(
-    (t) => t.dataset.slideTitle ?? t.getAttribute("aria-label") ?? "",
+  const titles = layers.map(
+    (layer) =>
+      layer.dataset.slideTitle ?? layer.querySelector("img")?.alt ?? "",
   );
+  const kickers = layers.map((layer) =>
+    kickerLabel(layer.dataset.slideKicker ?? ""),
+  );
+  const hrefs = layers.map((layer) => layer.dataset.slideHref ?? "/work");
   const total = layers.length;
-  const nav = [prevBtn, nextBtn].filter(Boolean) as HTMLElement[];
 
   let current = 0;
   let busy = false;
   let pendingIndex: number | null = null;
   let morphTl: gsap.core.Timeline | null = null;
+  let kickerTl: gsap.core.Timeline | null = null;
+  let autoplayTimer = 0;
 
-  const pad = (i: number) => String(i + 1).padStart(2, "0");
+  const reduced = prefersReducedMotion();
 
-  const setNavDim = (on: boolean) => {
-    for (const el of nav) el.style.opacity = on ? "0.3" : "";
+  const wrap = (index: number) => ((index % total) + total) % total;
+
+  const stopAutoplay = () => {
+    window.clearInterval(autoplayTimer);
+    autoplayTimer = 0;
+  };
+
+  /** Also the "restart the countdown" call after a manual nav. */
+  const startAutoplay = () => {
+    stopAutoplay();
+    if (reduced) return;
+    autoplayTimer = window.setInterval(() => {
+      goTo(current + 1);
+    }, AUTOPLAY_MS);
   };
 
   const resetLayer = (layer: HTMLElement) => {
@@ -78,62 +109,42 @@ export function initCamilleSlider(root: HTMLElement): CamilleSliderHandle {
     });
   };
 
-  const wave = (index: number | null) => {
-    for (const line of lines) {
-      line.style.removeProperty("--camille-line-h");
-      line.style.removeProperty("--camille-line-opacity");
-    }
-    if (index === null || !thumbsWrap || !lines.length) return;
-
-    const w = thumbsWrap.clientWidth;
-    if (!w) return;
-    const thumbW = w / total;
-    const center = (index + 0.5) * thumbW;
-    const lineW = w / lines.length;
-    const reach = thumbW * 0.7;
-    const base =
-      parseFloat(
-        getComputedStyle(stage).getPropertyValue("--camille-line-base"),
-      ) || 0.75;
-    const amp =
-      parseFloat(
-        getComputedStyle(stage).getPropertyValue("--camille-line-wave"),
-      ) || 1.75;
-
-    lines.forEach((line, i) => {
-      const d = Math.abs((i + 0.5) * lineW - center);
-      if (d > reach) return;
-      const n = d / reach;
-      const h = Math.cos((n * Math.PI) / 2);
-      line.style.setProperty("--camille-line-h", `${base + h * amp}rem`);
-      line.style.setProperty("--camille-line-opacity", String(0.3 + h * 0.4));
-    });
-  };
-
-  const sync = () => {
-    if (currentEl) currentEl.textContent = pad(current);
-    thumbs.forEach((t, i) => {
+  const syncChrome = () => {
+    if (indexEl) indexEl.textContent = padIndex(current);
+    if (viewLink) viewLink.href = hrefs[current] ?? "/work";
+    pills.forEach((pill, i) => {
       const on = i === current;
-      t.classList.toggle("is-active", on);
-      t.setAttribute("aria-selected", on ? "true" : "false");
+      pill.classList.toggle("is-active", on);
+      pill.setAttribute("aria-selected", on ? "true" : "false");
     });
-    wave(current);
 
-    const next = titles[current] ?? "";
-    if (!titleInner || titleInner.textContent === next) return;
-    morphTl?.kill();
-    if (prefersReducedMotion()) {
-      titleInner.textContent = next;
-      return;
+    const nextTitle = titles[current] ?? "";
+    const nextKicker = kickers[current] ?? "";
+    const instant = reduced;
+
+    if (titleInner && titleInner.textContent !== nextTitle) {
+      morphTl?.kill();
+      if (instant) titleInner.textContent = nextTitle;
+      else {
+        morphTl = gooeyMorph(titleInner, () => {
+          titleInner.textContent = nextTitle;
+        });
+      }
     }
-    morphTl = gooeyMorph(titleInner, () => {
-      titleInner.textContent = next;
-    });
+
+    if (kickerInner && kickerInner.textContent !== nextKicker) {
+      kickerTl?.kill();
+      if (instant) kickerInner.textContent = nextKicker;
+      else {
+        kickerTl = gooeyMorph(kickerInner, () => {
+          kickerInner.textContent = nextKicker;
+        });
+      }
+    }
   };
 
   const finishHop = () => {
     busy = false;
-    setNavDim(false);
     showOnly(current);
     if (pendingIndex !== null && pendingIndex !== current) {
       const next = pendingIndex;
@@ -149,13 +160,12 @@ export function initCamilleSlider(root: HTMLElement): CamilleSliderHandle {
     const inLayer = layers[to];
     if (!outLayer || !inLayer) return;
 
-    if (prefersReducedMotion()) {
+    if (reduced) {
       showOnly(to);
       return;
     }
 
     busy = true;
-    setNavDim(true);
 
     layers.forEach((layer) => {
       if (layer !== outLayer && layer !== inLayer) resetLayer(layer);
@@ -208,16 +218,21 @@ export function initCamilleSlider(root: HTMLElement): CamilleSliderHandle {
   };
 
   const goTo = (index: number) => {
-    if (index < 0 || index >= total || index === current) return;
+    const next = wrap(index);
+    if (next === current) return;
     if (busy) {
-      pendingIndex = index;
+      pendingIndex = next;
       return;
     }
     const from = current;
-    const dir = index < current ? "left" : "right";
-    current = index;
-    hop(from, index, dir);
-    sync();
+    let dir: "left" | "right";
+    if (from === 0 && next === total - 1) dir = "left";
+    else if (from === total - 1 && next === 0) dir = "right";
+    else dir = next < from ? "left" : "right";
+    current = next;
+    hop(from, next, dir);
+    syncChrome();
+    startAutoplay();
   };
 
   const onPrev = (e: MouseEvent) => {
@@ -228,51 +243,36 @@ export function initCamilleSlider(root: HTMLElement): CamilleSliderHandle {
     e.stopPropagation();
     goTo(current + 1);
   };
+  const onView = (e: MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    const href = viewLink?.href;
+    if (href) void go(href);
+  };
+  const onPill = (e: MouseEvent) => {
+    const pill = e.currentTarget;
+    if (!(pill instanceof HTMLElement)) return;
+    const index = Number(pill.dataset.slideIndex);
+    if (!Number.isFinite(index)) return;
+    goTo(index);
+  };
+
   prevBtn?.addEventListener("click", onPrev);
   nextBtn?.addEventListener("click", onNext);
+  viewLink?.addEventListener("click", onView);
+  for (const pill of pills) pill.addEventListener("click", onPill);
 
-  const onThumbsClick = (e: MouseEvent) => {
-    const thumb = (e.target as Element | null)?.closest?.(
-      ".camille_slider_thumb",
-    ) as HTMLElement | null;
-    if (!thumb || !thumbsWrap?.contains(thumb)) return;
-    e.stopPropagation();
-    const i = Number(thumb.dataset.slideIndex);
-    if (Number.isFinite(i)) goTo(i);
-  };
-  const onThumbsOver = (e: MouseEvent) => {
-    const thumb = (e.target as Element | null)?.closest?.(
-      ".camille_slider_thumb",
-    ) as HTMLElement | null;
-    if (!thumb || !thumbsWrap?.contains(thumb)) return;
-    wave(Number(thumb.dataset.slideIndex));
-  };
-  const onThumbsOut = () => wave(current);
-
-  thumbsWrap?.addEventListener("click", onThumbsClick);
-  thumbsWrap?.addEventListener("mouseover", onThumbsOver);
-  thumbsWrap?.addEventListener("mouseleave", onThumbsOut);
-
-  const onFrameClick = (e: MouseEvent) => {
-    if (chrome && e.target instanceof Node && chrome.contains(e.target)) return;
-    const { left, width } = frame.getBoundingClientRect();
-    const mid = left + width / 2;
-    if (e.clientX < mid) goTo(current - 1);
-    else goTo(current + 1);
-  };
-  frame.addEventListener("click", onFrameClick);
-
-  wave(0);
+  startAutoplay();
 
   return {
     destroy: () => {
       morphTl?.kill();
+      kickerTl?.kill();
+      stopAutoplay();
       prevBtn?.removeEventListener("click", onPrev);
       nextBtn?.removeEventListener("click", onNext);
-      thumbsWrap?.removeEventListener("click", onThumbsClick);
-      thumbsWrap?.removeEventListener("mouseover", onThumbsOver);
-      thumbsWrap?.removeEventListener("mouseleave", onThumbsOut);
-      frame.removeEventListener("click", onFrameClick);
+      viewLink?.removeEventListener("click", onView);
+      for (const pill of pills) pill.removeEventListener("click", onPill);
       gsap.killTweensOf(
         images.querySelectorAll(".camille_slider_photo, .camille_slider_img"),
       );

@@ -50,8 +50,11 @@ precision highp float;
 
 uniform sampler2D uScene;
 uniform sampler2D uAtlas;
+uniform sampler2D uHighlight;
 uniform float uGlyphCount;
 uniform vec3 uColor;
+uniform vec3 uHighlightColor;
+uniform float uHasHighlight;
 uniform float uGamma;
 uniform float uGlyphScale;
 uniform float uJitter;
@@ -111,6 +114,7 @@ void main() {
 
   float alpha = chr * flicker;
   if (alpha < 0.01) discard;
-  gl_FragColor = vec4(uColor, alpha);
+  float hi = uHasHighlight > 0.5 ? texture2D(uHighlight, vPixelUV).r : 0.;
+  gl_FragColor = vec4(mix(uColor, uHighlightColor, hi), alpha);
 }
 `;

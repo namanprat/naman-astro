@@ -67,16 +67,6 @@ html.theme-light .footer_box {
   color: var(--light-100);
 }
 
-@media (width >= 64rem) and (hover: hover) and (pointer: fine) {
-  .footer_box.is-ascii-hover {
-    cursor: none;
-  }
-
-  .footer_box.is-ascii-hover :is(a, button) {
-    cursor: pointer;
-  }
-}
-
 /* Full-width content shell inside the padded box. */
 .footer_contain.container {
   position: relative;

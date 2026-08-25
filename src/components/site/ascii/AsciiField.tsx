@@ -13,6 +13,7 @@ import { createPortal, useFrame, useThree } from "@react-three/fiber";
 import type { ReactNode } from "react";
 import * as THREE from "three";
 import { shaderColor } from "@/lib/site/cssColor";
+import { FINE_HOVER_QUERY } from "@/lib/site/hasFinePointerHover";
 import { prefersReducedMotion } from "@/lib/site/prefersReducedMotion";
 import { getDufornAsciiAtlas } from "@/lib/site/ascii/asciiAtlas";
 import {
@@ -31,6 +32,8 @@ type AsciiFieldProps = {
   surface: AsciiSurface;
   /** Glyph colour. A literal, not a token — see the per-surface notes. */
   ink: string;
+  /** Accent for pointer cluster highlights. Omit to disable. */
+  hoverHighlight?: string;
   /** Offscreen camera. Defaults frame a ~2-unit subject. */
   fov?: number;
   cameraPosition?: [number, number, number];
@@ -44,6 +47,53 @@ type Grid = {
   cols: number;
   rows: number;
 };
+
+const CLUSTER_SIZE = 10;
+const HIGHLIGHT_LIFETIME = 300;
+
+const blankHighlight = (() => {
+  const tex = new THREE.DataTexture(new Uint8Array([0, 0, 0, 255]), 1, 1);
+  tex.needsUpdate = true;
+  tex.minFilter = THREE.NearestFilter;
+  tex.magFilter = THREE.NearestFilter;
+  return tex;
+})();
+
+function highlightCluster(
+  until: Float32Array,
+  cols: number,
+  rows: number,
+  startCol: number,
+  startRow: number,
+  now: number,
+) {
+  const key = (c: number, r: number) => r * cols + c;
+  const start = key(startCol, startRow);
+  until[start] = now + HIGHLIGHT_LIFETIME;
+  const lit = [start];
+  let col = startCol;
+  let row = startRow;
+  const steps = Math.floor(Math.random() * CLUSTER_SIZE) + 1;
+  for (let step = 0; step < steps; step++) {
+    const neighbours: number[] = [];
+    for (let dy = -1; dy <= 1; dy++) {
+      for (let dx = -1; dx <= 1; dx++) {
+        if (dx === 0 && dy === 0) continue;
+        const nc = col + dx;
+        const nr = row + dy;
+        if (nc < 0 || nr < 0 || nc >= cols || nr >= rows) continue;
+        const ni = key(nc, nr);
+        if (!lit.includes(ni)) neighbours.push(ni);
+      }
+    }
+    if (neighbours.length === 0) break;
+    const next = neighbours[Math.floor(Math.random() * neighbours.length)];
+    until[next] = now + HIGHLIGHT_LIFETIME + step * 10;
+    lit.push(next);
+    col = next % cols;
+    row = Math.floor(next / cols);
+  }
+}
 
 /** One instanced quad per cell, filling [-aspect, aspect] x [-1, 1]. */
 function buildGrid(density: number, aspect: number): Grid {
@@ -97,13 +147,14 @@ function buildGrid(density: number, aspect: number): Grid {
 export default function AsciiField({
   surface,
   ink,
+  hoverHighlight,
   fov = 45,
   cameraPosition = [0, 0, 4],
   near = 0.1,
   far = 100,
   children,
 }: AsciiFieldProps) {
-  const { scene, size } = useThree();
+  const { scene, size, pointer, gl, events } = useThree();
   const materialRef = useRef<THREE.ShaderMaterial>(null);
   const [ready, setReady] = useState(false);
   const reducedMotion = useMemo(() => prefersReducedMotion(), []);
@@ -166,8 +217,11 @@ export default function AsciiField({
     () => ({
       uScene: { value: target.texture },
       uAtlas: { value: null as THREE.Texture | null },
+      uHighlight: { value: blankHighlight },
       uGlyphCount: { value: 1 },
       uColor: { value: shaderColor(ink) },
+      uHighlightColor: { value: shaderColor(hoverHighlight ?? ink) },
+      uHasHighlight: { value: 0 },
       uWarp: { value: tuning.warp },
       uGamma: { value: tuning.gamma },
       uGlyphScale: { value: tuning.glyphScale },
@@ -182,6 +236,10 @@ export default function AsciiField({
   useEffect(() => {
     uniforms.uColor.value.copy(shaderColor(ink));
   }, [uniforms, ink]);
+
+  useEffect(() => {
+    uniforms.uHighlightColor.value.copy(shaderColor(hoverHighlight ?? ink));
+  }, [uniforms, hoverHighlight, ink]);
 
   useEffect(() => {
     let disposed = false;
@@ -205,6 +263,66 @@ export default function AsciiField({
       texture?.dispose();
     };
   }, [uniforms]);
+
+  const hoverOn = Boolean(hoverHighlight) && !reducedMotion;
+  const hoveringRef = useRef(false);
+  const fineHoverRef = useRef(false);
+  const lastPointer = useRef({ x: 999, y: 999 });
+  const highlightUntil = useRef<Float32Array>(new Float32Array(0));
+  const highlightPixels = useRef<Uint8Array>(new Uint8Array(4));
+
+  const highlightTex = useMemo(() => {
+    const data = new Uint8Array(grid.cols * grid.rows * 4);
+    highlightPixels.current = data;
+    highlightUntil.current = new Float32Array(grid.cols * grid.rows);
+    const tex = new THREE.DataTexture(
+      data,
+      grid.cols,
+      grid.rows,
+      THREE.RGBAFormat,
+    );
+    tex.minFilter = THREE.NearestFilter;
+    tex.magFilter = THREE.NearestFilter;
+    tex.needsUpdate = true;
+    return tex;
+  }, [grid]);
+
+  useEffect(() => () => highlightTex.dispose(), [highlightTex]);
+
+  useEffect(() => {
+    uniforms.uHighlight.value = hoverOn ? highlightTex : blankHighlight;
+    uniforms.uHasHighlight.value = hoverOn ? 1 : 0;
+  }, [uniforms, hoverOn, highlightTex]);
+
+  useEffect(() => {
+    if (!hoverOn) return;
+    const el = (events.connected as HTMLElement | null) ?? gl.domElement;
+    const onEnter = () => {
+      hoveringRef.current = true;
+    };
+    const onLeave = () => {
+      hoveringRef.current = false;
+    };
+    el.addEventListener("pointerenter", onEnter);
+    el.addEventListener("pointerleave", onLeave);
+    return () => {
+      el.removeEventListener("pointerenter", onEnter);
+      el.removeEventListener("pointerleave", onLeave);
+      hoveringRef.current = false;
+    };
+  }, [hoverOn, gl, events]);
+
+  useEffect(() => {
+    if (!hoverOn) return;
+    const mq = window.matchMedia(FINE_HOVER_QUERY);
+    const sync = () => {
+      fineHoverRef.current = mq.matches;
+      if (!mq.matches) hoveringRef.current = false;
+    };
+    sync();
+    mq.addEventListener("change", sync);
+    return () => mq.removeEventListener("change", sync);
+  }, [hoverOn]);
 
   // ponytail: a non-zero priority takes R3F's automatic render away, so this
   // callback owns both passes — offscreen first, then the glyph grid to screen.
@@ -231,6 +349,41 @@ export default function AsciiField({
       u.uJitter.value = tuning.jitter;
       u.uNoise.value = reducedMotion ? 0 : tuning.noise;
       if (!reducedMotion) u.uTime.value += dt;
+    }
+
+    if (hoverOn) {
+      const now = performance.now();
+      const { cols, rows } = grid;
+      const until = highlightUntil.current;
+      const pixels = highlightPixels.current;
+      const fine = fineHoverRef.current;
+      if (hoveringRef.current && fine) {
+        if (
+          pointer.x !== lastPointer.current.x ||
+          pointer.y !== lastPointer.current.y
+        ) {
+          lastPointer.current = { x: pointer.x, y: pointer.y };
+          const col = Math.floor(((pointer.x + 1) / 2) * cols);
+          const row = Math.floor(((pointer.y + 1) / 2) * rows);
+          if (col >= 0 && row >= 0 && col < cols && row < rows) {
+            highlightCluster(until, cols, rows, col, row, now);
+          }
+        }
+      }
+      let dirty = false;
+      for (let i = 0; i < until.length; i++) {
+        const live = until[i] > now;
+        const v = live ? 255 : 0;
+        const p = i * 4;
+        if (pixels[p] !== v) {
+          pixels[p] = v;
+          pixels[p + 1] = v;
+          pixels[p + 2] = v;
+          pixels[p + 3] = 255;
+          dirty = true;
+        }
+      }
+      if (dirty) highlightTex.needsUpdate = true;
     }
 
     state.gl.setRenderTarget(target);

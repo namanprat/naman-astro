@@ -348,6 +348,7 @@ function AboutAsciiScene({ onReady }: { onReady?: () => void }) {
     <AsciiField
       surface="about"
       ink={SWATCH_LIGHT}
+      hoverHighlight={CANVAS.highlight}
       fov={65}
       cameraPosition={[0, 0, 4]}
     >

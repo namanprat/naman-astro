@@ -54,10 +54,8 @@ export default function Footer() {
   const footerRef = useRef<HTMLElement>(null);
   const asciiSourceRef = useRef<HTMLImageElement>(null);
   /* Phones show the plain masked wordmark instead (Footer.css). Gating the
-     mount rather than hiding the canvas matters: the component owns a rAF
-     loop, a ResizeObserver and three pointer listeners on `.footer_box`, and
-     `display: none` would leave all of it running on the devices that can
-     least afford it. Starts false so SSR and first paint agree. */
+     mount rather than hiding the canvas matters: the field owns a WebGL
+     context and a rAF loop. Starts false so SSR and first paint agree. */
   const [asciiOn, setAsciiOn] = useState(false);
   const lenisFromContext = useLenis();
   const [bridgedLenis, setBridgedLenis] = useState(() => getSiteLenis());
@@ -173,8 +171,8 @@ export default function Footer() {
               <div className="footer_layout grid is-12">
                 <h3 className="footer_tagline text-style-main">
                   I&apos;m a digital designer who makes things look good and
-                  work better. Good design isn&apos;t about adding
-                  more. It&apos;s about knowing what to leave out.
+                  work better. Good design isn&apos;t about adding more.
+                  It&apos;s about knowing what to leave out.
                 </h3>
 
                 <nav className="footer_col is-nav" aria-label="Footer">
