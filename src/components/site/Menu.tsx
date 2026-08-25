@@ -160,6 +160,8 @@ export default function Menu({ initialPathname = "/" }: MenuProps) {
   const [aboutMode, setAboutMode] = useState<AboutPanelMode>("ride");
   /** Home scroll section only — never used while About is open or on /work. */
   const [homeSectionId, setHomeSectionId] = useState("hero");
+  /** Sticky bar has reached the top of the viewport — drives .nav_fade. */
+  const [navStuck, setNavStuck] = useState(false);
   const [pathname, setPathname] = useState(initialPathname);
   const [workProjectOpen, setWorkProjectOpen] = useState(false);
   const [isDesktopNav, setIsDesktopNav] = useState(false);
@@ -319,12 +321,21 @@ export default function Menu({ initialPathname = "/" }: MenuProps) {
     const tl = gsap.timeline({
       onReverseComplete: () => {
         gsap.set(nav, { clearProps: "transform" });
+        /* The ride's `y` transform doesn't touch nav's size or the root
+           class, so the `--nav-offset` effect's ResizeObserver/MutationObserver
+           never re-fire once it clears. Nudge its `window resize` listener so
+           `is-stuck` (and `--nav-offset`) get re-measured against the real,
+           untransformed position — otherwise closing About while scrolled can
+           leave `.nav_fade` stuck hidden even though the bar is genuinely
+           pinned to the top. */
+        window.dispatchEvent(new Event("resize"));
       },
     });
     tl.to(nav, {
       y: targetY,
       duration: 0.6,
       ease: "introHop",
+      onComplete: () => window.dispatchEvent(new Event("resize")),
     });
     aboutNavTlRef.current = tl;
 
@@ -410,10 +421,15 @@ export default function Menu({ initialPathname = "/" }: MenuProps) {
     if (!nav) return;
 
     const setOffset = () => {
+      const rect = nav.getBoundingClientRect();
       document.documentElement.style.setProperty(
         "--nav-offset",
-        `${nav.getBoundingClientRect().bottom}px`,
+        `${rect.bottom}px`,
       );
+      /* Sticky bar has reached the top. Home keys its readability fade off
+         this; routes that pin the bar with `position: fixed` read stuck from
+         the start. */
+      setNavStuck(rect.top <= 1);
     };
 
     setOffset();
@@ -1096,7 +1112,7 @@ export default function Menu({ initialPathname = "/" }: MenuProps) {
           </div>
         </div>
         <div
-          className={`nav_wrap${isOpen ? " is-menu-open" : ""}${aboutInMenu ? " is-about-open" : ""}`}
+          className={`nav_wrap${isOpen ? " is-menu-open" : ""}${aboutOpen ? " is-about-open" : ""}${navStuck ? " is-stuck" : ""}`}
           ref={navContainerRef}
         >
           <div className="nav_fade" aria-hidden="true" />

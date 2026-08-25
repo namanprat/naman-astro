@@ -34,7 +34,7 @@ const FAQ_ITEMS = [
   {
     question: "What happens after launch?",
     answer:
-      "A stretch of hands-on support so everything runs, plus the notes you need to update the site yourself. After that you're equipped to run it in-house — and if you want ongoing care, we can talk about that separately.",
+      "A stretch of hands-on support so everything runs, plus the notes you need to update the site yourself. After that you're equipped to run it in-house. If you want ongoing care, we can talk about that separately.",
   },
   {
     question: "Can you handle branding, design and development?",
@@ -44,7 +44,7 @@ const FAQ_ITEMS = [
   {
     question: "Who do you work with?",
     answer:
-      "Founders and brands whose reputation has outgrown their digital presence — established work that still looks smaller than it is. If the site no longer matches what you've built, that's the brief.",
+      "Founders and brands whose reputation has outgrown their digital presence: established work that still looks smaller than it is. If the site no longer matches what you've built, that's the brief.",
   },
 ];
 
@@ -126,7 +126,7 @@ export default function Faq() {
           <div className="faq_statement studio_statement">
             <h2 className="faq_title studio_title text-style-h2">
               <span className="studio_title_indent" aria-hidden="true" />
-              Fewer projects, fully present. Intention over speed — every layer
+              Fewer projects, fully present. Intention over speed. Every layer
               earns its place before we move to the next.
             </h2>
           </div>

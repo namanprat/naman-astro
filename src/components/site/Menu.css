@@ -135,20 +135,22 @@ html.theme-light.menu-open {
 /* Theme-aware readability fade. `--background` is the page fill, so light
    gets the warm grey and dark gets near-black. A real node, not ::before:
    heading leading-trim also uses ::before, and an unlayered reset would
-   win the cascade on a pseudo. */
+   win the cascade on a pseudo. Starts above the bar so once it is showing,
+   inner pages get the usual top-down dissolve. On home it stays out of the
+   way of the wordmark until the bar sticks (see the `:not(.is-stuck)` rule
+   below), then dissolves in quickly. */
 .nav_fade {
   position: absolute;
   left: 0;
   width: 100%;
-  /* Starts above the bar so home (nav at the bottom of the hero) still
-     gets a readable cap over the canvas, and inner pages get the usual
-     top-down dissolve. */
   top: -4rem;
   height: 14rem;
   margin: 0;
   padding: 0;
   pointer-events: none;
   z-index: 0;
+  opacity: 1;
+  transition: opacity 0.3s ease;
   background-image: linear-gradient(
     to bottom,
     var(--background) 0%,
@@ -158,8 +160,28 @@ html.theme-light.menu-open {
   );
 }
 
+/* Home only: float clean over the SVG wordmark until the sticky bar reaches
+   the top, then dissolve the fade in. `html:has(.hero)` is the same
+   home/inner-page test `.name_hero` uses above. */
+html:has(.hero) .nav_wrap:not(.is-stuck) .nav_fade {
+  opacity: 0;
+}
+
+/* About open, either mode. Mobile's in-menu overlay owns this strip itself
+   (see AboutPanel.css's `.about_panel.is-in-menu`, which reserves this exact
+   height as transparent padding). Desktop's "ride" mode is the other reason:
+   it translates `.nav_wrap` itself down to dock at the card's bottom edge
+   (Menu.tsx's `dockNav`/`aboutNavTlRef`), dragging this absolutely-positioned
+   fade down with it, which would otherwise paint the gradient across the
+   card's content as the nav rides onto it. Either way: dissolve the fade out
+   while About is open, back in on close. */
+.nav_wrap.is-about-open .nav_fade {
+  opacity: 0;
+}
+
 .nav_wrap.is-menu-open .nav_fade {
   opacity: 0;
+  transition: none;
 }
 
 .nav_contain {

@@ -174,7 +174,7 @@ export default function Footer() {
                 <h3 className="footer_tagline text-style-main">
                   I&apos;m a digital designer who makes things look good and
                   work better. Good design isn&apos;t about adding
-                  more—it&apos;s about knowing what to leave out.
+                  more. It&apos;s about knowing what to leave out.
                 </h3>
 
                 <nav className="footer_col is-nav" aria-label="Footer">
