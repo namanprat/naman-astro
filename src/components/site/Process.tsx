@@ -1,7 +1,5 @@
 import { useEffect, useState } from "react";
-import ProcessCardCanvas, {
-  type ProcessCardShape,
-} from "./ProcessCardCanvas";
+import ProcessCardCanvas, { type ProcessCardShape } from "./ProcessCardCanvas";
 import "./Process.css";
 
 /**
@@ -21,7 +19,7 @@ const CARDS: ReadonlyArray<{
     title: "Uncover story",
     description:
       "We surface what makes you irreplaceable. Then we shape the strategy.",
-    shape: "icosahedron",
+    shape: "box",
   },
   {
     title: "Shape presence",
@@ -31,9 +29,8 @@ const CARDS: ReadonlyArray<{
   },
   {
     title: "Send it",
-    description:
-      "The site goes live as a long-term asset. It grows with you.",
-    shape: "torus",
+    description: "The site goes live as a long-term asset. It grows with you.",
+    shape: "box",
   },
 ];
 

@@ -24,23 +24,19 @@ export type AsciiTuning = {
   noise: number;
 };
 
+/** Look tuned on the Team cylinder; About follows the same lattice. */
+const TEAM_LOOK: AsciiTuning = {
+  density: 183,
+  glyphScale: 2.2,
+  warp: 1,
+  gamma: 0.8,
+  jitter: 0.02,
+  noise: 0.6,
+};
+
 export const ASCII_DEFAULTS: Record<AsciiSurface, AsciiTuning> = {
-  about: {
-    density: 96,
-    glyphScale: 1.25,
-    warp: 0.94,
-    gamma: 0.8,
-    jitter: 0.02,
-    noise: 0.15,
-  },
-  team: {
-    density: 80,
-    glyphScale: 1.3,
-    warp: 1,
-    gamma: 0.8,
-    jitter: 0.02,
-    noise: 0.6,
-  },
+  about: { ...TEAM_LOOK },
+  team: { ...TEAM_LOOK },
   process: {
     density: 40,
     glyphScale: 1.2,
@@ -53,7 +49,7 @@ export const ASCII_DEFAULTS: Record<AsciiSurface, AsciiTuning> = {
 
 export const ASCII_SURFACES = Object.keys(ASCII_DEFAULTS) as AsciiSurface[];
 
-const STORAGE_KEY = "ascii-tuning";
+const STORAGE_KEY = "ascii-tuning-v2";
 
 const tuning: Record<AsciiSurface, AsciiTuning> = {
   about: { ...ASCII_DEFAULTS.about },
