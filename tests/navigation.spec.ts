@@ -131,7 +131,7 @@ test("opening Contact does not reflow the mobile nav row", async ({ page }) => {
 /**
  * The phone counterpart to the overlay test above.
  *
- * Below 48rem About is a document: the nav link routes to it, the dither bust
+ * Below 48rem About is a document: the nav link routes to it, the ASCII bust
  * that the card had no room for is laid out, and the footer is present. The
  * overlay must NOT also mount there — `Menu` renders it on every route, so a
  * second hidden copy of the whole panel (duplicate `id` included) is the

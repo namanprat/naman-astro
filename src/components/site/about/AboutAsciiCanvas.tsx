@@ -1,3 +1,10 @@
+/**
+ * The About bust, drawn in Duforn glyphs.
+ *
+ * This used to be a 4x4 ordered-dither post pass with a pointer-warp effect in
+ * front of it. Both are gone: the lit bust now renders into `AsciiField`, the
+ * same shared ASCII pass the Process cards and the Team cylinder go through.
+ */
 import {
   OrbitControls,
   Center,
@@ -5,12 +12,10 @@ import {
   Lightformer,
   useGLTF,
 } from "@react-three/drei";
-import { Canvas, useFrame, useThree } from "@react-three/fiber";
-import { EffectComposer, wrapEffect } from "@react-three/postprocessing";
+import { Canvas, useFrame } from "@react-three/fiber";
 import {
   Suspense,
   Component,
-  useEffect,
   useLayoutEffect,
   useMemo,
   useRef,
@@ -20,14 +25,9 @@ import {
   type RefObject,
 } from "react";
 import * as THREE from "three";
-import { DitheringEffect } from "./aboutDitherEffect";
-import {
-  AboutDistortionEffect,
-  aboutDistortionState,
-} from "./aboutDistortionEffect";
-import { SWATCH_LIGHT_NUM } from "@/lib/site/siteColors";
+import AsciiField from "../ascii/AsciiField";
+import { SWATCH_LIGHT, SWATCH_LIGHT_NUM } from "@/lib/site/siteColors";
 import { getAboutCanvasMaxDpr, BUST_URL } from "@/lib/site/aboutBust";
-import { hasFinePointerHover } from "@/lib/site/hasFinePointerHover";
 import { prefersReducedMotion } from "@/lib/site/prefersReducedMotion";
 
 /** Render settings for the About model canvas. */
@@ -37,15 +37,16 @@ const CANVAS = {
   spinSpeed: 0.35,
   highlight: "#066aff",
   envIntensity: 1.5,
+  /** Glyph rows across the square plate — the finest of the three surfaces. */
+  asciiDensity: 64,
+  /** Archive's polar re-radius. Only the bust wants the fisheye. */
+  asciiWarp: 0.94,
+  asciiNoise: 0.25,
 } as const;
 
 const DRACO_PATH = "/draco/gltf/";
 /** Longest-axis size after normalize; Center's `scale` then reads as world units. */
 const MODEL_UNIT = 1;
-
-const Dither = wrapEffect(DitheringEffect);
-
-const Distortion = wrapEffect(AboutDistortionEffect);
 
 useGLTF.setDecoderPath(DRACO_PATH);
 useGLTF.preload(BUST_URL, DRACO_PATH);
@@ -307,7 +308,7 @@ class ModelErrorBoundary extends Component<
 
   componentDidCatch(error: Error, info: ErrorInfo) {
     console.error(
-      "[AboutDitherCanvas] model failed:",
+      "[AboutAsciiCanvas] model failed:",
       error,
       info.componentStack,
     );
@@ -318,79 +319,6 @@ class ModelErrorBoundary extends Component<
     if (this.state.failed) return null;
     return this.props.children;
   }
-}
-
-function isInsideRect(event: PointerEvent, rect: DOMRect): boolean {
-  return (
-    event.clientX >= rect.left &&
-    event.clientX <= rect.right &&
-    event.clientY >= rect.top &&
-    event.clientY <= rect.bottom
-  );
-}
-
-function AboutDistortionHover() {
-  const { gl } = useThree();
-
-  useEffect(() => {
-    if (!hasFinePointerHover() || prefersReducedMotion()) return;
-
-    const el = gl.domElement;
-    const hitTarget: HTMLElement =
-      (el.closest(".about_panel_media") as HTMLElement | null) ?? el;
-
-    const syncPointer = (event: PointerEvent) => {
-      const rect = el.getBoundingClientRect();
-      if (rect.width <= 0 || rect.height <= 0) return;
-      aboutDistortionState.pointer.set(
-        (event.clientX - rect.left) / rect.width,
-        1 - (event.clientY - rect.top) / rect.height,
-      );
-    };
-
-    const onPointerMove = (event: PointerEvent) => {
-      const rect = hitTarget.getBoundingClientRect();
-      if (!isInsideRect(event, rect)) {
-        aboutDistortionState.strengthTarget = 0;
-        return;
-      }
-      syncPointer(event);
-      aboutDistortionState.strengthTarget = 1;
-    };
-
-    const onPointerLeave = (event: PointerEvent) => {
-      if (
-        event.relatedTarget instanceof Node &&
-        hitTarget.contains(event.relatedTarget)
-      )
-        return;
-      aboutDistortionState.strengthTarget = 0;
-    };
-
-    const onBlur = () => {
-      aboutDistortionState.strengthTarget = 0;
-    };
-
-    hitTarget.addEventListener("pointermove", onPointerMove, { passive: true });
-    hitTarget.addEventListener("pointerleave", onPointerLeave);
-    window.addEventListener("blur", onBlur);
-    return () => {
-      hitTarget.removeEventListener("pointermove", onPointerMove);
-      hitTarget.removeEventListener("pointerleave", onPointerLeave);
-      window.removeEventListener("blur", onBlur);
-      aboutDistortionState.strength = 0;
-      aboutDistortionState.strengthTarget = 0;
-    };
-  }, [gl]);
-
-  useFrame((_, delta) => {
-    const lerp = 1 - Math.exp(-delta * 10);
-    aboutDistortionState.strength +=
-      (aboutDistortionState.strengthTarget - aboutDistortionState.strength) *
-      lerp;
-  });
-
-  return null;
 }
 
 function BustReadyGate({ onReady }: { onReady?: () => void }) {
@@ -417,9 +345,19 @@ function SpinY({ speed, children }: { speed: number; children: ReactNode }) {
   return <group ref={ref}>{children}</group>;
 }
 
-function AboutDitherScene({ onReady }: { onReady?: () => void }) {
+function AboutAsciiScene({ onReady }: { onReady?: () => void }) {
   return (
-    <>
+    /* ponytail: ink is the fixed light swatch, never `--text`. The plate under
+       this canvas is `--dark-900` in both themes and the canvas composites with
+       `mix-blend-mode: screen`, so dark ink would blend away to nothing. */
+    <AsciiField
+      density={CANVAS.asciiDensity}
+      ink={SWATCH_LIGHT}
+      warp={CANVAS.asciiWarp}
+      noise={CANVAS.asciiNoise}
+      fov={65}
+      cameraPosition={[0, 0, 4]}
+    >
       <group position={[0, -0.5, 0]}>
         <SpinY speed={CANVAS.spinSpeed}>
           <Center scale={CANVAS.bustScale} position={[0, CANVAS.bustY, 0]}>
@@ -429,6 +367,8 @@ function AboutDitherScene({ onReady }: { onReady?: () => void }) {
           </Center>
         </SpinY>
       </group>
+      {/* Both of these read `scene` and `camera` out of context, which the
+          field's portal has already pointed at the offscreen pair. */}
       <OrbitControls
         enableDamping
         enableZoom={false}
@@ -444,29 +384,20 @@ function AboutDitherScene({ onReady }: { onReady?: () => void }) {
       >
         <Room highlight={CANVAS.highlight} />
       </Environment>
-      <AboutDistortionHover />
-      <EffectComposer
-        multisampling={0}
-        enableNormalPass={false}
-        stencilBuffer={false}
-      >
-        <Distortion />
-        <Dither />
-      </EffectComposer>
       <BustReadyGate onReady={onReady} />
-    </>
+    </AsciiField>
   );
 }
 
-type AboutDitherCanvasProps = {
+type AboutAsciiCanvasProps = {
   eventSource?: RefObject<HTMLElement | null>;
   onReady?: () => void;
 };
 
-export default function AboutDitherCanvas({
+export default function AboutAsciiCanvas({
   eventSource,
   onReady,
-}: AboutDitherCanvasProps) {
+}: AboutAsciiCanvasProps) {
   const maxDpr = getAboutCanvasMaxDpr();
   const [alive, setAlive] = useState(true);
 
@@ -480,7 +411,6 @@ export default function AboutDitherCanvas({
         frameloop="always"
         shadows={{ type: THREE.PCFShadowMap }}
         dpr={[1, maxDpr]}
-        camera={{ position: [0, 0, 4], fov: 65 }}
         gl={{
           alpha: true,
           powerPreference: "high-performance",
@@ -488,7 +418,9 @@ export default function AboutDitherCanvas({
         }}
         resize={{ scroll: false, debounce: 0 }}
         onCreated={({ gl, setSize }) => {
-          /* Transparent GL clear — CSS .about_panel_media (--black) is the ground. */
+          /* Transparent GL clear — CSS .about_panel_media (--dark-900) is the
+             ground, and the ASCII pass needs the offscreen clear transparent
+             so bare background stamps no glyph. */
           gl.setClearColor(0x000000, 0);
           gl.toneMapping = THREE.NoToneMapping;
           gl.outputColorSpace = THREE.SRGBColorSpace;
@@ -513,7 +445,7 @@ export default function AboutDitherCanvas({
         }}
       >
         <Suspense fallback={null}>
-          <AboutDitherScene onReady={onReady} />
+          <AboutAsciiScene onReady={onReady} />
         </Suspense>
       </Canvas>
     </ModelErrorBoundary>

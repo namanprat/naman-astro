@@ -7,7 +7,7 @@
  * cascade layers puts at risk. These shots are the safety net for that work.
  *
  * Every `<canvas>` is masked. The fluid sim, team carousel, archive orb, About
- * dither and the ASCII footer logo all paint per-frame from a clock or a
+ * bust and the ASCII footer logo all paint per-frame from a clock or a
  * pointer, so they never produce the same pixels twice; comparing them would
  * fail on noise and hide real layout drift.
  */

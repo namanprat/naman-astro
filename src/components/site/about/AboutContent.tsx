@@ -8,7 +8,7 @@ import RollingText from "../RollingText";
  * the two presentations cannot drift apart on content.
  */
 
-const AboutDitherCanvas = lazy(() => import("./AboutDitherCanvas"));
+const AboutAsciiCanvas = lazy(() => import("./AboutAsciiCanvas"));
 
 const SERVICES = [
   "Brand strategy",
@@ -68,7 +68,7 @@ export default function AboutContent({
         <div className="about_panel_reveal_inner">
           {mountCanvas && (
             <Suspense fallback={null}>
-              <AboutDitherCanvas
+              <AboutAsciiCanvas
                 eventSource={mediaRef}
                 onReady={onCanvasReady}
               />
