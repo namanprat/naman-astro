@@ -51,13 +51,22 @@ type Grid = {
   rows: number;
 };
 
-/** Disk radius in cells. Density is ~183 rows, so 22 cells is a fat trail. */
-const CLUSTER_RADIUS = 22;
-/** Extra random-walk steps off the disk edge, so the stamp is not a clean circle. */
-const CLUSTER_WALK = 28;
-const HIGHLIGHT_LIFETIME = 1100;
-/** px of scroll → 0–1 of a sweep across the grid. */
-const SCROLL_TRAIL_SCALE = 0.00008;
+/**
+ * Brush, in cells. A fat disk every pointer sample (radius 22) filled ~1500
+ * cells and scanned the whole lattice every frame, so the canvas hitch made
+ * the trail look slow and gappy. A smaller falloff disk, stamped along the
+ * pointer path each frame, reads as a thicker ribbon than the old 10-cell
+ * random walk without stalling the loop. Same density as the Team lattice
+ * (~183 rows): radius 7 is ~4% of the short axis.
+ */
+const BRUSH_RADIUS = 7;
+/** Fade window. Binary on/off at 1.1s felt sticky; this matches the fluid's
+ *  dissipation beat more closely. */
+const LIFE_MS = 520;
+/** Cap interpolated stamps so a huge pointer jump cannot hitch a frame. */
+const MAX_STROKE_STEPS = 48;
+/** px of scroll velocity → 0–1 of a sweep across the grid. */
+const SCROLL_TRAIL_SCALE = 0.00022;
 
 const blankHighlight = (() => {
   const tex = new THREE.DataTexture(new Uint8Array([0, 0, 0, 255]), 1, 1);
@@ -67,49 +76,113 @@ const blankHighlight = (() => {
   return tex;
 })();
 
-function highlightCluster(
+function markCell(
   until: Float32Array,
+  live: number[],
+  index: number,
+  expires: number,
+  now: number,
+): void {
+  if (expires <= until[index]) return;
+  if (until[index] <= now) live.push(index);
+  until[index] = expires;
+}
+
+/** Soft disk: centre stays lit for `LIFE_MS`, the rim dies sooner. */
+function stampDisk(
+  until: Float32Array,
+  live: number[],
   cols: number,
   rows: number,
   startCol: number,
   startRow: number,
   now: number,
-) {
-  const key = (c: number, r: number) => r * cols + c;
-  const radius2 = CLUSTER_RADIUS * CLUSTER_RADIUS;
-  for (let dy = -CLUSTER_RADIUS; dy <= CLUSTER_RADIUS; dy++) {
-    for (let dx = -CLUSTER_RADIUS; dx <= CLUSTER_RADIUS; dx++) {
-      if (dx * dx + dy * dy > radius2) continue;
+): void {
+  const radius2 = BRUSH_RADIUS * BRUSH_RADIUS;
+  const radius = BRUSH_RADIUS;
+  for (let dy = -radius; dy <= radius; dy++) {
+    for (let dx = -radius; dx <= radius; dx++) {
+      const d2 = dx * dx + dy * dy;
+      if (d2 > radius2) continue;
       const nc = startCol + dx;
       const nr = startRow + dy;
       if (nc < 0 || nr < 0 || nc >= cols || nr >= rows) continue;
-      until[key(nc, nr)] = now + HIGHLIGHT_LIFETIME;
+      const fall = 1 - Math.sqrt(d2) / (radius + 0.001);
+      markCell(
+        until,
+        live,
+        nr * cols + nc,
+        now + LIFE_MS * (0.35 + 0.65 * fall),
+        now,
+      );
     }
   }
+}
 
-  const lit = [key(startCol, startRow)];
-  let col = startCol;
-  let row = startRow;
-  const steps = Math.floor(Math.random() * CLUSTER_WALK) + CLUSTER_RADIUS;
-  for (let step = 0; step < steps; step++) {
-    const neighbours: number[] = [];
-    for (let dy = -1; dy <= 1; dy++) {
-      for (let dx = -1; dx <= 1; dx++) {
-        if (dx === 0 && dy === 0) continue;
-        const nc = col + dx;
-        const nr = row + dy;
-        if (nc < 0 || nr < 0 || nc >= cols || nr >= rows) continue;
-        const ni = key(nc, nr);
-        if (!lit.includes(ni)) neighbours.push(ni);
-      }
-    }
-    if (neighbours.length === 0) break;
-    const next = neighbours[Math.floor(Math.random() * neighbours.length)];
-    until[next] = now + HIGHLIGHT_LIFETIME + step * 12;
-    lit.push(next);
-    col = next % cols;
-    row = Math.floor(next / cols);
+/** NDC segment → cell stamps, so a fast move is a stroke not a dotted line. */
+function stampSegment(
+  until: Float32Array,
+  live: number[],
+  cols: number,
+  rows: number,
+  x0: number,
+  y0: number,
+  x1: number,
+  y1: number,
+  now: number,
+): void {
+  const dx = x1 - x0;
+  const dy = y1 - y0;
+  const dist = Math.hypot((dx * cols) / 2, (dy * rows) / 2);
+  const steps = Math.min(MAX_STROKE_STEPS, Math.max(1, Math.ceil(dist)));
+  for (let i = 1; i <= steps; i++) {
+    const t = i / steps;
+    const col = Math.floor(((x0 + dx * t + 1) / 2) * cols);
+    const row = Math.floor(((y0 + dy * t + 1) / 2) * rows);
+    if (col < 0 || row < 0 || col >= cols || row >= rows) continue;
+    stampDisk(until, live, cols, rows, col, row, now);
   }
+}
+
+function writeLiveCells(
+  until: Float32Array,
+  live: number[],
+  pixels: Uint8Array,
+  now: number,
+): boolean {
+  let dirty = false;
+  let write = 0;
+  for (let r = 0; r < live.length; r++) {
+    const i = live[r];
+    const remain = until[i] - now;
+    if (remain <= 0) {
+      until[i] = 0;
+      const p = i * 4;
+      if (pixels[p] !== 0) {
+        pixels[p] = 0;
+        pixels[p + 1] = 0;
+        pixels[p + 2] = 0;
+        pixels[p + 3] = 255;
+        dirty = true;
+      }
+      continue;
+    }
+    live[write++] = i;
+    const v =
+      remain >= LIFE_MS
+        ? 255
+        : Math.max(1, Math.round((remain / LIFE_MS) * 255));
+    const p = i * 4;
+    if (pixels[p] !== v) {
+      pixels[p] = v;
+      pixels[p + 1] = v;
+      pixels[p + 2] = v;
+      pixels[p + 3] = 255;
+      dirty = true;
+    }
+  }
+  live.length = write;
+  return dirty;
 }
 
 /** One instanced quad per cell, filling [-aspect, aspect] x [-1, 1]. */
@@ -171,7 +244,7 @@ export default function AsciiField({
   far = 100,
   children,
 }: AsciiFieldProps) {
-  const { scene, size, pointer, gl, events } = useThree();
+  const { scene, size, gl, events } = useThree();
   const materialRef = useRef<THREE.ShaderMaterial>(null);
   const [ready, setReady] = useState(false);
   const reducedMotion = useMemo(() => prefersReducedMotion(), []);
@@ -284,9 +357,11 @@ export default function AsciiField({
 
   const trailOn = Boolean(hoverHighlight) && !reducedMotion;
   const hoveringRef = useRef(false);
-  const lastPointer = useRef({ x: 999, y: 999 });
+  const pointerNdc = useRef({ x: 0, y: 0 });
+  const lastStamp = useRef<{ x: number; y: number } | null>(null);
   const highlightUntil = useRef<Float32Array>(new Float32Array(0));
   const highlightPixels = useRef<Uint8Array>(new Uint8Array(4));
+  const liveCells = useRef<number[]>([]);
   const scrollSweep = useRef(0);
   const scrollVel = useRef(0);
 
@@ -294,6 +369,8 @@ export default function AsciiField({
     const data = new Uint8Array(grid.cols * grid.rows * 4);
     highlightPixels.current = data;
     highlightUntil.current = new Float32Array(grid.cols * grid.rows);
+    liveCells.current = [];
+    lastStamp.current = null;
     const tex = new THREE.DataTexture(
       data,
       grid.cols,
@@ -316,30 +393,62 @@ export default function AsciiField({
   useEffect(() => {
     if (!trailOn) return;
     const el = (events.connected as HTMLElement | null) ?? gl.domElement;
-    const onEnter = () => {
-      hoveringRef.current = true;
+
+    const contains = (clientX: number, clientY: number) => {
+      const box = el.getBoundingClientRect();
+      return (
+        clientX >= box.left &&
+        clientX <= box.right &&
+        clientY >= box.top &&
+        clientY <= box.bottom
+      );
     };
-    const onLeave = () => {
-      hoveringRef.current = false;
+
+    const writeNdc = (clientX: number, clientY: number) => {
+      const box = el.getBoundingClientRect();
+      if (box.width < 1 || box.height < 1) return;
+      pointerNdc.current = {
+        x: ((clientX - box.left) / box.width) * 2 - 1,
+        y: 1 - ((clientY - box.top) / box.height) * 2,
+      };
     };
-    const onDown = () => {
+
+    const onMove = (event: PointerEvent) => {
+      const inside = contains(event.clientX, event.clientY);
+      if (!inside && !hoveringRef.current) return;
+      hoveringRef.current = inside;
+      if (inside) writeNdc(event.clientX, event.clientY);
+    };
+    const onDown = (event: PointerEvent) => {
+      if (!contains(event.clientX, event.clientY)) return;
       hoveringRef.current = true;
+      writeNdc(event.clientX, event.clientY);
+      lastStamp.current = null;
     };
     const onUp = (event: PointerEvent) => {
       if (event.pointerType !== "mouse") hoveringRef.current = false;
     };
-    el.addEventListener("pointerenter", onEnter);
-    el.addEventListener("pointerleave", onLeave);
+    const onLeave = () => {
+      hoveringRef.current = false;
+      lastStamp.current = null;
+    };
+
+    /* Window-level move, same as the homepage fluid: R3F's `pointer` only
+       updates when its event manager sees a move, and OrbitControls can
+       swallow those. */
+    window.addEventListener("pointermove", onMove, { passive: true });
     el.addEventListener("pointerdown", onDown);
+    el.addEventListener("pointerleave", onLeave);
     window.addEventListener("pointerup", onUp);
     window.addEventListener("pointercancel", onUp);
     return () => {
-      el.removeEventListener("pointerenter", onEnter);
-      el.removeEventListener("pointerleave", onLeave);
+      window.removeEventListener("pointermove", onMove);
       el.removeEventListener("pointerdown", onDown);
+      el.removeEventListener("pointerleave", onLeave);
       window.removeEventListener("pointerup", onUp);
       window.removeEventListener("pointercancel", onUp);
       hoveringRef.current = false;
+      lastStamp.current = null;
     };
   }, [trailOn, gl, events]);
 
@@ -347,7 +456,8 @@ export default function AsciiField({
     if (!trailOn) return;
     const panel = gl.domElement.closest(".about_panel_scroll");
     const scroller =
-      panel instanceof HTMLElement && panel.scrollHeight > panel.clientHeight + 1
+      panel instanceof HTMLElement &&
+      panel.scrollHeight > panel.clientHeight + 1
         ? panel
         : undefined;
     const st = ScrollTrigger.create({
@@ -397,45 +507,46 @@ export default function AsciiField({
       const { cols, rows } = grid;
       const until = highlightUntil.current;
       const pixels = highlightPixels.current;
+      const live = liveCells.current;
+
       if (hoveringRef.current) {
-        if (
-          pointer.x !== lastPointer.current.x ||
-          pointer.y !== lastPointer.current.y
-        ) {
-          lastPointer.current = { x: pointer.x, y: pointer.y };
-          const col = Math.floor(((pointer.x + 1) / 2) * cols);
-          const row = Math.floor(((pointer.y + 1) / 2) * rows);
+        const { x, y } = pointerNdc.current;
+        const prev = lastStamp.current;
+        if (!prev) {
+          const col = Math.floor(((x + 1) / 2) * cols);
+          const row = Math.floor(((y + 1) / 2) * rows);
           if (col >= 0 && row >= 0 && col < cols && row < rows) {
-            highlightCluster(until, cols, rows, col, row, now);
+            stampDisk(until, live, cols, rows, col, row, now);
           }
+          lastStamp.current = { x, y };
+        } else if (prev.x !== x || prev.y !== y) {
+          stampSegment(until, live, cols, rows, prev.x, prev.y, x, y, now);
+          lastStamp.current = { x, y };
         }
       }
+
       const vel = scrollVel.current;
       if (vel !== 0) {
         scrollVel.current = 0;
-        scrollSweep.current =
-          ((scrollSweep.current + vel * SCROLL_TRAIL_SCALE) % 1 + 1) % 1;
-        const t = scrollSweep.current;
-        const col = Math.floor((0.3 + 0.4 * Math.sin(t * Math.PI * 2)) * cols);
-        const row = Math.floor((0.2 + 0.6 * t) * rows);
-        if (col >= 0 && row >= 0 && col < cols && row < rows) {
-          highlightCluster(until, cols, rows, col, row, now);
+        const from = scrollSweep.current;
+        const to = from + vel * SCROLL_TRAIL_SCALE;
+        scrollSweep.current = ((to % 1) + 1) % 1;
+        const dist = Math.abs(to - from) * Math.max(cols, rows);
+        const steps = Math.min(MAX_STROKE_STEPS, Math.max(1, Math.ceil(dist)));
+        for (let i = 1; i <= steps; i++) {
+          const s = (((from + ((to - from) * i) / steps) % 1) + 1) % 1;
+          const col = Math.floor(
+            (0.3 + 0.4 * Math.sin(s * Math.PI * 2)) * cols,
+          );
+          const row = Math.floor((0.2 + 0.6 * s) * rows);
+          if (col < 0 || row < 0 || col >= cols || row >= rows) continue;
+          stampDisk(until, live, cols, rows, col, row, now);
         }
       }
-      let dirty = false;
-      for (let i = 0; i < until.length; i++) {
-        const live = until[i] > now;
-        const v = live ? 255 : 0;
-        const p = i * 4;
-        if (pixels[p] !== v) {
-          pixels[p] = v;
-          pixels[p + 1] = v;
-          pixels[p + 2] = v;
-          pixels[p + 3] = 255;
-          dirty = true;
-        }
+
+      if (writeLiveCells(until, live, pixels, now)) {
+        highlightTex.needsUpdate = true;
       }
-      if (dirty) highlightTex.needsUpdate = true;
     }
 
     state.gl.setRenderTarget(target);
