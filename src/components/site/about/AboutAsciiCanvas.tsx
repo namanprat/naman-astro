@@ -26,7 +26,11 @@ import {
 } from "react";
 import * as THREE from "three";
 import AsciiField from "../ascii/AsciiField";
-import { SWATCH_LIGHT, SWATCH_LIGHT_NUM } from "@/lib/site/siteColors";
+import {
+  SWATCH_BRAND,
+  SWATCH_LIGHT,
+  SWATCH_LIGHT_NUM,
+} from "@/lib/site/siteColors";
 import { getAboutCanvasMaxDpr, BUST_URL } from "@/lib/site/aboutBust";
 import { prefersReducedMotion } from "@/lib/site/prefersReducedMotion";
 
@@ -344,11 +348,13 @@ function AboutAsciiScene({ onReady }: { onReady?: () => void }) {
   return (
     /* ponytail: ink is the fixed light swatch, never `--text`. The plate under
        this canvas is `--dark-900` in both themes and the canvas composites with
-       `mix-blend-mode: screen`, so dark ink would blend away to nothing. */
+       `mix-blend-mode: screen`, so dark ink would blend away to nothing.
+       The pointer trail is `--brand-500` so it reads as the accent, not the
+       blue fill light. */
     <AsciiField
       surface="about"
       ink={SWATCH_LIGHT}
-      hoverHighlight={CANVAS.highlight}
+      hoverHighlight={SWATCH_BRAND}
       fov={65}
       cameraPosition={[0, 0, 4]}
     >

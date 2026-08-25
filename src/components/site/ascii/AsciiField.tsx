@@ -48,8 +48,11 @@ type Grid = {
   rows: number;
 };
 
-const CLUSTER_SIZE = 10;
-const HIGHLIGHT_LIFETIME = 300;
+/** Disk radius in cells. Density is ~183 rows, so 22 cells is a fat trail. */
+const CLUSTER_RADIUS = 22;
+/** Extra random-walk steps off the disk edge, so the stamp is not a clean circle. */
+const CLUSTER_WALK = 28;
+const HIGHLIGHT_LIFETIME = 1100;
 
 const blankHighlight = (() => {
   const tex = new THREE.DataTexture(new Uint8Array([0, 0, 0, 255]), 1, 1);
@@ -68,12 +71,21 @@ function highlightCluster(
   now: number,
 ) {
   const key = (c: number, r: number) => r * cols + c;
-  const start = key(startCol, startRow);
-  until[start] = now + HIGHLIGHT_LIFETIME;
-  const lit = [start];
+  const radius2 = CLUSTER_RADIUS * CLUSTER_RADIUS;
+  for (let dy = -CLUSTER_RADIUS; dy <= CLUSTER_RADIUS; dy++) {
+    for (let dx = -CLUSTER_RADIUS; dx <= CLUSTER_RADIUS; dx++) {
+      if (dx * dx + dy * dy > radius2) continue;
+      const nc = startCol + dx;
+      const nr = startRow + dy;
+      if (nc < 0 || nr < 0 || nc >= cols || nr >= rows) continue;
+      until[key(nc, nr)] = now + HIGHLIGHT_LIFETIME;
+    }
+  }
+
+  const lit = [key(startCol, startRow)];
   let col = startCol;
   let row = startRow;
-  const steps = Math.floor(Math.random() * CLUSTER_SIZE) + 1;
+  const steps = Math.floor(Math.random() * CLUSTER_WALK) + CLUSTER_RADIUS;
   for (let step = 0; step < steps; step++) {
     const neighbours: number[] = [];
     for (let dy = -1; dy <= 1; dy++) {
@@ -88,7 +100,7 @@ function highlightCluster(
     }
     if (neighbours.length === 0) break;
     const next = neighbours[Math.floor(Math.random() * neighbours.length)];
-    until[next] = now + HIGHLIGHT_LIFETIME + step * 10;
+    until[next] = now + HIGHLIGHT_LIFETIME + step * 12;
     lit.push(next);
     col = next % cols;
     row = Math.floor(next / cols);
@@ -228,6 +240,7 @@ export default function AsciiField({
       uJitter: { value: tuning.jitter },
       uTime: { value: 0 },
       uNoise: { value: reducedMotion ? 0 : tuning.noise },
+      uCharNoise: { value: 0 },
     }),
     // Tuning is re-pushed every frame; only the texture binding is fixed here.
     [target],
