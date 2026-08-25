@@ -120,7 +120,7 @@ export const workItems: WorkItem[] = [
     slug: "haptic",
     title: "Haptic",
     description:
-      "Haptic AI needed a visual identity that felt human in a category that defaults to cold and interchangeable. We built a tactile brand system — wordmark, icon grid, campaign surfaces, and motion — that makes an abstract AI product legible and trustworthy.",
+      "Haptic AI needed a visual identity that felt human in a category that defaults to cold and interchangeable. We built a tactile brand system (wordmark, icon grid, campaign surfaces, and motion) that makes an abstract AI product legible and trustworthy.",
     image: "/work/haptic/haptic-cover.webp",
     alt: "Haptic",
     coverVideo: "/work/haptic/haptic-reveal.webm",
@@ -139,7 +139,7 @@ export const workItems: WorkItem[] = [
         title: "Why this, why now",
         body: body(
           "AI products are arriving faster than the visual language to describe them. Most land in the same place: gradient blobs, generic sans-serif, and a name that could belong to any startup on the block. The category has a sameness problem, and users feel it before they can name it.",
-          "Haptic AI came to us with a product that was genuinely different — but a brand that didn't yet show it. The challenge wasn't to decorate an AI company. It was to give people something to hold onto: a mark, a tone, a system that felt tactile in a space that often feels weightless.",
+          "Haptic AI came to us with a product that was genuinely different, but a brand that didn't yet show it. The challenge wasn't to decorate an AI company. It was to give people something to hold onto: a mark, a tone, a system that felt tactile in a space that often feels weightless.",
           "We started from a simple premise. If the product promises to make complex things feel within reach, the identity should do the same work before anyone opens the app.",
         ),
       },
@@ -152,8 +152,8 @@ export const workItems: WorkItem[] = [
         kind: "text",
         title: "Positioning before pixels",
         body: body(
-          "Before any marks were drawn, we mapped how people actually relate to AI tools: the curiosity, the hesitation, the moment of trust when something just works. Users weren't asking for more futuristic. They were asking for clarity — something that felt designed for them, not demoed at them.",
-          "That research shaped the positioning: Haptic as the interface between human intent and machine capability. Not a black box, not a chatbot costume — a product with a visible hand on the other side.",
+          "Before any marks were drawn, we mapped how people actually relate to AI tools: the curiosity, the hesitation, the moment of trust when something just works. Users weren't asking for more futuristic. They were asking for clarity: something that felt designed for them, not demoed at them.",
+          "That research shaped the positioning: Haptic as the interface between human intent and machine capability. Not a black box, not a chatbot costume. A product with a visible hand on the other side.",
           "The wordmark became the first expression of that idea. Custom letterforms with enough weight to feel grounded, enough openness to stay approachable. It had to work at billboard scale and favicon size without losing its character.",
         ),
       },
@@ -162,7 +162,7 @@ export const workItems: WorkItem[] = [
         title: "A system, not a logo",
         body: body(
           "Identity work that stops at a logo rarely survives contact with a real product. We built Haptic as a system: a wordmark, an icon grid for product surfaces, and campaign art that could carry the same voice into the wild.",
-          "The icon set was designed as a modular grid — each glyph readable at small sizes, consistent in stroke and corner language, flexible enough to grow with the product roadmap. The billboard treatment extended the palette and typography into a single campaign surface: bold, legible, unmistakably Haptic from across a street.",
+          "The icon set was designed as a modular grid: each glyph readable at small sizes, consistent in stroke and corner language, flexible enough to grow with the product roadmap. The billboard treatment extended the palette and typography into a single campaign surface: bold, legible, unmistakably Haptic from across a street.",
           "Every asset had to answer the same question: does this make the product feel more real, more reachable, more like something you'd actually use?",
         ),
       },
@@ -175,8 +175,8 @@ export const workItems: WorkItem[] = [
         kind: "text",
         title: "Motion as identity",
         body: body(
-          "Static marks only tell half the story for a product that lives in motion. The reveal animation became the bridge between brand and product — a short sequence that introduces the wordmark, unfolds the icon system, and lands on the hero image with the same tactile confidence as the rest of the identity.",
-          "We treated motion as a design material, not an afterthought. Timing, easing, and the order of appearance were tuned so the reveal feels intentional — like the brand is introducing itself, not loading.",
+          "Static marks only tell half the story for a product that lives in motion. The reveal animation became the bridge between brand and product, a short sequence that introduces the wordmark, unfolds the icon system, and lands on the hero image with the same tactile confidence as the rest of the identity.",
+          "We treated motion as a design material, not an afterthought. Timing, easing, and the order of appearance were tuned so the reveal feels intentional, like the brand is introducing itself, not loading.",
           "The result is an identity that works across touchpoints: a wordmark you remember, icons you recognise, campaign art that stops the scroll, and motion that ties it all together when Haptic shows up for the first time.",
         ),
       },
@@ -186,7 +186,7 @@ export const workItems: WorkItem[] = [
     slug: "notice",
     title: "Notice",
     description:
-      "Brand and digital work for Notice — a studio that builds clear, considered creative systems for clients who need presence without noise.",
+      "Brand and digital work for Notice, a studio that builds clear, considered creative systems for clients who need presence without noise.",
     image: "/work/notice/notice-cover.webp",
     alt: "Notice",
     featured: true,
@@ -205,7 +205,7 @@ export const workItems: WorkItem[] = [
     slug: "project-qaafi",
     title: "Project Qaafi",
     description:
-      "Project Qaafi — identity and digital foundations for a project that needed a clear visual voice from the start.",
+      "Project Qaafi: identity and digital foundations for a project that needed a clear visual voice from the start.",
     image: "/work/project-qaafi/project-qaafi-cover.webp",
     alt: "Project Qaafi",
     featured: true,
@@ -216,7 +216,7 @@ export const workItems: WorkItem[] = [
       {
         kind: "text",
         title: "Selected work",
-        body: "Brand and product-facing design for Project Qaafi — building a system that can grow with the project.",
+        body: "Brand and product-facing design for Project Qaafi, building a system that can grow with the project.",
       },
     ],
   },
@@ -224,7 +224,7 @@ export const workItems: WorkItem[] = [
     slug: "t-bonk",
     title: "t.Bonk",
     description:
-      "t.Bonk — visual identity and digital craft for a brand that needed to feel sharp, ownable, and ready for the feed.",
+      "t.Bonk: visual identity and digital craft for a brand that needed to feel sharp, ownable, and ready for the feed.",
     image: "/work/t-bonk/t-bonk-cover.webp",
     alt: "t.Bonk",
     coverImage: "/work/t-bonk/t-bonk-project.webp",
@@ -244,7 +244,7 @@ export const workItems: WorkItem[] = [
     slug: "perception-pod",
     title: "Perception Pod",
     description:
-      "Perception Pod — design for a product that turns perception into something you can see, share, and trust.",
+      "Perception Pod: design for a product that turns perception into something you can see, share, and trust.",
     image: "/work/perception-pod/perception-pod-cover.webp",
     alt: "Perception Pod",
     span: 5,

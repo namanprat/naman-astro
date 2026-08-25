@@ -14,7 +14,7 @@ export default function Manifesto() {
           <h1 className="manifesto_lead text-style-h2">
             I&apos;m a digital designer with a simple goal: close the gap
             between who you are and how the world sees you. Good design
-            isn&apos;t about adding more — it&apos;s knowing what to leave out.
+            isn&apos;t about adding more. It&apos;s knowing what to leave out.
           </h1>
         </div>
       </div>
