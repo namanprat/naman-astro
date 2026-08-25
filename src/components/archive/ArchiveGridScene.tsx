@@ -50,6 +50,7 @@ const FRAG = /* glsl */ `
 export default function ArchiveGridScene() {
   const ref = useRef<THREE.GridHelper>(null);
   const camera = useThree((s) => s.camera);
+  const gl = useThree((s) => s.gl);
 
   // Pointer in NDC: target updated on move, smoothed toward each frame.
   const pointerTarget = useRef(new THREE.Vector2(0, 0));
@@ -78,8 +79,12 @@ export default function ArchiveGridScene() {
 
   useEffect(() => {
     if (prefersReducedMotion()) return; // grid stays static, no glow
-    const w = () => Math.max(window.innerWidth, 1);
-    const h = () => Math.max(window.innerHeight, 1);
+    // Canvas box, not the window: the stage spans the whole screen while the
+    // window reports the height mobile Safari's chrome leaves over, and the
+    // mismatch would drag the glow away from the cursor.
+    const canvas = gl.domElement;
+    const w = () => Math.max(canvas.clientWidth, 1);
+    const h = () => Math.max(canvas.clientHeight, 1);
     const onMove = (e: PointerEvent) => {
       pointerTarget.current.set(
         (e.clientX / w()) * 2 - 1,
@@ -97,7 +102,7 @@ export default function ArchiveGridScene() {
       document.removeEventListener("mouseleave", onLeave);
       glowMaterial.dispose();
     };
-  }, [glowMaterial]);
+  }, [glowMaterial, gl]);
 
   useFrame(() => {
     const grid = ref.current;

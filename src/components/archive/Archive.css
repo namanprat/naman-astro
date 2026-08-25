@@ -48,7 +48,13 @@ html.page-archive .nav_wrap.is-menu-open .nav_grid h5 {
 
 .archive_stage {
   position: fixed;
-  inset: 0;
+  top: 0;
+  left: 0;
+  right: 0;
+  /* Full screen, not the dynamic viewport: on mobile Safari the orb should read
+     through the translucent status bar and toolbar rather than stopping at them.
+     The switcher carries the safe-area inset so the controls stay clear. */
+  height: var(--site--screen-height);
   /* Below the nav, above nothing else — the scene is the whole page. */
   z-index: 0;
   background-color: var(--dark-900);

@@ -20,12 +20,19 @@ import Layout from "@/layouts/BaseLayout.astro";
 <style>
   .not_found {
     box-sizing: border-box;
-    min-height: 100vh;
+    /* `vh` is the large viewport, so on mobile Safari it centred this block
+       against a screen taller than the one showing and pushed the link under the
+       toolbar. */
+    min-height: 100svh;
+    min-height: 100dvh;
     display: flex;
     flex-direction: column;
     justify-content: center;
     align-items: flex-start;
     padding: var(--section-space-nav-overlap) var(--site-margin);
+    padding-bottom: calc(
+      var(--section-space-nav-overlap) + var(--site--safe-area-bottom)
+    );
     gap: var(--space-4);
     max-width: 36rem;
   }
