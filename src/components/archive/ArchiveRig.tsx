@@ -32,11 +32,51 @@ export default function ArchiveRig() {
     let velX = 0;
     let velY = 0;
     let lastMoveT = 0;
+    /* Live touch points by id. A second finger turns the drag into a pinch —
+       the touch half of the wheel handler below, same orb-only gate and same
+       zoom clamp, so both inputs land on one behaviour. */
+    const points = new Map<number, { x: number; y: number }>();
+    let pinching = false;
+    let pinchStartSpan = 0;
+    let pinchStartZoom = 0;
 
     const orbMode = () => rigState.morph < 0.05 && !rigState.isMorphing;
     const gridMode = () => rigState.morph > 0.95 && !rigState.isMorphing;
 
+    const pinchSpan = () => {
+      const [a, b] = [...points.values()];
+      if (!a || !b) return 0;
+      return Math.max(Math.hypot(a.x - b.x, a.y - b.y), 1);
+    };
+
+    const startPinch = () => {
+      const span = pinchSpan();
+      if (!span) return;
+      pinching = true;
+      pinchStartSpan = span;
+      pinchStartZoom = rigState.zoom;
+      // Abandon the orbit the first finger opened. Picking it back up after the
+      // pinch would apply every pixel the fingers travelled as one spin.
+      down = false;
+      rigState.isDragging = false;
+      rigState.isGridPanning = false;
+    };
+
     const onDown = (e: PointerEvent) => {
+      if (e.pointerType === "touch") {
+        // A primary touch means nothing else is down, so anything still in the
+        // map is a lift we never saw — drop it rather than pinch against a
+        // finger that is long gone.
+        if (e.isPrimary) {
+          points.clear();
+          pinching = false;
+        }
+        points.set(e.pointerId, { x: e.clientX, y: e.clientY });
+        if (points.size > 1) {
+          if (points.size === 2 && orbMode()) startPinch();
+          return;
+        }
+      }
       if (rigState.isMorphing) return;
       down = true;
       isTouch = e.pointerType === "touch";
@@ -55,6 +95,23 @@ export default function ArchiveRig() {
     };
 
     const onMove = (e: PointerEvent) => {
+      if (e.pointerType === "touch" && points.has(e.pointerId)) {
+        points.set(e.pointerId, { x: e.clientX, y: e.clientY });
+      }
+
+      if (pinching) {
+        if (!orbMode()) return;
+        const span = pinchSpan();
+        if (!span) return;
+        // Spreading the fingers pulls the camera in, so the ratio inverts.
+        rigState.zoom = clamp(
+          pinchStartZoom * (pinchStartSpan / span),
+          ARCHIVE_CONFIG.globeZoomMin,
+          ARCHIVE_CONFIG.globeZoomMax,
+        );
+        return;
+      }
+
       if (!down || rigState.isMorphing) return;
       const dx = e.clientX - startX;
       const dy = e.clientY - startY;
@@ -99,6 +156,15 @@ export default function ArchiveRig() {
     };
 
     const onUp = (e: PointerEvent) => {
+      if (e.pointerType === "touch") {
+        points.delete(e.pointerId);
+        // Hold the pinch until the last finger is up. Handing a leftover finger
+        // back to the orbit would spin the orb from a stale anchor.
+        if (pinching) {
+          if (points.size === 0) pinching = false;
+          return;
+        }
+      }
       if (!down) return;
       down = false;
       // Fling: project the release velocity forward; the idle damp in useFrame
