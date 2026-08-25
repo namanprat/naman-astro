@@ -11,6 +11,7 @@
     grid-column: calc(1 * var(--_responsive---large) + 1) / span calc(10 * var(--_responsive---large) + 12 * (1 - var(--_responsive---large)));
     display: grid;
     grid-template-columns: repeat(calc(3 - 2 * var(--_responsive---small)), minmax(0, 1fr));
+    align-items: stretch;
     gap: var(--site-gutter);
     margin: 0;
     padding: 0;
@@ -28,30 +29,36 @@
     padding: var(--space-4);
     display: flex;
     flex-direction: column;
-    justify-content: space-between;
+    align-items: center;
+    gap: var(--space-3);
     text-align: center;
     overflow: clip;
+    border-radius: var(--radius-main);
+    background-color: var(--dark-900);
+    color: var(--light-100);
+  }
+
+  .process_card.is-accent {
     background-color: var(--brand-500);
     color: var(--dark-900);
   }
 
+  .process_card_media {
+    position: relative;
+    flex: 1 1 auto;
+    min-height: 0;
+    width: 100%;
+  }
+
   .process_card_title {
     margin: 0;
-    color: inherit;
-  }
-
-  .process_card_foot {
-    display: flex;
-    flex-direction: column;
-    gap: var(--space-3);
-  }
-
-  .process_card_index {
+    flex: none;
     color: inherit;
   }
 
   .process_card_copy {
     margin: 0;
+    flex: none;
     color: inherit;
   }
 }
