@@ -62,7 +62,7 @@ type Grid = {
 const BRUSH_RADIUS = 7;
 /** Fade window. Binary on/off at 1.1s felt sticky; this matches the fluid's
  *  dissipation beat more closely. */
-const LIFE_MS = 520;
+const LIFE_MS = 720;
 /** Cap interpolated stamps so a huge pointer jump cannot hitch a frame. */
 const MAX_STROKE_STEPS = 48;
 /** px of scroll velocity → 0–1 of a sweep across the grid. */
@@ -244,7 +244,7 @@ export default function AsciiField({
   far = 100,
   children,
 }: AsciiFieldProps) {
-  const { scene, size, gl, events } = useThree();
+  const { scene, size, pointer, gl, events } = useThree();
   const materialRef = useRef<THREE.ShaderMaterial>(null);
   const [ready, setReady] = useState(false);
   const reducedMotion = useMemo(() => prefersReducedMotion(), []);
@@ -359,6 +359,7 @@ export default function AsciiField({
   const hoveringRef = useRef(false);
   const pointerNdc = useRef({ x: 0, y: 0 });
   const lastStamp = useRef<{ x: number; y: number } | null>(null);
+  const lastR3f = useRef<{ x: number; y: number } | null>(null);
   const highlightUntil = useRef<Float32Array>(new Float32Array(0));
   const highlightPixels = useRef<Uint8Array>(new Uint8Array(4));
   const liveCells = useRef<number[]>([]);
@@ -413,7 +414,7 @@ export default function AsciiField({
       };
     };
 
-    const onMove = (event: PointerEvent) => {
+    const onMove = (event: MouseEvent) => {
       const inside = contains(event.clientX, event.clientY);
       if (!inside && !hoveringRef.current) return;
       hoveringRef.current = inside;
@@ -425,6 +426,9 @@ export default function AsciiField({
       writeNdc(event.clientX, event.clientY);
       lastStamp.current = null;
     };
+    const onEnter = () => {
+      hoveringRef.current = true;
+    };
     const onUp = (event: PointerEvent) => {
       if (event.pointerType !== "mouse") hoveringRef.current = false;
     };
@@ -433,16 +437,19 @@ export default function AsciiField({
       lastStamp.current = null;
     };
 
-    /* Window-level move, same as the homepage fluid: R3F's `pointer` only
-       updates when its event manager sees a move, and OrbitControls can
-       swallow those. */
+    /* pointermove *and* mousemove: some drivers only fire one, and the
+       homepage fluid listens on window for the same reason. */
     window.addEventListener("pointermove", onMove, { passive: true });
+    window.addEventListener("mousemove", onMove, { passive: true });
+    el.addEventListener("pointerenter", onEnter);
     el.addEventListener("pointerdown", onDown);
     el.addEventListener("pointerleave", onLeave);
     window.addEventListener("pointerup", onUp);
     window.addEventListener("pointercancel", onUp);
     return () => {
       window.removeEventListener("pointermove", onMove);
+      window.removeEventListener("mousemove", onMove);
+      el.removeEventListener("pointerenter", onEnter);
       el.removeEventListener("pointerdown", onDown);
       el.removeEventListener("pointerleave", onLeave);
       window.removeEventListener("pointerup", onUp);
@@ -509,19 +516,31 @@ export default function AsciiField({
       const pixels = highlightPixels.current;
       const live = liveCells.current;
 
-      if (hoveringRef.current) {
-        const { x, y } = pointerNdc.current;
+      let r3fMoved = false;
+      if (!lastR3f.current) {
+        lastR3f.current = { x: pointer.x, y: pointer.y };
+      } else if (
+        lastR3f.current.x !== pointer.x ||
+        lastR3f.current.y !== pointer.y
+      ) {
+        lastR3f.current = { x: pointer.x, y: pointer.y };
+        r3fMoved = true;
+      }
+
+      if (hoveringRef.current || r3fMoved) {
+        const px = pointer.x;
+        const py = pointer.y;
         const prev = lastStamp.current;
         if (!prev) {
-          const col = Math.floor(((x + 1) / 2) * cols);
-          const row = Math.floor(((y + 1) / 2) * rows);
+          const col = Math.floor(((px + 1) / 2) * cols);
+          const row = Math.floor(((py + 1) / 2) * rows);
           if (col >= 0 && row >= 0 && col < cols && row < rows) {
             stampDisk(until, live, cols, rows, col, row, now);
           }
-          lastStamp.current = { x, y };
-        } else if (prev.x !== x || prev.y !== y) {
-          stampSegment(until, live, cols, rows, prev.x, prev.y, x, y, now);
-          lastStamp.current = { x, y };
+          lastStamp.current = { x: px, y: py };
+        } else if (prev.x !== px || prev.y !== py) {
+          stampSegment(until, live, cols, rows, prev.x, prev.y, px, py, now);
+          lastStamp.current = { x: px, y: py };
         }
       }
 
