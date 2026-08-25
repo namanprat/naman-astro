@@ -20,7 +20,9 @@ import "@/lib/site/eases";
 
 import AboutContent from "./about/AboutContent";
 
-const BUST_MOUNT_IDLE_MS = 350;
+const SLIDE_S = 0.45;
+/* After the card lands — mounting WebGL mid-slide hitchs the tween. */
+const BUST_MOUNT_DELAY_MS = 500;
 const BUST_FADE_IN_S = 0.6;
 const BUST_FADE_FALLBACK_MS = 5000;
 
@@ -65,23 +67,8 @@ function hideChrome(
 }
 
 function scheduleAboutBustMount(onMount: () => void): () => void {
-  let cancelled = false;
-  const run = () => {
-    if (cancelled) return;
-    onMount();
-  };
-  if (typeof requestIdleCallback === "function") {
-    const id = requestIdleCallback(run, { timeout: BUST_MOUNT_IDLE_MS });
-    return () => {
-      cancelled = true;
-      cancelIdleCallback(id);
-    };
-  }
-  const id = window.setTimeout(run, 0);
-  return () => {
-    cancelled = true;
-    window.clearTimeout(id);
-  };
+  const id = window.setTimeout(onMount, BUST_MOUNT_DELAY_MS);
+  return () => window.clearTimeout(id);
 }
 
 export default function AboutPanel({ open, mode, onClose }: AboutPanelProps) {
@@ -100,16 +87,26 @@ export default function AboutPanel({ open, mode, onClose }: AboutPanelProps) {
   useLayoutEffect(() => {
     if (!open) return;
     const panel = panelRef.current;
+    const surface = surfaceRef.current;
     if (!panel) return;
+
+    /* Before paint so desktop CSS can pin the nav without a frame of the bar
+       sitting in the hero while the card starts sliding. Left on through the
+       exit tween — hideChrome drops it when the reverse finishes. */
+    panel.classList.add("is-open");
 
     if (!prevOpenRef.current) {
       const lead = panel.querySelector<HTMLElement>(".about_panel_lead");
       const leadGooey = lead ? prepareGooey(lead) : null;
       if (leadGooey) parkGooey(leadGooey);
+      /* Park the card off-screen before the first open paint. Otherwise
+         `is-open` reveals it in place, then the entrance tween yanks it up. */
+      if (mode !== "inMenu" && surface) {
+        gsap.set(surface, { top: "-100vh" });
+      }
     }
 
     if (mode !== "inMenu") return;
-    panel.classList.add("is-open");
     /* Media only. The copy blocks no longer slide as wholes — Menu splits them
        into lines and parks those, so translating the block too would carry the
        already-parked lines a second screen down. The canvas dissolves rather
@@ -155,42 +152,40 @@ export default function AboutPanel({ open, mode, onClose }: AboutPanelProps) {
          not teleport the card off-screen and slide it in again. */
       if (!wasOpen) {
         tlRef.current?.kill();
-        const tl = gsap.timeline({
-          onReverseComplete: () => {
-            hideChrome(panel, surface, backdrop);
-          },
-        });
-        tl.fromTo(
-          backdrop,
-          { autoAlpha: 0 },
-          { autoAlpha: 1, duration: 0.45, ease: "power2.out" },
-          0,
-        );
-        /* yPercent on the surface (frosted card), not the padded shell.
-           Overflow lives on the inner scroller so the slide isn't clipped
-           and frost can sample the page. Force y:0 so any previously parsed
-           pixel translate can't keep the card parked above. */
-        tl.fromTo(
-          surface,
-          { top: "-100vh" },
-          { top: "0", duration: 0.6, ease: "introHop", force3D: false },
-          0,
-        );
-        /* Its own timeline, deliberately: `tl` gets reversed on close, and a
-           reversed gooey reveal re-applies the threshold filter to the whole
-           heading — which read as the entire panel going soft on the way out.
-           The lead re-parks on the next open, so the entrance is unchanged. */
-        if (leadGooey) addGooeyReveal(gsap.timeline(), leadGooey, 0.15);
-        tlRef.current = tl;
+        if (prefersReducedMotion()) {
+          gsap.set(backdrop, { autoAlpha: 1 });
+          gsap.set(surface, { top: "0" });
+          if (leadGooey) addGooeyReveal(gsap.timeline(), leadGooey, 0);
+          tlRef.current = null;
+        } else {
+          const tl = gsap.timeline({
+            onReverseComplete: () => {
+              hideChrome(panel, surface, backdrop);
+            },
+          });
+          tl.fromTo(
+            backdrop,
+            { autoAlpha: 0 },
+            { autoAlpha: 1, duration: SLIDE_S, ease: "power2.out" },
+            0,
+          );
+          /* `top`, not transform: a translate makes the frost sample the empty
+             panel instead of the page. */
+          tl.fromTo(
+            surface,
+            { top: "-100vh" },
+            { top: "0", duration: SLIDE_S, ease: "hop", force3D: false },
+            0,
+          );
+          /* Own timeline: reversing the card must not re-apply the gooey
+             threshold or the heading goes soft on the way out. */
+          if (leadGooey) addGooeyReveal(gsap.timeline(), leadGooey, 0.1);
+          tlRef.current = tl;
+        }
       }
       return;
     }
 
-    /* Reversing is what keeps the card locked to the nav: Menu closes the nav by
-       reversing its own 0.6s introHop tween, so the card has to come back up the
-       same way or the two drift apart. A hand-written exit tween cannot match a
-       reversed ease. The gooey lead is deliberately not in this timeline (see
-       the entrance), so reversing moves y and the scrim — nothing blurs. */
     if (tlRef.current) {
       tlRef.current.reverse();
     } else {

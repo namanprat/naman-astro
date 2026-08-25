@@ -107,9 +107,9 @@ const SECTION_IDS = ["hero", "team", "contact"];
 
 /**
  * Where the chrome switches between the compact mobile nav and the desktop
- * stacks, and with it the About panel's `ride` vs `padded` mode. Tablet
- * portrait sits above it, so this is 48rem — deliberately *not* the site's
- * 64rem grid cut, which still hands this band 8 columns. Mirrored by
+ * stacks, and with it the About panel's overlay (`ride`) vs in-menu mode.
+ * Tablet portrait sits above it, so this is 48rem — deliberately *not* the
+ * site's 64rem grid cut, which still hands this band 8 columns. Mirrored by
  * `Menu.css`'s `< 48rem` block and `AboutPanel.css`'s `>= 48rem` block.
  */
 export const DESKTOP_NAV_MQ = "(width >= 48rem)";
@@ -199,8 +199,6 @@ export default function Menu({ initialPathname = "/" }: MenuProps) {
   const pendingPathRef = useRef<string | null>(null);
   const aboutModeRef = useRef(aboutMode);
   aboutModeRef.current = aboutMode;
-  const aboutOpenRef = useRef(aboutOpen);
-  aboutOpenRef.current = aboutOpen;
   const aboutMenuSeqRef = useRef(0);
   const contactClusterRef = useRef<HTMLDivElement>(null);
   const contactTlRef = useRef<gsap.core.Timeline | null>(null);
@@ -269,90 +267,6 @@ export default function Menu({ initialPathname = "/" }: MenuProps) {
       registerAboutPanel(null);
     };
   }, []);
-
-  const aboutNavTlRef = useRef<gsap.core.Timeline | null>(null);
-
-  useEffect(() => {
-    const nav = navContainerRef.current;
-    if (!nav) return;
-
-    if (aboutOpen && aboutMode !== "ride") {
-      setAboutMode("ride");
-      return;
-    }
-
-    if (!aboutOpen || aboutMode !== "ride") {
-      if (aboutNavTlRef.current) {
-        aboutNavTlRef.current.reverse();
-      } else if (!isOpen) {
-        gsap.set(nav, { clearProps: "transform" });
-      }
-      return;
-    }
-
-    const panel = document.querySelector<HTMLElement>(".about_panel");
-    if (!panel) return;
-
-    aboutNavTlRef.current?.kill();
-    gsap.set(nav, { y: 0 });
-
-    /*
-      Ride to the card's visible bottom edge, not the padded panel shell.
-      Same gutter as hero logo → nav: nav_grid padding-block sits under this.
-      cardBottom strips the panel's bottom gutter padding so we dock to the
-      accent surface, matching the hero lockup → nav air.
-    */
-    const cardBottom = (el: HTMLElement) =>
-      el.offsetHeight - (parseFloat(getComputedStyle(el).paddingBottom) || 0);
-
-    const dockNav = () => {
-      /* Mobile chrome puts extra padding-top on the wrap (SVG lockup slot).
-         Dock the grid, not the wrap, or the links land a mark-height too low. */
-      const anchor = isDesktopNav
-        ? nav
-        : (nav.querySelector<HTMLElement>(".nav_grid") ?? nav);
-      const navTop = anchor.getBoundingClientRect().top;
-      const panelTop = panel.getBoundingClientRect().top;
-      return Math.max(0, panelTop + cardBottom(panel) - navTop);
-    };
-
-    const targetY = dockNav();
-
-    const tl = gsap.timeline({
-      onReverseComplete: () => {
-        gsap.set(nav, { clearProps: "transform" });
-        /* The ride's `y` transform doesn't touch nav's size or the root
-           class, so the `--nav-offset` effect's ResizeObserver/MutationObserver
-           never re-fire once it clears. Nudge its `window resize` listener so
-           `is-stuck` (and `--nav-offset`) get re-measured against the real,
-           untransformed position — otherwise closing About while scrolled can
-           leave `.nav_fade` stuck hidden even though the bar is genuinely
-           pinned to the top. */
-        window.dispatchEvent(new Event("resize"));
-      },
-    });
-    tl.to(nav, {
-      y: targetY,
-      duration: 0.6,
-      ease: "introHop",
-      onComplete: () => window.dispatchEvent(new Event("resize")),
-    });
-    aboutNavTlRef.current = tl;
-
-    // Panel height is content-driven — keep Close docked to the card bottom.
-    const ro = new ResizeObserver(() => {
-      if (!aboutNavTlRef.current || aboutNavTlRef.current.isActive()) return;
-      gsap.set(nav, { y: 0 });
-      gsap.set(nav, { y: dockNav() });
-    });
-    ro.observe(panel);
-    const surface = panel.querySelector(".about_panel_surface");
-    if (surface) ro.observe(surface);
-
-    return () => {
-      ro.disconnect();
-    };
-  }, [aboutOpen, aboutMode, isDesktopNav, isOpen]);
 
   useEffect(() => {
     const chrome = heroChromeRef.current;
@@ -426,6 +340,12 @@ export default function Menu({ initialPathname = "/" }: MenuProps) {
         "--nav-offset",
         `${rect.bottom}px`,
       );
+      /* Height, not viewport bottom: About's desktop overlay pads by this so
+         the card clears the bar without tracking a transformed `rect.bottom`. */
+      document.documentElement.style.setProperty(
+        "--nav-height",
+        `${nav.offsetHeight}px`,
+      );
       /* Sticky bar has reached the top. Home keys its readability fade off
          this; routes that pin the bar with `position: fixed` read stuck from
          the start. */
@@ -456,6 +376,7 @@ export default function Menu({ initialPathname = "/" }: MenuProps) {
       window.removeEventListener("scroll", setOffset);
       window.removeEventListener("resize", setOffset);
       unsub?.();
+      document.documentElement.style.removeProperty("--nav-height");
     };
   }, [lenis]);
 
@@ -547,7 +468,6 @@ export default function Menu({ initialPathname = "/" }: MenuProps) {
     const nav = navContainerRef.current;
     if (!nav) return;
     gsap.killTweensOf(nav);
-    if (aboutOpenRef.current && aboutModeRef.current === "ride") return;
     gsap.set(nav, { clearProps: "transform" });
   };
 

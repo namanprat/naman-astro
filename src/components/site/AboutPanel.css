@@ -268,20 +268,19 @@ html.theme-light .about_panel.is-in-menu {
   row-gap: var(--space-8);
 }
 
-/* The ride/padded card chrome. Cut at 48rem with the nav (Menu.tsx's
+/* Desktop overlay chrome. Cut at 48rem with the nav (Menu.tsx's
    DESKTOP_NAV_MQ), not at the site's 64rem grid cut — the 8-col content map
    further down already covers the 48–64rem band. */
 @media (width >= 48rem) {
   .about_panel:not(.is-in-menu) {
     padding: 0;
-    /* Ride mode (desktop About) is not --padded. Side gap is --about--inset
-       (margin − gutter); mirror it on top. Do not use --nav-offset here: it
-       tracks the transformed nav as it docks to the card and would feed back. */
-    padding-top: var(--about--inset);
+    /* Bar stays pinned at the top of the viewport; clear it with its height
+       (Menu.tsx `--nav-height`), not `--nav-offset` (viewport bottom). */
+    padding-top: calc(var(--nav-height, 0px) + var(--about--inset));
   }
 
   .about_panel.is-padded:not(.is-in-menu) {
-    padding-top: calc(var(--nav-offset, var(--site--nav-offset)) + var(--about--inset));
+    padding-top: calc(var(--nav-height, var(--nav-offset, 0px)) + var(--about--inset));
   }
 
   .about_panel:not(.is-in-menu) .about_panel_surface {
