@@ -325,7 +325,10 @@ export default function AsciiField({
   );
 
   useEffect(() => {
-    uniforms.uColor.value.copy(shaderColor(ink));
+    const color = shaderColor(ink);
+    uniforms.uColor.value.copy(color);
+    const material = materialRef.current;
+    if (material) material.uniforms.uColor.value.copy(color);
   }, [uniforms, ink]);
 
   useEffect(() => {

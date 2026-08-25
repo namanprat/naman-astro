@@ -12,7 +12,7 @@ import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import { workItems } from "@/content/work";
 import { prefersReducedMotion } from "@/lib/site/prefersReducedMotion";
-import { useThemeInk } from "@/lib/site/ascii/useThemeInk";
+import { useThemeInk, useThemeLight } from "@/lib/site/ascii/useThemeInk";
 import AsciiField from "./ascii/AsciiField";
 
 gsap.registerPlugin(ScrollTrigger);
@@ -93,6 +93,7 @@ function buildAtlasFromImages(
   gl: WebGLRenderingContext,
   images: HTMLImageElement[],
   gapPct: number,
+  invert: boolean,
 ): { texture: THREE.CanvasTexture; gapRatio: number } {
   const hardwareLimit = gl.getParameter(gl.MAX_TEXTURE_SIZE) as number;
   const isMobile = window.innerWidth < 768;
@@ -122,6 +123,16 @@ function buildAtlasFromImages(
     const xPos = Math.floor(i * scaledSlot);
     const drawW = Math.floor(scaledTile);
     drawImageCover(ctx, img, xPos, 0, drawW, totalH);
+    if (invert) {
+      // Light theme flips the covers. `difference` against white inverts what
+      // is already on the canvas; it is painted per tile rather than over the
+      // whole atlas so the transparent gaps between tiles stay transparent.
+      // Preferred over `ctx.filter`, which Safari only gained in 17.
+      ctx.globalCompositeOperation = "difference";
+      ctx.fillStyle = "#ffffff";
+      ctx.fillRect(xPos, 0, drawW, totalH);
+      ctx.globalCompositeOperation = "source-over";
+    }
   });
 
   const texture = new THREE.CanvasTexture(atlas);
@@ -166,6 +177,7 @@ function CylinderStrip() {
   const [gapRatio, setGapRatio] = useState(0);
   const [texture, setTexture] = useState<THREE.CanvasTexture | null>(null);
 
+  const themeLight = useThemeLight();
   const reducedMotion = useMemo(() => prefersReducedMotion(), []);
   const baseDims = useMemo(
     () => getResponsiveDimensions(size.width || 1024, 0, STRIP.radius),
@@ -195,13 +207,19 @@ function CylinderStrip() {
   useEffect(() => {
     if (!imagesReady || !imagesRef.current) return;
     const ctx = gl.getContext() as WebGLRenderingContext;
-    const photo = buildAtlasFromImages(ctx, imagesRef.current, STRIP.gapPct);
+    const photo = buildAtlasFromImages(
+      ctx,
+      imagesRef.current,
+      STRIP.gapPct,
+      themeLight,
+    );
     photoTex.current?.dispose();
     photoTex.current = photo.texture;
     setTexture(photo.texture);
     setGapRatio(photo.gapRatio);
     setReady(true);
-  }, [imagesReady, gl]);
+    // Rebaked on toggle: the inversion is burned into the atlas.
+  }, [imagesReady, gl, themeLight]);
 
   useEffect(() => {
     if (reducedMotion) return;

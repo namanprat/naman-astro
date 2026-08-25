@@ -23,3 +23,22 @@ export function useThemeInk(fallback = "#8b8b8b"): string {
 
   return ink;
 }
+
+/** Same one-attribute subscription, for surfaces that only need light vs dark. */
+export function useThemeLight(): boolean {
+  const [light, setLight] = useState(false);
+
+  useEffect(() => {
+    const apply = () =>
+      setLight(document.documentElement.classList.contains("theme-light"));
+    apply();
+    const mo = new MutationObserver(apply);
+    mo.observe(document.documentElement, {
+      attributes: true,
+      attributeFilter: ["class"],
+    });
+    return () => mo.disconnect();
+  }, []);
+
+  return light;
+}
