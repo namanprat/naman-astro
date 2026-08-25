@@ -1,5 +1,4 @@
 import { useEffect, useState } from "react";
-import { SWATCH_LIGHT } from "@/lib/site/siteColors";
 import ProcessCardCanvas, {
   type ProcessCardShape,
 } from "./ProcessCardCanvas";
@@ -17,31 +16,29 @@ const CARDS: ReadonlyArray<{
   title: string;
   description: string;
   shape: ProcessCardShape;
-  accent?: boolean;
 }> = [
   {
     title: "Uncover story",
     description:
-      "We dig into your brand and surface what makes you irreplaceable. That becomes sharp positioning and a website strategy that connects in seconds.",
+      "We surface what makes you irreplaceable. Then we shape the strategy.",
     shape: "icosahedron",
   },
   {
     title: "Shape presence",
     description:
-      "With the narrative locked, we design a brand and website that feels premium and signals credibility. Your audience gets one clear reason to lean in and act.",
+      "We design a brand and site that feels premium. One reason to lean in.",
     shape: "box",
-    accent: true,
   },
   {
     title: "Send it",
     description:
-      "The site goes live as a long-term asset that turns attention into opportunity. It attracts the clients you are built for, and grows with you.",
+      "The site goes live as a long-term asset. It grows with you.",
     shape: "torus",
   },
 ];
 
-/** Matches `--dark-900` so accent glyphs sit on the same ink as the type. */
-const ACCENT_INK = "#101010";
+/** Matches `--dark-900` so glyphs sit on the same ink as the type. */
+const CARD_INK = "#101010";
 
 export default function Process() {
   const [inView, setInView] = useState(false);
@@ -75,14 +72,11 @@ export default function Process() {
 
           <ul className="process_cards">
             {CARDS.map((card) => (
-              <li
-                className={`process_card${card.accent ? " is-accent" : ""}`}
-                key={card.title}
-              >
+              <li className="process_card" key={card.title}>
                 <div className="process_card_media">
                   <ProcessCardCanvas
                     shape={card.shape}
-                    ink={card.accent ? ACCENT_INK : SWATCH_LIGHT}
+                    ink={CARD_INK}
                     active={inView}
                   />
                 </div>

@@ -33,12 +33,6 @@
     gap: var(--space-3);
     text-align: center;
     overflow: clip;
-    border-radius: var(--radius-main);
-    background-color: var(--dark-900);
-    color: var(--light-100);
-  }
-
-  .process_card.is-accent {
     background-color: var(--brand-500);
     color: var(--dark-900);
   }
