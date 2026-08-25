@@ -507,6 +507,10 @@ export default function AsciiField({
       u.uJitter.value = tuning.jitter;
       u.uNoise.value = reducedMotion ? 0 : tuning.noise;
       if (!reducedMotion) u.uTime.value += dt;
+      if (trailOn) {
+        u.uHasHighlight.value = 1;
+        u.uHighlight.value = highlightTex;
+      }
     }
 
     if (trailOn) {
