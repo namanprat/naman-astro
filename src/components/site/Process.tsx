@@ -1,32 +1,59 @@
+import { useEffect, useState } from "react";
+import ProcessCardCanvas, {
+  type ProcessCardShape,
+} from "./ProcessCardCanvas";
 import "./Process.css";
 
 /**
- * Markup only. The section heading is an ordinary `h2` and each card title an
- * `h3`, so both are picked up by the site-wide gooey entrance in
- * `lib/site/gooeyReveal.ts` — `.process` is absent from that module's SKIP list
- * for exactly this reason. The heading's hanging first line is the empty
- * `.studio_title_indent` box, not a `text-indent` — being ordinary inline
- * content, it wraps and splits along with the rest of the heading.
+ * The section heading is an ordinary `h2` and each card title an `h3`, so both
+ * are picked up by the site-wide gooey entrance in `lib/site/gooeyReveal.ts` —
+ * `.process` is absent from that module's SKIP list for exactly this reason.
+ * The heading's hanging first line is the empty `.studio_title_indent` box,
+ * not a `text-indent` — being ordinary inline content, it wraps and splits
+ * along with the rest of the heading.
  */
-const CARDS = [
+const CARDS: ReadonlyArray<{
+  title: string;
+  description: string;
+  shape: ProcessCardShape;
+}> = [
   {
-    title: "Uncover your story",
+    title: "Uncover story",
     description:
-      "We dig into your brand, surface what makes you irreplaceable, and shape it into sharp positioning and a website strategy that connects in seconds.",
+      "We surface what makes you irreplaceable. Then we shape the strategy.",
+    shape: "icosahedron",
   },
   {
-    title: "Shape the presence",
+    title: "Shape presence",
     description:
-      "With the narrative locked, we design a brand and website that feels premium, signals credibility, and gives your audience one clear reason to lean in and act.",
+      "We design a brand and site that feels premium. One reason to lean in.",
+    shape: "box",
   },
   {
-    title: "Send it into the world",
+    title: "Send it",
     description:
-      "The site goes live as a long-term asset that turns attention into opportunity, attracts the clients you're built for, and grows with you.",
+      "The site goes live as a long-term asset. It grows with you.",
+    shape: "torus",
   },
 ];
 
+/** Matches `--dark-900` so glyphs sit on the same ink as the type. */
+const CARD_INK = "#101010";
+
 export default function Process() {
+  const [inView, setInView] = useState(false);
+
+  useEffect(() => {
+    const el = document.getElementById("process");
+    if (!el) return;
+    const io = new IntersectionObserver(
+      ([entry]) => setInView(entry.isIntersecting),
+      { rootMargin: "20% 0px", threshold: 0 },
+    );
+    io.observe(el);
+    return () => io.disconnect();
+  }, []);
+
   return (
     <section
       className="process_wrap studio_section"
@@ -44,19 +71,21 @@ export default function Process() {
           </div>
 
           <ul className="process_cards">
-            {CARDS.map((card, i) => (
+            {CARDS.map((card) => (
               <li className="process_card" key={card.title}>
+                <div className="process_card_media">
+                  <ProcessCardCanvas
+                    shape={card.shape}
+                    ink={CARD_INK}
+                    active={inView}
+                  />
+                </div>
                 <h3 className="process_card_title text-style-h3">
                   {card.title}
                 </h3>
-                <div className="process_card_foot">
-                  <span className="process_card_index text-style-mono">
-                    {`0${i + 1} / 0${CARDS.length}`}
-                  </span>
-                  <p className="process_card_copy text-style-main">
-                    {card.description}
-                  </p>
-                </div>
+                <p className="process_card_copy text-style-main">
+                  {card.description}
+                </p>
               </li>
             ))}
           </ul>

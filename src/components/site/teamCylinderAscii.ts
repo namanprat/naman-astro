@@ -104,10 +104,11 @@ export function readThemeInk(): string {
   return color || "#8b8b8b";
 }
 
-export async function buildDufornAsciiAtlas(): Promise<{
-  texture: THREE.CanvasTexture;
-  glyphCount: number;
-}> {
+type AtlasBake = { canvas: HTMLCanvasElement; glyphCount: number };
+
+let bakePromise: Promise<AtlasBake> | null = null;
+
+async function bakeDufornAsciiAtlas(): Promise<AtlasBake> {
   const px = Math.round(CELL * 0.72);
   await (document.fonts?.load(`${px}px "Duforn Mono"`) ?? Promise.resolve());
 
@@ -155,11 +156,40 @@ export async function buildDufornAsciiAtlas(): Promise<{
     ctx.fillText(ch, i * cell + cell / 2, cell / 2);
   }
 
-  const texture = new THREE.CanvasTexture(canvas);
+  return { canvas, glyphCount: n };
+}
+
+function textureFromBake(bake: AtlasBake): THREE.CanvasTexture {
+  const texture = new THREE.CanvasTexture(bake.canvas);
   texture.generateMipmaps = false;
   texture.minFilter = THREE.LinearFilter;
   texture.magFilter = THREE.LinearFilter;
   texture.needsUpdate = true;
+  return texture;
+}
 
-  return { texture, glyphCount: n };
+/**
+ * Shared Duforn bake, new CanvasTexture per caller.
+ * Each R3F Canvas has its own WebGL context, so they cannot share a Texture
+ * object — only the source canvas. Team + Process cards hit this once.
+ */
+export async function getDufornAsciiAtlas(): Promise<{
+  texture: THREE.CanvasTexture;
+  glyphCount: number;
+}> {
+  try {
+    bakePromise ??= bakeDufornAsciiAtlas();
+    const bake = await bakePromise;
+    return { texture: textureFromBake(bake), glyphCount: bake.glyphCount };
+  } catch (err) {
+    bakePromise = null;
+    throw err;
+  }
+}
+
+export async function buildDufornAsciiAtlas(): Promise<{
+  texture: THREE.CanvasTexture;
+  glyphCount: number;
+}> {
+  return getDufornAsciiAtlas();
 }
