@@ -622,7 +622,9 @@ html:not(:has(.hero)) .name_hero {
     width: 100%;
     padding-top: var(--lockup-top);
   }
+}
 
+@media (width >= 48rem) {
   /* Pin the bar to the viewport while the desktop About card is up (including
      the exit slide). No GSAP dock — the lockup stays put behind the overlay. */
   html:has(.about_panel.is-open:not(.is-in-menu)) .nav_wrap {
