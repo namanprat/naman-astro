@@ -19,20 +19,18 @@ import {
   ASCII_FIELD_FRAG,
   ASCII_FIELD_VERT,
 } from "@/lib/site/ascii/asciiFieldShader";
+import { ensureAsciiGui } from "@/lib/site/ascii/asciiGui";
+import {
+  getAsciiTuning,
+  subscribeAsciiTuning,
+  type AsciiSurface,
+} from "@/lib/site/ascii/asciiTuning";
 
 type AsciiFieldProps = {
-  /** Glyph rows across the short axis. Columns follow from the aspect. */
-  density: number;
+  /** Which entry of `asciiTuning` drives the look, and which GUI folder. */
+  surface: AsciiSurface;
   /** Glyph colour. A literal, not a token — see the per-surface notes. */
   ink: string;
-  /** Archive's polar re-radius exponent. 1 is off; below 1 fisheyes the grid. */
-  warp?: number;
-  /** Brightness curve before the glyph lookup. Archive used 1.2. */
-  gamma?: number;
-  /** Per-cell brightness dither, so flat areas don't band. Archive used 0.02. */
-  jitter?: number;
-  /** Per-cell flicker, 0–1. Forced to 0 under reduced motion. */
-  noise?: number;
   /** Offscreen camera. Defaults frame a ~2-unit subject. */
   fov?: number;
   cameraPosition?: [number, number, number];
@@ -97,12 +95,8 @@ function buildGrid(density: number, aspect: number): Grid {
 }
 
 export default function AsciiField({
-  density,
+  surface,
   ink,
-  warp = 1,
-  gamma = 1.2,
-  jitter = 0.02,
-  noise = 0,
   fov = 45,
   cameraPosition = [0, 0, 4],
   near = 0.1,
@@ -113,6 +107,17 @@ export default function AsciiField({
   const materialRef = useRef<THREE.ShaderMaterial>(null);
   const [ready, setReady] = useState(false);
   const reducedMotion = useMemo(() => prefersReducedMotion(), []);
+
+  // ponytail: the live object, mutated in place by the GUI. Only `density`
+  // rebuilds anything, so that is the one value mirrored into React state; the
+  // rest are read straight off it in the frame loop.
+  const tuning = useMemo(() => getAsciiTuning(surface), [surface]);
+  const [density, setDensity] = useState(tuning.density);
+
+  useEffect(() => {
+    void ensureAsciiGui(surface);
+    return subscribeAsciiTuning(surface, () => setDensity(tuning.density));
+  }, [surface, tuning]);
 
   const offscreen = useMemo(() => new THREE.Scene(), []);
 
@@ -163,23 +168,20 @@ export default function AsciiField({
       uAtlas: { value: null as THREE.Texture | null },
       uGlyphCount: { value: 1 },
       uColor: { value: shaderColor(ink) },
-      uWarp: { value: warp },
-      uGamma: { value: gamma },
-      uJitter: { value: jitter },
+      uWarp: { value: tuning.warp },
+      uGamma: { value: tuning.gamma },
+      uGlyphScale: { value: tuning.glyphScale },
+      uJitter: { value: tuning.jitter },
       uTime: { value: 0 },
-      uNoise: { value: reducedMotion ? 0 : noise },
+      uNoise: { value: reducedMotion ? 0 : tuning.noise },
     }),
-    // Everything but the texture bindings is re-pushed by the effects below.
+    // Tuning is re-pushed every frame; only the texture binding is fixed here.
     [target],
   );
 
   useEffect(() => {
     uniforms.uColor.value.copy(shaderColor(ink));
-    uniforms.uWarp.value = warp;
-    uniforms.uGamma.value = gamma;
-    uniforms.uJitter.value = jitter;
-    uniforms.uNoise.value = reducedMotion ? 0 : noise;
-  }, [uniforms, ink, warp, gamma, jitter, noise, reducedMotion]);
+  }, [uniforms, ink]);
 
   useEffect(() => {
     let disposed = false;
@@ -221,7 +223,15 @@ export default function AsciiField({
     gridCamera.updateProjectionMatrix();
 
     const material = materialRef.current;
-    if (material && !reducedMotion) material.uniforms.uTime.value += dt;
+    if (material) {
+      const u = material.uniforms;
+      u.uWarp.value = tuning.warp;
+      u.uGamma.value = tuning.gamma;
+      u.uGlyphScale.value = tuning.glyphScale;
+      u.uJitter.value = tuning.jitter;
+      u.uNoise.value = reducedMotion ? 0 : tuning.noise;
+      if (!reducedMotion) u.uTime.value += dt;
+    }
 
     state.gl.setRenderTarget(target);
     state.gl.clear();

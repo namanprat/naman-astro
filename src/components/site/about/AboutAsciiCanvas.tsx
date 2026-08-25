@@ -37,11 +37,6 @@ const CANVAS = {
   spinSpeed: 0.35,
   highlight: "#066aff",
   envIntensity: 1.5,
-  /** Glyph rows across the square plate — the finest of the three surfaces. */
-  asciiDensity: 64,
-  /** Archive's polar re-radius. Only the bust wants the fisheye. */
-  asciiWarp: 0.94,
-  asciiNoise: 0.25,
 } as const;
 
 const DRACO_PATH = "/draco/gltf/";
@@ -351,10 +346,8 @@ function AboutAsciiScene({ onReady }: { onReady?: () => void }) {
        this canvas is `--dark-900` in both themes and the canvas composites with
        `mix-blend-mode: screen`, so dark ink would blend away to nothing. */
     <AsciiField
-      density={CANVAS.asciiDensity}
+      surface="about"
       ink={SWATCH_LIGHT}
-      warp={CANVAS.asciiWarp}
-      noise={CANVAS.asciiNoise}
       fov={65}
       cameraPosition={[0, 0, 4]}
     >

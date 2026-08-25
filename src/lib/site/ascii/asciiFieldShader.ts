@@ -53,6 +53,7 @@ uniform sampler2D uAtlas;
 uniform float uGlyphCount;
 uniform vec3 uColor;
 uniform float uGamma;
+uniform float uGlyphScale;
 uniform float uJitter;
 uniform float uTime;
 uniform float uNoise;
@@ -91,9 +92,15 @@ void main() {
   float brightness = clamp(pow(lum, uGamma) + vRandom * uJitter, 0., 0.99);
 
   float index = floor(brightness * uGlyphCount);
-  vec2 inCell = clamp(vUv, 0., 1.);
-  float column = 0.5 + (inCell.x - 0.5) * CELL_INSET;
-  vec2 atlasUv = vec2((column + index) / uGlyphCount, inCell.y);
+
+  // Above 1 the glyph is cropped in rather than shrunk, which fills the cell
+  // and reads denser; below 1 it shrinks and the surround has to drop out.
+  vec2 glyphCell = (clamp(vUv, 0., 1.) - 0.5) / max(uGlyphScale, 0.05) + 0.5;
+  if (glyphCell.x < 0. || glyphCell.x > 1.) discard;
+  if (glyphCell.y < 0. || glyphCell.y > 1.) discard;
+
+  float column = 0.5 + (glyphCell.x - 0.5) * CELL_INSET;
+  vec2 atlasUv = vec2((column + index) / uGlyphCount, glyphCell.y);
   float chr = texture2D(uAtlas, atlasUv).a;
 
   float flicker = 1.;

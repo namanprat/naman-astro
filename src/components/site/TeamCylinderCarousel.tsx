@@ -37,9 +37,6 @@ const TAU = Math.PI * 2;
 const VELOCITY_UV_SCALE = 0.000012 / TAU;
 /** Continuous idle crawl (UV/s) so the strip keeps moving off-scroll. */
 const IDLE_UV_PER_SEC = 0.12 / TAU;
-/** Glyph rows across the short axis. Denser than the old 35-cell UV lattice. */
-const ASCII_DENSITY = 56;
-const ASCII_NOISE = 1;
 /** Extra mesh scale below 768px so the oval fits a phone viewport. */
 const MOBILE_SCALE = 0.75;
 
@@ -318,9 +315,8 @@ export default function TeamCylinderCarousel() {
       }}
     >
       <AsciiField
-        density={ASCII_DENSITY}
+        surface="team"
         ink={ink}
-        noise={ASCII_NOISE}
         fov={45}
         cameraPosition={[0, 0, 6.4]}
       >

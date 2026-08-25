@@ -13,9 +13,6 @@ import AsciiField from "./ascii/AsciiField";
 
 export type ProcessCardShape = "icosahedron" | "box" | "torus";
 
-/** Glyph rows across the card's short axis. */
-const ASCII_DENSITY = 26;
-const ASCII_NOISE = 0.35;
 const SPIN_RAD_PER_SEC = 0.4;
 const TILT_X = 0.4;
 const TILT_Z = 0.12;
@@ -84,9 +81,8 @@ export default function ProcessCardCanvas({
       {/* ponytail: `ink` is a literal from Process.tsx, not `--text` — the card
           plate is light in both themes, so following the toggle would erase it. */}
       <AsciiField
-        density={ASCII_DENSITY}
+        surface="process"
         ink={ink}
-        noise={ASCII_NOISE}
         fov={35}
         cameraPosition={[0, 0, 2.8]}
         far={20}

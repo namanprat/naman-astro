@@ -2,28 +2,30 @@
  * Duforn Mono glyph atlas — a 1×N strip ordered sparse → dense by measured ink.
  *
  * Ported from `Archive (1)/js/app.js` `createASCIITexture()`, which baked a
- * hand-ordered dictionary and drew the dense tail through three blur passes so
- * bright cells bloom. We keep the bloom but rank the glyphs by measured alpha
- * instead of trusting a hand-sorted string — Duforn is a 68-glyph subset and its
- * density order is not the Menlo one the Archive assumed.
+ * hand-ordered dictionary. The ranking here is measured instead: alpha coverage
+ * per glyph, because Duforn is a 68-glyph subset whose density order is not the
+ * Menlo one the Archive assumed.
+ *
+ * The Archive also stacked blur passes behind its dense tail. That is dropped —
+ * the halo read as a drop shadow on every surface, and the ramp is short enough
+ * now that it had nothing to smooth over.
  */
 import * as THREE from "three";
 
 /**
- * Every character the Duforn face actually ships (cmap, 68 glyphs).
- * Anything outside this set falls through to the next family in `--mono-family`,
- * which is a different metric — so the atlas must not reach for one.
+ * Symbols only — no letters, no digits.
+ *
+ * ponytail: this is the whole of it. Duforn's cmap is 68 glyphs and every other
+ * one is a letter or a number, so stripping those leaves exactly ` !,.?@`. Any
+ * character outside that cmap falls through to the next family in
+ * `--mono-family`, which is a different metric, so the ramp cannot be padded out
+ * with punctuation the face does not ship.
  */
-export const DUFORN_GLYPHS =
-  " !,.0123456789?@ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz";
+export const DUFORN_GLYPHS = " !,.?@";
 
 const CELL = 64;
 const MONO_FONT =
   '"Duforn Mono", ui-monospace, SFMono-Regular, Menlo, monospace';
-/** Fraction of the ranked strip that gets the Archive's bloom passes. */
-const BLOOM_FROM = 0.62;
-const BLOOM_PASSES = 3;
-const BLOOM_STEP_PX = 3;
 
 export function readThemeInk(): string {
   const probe = document.createElement("span");
@@ -80,23 +82,11 @@ async function bakeDufornAsciiAtlas(): Promise<AtlasBake> {
   ctx.textAlign = "center";
   ctx.textBaseline = "middle";
 
-  const bloomFrom = Math.floor(n * BLOOM_FROM);
   for (let i = 0; i < n; i++) {
     const ch = ranked[i].ch;
     if (ch === " ") continue;
-    const x = i * cell + cell / 2;
-    // ponytail: the dense tail is stacked through widening blurs first, so the
-    // brightest cells carry a halo the crisp pass then sits inside.
-    if (i >= bloomFrom) {
-      for (let j = BLOOM_PASSES - 1; j >= 0; j--) {
-        ctx.filter = `blur(${j * BLOOM_STEP_PX}px)`;
-        ctx.fillText(ch, x, cell / 2);
-      }
-    }
-    ctx.filter = "none";
-    ctx.fillText(ch, x, cell / 2);
+    ctx.fillText(ch, i * cell + cell / 2, cell / 2);
   }
-  ctx.filter = "none";
 
   return { canvas, glyphCount: n };
 }
