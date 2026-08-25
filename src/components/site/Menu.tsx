@@ -12,8 +12,9 @@ import { LINE_PARK_PERCENT, parkLines } from "@/lib/site/lineMask";
 import { prefersReducedMotion } from "@/lib/site/prefersReducedMotion";
 import { markWorkReturn } from "@/lib/site/workSession";
 import {
+  ABOUT_PATH,
+  openAbout,
   registerAboutPanel,
-  toggleAboutPanel,
   openAboutPanel,
   closeAboutPanel,
   installAboutInterceptors,
@@ -171,15 +172,16 @@ export default function Menu({ initialPathname = "/" }: MenuProps) {
   const lenis = lenisFromContext ?? bridgedLenis;
 
   /** Single source of truth for the nav active dot. */
-  const activeId = aboutOpen
-    ? "about"
-    : pathname === "/work" || pathname.startsWith("/work/")
-      ? "work"
-      : pathname === "/archive"
-        ? "archive"
-        : homeSectionId === "team"
-          ? "hero"
-          : homeSectionId;
+  const activeId =
+    aboutOpen || pathname === ABOUT_PATH
+      ? "about"
+      : pathname === "/work" || pathname.startsWith("/work/")
+        ? "work"
+        : pathname === "/archive"
+          ? "archive"
+          : homeSectionId === "team"
+            ? "hero"
+            : homeSectionId;
 
   useEffect(() => subscribeSiteLenis(setBridgedLenis), []);
 
@@ -811,8 +813,9 @@ export default function Menu({ initialPathname = "/" }: MenuProps) {
     }
 
     if (id === "about") {
-      // Panel lives in Menu on every page — never route to /#about.
-      toggleAboutPanel();
+      /* Overlay on desktop, real route on phones — `openAbout` owns the fork so
+         nav, footer and stray `#about` anchors cannot disagree. */
+      openAbout();
       return;
     }
 
@@ -1096,6 +1099,7 @@ export default function Menu({ initialPathname = "/" }: MenuProps) {
           className={`nav_wrap${isOpen ? " is-menu-open" : ""}${aboutInMenu ? " is-about-open" : ""}`}
           ref={navContainerRef}
         >
+          <div className="nav_fade" aria-hidden="true" />
           <div className="nav_contain container gap-0">
             <nav className="nav_grid grid is-12" ref={navRef} aria-label="Main">
               <div className="nav_logo">
@@ -1174,7 +1178,7 @@ export default function Menu({ initialPathname = "/" }: MenuProps) {
                       );
                     }
                     const text =
-                      id === "about" && aboutOpen
+                      id === "about" && aboutOpen && pathname !== ABOUT_PATH
                         ? "Close"
                         : id === "work" && workProjectOpen
                           ? "Back"
@@ -1320,7 +1324,12 @@ export default function Menu({ initialPathname = "/" }: MenuProps) {
           </div>
         </div>
       </div>
-      <AboutPanel open={aboutOpen} mode={aboutMode} onClose={dismissAbout} />
+      {/* The `/about` route renders the same content as a document. Mounting the
+          overlay too would put a second, hidden copy of every heading and list
+          in the DOM — duplicate `id="site-about-panel"` included. */}
+      {pathname !== ABOUT_PATH && (
+        <AboutPanel open={aboutOpen} mode={aboutMode} onClose={dismissAbout} />
+      )}
     </>
   );
 }

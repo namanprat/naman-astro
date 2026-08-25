@@ -80,8 +80,11 @@ html.page-work .fluid_wrap {
   margin-top: 0;
 }
 
-/* Scrolling case-study — keep the sim as a viewport backdrop, not extra height. */
-html.page-work-project .fluid_wrap {
+/* Scrolling routes — keep the sim as a viewport backdrop, not extra height.
+   Without this the wrap stays in flow at `100dvh` (plus its hero pull-up) and
+   pushes the whole document down by a viewport. */
+html.page-work-project .fluid_wrap,
+html.page-about .fluid_wrap {
   position: fixed;
   inset: 0;
   height: auto;

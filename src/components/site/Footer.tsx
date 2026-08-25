@@ -6,7 +6,7 @@ import { useGSAP } from "@gsap/react";
 import { go } from "@/lib/site/navigate";
 import { replayHomeIntro } from "@/lib/site/heroIntro";
 import { hashId, scrollToSection } from "@/lib/site/scrollToSection";
-import { toggleAboutPanel } from "@/lib/site/aboutPanel";
+import { openAbout, toggleAboutPanel } from "@/lib/site/aboutPanel";
 import {
   addGooeyReveal,
   parkGooey,
@@ -24,6 +24,7 @@ import {
   socialLinkTabProps,
 } from "./Menu";
 import FooterAsciiLogo from "./FooterAsciiLogo";
+import { MOBILE_LAYOUT_MQ } from "@/lib/site/isMobileLayout";
 import RollingText from "./RollingText";
 import "./Footer.css";
 
@@ -52,12 +53,26 @@ function Reveal({ children }: { children: React.ReactNode }) {
 export default function Footer() {
   const footerRef = useRef<HTMLElement>(null);
   const asciiSourceRef = useRef<HTMLImageElement>(null);
+  /* Phones show the plain masked wordmark instead (Footer.css). Gating the
+     mount rather than hiding the canvas matters: the component owns a rAF
+     loop, a ResizeObserver and three pointer listeners on `.footer_box`, and
+     `display: none` would leave all of it running on the devices that can
+     least afford it. Starts false so SSR and first paint agree. */
+  const [asciiOn, setAsciiOn] = useState(false);
   const lenisFromContext = useLenis();
   const [bridgedLenis, setBridgedLenis] = useState(() => getSiteLenis());
   const lenis = lenisFromContext ?? bridgedLenis;
   const emailCopy = useCopyEmail(EMAIL_HREF);
 
   useEffect(() => subscribeSiteLenis(setBridgedLenis), []);
+
+  useEffect(() => {
+    const mq = window.matchMedia(MOBILE_LAYOUT_MQ);
+    const sync = () => setAsciiOn(!mq.matches);
+    sync();
+    mq.addEventListener("change", sync);
+    return () => mq.removeEventListener("change", sync);
+  }, []);
 
   const onNavClick = (e: React.MouseEvent, href: string) => {
     e.preventDefault();
@@ -71,7 +86,12 @@ export default function Footer() {
       return;
     }
     const id = hashId(href);
-    if (id === "about" || id === "team") {
+    if (id === "about") {
+      /* Overlay on desktop, route on phones — and a no-op when already there. */
+      openAbout();
+      return;
+    }
+    if (id === "team") {
       toggleAboutPanel();
       return;
     }
@@ -148,7 +168,7 @@ export default function Footer() {
         <div className="footer_scale">
           {/* Panel is the floating card; the container inside keeps content on grid. */}
           <div className="footer_box">
-            <FooterAsciiLogo sourceRef={asciiSourceRef} />
+            {asciiOn && <FooterAsciiLogo sourceRef={asciiSourceRef} />}
             <div className="footer_contain container gap-0">
               <div className="footer_layout grid is-12">
                 <h3 className="footer_tagline text-style-main">

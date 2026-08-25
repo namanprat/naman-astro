@@ -92,8 +92,8 @@ html.theme-light.menu-open {
   mask-size: 100% 100%;
 }
 
-/* Layout is `aspect-ratio` on the lockup. Display none so an opacity:0 child
-   can't collapse mix-blend-mode:difference on iOS Safari. */
+/* Layout is `aspect-ratio` on the lockup. The SVG is the mask source, not
+   a painted child. */
 .name_hero_lockup img {
   display: none;
 }
@@ -114,28 +114,10 @@ html.theme-light.menu-open {
 
 .name_hero {
   position: relative;
-  /* Above the in-flow .fluid_wrap so the blend can still sample the sim. */
   z-index: var(--z--raised);
   width: 100%;
   padding-top: var(--hero-chrome-pad);
   box-sizing: border-box;
-}
-
-/* Invert against whatever the fluid sim paints underneath as it follows the
-   cursor. Sits on .name_hero, not the lockup — .name_hero_gooey's filter makes
-   its own buffer, and blending inside that would never see the canvas. */
-.name_hero,
-.nav_wrap {
-  mix-blend-mode: difference;
-}
-
-/* Over the menu the blend has to go: overlay ink is a flat `--menu-ink`, and
-   `difference` would cancel it against the panel (black-on-accent, white-on-frost). */
-html.menu-open .name_hero,
-html.menu-open .nav_wrap,
-html.about-open .name_hero,
-html.about-open .nav_wrap {
-  mix-blend-mode: normal;
 }
 
 .nav_wrap {
@@ -147,6 +129,37 @@ html.about-open .nav_wrap {
   pointer-events: none;
   padding-top: var(--site--safe-area-top);
   box-sizing: border-box;
+  overflow: visible;
+}
+
+/* Theme-aware readability fade. `--background` is the page fill, so light
+   gets the warm grey and dark gets near-black. A real node, not ::before:
+   heading leading-trim also uses ::before, and an unlayered reset would
+   win the cascade on a pseudo. */
+.nav_fade {
+  position: absolute;
+  left: 0;
+  width: 100%;
+  /* Starts above the bar so home (nav at the bottom of the hero) still
+     gets a readable cap over the canvas, and inner pages get the usual
+     top-down dissolve. */
+  top: -4rem;
+  height: 14rem;
+  margin: 0;
+  padding: 0;
+  pointer-events: none;
+  z-index: 0;
+  background-image: linear-gradient(
+    to bottom,
+    var(--background) 0%,
+    color-mix(in srgb, var(--background) 80%, transparent) 40%,
+    color-mix(in srgb, var(--background) 35%, transparent) 70%,
+    transparent 100%
+  );
+}
+
+.nav_wrap.is-menu-open .nav_fade {
+  opacity: 0;
 }
 
 .nav_contain {
@@ -156,6 +169,7 @@ html.about-open .nav_wrap {
 .nav_grid {
   pointer-events: all;
   position: relative;
+  z-index: 1;
   width: 100%;
   /* Gutter = logo→nav gap and sticky top padding (with safe-area on container) */
   padding-block: var(--site-gutter);
@@ -362,16 +376,28 @@ html.about-open .nav_wrap {
   pointer-events: auto;
   display: flex;
   align-items: center;
-  /* Same face/size as nav labels so 1cap matches uppercase cap height. */
+  /*
+    Exactly one nav label tall, derived rather than guessed.
+
+    `base.css` leading-trims every `.text-style-*` box with two table
+    pseudo-elements at `-0.5lh + trim`, so a label's rendered height collapses
+    to `trim-top + trim-bottom` — the `lh` terms cancel. Reusing the same two
+    tokens makes this track the labels at every breakpoint and survive a
+    change to the trim, with no ratio to keep in sync.
+
+    Neither font unit works here: `1cap` reads 0.58em in Duforn Mono (~2.4px
+    short) and `1em` is the untrimmed line box (~5.2px tall).
+  */
   font-family: var(--text-main-font-family);
   font-size: var(--text-main);
   line-height: 1;
-  height: 1cap;
+  height: calc(var(--text-main-trim-top) + var(--text-main-trim-bottom));
 }
 
 .nav_theme_toggle_svg {
   display: block;
-  height: 1cap;
+  /* Fill the button's box — it is already the label height. */
+  height: 100%;
   width: auto;
   background: none;
   background-color: transparent;
@@ -458,22 +484,22 @@ html:not(:has(.hero)) .name_hero {
   white-space: nowrap;
 }
 
-/* Phones: SVG lockup + wordmark in the first column, then Work/About,
-   Archive/Contact, theme. Tablet portrait and up keeps the desktop stacks. */
+/* Phones: wordmark and theme switch on row 1, then Work / Archive / Contact /
+   About spread across row 2. Tablet portrait and up keeps the desktop stacks. */
 @media (width < 48rem) {
   .nav_menu_toggle_open,
   .nav_home {
     display: none;
   }
 
-  html:not(:has(.hero)) .name_hero {
-    display: block;
-  }
-
   :root {
-    --mark-h: calc((100vw - var(--site-margin) * 2) * 70 / 446);
-    --lockup-top: calc(var(--site--safe-area-top) + var(--site-gutter));
-    --lockup-gap: var(--site-gutter);
+    /* `--site-margin`, not `--site-gutter`: the bar's block padding has to read
+       as the same inset as the page's side padding, and the sides come from
+       `.container` → `--site-width` → `--site-margin`. The two tokens are both
+       fluid clamps but over different ranges (gutter 16→32, margin 16→48), so
+       they agree only at 320px and drift apart from there. */
+    --lockup-top: calc(var(--site--safe-area-top) + var(--site-margin));
+    --lockup-gap: var(--site-margin);
   }
 
   .nav_grid.grid {
@@ -483,6 +509,35 @@ html:not(:has(.hero)) .name_hero {
     column-gap: var(--site-gutter);
     row-gap: var(--space-2);
     padding-block: var(--lockup-gap);
+    /* Bigger tap targets. Rebinding the token rather than setting `font-size`
+       carries `.nav_theme_toggle` with it — the switch sizes off `--text-main`
+       and the label trim tokens, so it stays label-height for free. 18px is the
+       token's own desktop ceiling (`--text-main-max`), not a new number. */
+    --text-main: 1.125rem;
+  }
+
+  /*
+    Hold the Contact cell at its widest label so pressing it cannot reflow the
+    row. The toggle swaps "Contact" → "Close" (Menu.tsx), and with
+    `max-content` tracks under `justify-content: space-between` a narrower track
+    grows the free space and shifts every item in row 2.
+
+    Of the three labels that swap, this is the only one that changes width:
+    Work↔"Back" is 4↔4 characters and About↔"Close" is 5↔5.
+
+    On the label, not the cell: `ch` resolves against the element's own
+    font-size, and only the `h5` carries the `--text-main` rebind (18px). The
+    wrapper inherits the body's 16.1px, so `7ch` there came out 6.7px short and
+    the row still moved. The button's active-dot padding sits outside the `h5`
+    and is constant, so holding the label steady holds the cell steady.
+
+    ponytail: `ch` is exact only because the nav face is monospace
+    (`--mono-family`) at `letter-spacing: 0`. If either changes, or a longer
+    label lands in this cell, swap to a hidden `::before` sizer carrying the
+    literal widest string.
+  */
+  .nav_contact_toggle h5 {
+    min-width: 7ch; /* "CONTACT" */
   }
 
   .nav_stack,
@@ -490,35 +545,41 @@ html:not(:has(.hero)) .name_hero {
     display: contents;
   }
 
+  /* Row 1 is the wordmark and the theme switch alone, pushed to opposite edges.
+     Both span the full row so neither forces a track wide — that keeps row 2's
+     four labels evenly spread by the `space-between` above. */
   .nav_logo {
-    grid-column: 1;
+    grid-column: 1 / -1;
     grid-row: 1;
+    justify-self: start;
     display: block;
   }
 
-  .nav_work {
-    grid-column: 2;
-    grid-row: 1;
-  }
-
-  .nav_about {
-    grid-column: 2;
-    grid-row: 2;
-  }
-
-  .nav_archive {
-    grid-column: 3;
-    grid-row: 1;
-  }
-
   .nav_theme_toggle {
-    grid-column: 4;
+    grid-column: 1 / -1;
     grid-row: 1;
     justify-self: end;
   }
 
+  /* Row 2, left to right. Visual order deliberately differs from DOM order
+     (Work, About, Contact, Archive), same as it did before. */
+  .nav_work {
+    grid-column: 1;
+    grid-row: 2;
+  }
+
+  .nav_archive {
+    grid-column: 2;
+    grid-row: 2;
+  }
+
   .nav_contact {
     grid-column: 3;
+    grid-row: 2;
+  }
+
+  .nav_about {
+    grid-column: 4;
     grid-row: 2;
   }
 
@@ -531,23 +592,15 @@ html:not(:has(.hero)) .name_hero {
      (sticky, `top: 0`) rules already do that, so every breakpoint now shares
      one hero/nav interaction and there is nothing to override here. */
 
-  /* Inner pages: same stuck lockup (SVG + links), overlaying the stage so
-     overflow-hidden routes don't get pushed down. */
-  html:not(:has(.hero)) .name_hero {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    padding-top: var(--lockup-top);
-    z-index: calc(var(--z--nav) + 1);
-  }
-
+  /* Inner pages: the bar alone, overlaying the stage so overflow-hidden routes
+     don't get pushed down. The SVG lockup is a home-page element now, so there
+     is no mark height to reserve above the links. */
   html:not(:has(.hero)) .nav_wrap {
     position: fixed;
     top: 0;
     left: 0;
     width: 100%;
-    padding-top: calc(var(--lockup-top) + var(--mark-h));
+    padding-top: var(--lockup-top);
   }
 
   /* Card takes the top of the viewport; the lockup would paint over it. */

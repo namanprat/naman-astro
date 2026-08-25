@@ -1,15 +1,60 @@
-<html lang="en">
-  <head>
-    <meta charset="utf-8" />
-    <meta
-      name="viewport"
-      content="width=device-width, initial-scale=1, viewport-fit=cover"
-    />
-    <meta http-equiv="refresh" content="0;url=/#about" />
-    <title>About</title>
-    <script is:inline>
+---
+/**
+ * About as a real route — phones only.
+ *
+ * Above 48rem this still bounces to the `/#about` overlay, which is unchanged.
+ * Below it the card had no room for the dither bust, so the same layout gets a
+ * document of its own: canvas back, page theme rather than the panel's forced
+ * ink, and the footer underneath.
+ */
+import Layout from "@/layouts/BaseLayout.astro";
+import SiteLenis from "@/components/site/PortfolioHome.tsx";
+import AboutPage from "@/components/site/about/AboutPage";
+import Footer from "@/components/site/Footer";
+---
+
+<Layout title="About" description="About Naman Pratulya — services and clients.">
+  {
+    /* Pre-paint, before anything renders: desktop keeps the overlay it has
+       always had. Runs in the head slot so a wide viewport never flashes the
+       page before replacing it. */
+  }
+  <script slot="head" is:inline>
+    if (window.matchMedia("(width >= 48rem)").matches) {
       location.replace("/#about");
-    </script>
-  </head>
-  <body></body>
-</html>
+    }
+    /* Pins the fluid sim as a viewport backdrop — see FluidCanvas.css. */
+    document.documentElement.classList.add("page-about");
+  </script>
+  {
+    /* No `theme` prop on the Layout, so nothing is forced: BaseLayout's restore
+       script applies a stored choice, and this fills the gap for a first-time
+       visitor. Same script as index.astro — head slot runs after the restore. */
+  }
+  <script slot="head" is:inline>
+    try {
+      var stored = localStorage.getItem("site-theme");
+      if (stored !== "light" && stored !== "dark") {
+        var root = document.documentElement;
+        var prefersDark = window.matchMedia(
+          "(prefers-color-scheme: dark)",
+        ).matches;
+        root.classList.remove("theme-light", "theme-dark");
+        root.classList.add(prefersDark ? "theme-dark" : "theme-light");
+      }
+    } catch (e) {}
+  </script>
+  <SiteLenis client:only="react" />
+  {
+    /* Real block wrapper, not the bare island. `NavHideOnFooter` (lenisBoot)
+       picks the footer's previous flow sibling as its ScrollTrigger, and an
+       `<astro-island>` host has no layout box — so `start: "bottom bottom"`
+       resolved at the document top and fired `onEnter` on load, fading the nav
+       out before you had scrolled anywhere. Home dodges this because its
+       sibling is the real `.studio` div; this is that same shape. */
+  }
+  <div class="about_page">
+    <AboutPage client:only="react" />
+  </div>
+  <Footer client:only="react" />
+</Layout>

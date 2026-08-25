@@ -150,6 +150,11 @@ for (const view of ["slider", "grid"] as const) {
       page,
       context,
     }) => {
+      /* Below 48rem About is a route, so `#about` navigates off /work instead
+         of overlaying it — there is no round trip to make, and nothing that
+         could leave the gallery's Observer muted. */
+      test.skip(isNarrowNav(), "About is a route at this width, not an overlay");
+
       const cdp = await context.newCDPSession(page);
       const touch = isTouch();
 

@@ -80,15 +80,20 @@ html.page-work-project main {
   }
 }
 
-/* Viewport-centered via vh/% (not inset:0 flex centering). */
+/* Viewport-centered via vh/% (not inset:0 flex centering).
+   Width is the site grid band — the same measure `.project_title` uses — so
+   a name wraps identically on `/work` and `/work/[slug]`. Padding used to eat
+   a second margin inside a max-width that already subtracted it. */
 .work_wrap .gallery_label {
   position: fixed;
   top: 50vh;
   left: 50%;
   z-index: calc(var(--z--nav) - 3);
   margin: 0;
-  padding-inline: var(--site-margin);
-  max-width: calc(100vw - 2 * var(--site-margin));
+  padding-inline: 0;
+  width: var(--site--grid-width);
+  max-width: var(--max-width-main);
+  box-sizing: border-box;
   transform: translate(-50%, -50%);
   pointer-events: none;
   text-align: center;
@@ -99,6 +104,13 @@ html.page-work-project main {
      label and it needs no `html.is-gooey-soft` override of its own.
      `text-style-display` is heavy enough to survive the threshold sitting on
      permanently. */
+}
+
+/* Same wrap box as `.project_title` — the inner is otherwise inline-block
+   and shrinks to the glyphs, so a long name wrapped earlier than the h1. */
+.work_wrap .gallery_label .gooey_reveal_inner {
+  display: block;
+  width: 100%;
 }
 
 .work_wrap .gallery_label_count {
@@ -405,16 +417,18 @@ html.work-returning .view_switcher {
 /* Same viewport lockup as `.gallery_label` — dead-center, so opening a project
    leaves it exactly where the label was and `Transition` has nothing to travel.
    Under 64rem it drops into flow at the top of the hero instead, and there the
-   morph does carry it up. No `width` here: absolutely positioned at `left: 50%`,
-   a full width would put a viewport-wide box half a screen off centre. */
+   morph does carry it up. Width is the grid band, then `left: 50%` + translate
+   centres that box; a `100%` width would sit half a screen off centre. */
 .project_title {
   position: absolute;
   top: 50%;
   left: 50%;
   z-index: 1;
   margin: 0;
-  padding-inline: var(--site-margin);
-  max-width: calc(100vw - 2 * var(--site-margin));
+  padding-inline: 0;
+  width: var(--site--grid-width);
+  max-width: var(--max-width-main);
+  box-sizing: border-box;
   transform: translate(-50%, -50%);
   pointer-events: none;
   text-align: center;
@@ -607,8 +621,9 @@ html.work-returning .view_switcher {
     top: auto;
     left: auto;
     transform: none;
-    padding-inline: 0;
-    max-width: none;
+    /* `%` band, same number as `--site--grid-width` inside a full-bleed hero. */
+    width: var(--site-width);
+    margin-inline: auto;
     pointer-events: auto;
     text-align: center;
   }

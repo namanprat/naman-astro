@@ -177,7 +177,11 @@ html.theme-light .footer_box {
   visibility: hidden;
 }
 
-@media (prefers-reduced-motion: reduce) {
+/* Reduced motion gets the raw SVG instead of the ASCII canvas — but only where
+   that canvas exists. Below 48rem it is never mounted and `.footer_logo` paints
+   a static, theme-aware mask instead, so un-hiding this would stack the SVG's
+   own baked fill on top of it. */
+@media (prefers-reduced-motion: reduce) and (width >= 48rem) {
   .footer_logo_source {
     visibility: visible;
   }
@@ -201,16 +205,54 @@ html.theme-light .footer_box {
 }
 
 @media (width < 48rem) {
-  /* Full-width on the phone. Safe-area stays on the wrap so the orange fill
-     sits above the home indicator and the bar keeps the page theme, not accent. */
+  /*
+    Full-bleed on the phone — no float, so no padding on the wrap at all.
+
+    The wrap is `background-color: transparent` and the fill lives on
+    `.footer_child` inside it, so any padding here paints as a bare strip of
+    page background above and below the card. That is the gap you can see under
+    the footer at the very bottom of the document.
+
+    The safe-area inset it used to carry moves onto `.footer_box` below, which
+    is inside the fill — so the colour reaches the physical bottom edge while
+    the type still clears the home indicator.
+  */
   .footer_wrap {
     padding-inline: 0;
+    padding-block: 0;
+  }
+
+  /* The card is full-bleed here, so this padding *is* the content's side inset
+     — it has to be the same `--site-margin` the rest of the page uses, not
+     `--site-gutter`. Block padding stays as it was (deliberate air inside the
+     card), plus the safe area inherited from the wrap. */
+  .footer_box {
+    padding-inline: var(--site-margin);
+    padding-bottom: calc(var(--space-6) + var(--site--safe-area-bottom));
   }
 
   .footer_tagline,
   .footer_col.is-nav,
   .footer_col.is-connect {
     grid-column: 1 / -1;
+  }
+
+  /*
+    Plain wordmark instead of the ASCII canvas, which is not mounted at this
+    width (Footer.tsx). Masked rather than showing the `<img>` directly: the
+    SVG's own fill is fixed, while `.footer_box` already forces `--text` per
+    theme, so the mask flips black-on-accent / white-on-frost for free.
+
+    Same shape as `.name_hero_lockup` (Menu.css) and `.preloader_mark`. The
+    `aspect-ratio` is load-bearing — a zero-height box makes `mask-size`
+    resolve to nothing on WebKit.
+  */
+  .footer_logo {
+    aspect-ratio: 446 / 70;
+    background-color: var(--text);
+    -webkit-mask: url("/main-assets/name-hero.svg") left center / contain
+      no-repeat;
+    mask: url("/main-assets/name-hero.svg") left center / contain no-repeat;
   }
 }
 }

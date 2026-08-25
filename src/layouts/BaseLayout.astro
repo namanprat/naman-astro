@@ -3,7 +3,6 @@ import Analytics from "@vercel/analytics/astro";
 import "@/styles/global.css";
 import "@/styles/site.css";
 import BaseHead from "@/components/BaseHead.astro";
-import SkipLink from "@/components/SkipLink.astro";
 import Menu from "@/components/site/Menu";
 import GooeyFilter from "@/components/site/GooeyFilter.astro";
 import FluidCanvas from "@/components/site/FluidCanvas.astro";
@@ -83,7 +82,6 @@ const isArchive = Astro.url.pathname === "/archive";
     </script>
   </head>
   <body>
-    <SkipLink />
     {
       /* Every route: headings and the work label both filter through it, and a
         `url()` pointing at a missing node blanks the element on WebKit. */
@@ -95,10 +93,7 @@ const isArchive = Astro.url.pathname === "/archive";
     <div class="site-backdrop">
       <slot name="backdrop" />
     </div>
-    {
-      /* `tabindex` so the jump moves focus here, not just the scroll position */
-    }
-    <main id="main" tabindex="-1">
+    <main id="main">
       {!isArchive && <FluidCanvas />}
       <slot />
     </main>

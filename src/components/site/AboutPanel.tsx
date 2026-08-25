@@ -1,7 +1,5 @@
 import "./AboutPanel.css";
 import {
-  lazy,
-  Suspense,
   useCallback,
   useEffect,
   useLayoutEffect,
@@ -17,10 +15,9 @@ import {
   parkGooey,
   prepareGooey,
 } from "@/lib/site/gooeyReveal";
-import RollingText from "./RollingText";
 import "@/lib/site/eases";
 
-const AboutDitherCanvas = lazy(() => import("./about/AboutDitherCanvas"));
+import AboutContent from "./about/AboutContent";
 
 const BUST_MOUNT_IDLE_MS = 350;
 const BUST_FADE_IN_S = 0.6;
@@ -48,36 +45,6 @@ type AboutPanelProps = {
   mode: AboutPanelMode;
   onClose: () => void;
 };
-
-const SERVICES = [
-  "Brand strategy",
-  "Visual identity",
-  "Website design",
-  "Website development",
-  "Motion design",
-] as const;
-
-const CLIENTS = [
-  "Animal",
-  "Notice",
-  "Project Qaafi",
-  "Perception Pod",
-  "November",
-  "Egodeath",
-  "Haptic AI",
-  "t.Bonk",
-] as const;
-
-/** Max items per clients column before spilling to the next with gutter. */
-const CLIENTS_PER_COL = 4;
-
-function chunkClients(items: readonly string[], size: number): string[][] {
-  const columns: string[][] = [];
-  for (let i = 0; i < items.length; i += size) {
-    columns.push([...items.slice(i, i + size)]);
-  }
-  return columns;
-}
 
 function hideChrome(
   panel: HTMLElement,
@@ -128,7 +95,6 @@ export default function AboutPanel({ open, mode, onClose }: AboutPanelProps) {
   const [mountCanvas, setMountCanvas] = useState(false);
   const [bustReady, setBustReady] = useState(false);
   const onBustReady = useCallback(() => setBustReady(true), []);
-  const clientColumns = chunkClients(CLIENTS, CLIENTS_PER_COL);
 
   useLayoutEffect(() => {
     if (!open) return;
@@ -322,91 +288,11 @@ export default function AboutPanel({ open, mode, onClose }: AboutPanelProps) {
         <div className="about_panel_surface" ref={surfaceRef}>
           <div className="about_panel_scroll" data-lenis-prevent>
             <div className="about_panel_inner container gap-0">
-              <div className="about_panel_grid grid is-12">
-                <div
-                  ref={mediaRef}
-                  className="about_panel_reveal about_panel_media"
-                  aria-hidden="true"
-                >
-                  <div className="about_panel_reveal_inner">
-                    {mountCanvas && (
-                      <Suspense fallback={null}>
-                        <AboutDitherCanvas
-                          eventSource={mediaRef}
-                          onReady={onBustReady}
-                        />
-                      </Suspense>
-                    )}
-                  </div>
-                </div>
-
-                <div className="about_panel_reveal about_panel_intro">
-                  <div className="about_panel_reveal_inner">
-                    <h3 className="about_panel_lead text-style-h3">
-                      I make things look good and work better. Immersed in your
-                      story, ruthless about what moves people, and built to
-                      close the gap between who you are and how the world sees
-                      you.
-                    </h3>
-                    <span className="about_panel_cv_clip">
-                      <a
-                        className="about_panel_cv text-style-main"
-                        href="/main-assets/cv.pdf"
-                        download
-                      >
-                        <span className="about_panel_cv_label">
-                          <RollingText>Download CV</RollingText>
-                        </span>
-                        <span
-                          className="about_panel_cv_icon"
-                          aria-hidden="true"
-                        >
-                          ↗
-                        </span>
-                      </a>
-                    </span>
-                  </div>
-                </div>
-
-                <div className="about_panel_lists">
-                  <div className="about_panel_reveal about_panel_col is-services">
-                    <div className="about_panel_reveal_inner">
-                      <h5 className="about_panel_col_label text-style-main">
-                        Services
-                      </h5>
-                      <div className="about_panel_col_list">
-                        {SERVICES.map((item) => (
-                          <h5 key={item} className="text-style-main">
-                            {item}
-                          </h5>
-                        ))}
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="about_panel_reveal about_panel_col is-clients">
-                    <div className="about_panel_reveal_inner">
-                      <h5 className="about_panel_col_label text-style-main">
-                        Clients
-                      </h5>
-                      <div className="about_panel_clients_cols">
-                        {clientColumns.map((column, index) => (
-                          <div
-                            key={`clients-col-${index}`}
-                            className="about_panel_col_list"
-                          >
-                            {column.map((item) => (
-                              <h5 key={item} className="text-style-main">
-                                {item}
-                              </h5>
-                            ))}
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
+              <AboutContent
+                mediaRef={mediaRef}
+                mountCanvas={mountCanvas}
+                onCanvasReady={onBustReady}
+              />
             </div>
           </div>
         </div>

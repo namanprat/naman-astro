@@ -34,10 +34,12 @@ html.theme-light .about_panel_backdrop {
      slide in from above (scroll lives on __surface). */
   background-color: transparent;
   /* Dark mode: black on accent. Light mode: white on frost.
-     Never inherit the page's light-mode grey ink. */
-  --panel-ink: var(--dark-900);
-  --text: var(--panel-ink);
-  color: var(--panel-ink);
+     Never inherit the page's light-mode grey ink.
+
+     Hoisted out of `.about_panel` onto `:not(.is-page)` below: the route is a
+     document, not a card, so it has to keep the theme's own ink. Overriding
+     from `.is-page` is not possible — `--text` is reassigned on this same
+     element, so any `var(--text)` there would read the shadowed value. */
   overflow: visible;
   pointer-events: none;
   visibility: hidden;
@@ -63,7 +65,13 @@ html.theme-light .about_panel_backdrop {
   --about--inset: calc(var(--site-margin) - var(--site-gutter));
 }
 
-html.theme-light .about_panel {
+.about_panel:not(.is-page) {
+  --panel-ink: var(--dark-900);
+  --text: var(--panel-ink);
+  color: var(--panel-ink);
+}
+
+html.theme-light .about_panel:not(.is-page) {
   --panel-ink: var(--light-100);
 }
 
@@ -705,6 +713,155 @@ html.theme-light .about_panel.is-in-menu {
   .about_panel:not(.is-in-menu) .about_panel_col.is-clients .about_panel_col_label {
     grid-column: auto;
     grid-row: auto;
+  }
+}
+
+/*
+  ── About as a route ───────────────────────────────────────────────────────
+  Phones only (`AboutPage.tsx`; desktop still redirects to the `/#about`
+  overlay). Every rule that shapes the phone layout is written against
+  `.about_panel:not(.is-in-menu)`, so `is-page` inherits the whole stack for
+  free and only undoes what a fixed overlay needs and a document does not.
+
+  Last in the file on purpose: these tie on specificity with the phone rules
+  above (both 0-3-0), so source order is what makes them win. Do not hoist.
+*/
+/* Route wrapper (about.astro). Exists so the footer has a real previous flow
+   sibling for `NavHideOnFooter`'s ScrollTrigger — same role `.studio` plays on
+   home. `z-index` matches `.studio` so it stacks over the fixed fluid sim. */
+.about_page {
+  position: relative;
+  z-index: 2;
+  width: 100%;
+}
+
+.about_panel.is-page {
+  position: static;
+  height: auto;
+  z-index: auto;
+  pointer-events: auto;
+  padding: 0;
+  /* The route keeps the theme's own ink — `.about_panel:not(.is-page)` holds
+     the card inversion. Re-pointing `--panel-ink` at the (now unshadowed)
+     `--text` is what keeps the five scattered `color: var(--panel-ink)` rules
+     below working instead of each needing its own override. */
+  --panel-ink: var(--text);
+}
+
+/* No frost and no fill: on a page the card ground would read as a box floating
+   over the document. Must stay after `html.theme-dark .about_panel_surface`,
+   which it ties with on specificity — source order is what settles it. */
+.about_panel.is-page .about_panel_surface {
+  background-color: transparent;
+  backdrop-filter: none;
+}
+
+.about_panel.is-page .about_panel_surface,
+.about_panel.is-page .about_panel_scroll {
+  /* Base clamps both to 85vh so the floating card can never outgrow the
+     viewport. A document has no such ceiling — and an inner scroller here
+     would trap the page's own scroll. */
+  max-height: none;
+  overflow: visible;
+}
+
+/* Clear the bar, which is `position: fixed` on inner pages below 48rem.
+   `--nav-offset` is its measured viewport bottom (Menu.tsx), so it tracks the
+   real height rather than a guess — the same token `.is-padded` uses. */
+.about_panel.is-page .about_panel_inner.container {
+  /* Back to plain `.container` behaviour. The base rule swaps in the vw-based
+     `--site--grid-width` because a `%` width would shrink inside the card's
+     padding — with `padding: 0` above there is no card, so the page's own
+     `--site-width` is both correct and consistent with every other route.
+     `--about--inset` block padding goes too: it is card geometry
+     (`margin - gutter`), meaningless here, and the two rules below own the
+     block axis. */
+  width: var(--site-width);
+  padding-block: 0;
+  padding-top: calc(var(--nav-offset, var(--site--nav-offset)) + var(--site-margin));
+  padding-bottom: var(--section-space-small);
+}
+
+/* The bust is the reason this route exists — undo the phone hide. */
+.about_panel.is-page .about_panel_media {
+  display: block;
+  grid-column: 1 / -1;
+  grid-row: 1;
+  width: 100%;
+  max-width: none;
+}
+
+.about_panel.is-page .about_panel_grid {
+  grid-template-rows: auto auto auto auto;
+}
+
+.about_panel.is-page .about_panel_intro {
+  grid-row: 2;
+}
+
+/*
+  Phone About is a document on `.grid.is-12`, which is 4 tracks below 30rem
+  and 6 from there to the 48rem overlay cut. Keep `display: contents` so
+  Services / Clients sit on those tracks — not in a nested 1-col grid, and
+  not on a pixel inset measured off the nav.
+
+  4-col: stack. Clients span all four with names on 1 and 3 (same skip-a-track
+  as desktop's 10/12). Services follows on 1–2.
+  6-col: side by side. Services 1–2, Clients 3–6, names on 1 and 3 of that span.
+*/
+@media (width < 48rem) {
+  .about_panel.is-page:not(.is-in-menu) .about_panel_lists {
+    display: contents;
+  }
+
+  .about_panel.is-page:not(.is-in-menu) .about_panel_col.is-clients {
+    order: 0;
+    grid-column: 1 / -1;
+    grid-row: 3;
+    display: grid;
+    grid-template-columns: subgrid;
+    grid-template-rows: auto auto;
+    gap: var(--space-3) var(--site-gutter);
+    align-self: start;
+    width: 100%;
+  }
+
+  .about_panel.is-page:not(.is-in-menu) .about_panel_col.is-services {
+    order: 0;
+    grid-column: 1 / span 2;
+    grid-row: 4;
+    align-self: start;
+    width: 100%;
+  }
+
+  .about_panel.is-page:not(.is-in-menu) .about_panel_col.is-clients .about_panel_col_label {
+    grid-column: 1 / span 2;
+    grid-row: 1;
+  }
+
+  .about_panel.is-page:not(.is-in-menu) .about_panel_clients_cols {
+    display: grid;
+    grid-template-columns: subgrid;
+    grid-column: 1 / -1;
+    grid-row: 2;
+    gap: var(--space-3) var(--site-gutter);
+    width: 100%;
+  }
+
+  .about_panel.is-page:not(.is-in-menu) .about_panel_clients_cols > *:nth-child(2) {
+    grid-column: 3;
+  }
+}
+
+@media (width >= 30rem) and (width < 48rem) {
+  .about_panel.is-page:not(.is-in-menu) .about_panel_col.is-services {
+    grid-column: 1 / span 2;
+    grid-row: 3;
+  }
+
+  .about_panel.is-page:not(.is-in-menu) .about_panel_col.is-clients {
+    grid-column: 3 / -1;
+    grid-row: 3;
   }
 }
 }
