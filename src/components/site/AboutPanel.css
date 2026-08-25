@@ -310,7 +310,8 @@ html.theme-light .about_panel.is-in-menu {
   aspect-ratio: 1;
   height: auto;
   overflow: clip;
-  /* Ride-mode ground — always --black (both themes) for the dither clear.
+  /* Ride-mode ground — always --black (both themes); the ASCII canvas clears
+     transparent and composites onto it with mix-blend-mode: screen.
      inMenu parks this on the dissolve inner so the plate isn't visible
      before the headers unreveal. */
   background-color: var(--dark-900);

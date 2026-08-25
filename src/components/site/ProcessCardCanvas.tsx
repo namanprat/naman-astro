@@ -1,21 +1,18 @@
 /**
- * One ASCII-shaded primitive per Process card. Atlas is shared; each Canvas
- * still owns its own WebGL texture. Frameloop is paused while `#process`
- * is off-screen.
+ * One ASCII-shaded primitive per Process card.
+ *
+ * The primitive is now an ordinary lit mesh — the ASCII lives entirely in
+ * `AsciiField`, shared with About and Team. Frameloop is paused while
+ * `#process` is off-screen.
  */
-import { useEffect, useMemo, useRef, useState } from "react";
-import { Canvas, useFrame, useThree } from "@react-three/fiber";
+import { useMemo, useRef } from "react";
+import { Canvas, useFrame } from "@react-three/fiber";
 import * as THREE from "three";
 import { prefersReducedMotion } from "@/lib/site/prefersReducedMotion";
-import { shaderColor } from "@/lib/site/cssColor";
-import { getDufornAsciiAtlas } from "./teamCylinderAscii";
-import { SHAPE_ASCII_FRAG, SHAPE_ASCII_VERT } from "./processCardAscii";
+import AsciiField from "./ascii/AsciiField";
 
 export type ProcessCardShape = "icosahedron" | "box" | "torus";
 
-const ASCII_GRANULARITY = 18;
-const ASCII_FONT_SIZE = 0.9;
-const ASCII_NOISE = 0.35;
 const SPIN_RAD_PER_SEC = 0.4;
 const TILT_X = 0.4;
 const TILT_Z = 0.12;
@@ -32,93 +29,22 @@ function ShapeGeometry({ shape }: { shape: ProcessCardShape }) {
   return <icosahedronGeometry args={[1, 1]} />;
 }
 
-function ShapeScene({
-  shape,
-  ink,
-}: {
-  shape: ProcessCardShape;
-  ink: string;
-}) {
-  const { gl, size } = useThree();
+function SpinningShape({ shape }: { shape: ProcessCardShape }) {
   const meshRef = useRef<THREE.Mesh>(null);
-  const materialRef = useRef<THREE.ShaderMaterial>(null);
-  const asciiTex = useRef<THREE.CanvasTexture | null>(null);
-  const [ready, setReady] = useState(false);
   const reducedMotion = useMemo(() => prefersReducedMotion(), []);
 
-  const uniforms = useMemo(
-    () => ({
-      uAsciiTexture: { value: null as THREE.Texture | null },
-      uGlyphCount: { value: 1 },
-      uGranularity: { value: ASCII_GRANULARITY },
-      uFontSize: { value: ASCII_FONT_SIZE },
-      uSurfaceAspect: { value: 1 },
-      uResolution: { value: new THREE.Vector2(1, 1) },
-      uColor: { value: shaderColor(ink) },
-      uTime: { value: 0 },
-      uNoise: { value: reducedMotion ? 0 : ASCII_NOISE },
-    }),
-    [ink, reducedMotion],
-  );
-
-  useEffect(() => {
-    uniforms.uColor.value.copy(shaderColor(ink));
-  }, [ink, uniforms]);
-
-  useEffect(() => {
-    let disposed = false;
-    getDufornAsciiAtlas()
-      .then((ascii) => {
-        if (disposed) {
-          ascii.texture.dispose();
-          return;
-        }
-        asciiTex.current = ascii.texture;
-        uniforms.uAsciiTexture.value = ascii.texture;
-        uniforms.uGlyphCount.value = ascii.glyphCount;
-        setReady(true);
-      })
-      .catch(() => {
-        /* Atlas failed — leave the well empty; title and copy stay readable. */
-      });
-    return () => {
-      disposed = true;
-      asciiTex.current?.dispose();
-      asciiTex.current = null;
-    };
-  }, [uniforms]);
-
   useFrame((_, dt) => {
-    const dpr = gl.getPixelRatio();
-    uniforms.uResolution.value.set(size.width * dpr, size.height * dpr);
-    uniforms.uSurfaceAspect.value = size.width / Math.max(size.height, 1);
-
     const mesh = meshRef.current;
-    if (mesh) {
-      mesh.rotation.x = TILT_X;
-      mesh.rotation.z = TILT_Z;
-      if (!reducedMotion) mesh.rotation.y += dt * SPIN_RAD_PER_SEC;
-    }
-
-    const mat = materialRef.current;
-    if (mat && !reducedMotion) mat.uniforms.uTime.value += dt;
+    if (!mesh) return;
+    mesh.rotation.x = TILT_X;
+    mesh.rotation.z = TILT_Z;
+    if (!reducedMotion) mesh.rotation.y += dt * SPIN_RAD_PER_SEC;
   });
-
-  if (!ready) return null;
 
   return (
     <mesh ref={meshRef}>
       <ShapeGeometry shape={shape} />
-      <shaderMaterial
-        ref={materialRef}
-        uniforms={uniforms}
-        vertexShader={SHAPE_ASCII_VERT}
-        fragmentShader={SHAPE_ASCII_FRAG}
-        side={THREE.DoubleSide}
-        transparent
-        depthWrite
-        toneMapped={false}
-      />
+      <meshStandardMaterial color="#ffffff" roughness={0.35} metalness={0} />
     </mesh>
   );
 }
@@ -138,7 +64,6 @@ export default function ProcessCardCanvas({
         antialias: false,
         powerPreference: "low-power",
       }}
-      camera={{ position: [0, 0, 2.8], fov: 35, near: 0.1, far: 20 }}
       resize={{ scroll: false }}
       style={{
         position: "absolute",
@@ -153,7 +78,21 @@ export default function ProcessCardCanvas({
         gl.outputColorSpace = THREE.SRGBColorSpace;
       }}
     >
-      <ShapeScene shape={shape} ink={ink} />
+      {/* ponytail: `ink` is a literal from Process.tsx, not `--text` — the card
+          plate is light in both themes, so following the toggle would erase it. */}
+      <AsciiField
+        surface="process"
+        ink={ink}
+        fov={35}
+        cameraPosition={[0, 0, 2.8]}
+        far={20}
+      >
+        {/* Archive's rig: a near-black ambient with one hard key, so the
+            brightness ramp the glyphs read off is wide. */}
+        <ambientLight intensity={0.05} />
+        <directionalLight position={[1, 0, 0.866]} intensity={2.5} />
+        <SpinningShape shape={shape} />
+      </AsciiField>
     </Canvas>
   );
 }

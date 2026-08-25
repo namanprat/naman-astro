@@ -98,7 +98,7 @@ async function loadBust(): Promise<void> {
   // own cache so the About panel opens with no parse stall. Two requests, one
   // download. Ceiling: if drei ever caches by loader instance this breaks
   // silently — the panel would just lazy-load as it does today.
-  await import("@/components/site/about/AboutDitherCanvas");
+  await import("@/components/site/about/AboutAsciiCanvas");
 }
 
 /** Kick off every segment. Resolves when all of them settle or the failsafe fires. */

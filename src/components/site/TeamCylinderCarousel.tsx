@@ -1,6 +1,9 @@
 /**
  * Codrops Demo 1–style cylinder behind Team copy, as an R3F island.
- * Mesh pose is fixed; Duforn glyphs scroll in the shader. Ink is `--text`.
+ *
+ * The cylinder is now a plain photo-textured mesh that spins; the glyphs come
+ * from the shared `AsciiField`, so the lattice sits flat on screen and the ring
+ * turns beneath it — the same treatment as the About bust and the Process cards.
  */
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Canvas, useFrame, useThree } from "@react-three/fiber";
@@ -9,12 +12,8 @@ import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import { workItems } from "@/content/work";
 import { prefersReducedMotion } from "@/lib/site/prefersReducedMotion";
-import {
-  ASCII_FRAG,
-  ASCII_VERT,
-  buildDufornAsciiAtlas,
-  readThemeInk,
-} from "./teamCylinderAscii";
+import { useThemeInk } from "@/lib/site/ascii/useThemeInk";
+import AsciiField from "./ascii/AsciiField";
 
 gsap.registerPlugin(ScrollTrigger);
 
@@ -38,13 +37,10 @@ const TAU = Math.PI * 2;
 const VELOCITY_UV_SCALE = 0.000012 / TAU;
 /** Continuous idle crawl (UV/s) so the strip keeps moving off-scroll. */
 const IDLE_UV_PER_SEC = 0.12 / TAU;
-const ASCII_GRANULARITY = 35;
-const ASCII_FONT_SIZE = 1.95;
-const ASCII_NOISE = 1;
 /** Extra mesh scale below 768px so the oval fits a phone viewport. */
 const MOBILE_SCALE = 0.75;
 
-/** Strip transform. Pose is fixed; only the shader UVs travel. */
+/** Strip transform. Pose is fixed apart from the scroll-driven spin. */
 const STRIP = {
   posX: 0,
   posY: 1.1,
@@ -157,18 +153,18 @@ function getResponsiveDimensions(
   };
 }
 
-function TeamCylinderScene() {
+/** The photo ring itself — no ASCII here, it renders into the field's target. */
+function CylinderStrip() {
   const { camera, gl, size } = useThree();
   const meshRef = useRef<THREE.Mesh>(null);
-  const materialRef = useRef<THREE.ShaderMaterial>(null);
   const scrollUv = useRef(0);
   const velocityUv = useRef(0);
   const photoTex = useRef<THREE.CanvasTexture | null>(null);
-  const asciiTex = useRef<THREE.CanvasTexture | null>(null);
   const imagesRef = useRef<HTMLImageElement[] | null>(null);
   const [imagesReady, setImagesReady] = useState(false);
   const [ready, setReady] = useState(false);
   const [gapRatio, setGapRatio] = useState(0);
+  const [texture, setTexture] = useState<THREE.CanvasTexture | null>(null);
 
   const reducedMotion = useMemo(() => prefersReducedMotion(), []);
   const baseDims = useMemo(
@@ -176,53 +172,25 @@ function TeamCylinderScene() {
     [size.width],
   );
 
-  const uniforms = useMemo(
-    () => ({
-      uTexture: { value: null as THREE.Texture | null },
-      uAsciiTexture: { value: null as THREE.Texture | null },
-      uGlyphCount: { value: 1 },
-      uGranularity: { value: ASCII_GRANULARITY },
-      uFontSize: { value: ASCII_FONT_SIZE },
-      uSurfaceAspect: { value: IMAGE_COUNT * TILE_ASPECT },
-      uColor: { value: new THREE.Color("#8b8b8b") },
-      uTime: { value: 0 },
-      uNoise: { value: reducedMotion ? 0 : ASCII_NOISE },
-      uScroll: { value: 0 },
-    }),
-    [reducedMotion],
-  );
-
   useEffect(() => {
     let disposed = false;
-    Promise.all([
-      Promise.all(IMAGE_SRCS.map(loadImage)),
-      buildDufornAsciiAtlas(),
-    ])
-      .then(([images, ascii]) => {
-        if (disposed) {
-          ascii.texture.dispose();
-          return;
-        }
+    Promise.all(IMAGE_SRCS.map(loadImage))
+      .then((images) => {
+        if (disposed) return;
         imagesRef.current = images;
-        asciiTex.current = ascii.texture;
-        uniforms.uAsciiTexture.value = ascii.texture;
-        uniforms.uGlyphCount.value = ascii.glyphCount;
-        uniforms.uColor.value.set(readThemeInk());
         setImagesReady(true);
       })
       .catch(() => {
-        /* Atlas failed — leave the canvas empty; copy stays readable. */
+        /* Covers failed — leave the canvas empty; copy stays readable. */
       });
 
     return () => {
       disposed = true;
       photoTex.current?.dispose();
-      asciiTex.current?.dispose();
       photoTex.current = null;
-      asciiTex.current = null;
       imagesRef.current = null;
     };
-  }, [uniforms]);
+  }, []);
 
   useEffect(() => {
     if (!imagesReady || !imagesRef.current) return;
@@ -230,10 +198,10 @@ function TeamCylinderScene() {
     const photo = buildAtlasFromImages(ctx, imagesRef.current, STRIP.gapPct);
     photoTex.current?.dispose();
     photoTex.current = photo.texture;
-    uniforms.uTexture.value = photo.texture;
+    setTexture(photo.texture);
     setGapRatio(photo.gapRatio);
     setReady(true);
-  }, [imagesReady, gl, uniforms]);
+  }, [imagesReady, gl]);
 
   useEffect(() => {
     if (reducedMotion) return;
@@ -251,21 +219,6 @@ function TeamCylinderScene() {
     };
   }, [reducedMotion]);
 
-  useEffect(() => {
-    if (!ready) return;
-    const color = uniforms.uColor.value;
-    const apply = () => {
-      color.set(readThemeInk());
-    };
-    apply();
-    const mo = new MutationObserver(apply);
-    mo.observe(document.documentElement, {
-      attributes: true,
-      attributeFilter: ["class"],
-    });
-    return () => mo.disconnect();
-  }, [ready, uniforms]);
-
   useFrame((_, dt) => {
     if (!reducedMotion) {
       scrollUv.current += IDLE_UV_PER_SEC * dt + velocityUv.current;
@@ -280,6 +233,8 @@ function TeamCylinderScene() {
     const sx = next.radius / baseDims.radius;
     const sy = next.height / baseDims.height;
     mesh.position.set(STRIP.posX, STRIP.posY, STRIP.posZ);
+    // ponytail: the glyph lattice no longer travels with the UVs, so the whole
+    // ring turns instead — scroll feeds the same spin the UVs used to carry.
     const spinY = !reducedMotion ? scrollUv.current * TAU : 0;
     mesh.rotation.set(STRIP.rotX, STRIP.rotY + spinY, STRIP.rotZ);
     const viewportScale = size.width < 768 ? MOBILE_SCALE : 1;
@@ -294,17 +249,9 @@ function TeamCylinderScene() {
       camera.position.z = next.cameraZ;
       camera.updateProjectionMatrix();
     }
-
-    const mat = materialRef.current;
-    if (!mat) return;
-    mat.uniforms.uScroll.value = scrollUv.current;
-    if (!reducedMotion) mat.uniforms.uTime.value += dt;
-    const safeGap = Math.min(gapRatio, 0.95);
-    mat.uniforms.uSurfaceAspect.value =
-      (IMAGE_COUNT * TILE_ASPECT) / (1 - safeGap);
   });
 
-  if (!ready) return null;
+  if (!ready || !texture) return null;
 
   return (
     <mesh ref={meshRef}>
@@ -318,14 +265,10 @@ function TeamCylinderScene() {
           true,
         ]}
       />
-      <shaderMaterial
-        ref={materialRef}
-        uniforms={uniforms}
-        vertexShader={ASCII_VERT}
-        fragmentShader={ASCII_FRAG}
+      <meshBasicMaterial
+        map={texture}
         side={THREE.DoubleSide}
         transparent
-        depthWrite
         toneMapped={false}
       />
     </mesh>
@@ -334,6 +277,7 @@ function TeamCylinderScene() {
 
 export default function TeamCylinderCarousel() {
   const [inView, setInView] = useState(false);
+  const ink = useThemeInk();
 
   useEffect(() => {
     const el = document.getElementById("team");
@@ -356,7 +300,6 @@ export default function TeamCylinderCarousel() {
         antialias: true,
         powerPreference: "high-performance",
       }}
-      camera={{ position: [0, 0, 6.4], fov: 45, near: 0.1, far: 100 }}
       resize={{ scroll: false }}
       style={{
         position: "absolute",
@@ -371,7 +314,14 @@ export default function TeamCylinderCarousel() {
         gl.outputColorSpace = THREE.SRGBColorSpace;
       }}
     >
-      <TeamCylinderScene />
+      <AsciiField
+        surface="team"
+        ink={ink}
+        fov={45}
+        cameraPosition={[0, 0, 6.4]}
+      >
+        <CylinderStrip />
+      </AsciiField>
     </Canvas>
   );
 }

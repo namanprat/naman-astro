@@ -115,7 +115,7 @@ const SECTION_IDS = ["hero", "team", "contact"];
 export const DESKTOP_NAV_MQ = "(width >= 48rem)";
 
 const MENU_COPY = ".menu_overlay_items .revealer :is(a, button)";
-/* The dither canvas has no lines to split, so it dissolves rather than melts —
+/* The ASCII canvas has no lines to split, so it dissolves rather than melts —
    same duration and start as the lead's gooey, so the two arrive as one. */
 const ABOUT_MEDIA =
   ".about_panel.is-in-menu .about_panel_media .about_panel_reveal_inner";
