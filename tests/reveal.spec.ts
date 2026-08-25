@@ -203,7 +203,6 @@ test("featured slider copy uses the shared gooey, not a custom chain", async ({
   const title = page.locator(".camille_slider_title");
   await title.scrollIntoViewIfNeeded();
 
-  const reduced = test.info().project.name === "reduced-motion";
   const slide = isNarrowNav();
 
   const snapshot = () =>
@@ -224,6 +223,7 @@ test("featured slider copy uses the shared gooey, not a custom chain", async ({
       const hostUsed = official.filter((c) => el.classList.contains(c));
       const kickerUsed = official.filter((c) => kicker.classList.contains(c));
       return {
+        reduced: window.matchMedia("(prefers-reduced-motion: reduce)").matches,
         hostUsed,
         kickerUsed,
         inner: inner.className,
@@ -240,7 +240,7 @@ test("featured slider copy uses the shared gooey, not a custom chain", async ({
       if (!s.inner.includes("gooey_reveal_inner")) return "no inner";
       if (s.shadow !== "none" && s.shadow !== "") return `shadow ${s.shadow}`;
       if (s.hostUsed.length > 1) return `host ${s.hostUsed.join(",")}`;
-      if (reduced) {
+      if (s.reduced) {
         return s.hostUsed.length === 0 ? "ok" : "armed under reduced motion";
       }
       if (slide) {
@@ -267,7 +267,7 @@ test("featured slider copy uses the shared gooey, not a custom chain", async ({
       if (filter.includes("url(") && !filter.includes("blur-matrix")) {
         return `custom url ${filter}`;
       }
-      if (!reduced && !slide) {
+      if (!s.reduced && !slide) {
         if (
           s.hostUsed.includes("gooey_reveal") &&
           !filter.includes("blur-matrix") &&
@@ -276,7 +276,7 @@ test("featured slider copy uses the shared gooey, not a custom chain", async ({
           return `armed without chain ${filter}`;
         }
       }
-      if (!reduced && slide && s.hostUsed.includes("gooey_reveal")) {
+      if (!s.reduced && slide && s.hostUsed.includes("gooey_reveal")) {
         return "melt on phone after hop";
       }
       return "ok";
