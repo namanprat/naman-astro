@@ -39,7 +39,7 @@ import ThemeToggle from "./ThemeToggle";
 import "@/lib/site/eases";
 
 const AVAILABILITY_LINE = "available for projects from october ’26";
-const AVAILABILITY_COPIES = 4;
+const AVAILABILITY_COPIES = 6;
 
 gsap.registerPlugin(SplitText);
 

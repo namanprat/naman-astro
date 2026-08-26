@@ -122,12 +122,12 @@ html.theme-light.menu-open {
 
 .nav_wrap {
   position: sticky;
-  top: 0;
+  top: var(--nav-marquee-height, 0px);
   width: 100%;
   height: auto;
   z-index: var(--z--nav);
   pointer-events: none;
-  padding-top: var(--site--safe-area-top);
+  padding-top: 0;
   box-sizing: border-box;
   overflow: visible;
 }
@@ -183,10 +183,47 @@ html:has(.about_panel.is-open:not(.is-in-menu)) .nav_wrap .nav_fade {
   transition: none;
 }
 
-/* Phone-only availability ticker. Independent of the nav — fixed to the
-   viewport top. The <48rem block turns it on. */
+/* Availability ticker. Independent of the nav — fixed to the viewport top
+   on every breakpoint, stacked under the About overlay. */
 .nav_marquee {
-  display: none;
+  display: block;
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  z-index: calc(var(--z--nav) - 2);
+  overflow: clip;
+  background-color: var(--brand-500);
+  color: var(--dark-900);
+  padding-top: var(--site--safe-area-top);
+  pointer-events: none;
+}
+
+.nav_marquee_track {
+  display: flex;
+  width: max-content;
+  animation: nav-marquee 28s linear infinite;
+}
+
+.nav_marquee_group {
+  display: flex;
+  flex: none;
+  align-items: center;
+  gap: 2em;
+  padding-block: var(--space-2);
+  padding-inline: 1em;
+}
+
+.nav_marquee_copy {
+  margin: 0;
+  color: inherit;
+  line-height: 1;
+  white-space: nowrap;
+}
+
+.nav_marquee_copy::before,
+.nav_marquee_copy::after {
+  content: none;
 }
 
 .nav_contain {
@@ -527,57 +564,6 @@ html:not(:has(.hero)) .name_hero {
        they agree only at 320px and drift apart from there. */
     --lockup-top: calc(var(--site--safe-area-top) + var(--site-margin));
     --lockup-gap: var(--site-margin);
-    /* Fallback until Menu measures the ticker; html style then overrides. */
-    --nav-marquee-height: calc(
-      var(--site--safe-area-top) + var(--space-2) * 2 + 1em
-    );
-  }
-
-  /* Ticker is its own fixed layer. Dock the sticky/fixed bar under it. */
-  .nav_wrap {
-    top: var(--nav-marquee-height, 0px);
-    padding-top: 0;
-  }
-
-  .nav_marquee {
-    display: block;
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    z-index: calc(var(--z--nav) - 2);
-    overflow: clip;
-    background-color: var(--brand-500);
-    color: var(--dark-900);
-    padding-top: var(--site--safe-area-top);
-    pointer-events: none;
-  }
-
-  .nav_marquee_track {
-    display: flex;
-    width: max-content;
-    animation: nav-marquee 28s linear infinite;
-  }
-
-  .nav_marquee_group {
-    display: flex;
-    flex: none;
-    align-items: center;
-    gap: 2em;
-    padding-block: var(--space-2);
-    padding-inline: 1em;
-  }
-
-  .nav_marquee_copy {
-    margin: 0;
-    color: inherit;
-    line-height: 1;
-    white-space: nowrap;
-  }
-
-  .nav_marquee_copy::before,
-  .nav_marquee_copy::after {
-    content: none;
   }
 
   .nav_grid.grid {
