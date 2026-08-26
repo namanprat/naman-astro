@@ -167,13 +167,15 @@ html.theme-light .footer_box {
   visibility: hidden;
 }
 
-/* Reduced motion gets the raw SVG instead of the ASCII canvas — but only where
-   that canvas exists. Below 48rem it is never mounted and `.footer_logo` paints
-   a static, theme-aware mask instead, so un-hiding this would stack the SVG's
-   own baked fill on top of it. */
+/* Reduced motion: same mask the phone uses, not the SVG's baked white fill.
+   Un-hiding `.footer_logo_source` would stack that fill on top of `--text`.
+   The hidden `<img>` still sizes the slot. */
 @media (prefers-reduced-motion: reduce) and (width >= 48rem) {
-  .footer_logo_source {
-    visibility: visible;
+  .footer_logo {
+    background-color: var(--text);
+    -webkit-mask: url("/main-assets/name-hero.svg") left center / contain
+      no-repeat;
+    mask: url("/main-assets/name-hero.svg") left center / contain no-repeat;
   }
 }
 

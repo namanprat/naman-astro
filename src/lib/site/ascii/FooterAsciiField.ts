@@ -104,6 +104,9 @@ export class FooterAsciiField {
     });
     this.renderer.setClearColor(0x000000, 0);
     this.renderer.outputColorSpace = THREE.SRGBColorSpace;
+    // Same as `.footer_ascii_canvas { color-scheme: only light }` — keep the
+    // authored ink if a parent ever restyles the canvas.
+    canvas.style.colorScheme = "only light";
 
     const { signal } = this.abort;
     this.box.addEventListener("pointermove", this.onPointerMove, {
@@ -338,6 +341,10 @@ export class FooterAsciiField {
   }
 
   private readInk(): string {
+    // `.footer_box` already forces `--text` to white-on-frost / black-on-accent.
+    // Prefer that computed colour so the wordmark cannot drift off the copy.
+    const fromBox = getComputedStyle(this.box).color.trim();
+    if (fromBox && fromBox !== "rgba(0, 0, 0, 0)") return fromBox;
     return footerAsciiInk(
       document.documentElement.classList.contains("theme-light"),
     );
@@ -348,6 +355,7 @@ export class FooterAsciiField {
     const color = shaderColor(this.readInk());
     this.material.uniforms.uColor.value.copy(color);
     this.material.uniforms.uHighlightColor.value.copy(color);
+    this.render();
   };
 
   private onPointerMove = (event: PointerEvent): void => {
