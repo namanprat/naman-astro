@@ -302,6 +302,10 @@
     z-index: calc(var(--z--transition) + 1);
   }
 
+  html.is-page-transitioning .nav_marquee {
+    z-index: calc(var(--z--transition) + 2);
+  }
+
   html.is-page-transitioning,
   html.is-page-transitioning body,
   html.is-preloading,

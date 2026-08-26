@@ -184,19 +184,26 @@ html:has(.about_panel.is-open:not(.is-in-menu)) .nav_wrap .nav_fade {
 }
 
 /* Availability ticker. Independent of the nav — fixed to the viewport top
-   on every breakpoint, stacked under the About overlay. */
+   on every breakpoint, painted above the bar. Dissolves while About is open. */
 .nav_marquee {
   display: block;
   position: fixed;
   top: 0;
   left: 0;
   width: 100%;
-  z-index: calc(var(--z--nav) - 2);
+  z-index: calc(var(--z--nav) + 1);
   overflow: clip;
   background-color: var(--brand-500);
   color: var(--dark-900);
   padding-top: var(--site--safe-area-top);
   pointer-events: none;
+  opacity: 1;
+  transition: opacity 0.45s ease;
+}
+
+html.about-open .nav_marquee,
+html.page-about .nav_marquee {
+  opacity: 0;
 }
 
 .nav_marquee_track {
@@ -677,6 +684,10 @@ html:not(:has(.hero)) .name_hero {
 }
 
 @media (prefers-reduced-motion: reduce) {
+  .nav_marquee {
+    transition: none;
+  }
+
   .nav_marquee_track {
     animation: none;
     width: 100%;
