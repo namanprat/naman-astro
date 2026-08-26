@@ -208,7 +208,6 @@ export default function Menu({ initialPathname = "/" }: MenuProps) {
   const aboutSplitRef = useRef<SplitText | null>(null);
   const menuHeadsRef = useRef<GooeyTarget[]>([]);
   const aboutHeadRef = useRef<GooeyTarget | null>(null);
-  const aboutNavTlRef = useRef<gsap.core.Timeline | null>(null);
   const phaseRef = useRef<
     "closed" | "opening" | "open" | "closing" | "leaving"
   >("closed");
@@ -271,71 +270,38 @@ export default function Menu({ initialPathname = "/" }: MenuProps) {
     };
   }, []);
 
-  /* Desktop About: the card covers the bar, and the bar rides down to sit on
-     the orange surface's bottom edge. Same 0.45s `hop` as the card slide so
-     they land together.
-
-     Two things that used to break this, and that this path refuses:
-     - `gsap.set(nav, { y: 0 })` before the tween flashes the lockup.
-     - Measuring the live `top` of a surface still parked at `-100vh` docks
-       the bar to an off-screen edge and freezes the slide. The settled bottom
-       is `panel top + padding-top + surface offsetHeight`, which does not
-       move while `top` tweens. */
+  /* Desktop About: the bar rides the orange surface's *live* bottom edge, so
+     it stays glued while the card slides in and out. A tween to the settled
+     bottom arrives early on open (black gap) and late on close (bar stuck at
+     the dock, then a second hop home). `is-open` outlives `aboutOpen` for the
+     exit slide, so the ticker keys off that class, not the React flag. */
   useEffect(() => {
     const nav = navContainerRef.current;
-    if (!nav) return;
+    if (!nav || !isDesktopNav) return;
 
-    if (!aboutOpen || aboutMode !== "ride" || !isDesktopNav) {
-      if (aboutNavTlRef.current) {
-        aboutNavTlRef.current.reverse();
-      } else if (!isOpen) {
-        gsap.set(nav, { clearProps: "transform" });
+    const navY = () => parseFloat(String(gsap.getProperty(nav, "y"))) || 0;
+
+    const follow = () => {
+      if (document.documentElement.classList.contains("menu-open")) return;
+      const panel = document.querySelector<HTMLElement>(
+        ".about_panel.is-open:not(.is-in-menu)",
+      );
+      const surface = panel?.querySelector<HTMLElement>(".about_panel_surface");
+      if (!panel || !surface) {
+        if (navY()) gsap.set(nav, { clearProps: "transform" });
+        return;
       }
-      return;
-    }
-
-    const panel = document.querySelector<HTMLElement>(
-      ".about_panel:not(.is-in-menu)",
-    );
-    const surface = panel?.querySelector<HTMLElement>(".about_panel_surface");
-    if (!panel || !surface) return;
-
-    const dockY = () => {
-      const y = Number(gsap.getProperty(nav, "y")) || 0;
-      const navTop = nav.getBoundingClientRect().top - y;
-      const padTop = parseFloat(getComputedStyle(panel).paddingTop) || 0;
-      const settledBottom =
-        panel.getBoundingClientRect().top + padTop + surface.offsetHeight;
-      return Math.max(0, settledBottom - navTop);
+      const restTop = nav.getBoundingClientRect().top - navY();
+      const y = Math.max(0, surface.getBoundingClientRect().bottom - restTop);
+      gsap.set(nav, { y });
     };
 
-    aboutNavTlRef.current?.kill();
-
-    const targetY = dockY();
-    if (prefersReducedMotion()) {
-      gsap.set(nav, { y: targetY });
-      aboutNavTlRef.current = null;
-    } else {
-      const tl = gsap.timeline({
-        onReverseComplete: () => {
-          gsap.set(nav, { clearProps: "transform" });
-          aboutNavTlRef.current = null;
-        },
-      });
-      tl.to(nav, { y: targetY, duration: 0.45, ease: "hop" });
-      aboutNavTlRef.current = tl;
-    }
-
-    const ro = new ResizeObserver(() => {
-      if (aboutNavTlRef.current?.isActive()) return;
-      gsap.set(nav, { y: dockY() });
-    });
-    ro.observe(surface);
-
+    gsap.ticker.add(follow);
+    follow();
     return () => {
-      ro.disconnect();
+      gsap.ticker.remove(follow);
     };
-  }, [aboutOpen, aboutMode, isDesktopNav, isOpen]);
+  }, [isDesktopNav]);
 
   useEffect(() => {
     const chrome = heroChromeRef.current;

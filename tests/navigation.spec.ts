@@ -130,6 +130,39 @@ test("desktop About docks the nav under the card", async ({ page }) => {
       });
     }, { timeout: 15_000 })
     .toBe("ok");
+
+  const restTop = await page.evaluate(() => {
+    const nav = document.querySelector<HTMLElement>(".nav_wrap")!;
+    const t = getComputedStyle(nav).transform;
+    const y = t && t !== "none" ? new DOMMatrix(t).f : 0;
+    return nav.getBoundingClientRect().top - y;
+  });
+
+  await page.keyboard.press("Escape");
+  await expect
+    .poll(() => rootClasses(page), { timeout: 10_000 })
+    .not.toContain("about-open");
+  await expect
+    .poll(async () =>
+      page.evaluate(() => {
+        const nav = document.querySelector<HTMLElement>(".nav_wrap")!;
+        const t = getComputedStyle(nav).transform;
+        const y = t && t !== "none" ? new DOMMatrix(t).f : 0;
+        return Math.round(y);
+      }),
+    )
+    .toBe(0);
+  await expect
+    .poll(async () =>
+      page.evaluate(() =>
+        Math.round(
+          document
+            .querySelector<HTMLElement>(".nav_wrap")!
+            .getBoundingClientRect().top,
+        ),
+      ),
+    )
+    .toBe(Math.round(restTop));
 });
 
 test("opening About on desktop locks scroll behind the overlay", async ({
