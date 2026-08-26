@@ -195,6 +195,7 @@
     cursor: pointer;
     white-space: nowrap;
     line-height: 1;
+    overflow: clip;
     transition:
       background-color 200ms ease,
       color 200ms ease,
