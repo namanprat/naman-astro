@@ -9,6 +9,7 @@ import {
 import gsap from "gsap";
 import { shouldMountAboutBust } from "@/lib/site/aboutBust";
 import { ABOUT_OPEN_CLASS } from "@/lib/site/aboutPanel";
+import { followAboutNav, releaseAboutNav } from "@/lib/site/aboutNavDock";
 import { getSiteLenis } from "@/lib/site/lenisBridge";
 import { prefersReducedMotion } from "@/lib/site/prefersReducedMotion";
 import {
@@ -64,6 +65,7 @@ function hideChrome(
     gsap.set(surface, { clearProps: "transform,top" });
   }
   gsap.set(backdrop, { autoAlpha: 0 });
+  releaseAboutNav();
 }
 
 function scheduleAboutBustMount(onMount: () => void): () => void {
@@ -155,6 +157,7 @@ export default function AboutPanel({ open, mode, onClose }: AboutPanelProps) {
         if (prefersReducedMotion()) {
           gsap.set(backdrop, { autoAlpha: 1 });
           gsap.set(surface, { top: "0" });
+          followAboutNav(surface);
           if (leadGooey) addGooeyReveal(gsap.timeline(), leadGooey, 0);
           tlRef.current = null;
         } else {
@@ -174,7 +177,13 @@ export default function AboutPanel({ open, mode, onClose }: AboutPanelProps) {
           tl.fromTo(
             surface,
             { top: "-100vh" },
-            { top: "0", duration: SLIDE_S, ease: "hop", force3D: false },
+            {
+              top: "0",
+              duration: SLIDE_S,
+              ease: "hop",
+              force3D: false,
+              onUpdate: () => followAboutNav(surface),
+            },
             0,
           );
           /* Own timeline: reversing the card must not re-apply the gooey

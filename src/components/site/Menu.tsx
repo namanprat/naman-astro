@@ -19,6 +19,7 @@ import {
   closeAboutPanel,
   installAboutInterceptors,
 } from "@/lib/site/aboutPanel";
+import { followAboutNav, releaseAboutNav } from "@/lib/site/aboutNavDock";
 import { getSiteLenis, subscribeSiteLenis } from "@/lib/site/lenisBridge";
 import { bootHomeIntro, replayHomeIntro } from "@/lib/site/heroIntro";
 import { useCopyEmail } from "@/lib/site/copyEmail";
@@ -270,34 +271,23 @@ export default function Menu({ initialPathname = "/" }: MenuProps) {
     };
   }, []);
 
-  /* Desktop About: the bar rides the orange surface's *live* bottom edge, so
-     it stays glued while the card slides in and out. A tween to the settled
-     bottom arrives early on open (black gap) and late on close (bar stuck at
-     the dock, then a second hop home). `is-open` outlives `aboutOpen` for the
-     exit slide, so the ticker keys off that class, not the React flag. */
+  /* Keep the bar glued after the slide as well — bust mount can change the
+     card's height, and the ticker still runs while `is-open` outlives
+     `aboutOpen` on close. The card tween also calls `followAboutNav` onUpdate
+     so a starved rAF cannot leave the bar at the dock. */
   useEffect(() => {
-    const nav = navContainerRef.current;
-    if (!nav || !isDesktopNav) return;
-
-    const navY = () => parseFloat(String(gsap.getProperty(nav, "y"))) || 0;
-    /* Lock the untransformed top at the first glued frame so a mid-close
-       overflow/Lenis jump cannot recompute rest and snap the bar. */
-    let restTop: number | null = null;
+    if (!isDesktopNav) return;
 
     const follow = () => {
-      if (document.documentElement.classList.contains("menu-open")) return;
       const panel = document.querySelector<HTMLElement>(
         ".about_panel.is-open:not(.is-in-menu)",
       );
       const surface = panel?.querySelector<HTMLElement>(".about_panel_surface");
       if (!panel || !surface) {
-        restTop = null;
-        if (navY()) gsap.set(nav, { clearProps: "transform" });
+        releaseAboutNav();
         return;
       }
-      restTop ??= nav.getBoundingClientRect().top - navY();
-      const y = Math.max(0, surface.getBoundingClientRect().bottom - restTop);
-      gsap.set(nav, { y });
+      followAboutNav(surface);
     };
 
     gsap.ticker.add(follow);
