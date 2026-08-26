@@ -319,6 +319,7 @@ export default function AsciiField({
       uTime: { value: 0 },
       uNoise: { value: reducedMotion ? 0 : tuning.noise },
       uCharNoise: { value: 0 },
+      uOpaqueGlyphs: { value: 0 },
     }),
     // Tuning is re-pushed every frame; only the texture binding is fixed here.
     [target],

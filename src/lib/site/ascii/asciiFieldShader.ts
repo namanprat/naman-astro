@@ -61,6 +61,7 @@ uniform float uJitter;
 uniform float uTime;
 uniform float uNoise;
 uniform float uCharNoise;
+uniform float uOpaqueGlyphs;
 
 varying vec2 vUv;
 varying vec2 vPixelUV;
@@ -123,6 +124,7 @@ void main() {
 
   float alpha = chr * flicker;
   if (alpha < 0.01) discard;
+  if (uOpaqueGlyphs > 0.5) alpha = 1.;
   float hi = uHasHighlight > 0.5 ? texture2D(uHighlight, vPixelUV).r : 0.;
   gl_FragColor = vec4(mix(uColor, uHighlightColor, hi), alpha);
 }

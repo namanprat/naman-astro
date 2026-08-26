@@ -165,6 +165,9 @@ export class FooterAsciiField {
           uTime: { value: 0 },
           uNoise: { value: this.reduced ? 0 : 0.45 },
           uCharNoise: { value: this.reduced ? 0 : CHAR_NOISE },
+          // Holey glyphs at atlas alpha wash to grey on the frost card; opaque
+          // ink is what makes --light-100 actually read as white.
+          uOpaqueGlyphs: { value: 1 },
         },
         transparent: true,
         depthTest: false,
@@ -341,10 +344,6 @@ export class FooterAsciiField {
   }
 
   private readInk(): string {
-    // `.footer_box` already forces `--text` to white-on-frost / black-on-accent.
-    // Prefer that computed colour so the wordmark cannot drift off the copy.
-    const fromBox = getComputedStyle(this.box).color.trim();
-    if (fromBox && fromBox !== "rgba(0, 0, 0, 0)") return fromBox;
     return footerAsciiInk(
       document.documentElement.classList.contains("theme-light"),
     );
