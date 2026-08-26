@@ -70,6 +70,9 @@ export default function Process() {
           <ul className="process_cards">
             {CARDS.map((card) => (
               <li className="process_card" key={card.title}>
+                <h3 className="process_card_title text-style-h3">
+                  {card.title}
+                </h3>
                 <div className="process_card_media">
                   <ProcessCardCanvas
                     shape={card.shape}
@@ -77,9 +80,6 @@ export default function Process() {
                     active={inView}
                   />
                 </div>
-                <h3 className="process_card_title text-style-h3">
-                  {card.title}
-                </h3>
                 <p className="process_card_copy text-style-main">
                   {card.description}
                 </p>

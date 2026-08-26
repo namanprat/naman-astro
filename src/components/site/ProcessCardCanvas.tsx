@@ -5,15 +5,25 @@
  * `AsciiField`, shared with About and Team. Frameloop is paused while
  * `#process` is off-screen.
  */
-import { useMemo, useRef } from "react";
+import { useEffect, useMemo, useRef } from "react";
 import { Canvas, useFrame } from "@react-three/fiber";
 import * as THREE from "three";
+import gsap from "gsap";
+import { ScrollTrigger } from "gsap/ScrollTrigger";
 import { prefersReducedMotion } from "@/lib/site/prefersReducedMotion";
 import AsciiField from "./ascii/AsciiField";
 
+gsap.registerPlugin(ScrollTrigger);
+
 export type ProcessCardShape = "icosahedron" | "box" | "torus";
 
-const SPIN_RAD_PER_SEC = 0.4;
+/**
+ * Scroll velocity (px/s) → radians, signed, so the shapes turn with the scroll
+ * and reverse when it does. Half the cylinder carousel's 0.000012 so the cards
+ * read as slower than the strip. There is deliberately no idle term — unlike
+ * the cylinder, a page at rest leaves these still.
+ */
+const SPIN_RAD_PER_VELOCITY = 0.000006;
 const TILT_X = 0.4;
 const TILT_Z = 0.12;
 
@@ -31,14 +41,33 @@ function ShapeGeometry({ shape }: { shape: ProcessCardShape }) {
 
 function SpinningShape({ shape }: { shape: ProcessCardShape }) {
   const meshRef = useRef<THREE.Mesh>(null);
+  const spinDelta = useRef(0);
   const reducedMotion = useMemo(() => prefersReducedMotion(), []);
 
-  useFrame((_, dt) => {
+  useEffect(() => {
+    if (reducedMotion) return;
+    const st = ScrollTrigger.create({
+      start: 0,
+      end: "max",
+      onUpdate(self) {
+        const v = self.getVelocity();
+        if (!v) return;
+        spinDelta.current += v * SPIN_RAD_PER_VELOCITY;
+      },
+    });
+    return () => {
+      st.kill();
+    };
+  }, [reducedMotion]);
+
+  useFrame(() => {
     const mesh = meshRef.current;
     if (!mesh) return;
     mesh.rotation.x = TILT_X;
     mesh.rotation.z = TILT_Z;
-    if (!reducedMotion) mesh.rotation.y += dt * SPIN_RAD_PER_SEC;
+    // Drained every frame: no scroll since the last one means no turn.
+    mesh.rotation.y += spinDelta.current;
+    spinDelta.current = 0;
   });
 
   return (

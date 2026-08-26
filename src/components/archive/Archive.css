@@ -25,9 +25,9 @@ html.page-archive .nav_wrap {
 html.page-archive .nav_fade {
   background-image: linear-gradient(
     to bottom,
-    var(--dark-900) 0%,
-    color-mix(in srgb, var(--dark-900) 80%, transparent) 40%,
-    color-mix(in srgb, var(--dark-900) 35%, transparent) 70%,
+    color-mix(in srgb, var(--dark-900) 50%, transparent) 0%,
+    color-mix(in srgb, var(--dark-900) 40%, transparent) 40%,
+    color-mix(in srgb, var(--dark-900) 17.5%, transparent) 70%,
     transparent 100%
   );
 }

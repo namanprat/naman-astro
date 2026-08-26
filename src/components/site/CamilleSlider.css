@@ -17,10 +17,13 @@
     user-select: none;
   }
 
+  /* Narrow stage runs to viewport height less 15%. `svh` rather than `dvh` or
+     `vh`: the small viewport is the one that stays put while a mobile browser
+     collapses its URL bar, so the frame cannot resize under a scroll. */
   .camille_slider_frame {
     position: relative;
     width: 100%;
-    aspect-ratio: 10 / 16;
+    height: 85svh;
     overflow: clip;
     background-color: var(--background-skeleton);
     color: var(--light-100);
@@ -85,16 +88,20 @@
     white-space: nowrap;
   }
 
+  /* One tile for every control on the slide. Solid on the narrow stage, dashed
+     once the wide chrome takes over. */
   .camille_slider_prev,
-  .camille_slider_next {
+  .camille_slider_next,
+  .camille_slider_view_box,
+  .camille_slider_view_label {
     display: flex;
     align-items: center;
     justify-content: center;
     margin: 0;
-    border: var(--border-width) solid var(--light-100);
-    border-radius: 0;
-    background-color: var(--light-100);
-    color: var(--dark-900);
+    border: var(--border-width) solid color-mix(in lab, var(--light-100) 75%, transparent);
+    border-radius: var(--radius-small);
+    background-color: transparent;
+    color: inherit;
     cursor: pointer;
     transition:
       background-color 200ms ease,
@@ -102,11 +109,25 @@
       border-color 200ms ease;
   }
 
+  /* The arrow tile is the wide-stage form of the view control; on the narrow
+     stage the label carries the frame on its own. Padding cannot come from the
+     `padding-4` utility here, since the utilities layer outranks this one and
+     the wide stage has to be able to strip it back off. */
+  .camille_slider_view_box {
+    display: none;
+  }
+
+  .camille_slider_view_label {
+    padding: var(--space-3) var(--space-5);
+  }
+
   .camille_slider_prev:hover,
-  .camille_slider_next:hover {
-    background-color: var(--dark-900);
-    border-color: var(--dark-900);
-    color: var(--light-100);
+  .camille_slider_next:hover,
+  .camille_slider_view:hover .camille_slider_view_box,
+  .camille_slider_view:hover .camille_slider_view_label {
+    background-color: var(--light-100);
+    border-color: var(--light-100);
+    color: var(--dark-900);
   }
 
   .camille_slider_copy {
@@ -123,7 +144,18 @@
 
   .camille_slider_kicker {
     margin: var(--space-2) 0 0;
-    color: var(--light-100);
+    color: inherit;
+  }
+
+  .camille_slider_view {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    align-self: end;
+    justify-self: end;
+    gap: var(--space-2);
+    color: inherit;
+    text-decoration: none;
   }
 
   .camille_slider_icon {
@@ -208,7 +240,51 @@
 
   @container camille (width >= 40rem) {
     .camille_slider_frame {
+      height: auto;
+      /* Wide stage takes the viewport's own proportions. CSS cannot divide
+         `vw` by `vh`, but `atan2` accepts the two as lengths and `tan` turns
+         that angle back into the ratio as a plain number. The 16/10 above is
+         the fallback: an unparsable declaration is dropped and the previous
+         one stands, so engines without CSS trig keep the old ratio. */
       aspect-ratio: 16 / 10;
+      aspect-ratio: tan(atan2(100vw, 100vh));
+    }
+
+    /* Rail | copy | view along the bottom of the media, pills beneath. */
+    .camille_slider_overlay {
+      display: grid;
+      grid-template-columns: auto minmax(0, 1fr) auto;
+      grid-template-rows: minmax(0, 1fr) auto;
+      align-items: end;
+    }
+
+    /* Reversed so `next` sits above the counter and `prev` below it, while the
+       DOM keeps the prev-then-next order the narrow row reads in. */
+    .camille_slider_rail {
+      flex-direction: column-reverse;
+      align-self: end;
+    }
+
+    .camille_slider_prev,
+    .camille_slider_next,
+    .camille_slider_view_box {
+      border-style: dashed;
+    }
+
+    .camille_slider_view_box {
+      display: flex;
+    }
+
+    .camille_slider_view_label,
+    .camille_slider_view:hover .camille_slider_view_label {
+      padding: 0;
+      border: 0;
+      background-color: transparent;
+      color: inherit;
+    }
+
+    .camille_slider_pills {
+      display: flex;
     }
   }
 }
