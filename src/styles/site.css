@@ -46,6 +46,7 @@
   --site--span-8: calc(var(--site--column-width-plus-gutter) * 8 - var(--site-gutter));
   --muted: color-mix(in srgb, var(--text) 70%, transparent);
   --site--nav-offset: 0px;
+  --nav-marquee-height: 0px;
   --nav-height: 0px;
 
   --z--negative: -10;

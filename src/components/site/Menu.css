@@ -183,7 +183,8 @@ html:has(.about_panel.is-open:not(.is-in-menu)) .nav_wrap .nav_fade {
   transition: none;
 }
 
-/* Phone-only availability ticker. Hidden here; the <48rem block turns it on. */
+/* Phone-only availability ticker. Independent of the nav — fixed to the
+   viewport top. The <48rem block turns it on. */
 .nav_marquee {
   display: none;
 }
@@ -526,28 +527,30 @@ html:not(:has(.hero)) .name_hero {
        they agree only at 320px and drift apart from there. */
     --lockup-top: calc(var(--site--safe-area-top) + var(--site-margin));
     --lockup-gap: var(--site-margin);
+    /* Fallback until Menu measures the ticker; html style then overrides. */
+    --nav-marquee-height: calc(
+      var(--site--safe-area-top) + var(--space-2) * 2 + 1em
+    );
   }
 
-  /* Marquee is full-bleed under the notch; don't also pad the wrap or the
-     wordmark row sits a second margin below the ticker. */
+  /* Ticker is its own fixed layer. Dock the sticky/fixed bar under it. */
   .nav_wrap {
+    top: var(--nav-marquee-height, 0px);
     padding-top: 0;
   }
 
   .nav_marquee {
     display: block;
-    position: relative;
-    z-index: 1;
+    position: fixed;
+    top: 0;
+    left: 0;
     width: 100%;
+    z-index: calc(var(--z--nav) - 2);
     overflow: clip;
     background-color: var(--brand-500);
     color: var(--dark-900);
-    pointer-events: none;
-  }
-
-  .nav_wrap.is-stuck .nav_marquee,
-  html:not(:has(.hero)) .nav_marquee {
     padding-top: var(--site--safe-area-top);
+    pointer-events: none;
   }
 
   .nav_marquee_track {
@@ -663,16 +666,15 @@ html:not(:has(.hero)) .name_hero {
   }
 
   /* No phone-only sticky lockup. The SVG scrolls away with the hero and the
-     bar sticks on its own — the base `.name_hero` (relative) and `.nav_wrap`
-     (sticky, `top: 0`) rules already do that, so every breakpoint now shares
-     one hero/nav interaction and there is nothing to override here. */
+     bar sticks under the ticker (`top: var(--nav-marquee-height)`), so every
+     breakpoint now shares one hero/nav interaction. */
 
   /* Inner pages: the bar alone, overlaying the stage so overflow-hidden routes
      don't get pushed down. The SVG lockup is a home-page element now, so there
      is no mark height to reserve above the links. */
   html:not(:has(.hero)) .nav_wrap {
     position: fixed;
-    top: 0;
+    top: var(--nav-marquee-height, 0px);
     left: 0;
     width: 100%;
     padding-top: 0;

@@ -197,6 +197,7 @@ export default function Menu({ initialPathname = "/" }: MenuProps) {
   const toggleTrackRef = useRef<HTMLSpanElement>(null);
   const menuItemsRef = useRef<HTMLDivElement>(null);
   const navContainerRef = useRef<HTMLDivElement>(null);
+  const marqueeRef = useRef<HTMLDivElement>(null);
   const heroChromeRef = useRef<HTMLDivElement>(null);
   const overlayTlRef = useRef<gsap.core.Timeline | null>(null);
   const closePromiseRef = useRef<Promise<void> | null>(null);
@@ -363,6 +364,28 @@ export default function Menu({ initialPathname = "/" }: MenuProps) {
   }, []);
 
   useEffect(() => {
+    const el = marqueeRef.current;
+    if (!el) return;
+
+    const setHeight = () => {
+      document.documentElement.style.setProperty(
+        "--nav-marquee-height",
+        `${el.offsetHeight}px`,
+      );
+    };
+
+    setHeight();
+    const ro = new ResizeObserver(setHeight);
+    ro.observe(el);
+    window.addEventListener("resize", setHeight);
+    return () => {
+      ro.disconnect();
+      window.removeEventListener("resize", setHeight);
+      document.documentElement.style.removeProperty("--nav-marquee-height");
+    };
+  }, []);
+
+  useEffect(() => {
     const nav = navContainerRef.current;
     if (!nav) return;
 
@@ -372,10 +395,10 @@ export default function Menu({ initialPathname = "/" }: MenuProps) {
         "--nav-offset",
         `${rect.bottom}px`,
       );
-      /* Sticky bar has reached the top. Home keys its readability fade off
-         this; routes that pin the bar with `position: fixed` read stuck from
-         the start. */
-      setNavStuck(rect.top <= 1);
+      /* Sticky bar has reached its dock. On the phone that dock is under the
+         availability ticker (`top: var(--nav-marquee-height)`), not 0. */
+      const dock = Number.parseFloat(getComputedStyle(nav).top) || 0;
+      setNavStuck(rect.top <= dock + 1);
     };
 
     setOffset();
@@ -1023,6 +1046,20 @@ export default function Menu({ initialPathname = "/" }: MenuProps) {
 
   return (
     <>
+      <div className="nav_marquee" ref={marqueeRef}>
+        <p className="sr-only">{AVAILABILITY_LINE}</p>
+        <div className="nav_marquee_track" aria-hidden="true">
+          {[0, 1].map((group) => (
+            <div className="nav_marquee_group" key={group}>
+              {Array.from({ length: AVAILABILITY_COPIES }, (_, i) => (
+                <span key={i} className="nav_marquee_copy text-style-small">
+                  {AVAILABILITY_LINE}
+                </span>
+              ))}
+            </div>
+          ))}
+        </div>
+      </div>
       <div className="hero_chrome" ref={heroChromeRef}>
         <div className="name_hero">
           <div className="name_hero_contain container gap-0">
@@ -1062,23 +1099,6 @@ export default function Menu({ initialPathname = "/" }: MenuProps) {
           ref={navContainerRef}
         >
           <div className="nav_fade" aria-hidden="true" />
-          <div className="nav_marquee">
-            <p className="sr-only">{AVAILABILITY_LINE}</p>
-            <div className="nav_marquee_track" aria-hidden="true">
-              {[0, 1].map((group) => (
-                <div className="nav_marquee_group" key={group}>
-                  {Array.from({ length: AVAILABILITY_COPIES }, (_, i) => (
-                    <span
-                      key={i}
-                      className="nav_marquee_copy text-style-small"
-                    >
-                      {AVAILABILITY_LINE}
-                    </span>
-                  ))}
-                </div>
-              ))}
-            </div>
-          </div>
           <div className="nav_contain container gap-0">
             <nav className="nav_grid grid is-12" ref={navRef} aria-label="Main">
               <div className="nav_logo">
