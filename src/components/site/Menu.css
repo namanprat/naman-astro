@@ -160,6 +160,12 @@ html.theme-light.menu-open {
   );
 }
 
+/* Light mode only: the warm-grey wash reads twice as strong as the dark
+   fade, so cut it in half. Hide rules below still win on specificity. */
+html.theme-light .nav_fade {
+  opacity: 0.5;
+}
+
 /* Home only: float clean over the SVG wordmark until the sticky bar reaches
    the top, then dissolve the fade in. `html:has(.hero)` is the same
    home/inner-page test `.name_hero` uses above. */
