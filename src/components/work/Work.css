@@ -19,7 +19,7 @@ html.page-work-project body {
 html.page-work .nav_wrap,
 html.page-work-project .nav_wrap {
   position: fixed;
-  top: 0;
+  top: var(--nav-marquee-height, 0px);
   left: 0;
   right: 0;
 }
