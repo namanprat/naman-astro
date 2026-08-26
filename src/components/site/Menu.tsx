@@ -280,6 +280,9 @@ export default function Menu({ initialPathname = "/" }: MenuProps) {
     if (!nav || !isDesktopNav) return;
 
     const navY = () => parseFloat(String(gsap.getProperty(nav, "y"))) || 0;
+    /* Lock the untransformed top at the first glued frame so a mid-close
+       overflow/Lenis jump cannot recompute rest and snap the bar. */
+    let restTop: number | null = null;
 
     const follow = () => {
       if (document.documentElement.classList.contains("menu-open")) return;
@@ -288,10 +291,11 @@ export default function Menu({ initialPathname = "/" }: MenuProps) {
       );
       const surface = panel?.querySelector<HTMLElement>(".about_panel_surface");
       if (!panel || !surface) {
+        restTop = null;
         if (navY()) gsap.set(nav, { clearProps: "transform" });
         return;
       }
-      const restTop = nav.getBoundingClientRect().top - navY();
+      restTop ??= nav.getBoundingClientRect().top - navY();
       const y = Math.max(0, surface.getBoundingClientRect().bottom - restTop);
       gsap.set(nav, { y });
     };

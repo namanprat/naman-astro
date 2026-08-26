@@ -3,8 +3,8 @@
    Lenis is stopped in AboutPanel; this is the native-scroll backup so a
    wheel that leaks past still has nowhere to go. */
 @media (width >= 48rem) {
-  html.about-open,
-  html.about-open body {
+  html:has(.about_panel.is-open:not(.is-in-menu)),
+  html:has(.about_panel.is-open:not(.is-in-menu)) body {
     overflow: hidden;
     overscroll-behavior: none;
   }
