@@ -38,6 +38,9 @@ import RollingText from "./RollingText";
 import ThemeToggle from "./ThemeToggle";
 import "@/lib/site/eases";
 
+const AVAILABILITY_LINE = "available for projects from october ’26";
+const AVAILABILITY_COPIES = 4;
+
 gsap.registerPlugin(SplitText);
 
 const PANEL_DURATION = 0.9;
@@ -1059,6 +1062,23 @@ export default function Menu({ initialPathname = "/" }: MenuProps) {
           ref={navContainerRef}
         >
           <div className="nav_fade" aria-hidden="true" />
+          <div className="nav_marquee">
+            <p className="sr-only">{AVAILABILITY_LINE}</p>
+            <div className="nav_marquee_track" aria-hidden="true">
+              {[0, 1].map((group) => (
+                <div className="nav_marquee_group" key={group}>
+                  {Array.from({ length: AVAILABILITY_COPIES }, (_, i) => (
+                    <span
+                      key={i}
+                      className="nav_marquee_copy text-style-small"
+                    >
+                      {AVAILABILITY_LINE}
+                    </span>
+                  ))}
+                </div>
+              ))}
+            </div>
+          </div>
           <div className="nav_contain container gap-0">
             <nav className="nav_grid grid is-12" ref={navRef} aria-label="Main">
               <div className="nav_logo">

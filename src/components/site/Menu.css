@@ -183,6 +183,11 @@ html:has(.about_panel.is-open:not(.is-in-menu)) .nav_wrap .nav_fade {
   transition: none;
 }
 
+/* Phone-only availability ticker. Hidden here; the <48rem block turns it on. */
+.nav_marquee {
+  display: none;
+}
+
 .nav_contain {
   pointer-events: none;
 }
@@ -523,6 +528,55 @@ html:not(:has(.hero)) .name_hero {
     --lockup-gap: var(--site-margin);
   }
 
+  /* Marquee is full-bleed under the notch; don't also pad the wrap or the
+     wordmark row sits a second margin below the ticker. */
+  .nav_wrap {
+    padding-top: 0;
+  }
+
+  .nav_marquee {
+    display: block;
+    position: relative;
+    z-index: 1;
+    width: 100%;
+    overflow: clip;
+    background-color: var(--brand-500);
+    color: var(--dark-900);
+    pointer-events: none;
+  }
+
+  .nav_wrap.is-stuck .nav_marquee,
+  html:not(:has(.hero)) .nav_marquee {
+    padding-top: var(--site--safe-area-top);
+  }
+
+  .nav_marquee_track {
+    display: flex;
+    width: max-content;
+    animation: nav-marquee 28s linear infinite;
+  }
+
+  .nav_marquee_group {
+    display: flex;
+    flex: none;
+    align-items: center;
+    gap: 2em;
+    padding-block: var(--space-2);
+    padding-inline: 1em;
+  }
+
+  .nav_marquee_copy {
+    margin: 0;
+    color: inherit;
+    line-height: 1;
+    white-space: nowrap;
+  }
+
+  .nav_marquee_copy::before,
+  .nav_marquee_copy::after {
+    content: none;
+  }
+
   .nav_grid.grid {
     grid-template-columns: repeat(4, max-content);
     justify-content: space-between;
@@ -621,7 +675,28 @@ html:not(:has(.hero)) .name_hero {
     top: 0;
     left: 0;
     width: 100%;
-    padding-top: var(--lockup-top);
+    padding-top: 0;
+  }
+}
+
+@keyframes nav-marquee {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(-50%);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .nav_marquee_track {
+    animation: none;
+    width: 100%;
+    justify-content: center;
+  }
+
+  .nav_marquee_group + .nav_marquee_group {
+    display: none;
   }
 }
 
