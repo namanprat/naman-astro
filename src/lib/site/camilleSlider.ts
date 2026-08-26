@@ -58,9 +58,8 @@ export function initCamilleSlider(root: HTMLElement): CamilleSliderHandle {
   const kickerInner = root.querySelector<HTMLElement>(
     ".camille_slider_kicker_inner",
   );
-  const viewLink = root.querySelector<HTMLAnchorElement>(
-    ".camille_slider_view",
-  );
+  const hitLink = root.querySelector<HTMLAnchorElement>(".camille_slider_hit");
+  const cursorEl = root.querySelector<HTMLElement>(".camille_slider_cursor");
   const pills = [
     ...root.querySelectorAll<HTMLButtonElement>(".camille_slider_pill"),
   ];
@@ -137,6 +136,39 @@ export function initCamilleSlider(root: HTMLElement): CamilleSliderHandle {
 
   const wrap = (index: number) => ((index % total) + total) % total;
 
+  const chromeSel =
+    ".camille_slider_prev, .camille_slider_next, .camille_slider_rail, .camille_slider_copy, .camille_slider_pills, .camille_slider_hit";
+
+  const overChrome = (target: EventTarget | null) =>
+    target instanceof Element && !!target.closest(chromeSel);
+
+  const hideViewCursor = () => {
+    frame.classList.remove("is-view-cursor");
+  };
+
+  const onPointerMove = (event: PointerEvent) => {
+    if (event.pointerType !== "mouse" || !cursorEl) {
+      hideViewCursor();
+      return;
+    }
+    if (overChrome(event.target)) {
+      hideViewCursor();
+      return;
+    }
+    frame.classList.add("is-view-cursor");
+    cursorEl.style.left = `${event.clientX}px`;
+    cursorEl.style.top = `${event.clientY}px`;
+  };
+
+  const onPointerLeave = () => {
+    hideViewCursor();
+  };
+
+  const openCurrent = () => {
+    const href = hrefs[current];
+    if (href) void go(href);
+  };
+
   const stopAutoplay = () => {
     window.clearInterval(autoplayTimer);
     autoplayTimer = 0;
@@ -169,7 +201,7 @@ export function initCamilleSlider(root: HTMLElement): CamilleSliderHandle {
 
   const syncChrome = () => {
     if (indexEl) indexEl.textContent = padIndex(current);
-    if (viewLink) viewLink.href = hrefs[current] ?? "/work";
+    if (hitLink) hitLink.href = hrefs[current] ?? "/work";
     pills.forEach((pill, i) => {
       const on = i === current;
       pill.classList.toggle("is-active", on);
@@ -308,11 +340,13 @@ export function initCamilleSlider(root: HTMLElement): CamilleSliderHandle {
     e.stopPropagation();
     goTo(current + 1);
   };
-  const onView = (e: MouseEvent) => {
+  const onHit = (e: MouseEvent) => {
     e.preventDefault();
-    e.stopPropagation();
-    const href = viewLink?.href;
-    if (href) void go(href);
+    openCurrent();
+  };
+  const onFrameClick = (e: MouseEvent) => {
+    if (overChrome(e.target)) return;
+    openCurrent();
   };
   const onPill = (e: MouseEvent) => {
     const pill = e.currentTarget;
@@ -324,7 +358,10 @@ export function initCamilleSlider(root: HTMLElement): CamilleSliderHandle {
 
   prevBtn?.addEventListener("click", onPrev);
   nextBtn?.addEventListener("click", onNext);
-  viewLink?.addEventListener("click", onView);
+  hitLink?.addEventListener("click", onHit);
+  frame.addEventListener("click", onFrameClick);
+  frame.addEventListener("pointermove", onPointerMove);
+  frame.addEventListener("pointerleave", onPointerLeave);
   for (const pill of pills) pill.addEventListener("click", onPill);
 
   startAutoplay();
@@ -337,7 +374,11 @@ export function initCamilleSlider(root: HTMLElement): CamilleSliderHandle {
       stopAutoplay();
       prevBtn?.removeEventListener("click", onPrev);
       nextBtn?.removeEventListener("click", onNext);
-      viewLink?.removeEventListener("click", onView);
+      hitLink?.removeEventListener("click", onHit);
+      frame.removeEventListener("click", onFrameClick);
+      frame.removeEventListener("pointermove", onPointerMove);
+      frame.removeEventListener("pointerleave", onPointerLeave);
+      hideViewCursor();
       for (const pill of pills) pill.removeEventListener("click", onPill);
       gsap.killTweensOf(
         images.querySelectorAll(".camille_slider_photo, .camille_slider_img"),

@@ -76,4 +76,16 @@ for (const api of [
   assert.match(ts, new RegExp(api), `slider drives copy through ${api}`);
 }
 
+assert.doesNotMatch(
+  astro,
+  /camille_slider_view_label|View project<\/span/,
+  "desktop slider must not paint a View project control",
+);
+assert.match(
+  astro,
+  /camille_slider_cursor/,
+  "photo hover uses the view cursor chip",
+);
+assert.match(ts, /is-view-cursor/, "slider drives the view cursor from pointermove");
+
 console.log("camilleGooey: all assertions passed");

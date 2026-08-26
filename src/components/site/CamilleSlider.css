@@ -57,7 +57,7 @@
     background-color: var(--background-skeleton);
   }
 
-  /* Narrow stage: rail, copy and view collapse into one bottom-anchored stack
+  /* Narrow stage: rail and copy collapse into one bottom-anchored stack
      and the pills drop out. The container query below restores the wide form. */
   .camille_slider_overlay {
     position: absolute;
@@ -85,11 +85,9 @@
     gap: var(--space-3);
   }
 
-  /* One dashed tile for every control on the slide: both arrows and the
-     view-project target. */
+  /* One dashed tile for every control on the slide: both arrows. */
   .camille_slider_prev,
-  .camille_slider_next,
-  .camille_slider_view_box {
+  .camille_slider_next {
     display: flex;
     align-items: center;
     justify-content: center;
@@ -106,8 +104,7 @@
   }
 
   .camille_slider_prev:hover,
-  .camille_slider_next:hover,
-  .camille_slider_view:hover .camille_slider_view_box {
+  .camille_slider_next:hover {
     background-color: var(--light-100);
     border-color: var(--light-100);
     color: var(--dark-900);
@@ -128,27 +125,47 @@
     color: inherit;
   }
 
-  .camille_slider_view {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    align-self: end;
-    justify-self: end;
-    gap: var(--space-2);
-    color: inherit;
-    text-decoration: none;
-  }
-
-  .camille_slider_view_label {
-    margin: 0;
-  }
-
   .camille_slider_icon {
     display: block;
     width: 1.5rem;
     aspect-ratio: 1 / 1;
     flex-shrink: 0;
     fill: currentColor;
+  }
+
+  /* Follows the pointer over the photo. Tight orange chip, not the old
+     dashed "View project" control. */
+  .camille_slider_cursor {
+    position: fixed;
+    top: 0;
+    left: 0;
+    z-index: var(--z--overlay);
+    display: none;
+    pointer-events: none;
+    background-color: var(--brand-500);
+    color: var(--brand-text);
+    padding: 0.12rem 0.35rem;
+    border-radius: 0.15rem;
+    font-family: var(--mono-family);
+    font-size: var(--text-small);
+    font-weight: var(--primary-regular);
+    line-height: 1;
+    letter-spacing: var(--letter-spacing-normal);
+    text-transform: uppercase;
+    white-space: nowrap;
+    transform: translate(-50%, -50%);
+  }
+
+  @media (hover: hover) and (pointer: fine) {
+    .camille_slider_frame.is-view-cursor .camille_slider_cursor {
+      display: block;
+    }
+
+    .camille_slider_frame.is-view-cursor,
+    .camille_slider_frame.is-view-cursor .camille_slider_images,
+    .camille_slider_frame.is-view-cursor .camille_slider_photo {
+      cursor: none;
+    }
   }
 
   .camille_slider_pills {
@@ -195,10 +212,10 @@
       aspect-ratio: 16 / 10;
     }
 
-    /* Rail | copy | view along the bottom of the media, pills beneath. */
+    /* Rail | copy along the bottom of the media, pills beneath. */
     .camille_slider_overlay {
       display: grid;
-      grid-template-columns: auto minmax(0, 1fr) auto;
+      grid-template-columns: auto minmax(0, 1fr);
       grid-template-rows: minmax(0, 1fr) auto;
       align-items: end;
     }

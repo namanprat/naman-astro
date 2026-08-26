@@ -3,6 +3,7 @@ import {
   expectNavVisible,
   expectRevealed,
   isNarrowNav,
+  isTouch,
   rootClasses,
   seedSession,
   skipPreloader,
@@ -282,4 +283,28 @@ test("featured slider copy uses the shared gooey, not a custom chain", async ({
       return "ok";
     })
     .toBe("ok");
+});
+
+test("featured slider shows a view cursor on the photo, not View project", async ({
+  page,
+}) => {
+  test.skip(isTouch(), "view cursor is a hover chip");
+
+  await skipPreloader(page);
+  await page.goto("/");
+  await expectRevealed(page);
+
+  const frame = page.locator(".camille_slider_frame");
+  await frame.scrollIntoViewIfNeeded();
+
+  await expect(page.locator(".camille_slider_view")).toHaveCount(0);
+  await expect(page.locator(".camille_slider_view_label")).toHaveCount(0);
+
+  const photo = page.locator(".camille_slider_img.is-active .camille_slider_photo");
+  await photo.hover();
+
+  const cursor = page.locator(".camille_slider_cursor");
+  await expect(frame).toHaveClass(/is-view-cursor/);
+  await expect(cursor).toBeVisible();
+  await expect(cursor).toHaveText(/^view$/i);
 });
