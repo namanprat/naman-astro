@@ -484,3 +484,28 @@ test("archive theme-color stays dark regardless of the stored theme", async ({
     "#101010",
   );
 });
+
+test("the nav stays above the page-transition cover", async ({ page }) => {
+  await page.goto("/");
+  await expectRevealed(page);
+  await expectNavVisible(page);
+
+  const stacking = await page.evaluate(() => {
+    document.documentElement.classList.add("is-page-transitioning");
+    const nav = document.querySelector<HTMLElement>(".nav_wrap");
+    const panel = document.querySelector<HTMLElement>(".transition_panel");
+    if (!nav || !panel) return null;
+    const navZ = Number.parseFloat(getComputedStyle(nav).zIndex);
+    const panelZ = Number.parseFloat(getComputedStyle(panel).zIndex);
+    const navBox = nav.getBoundingClientRect();
+    return {
+      navZ,
+      panelZ,
+      navVisible: navBox.height > 0 && getComputedStyle(nav).visibility !== "hidden",
+    };
+  });
+
+  expect(stacking).not.toBeNull();
+  expect(stacking!.navVisible).toBe(true);
+  expect(stacking!.navZ).toBeGreaterThan(stacking!.panelZ);
+});

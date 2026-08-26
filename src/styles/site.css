@@ -58,6 +58,8 @@
   --z--menu: 210;
   --z--overlay: 999;
   --z--modal: 9999;
+  /* Page-transition cover. Nav sits one above so the bar stays put. */
+  --z--transition: 1000001;
 }
 
 /* Guarded, not declared straight into `:root`: a custom property swallows any
@@ -282,13 +284,19 @@
     background-color: var(--brand-500);
     transform: translateY(100%);
     pointer-events: none;
-    z-index: 1000001;
+    z-index: var(--z--transition);
     will-change: transform;
   }
 
   html.is-page-transitioning .transition_panel {
     transform: translateY(0);
     pointer-events: all;
+  }
+
+  /* Keep the bar painted over the rising cover — hard nav remounts it, so
+     dropping it under the panel reads as the nav disappearing. */
+  html.is-page-transitioning .nav_wrap {
+    z-index: calc(var(--z--transition) + 1);
   }
 
   html.is-page-transitioning,
