@@ -21,6 +21,7 @@ import {
 } from "./gooeyReveal";
 import { go } from "./navigate";
 import { prefersReducedMotion } from "./prefersReducedMotion";
+import { initRollingText } from "./rollingText";
 
 gsap.registerPlugin(CustomEase, ScrollTrigger);
 if (!CustomEase.get("camilleHop")) {
@@ -72,6 +73,11 @@ export function initCamilleSlider(root: HTMLElement): CamilleSliderHandle {
   if (!stage || !frame || !images || !layers.length) {
     return { destroy: () => {} };
   }
+
+  const rollDisposes = pills.map((pill) => {
+    const label = pill.querySelector<HTMLElement>(".roll_text");
+    return label ? initRollingText(label) : () => {};
+  });
 
   const titles = layers.map(
     (layer) =>
@@ -380,6 +386,7 @@ export function initCamilleSlider(root: HTMLElement): CamilleSliderHandle {
       frame.removeEventListener("pointerleave", onPointerLeave);
       hideViewCursor();
       for (const pill of pills) pill.removeEventListener("click", onPill);
+      for (const dispose of rollDisposes) dispose();
       gsap.killTweensOf(
         images.querySelectorAll(".camille_slider_photo, .camille_slider_img"),
       );

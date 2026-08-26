@@ -6,6 +6,7 @@
  */
 import { featuredWorkItems } from "@/content/work";
 import "./CamilleSlider.css";
+import "./RollingText.css";
 
 // ponytail: placeholder art from the cg-yzavoku slider stands in for the real
 // covers. Swap `src`/`alt` back to `item.image`/`item.alt` to restore them.
@@ -129,7 +130,7 @@ const first = SLIDES[0];
                 aria-selected={i === 0 ? "true" : "false"}
                 data-slide-index={i}
               >
-                {slide.title}
+                <span class="roll_text">{slide.title}</span>
               </button>
             ))
           }
