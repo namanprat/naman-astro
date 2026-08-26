@@ -23,7 +23,7 @@
     aspect-ratio: 10 / 16;
     overflow: clip;
     background-color: var(--background-skeleton);
-    color: var(--light-100);
+    color: var(--text);
     container-type: inline-size;
   }
 
@@ -57,32 +57,36 @@
     background-color: var(--background-skeleton);
   }
 
-  /* Narrow stage: rail and copy collapse into one bottom-anchored stack
-     and the pills drop out. The container query below restores the wide form. */
+  /* Title + kicker top-left, arrow cluster top-right, chips along the
+     bottom of the image. Padding and row gaps come from Lumos utilities. */
   .camille_slider_overlay {
     position: absolute;
     inset: 0;
     z-index: 3;
     display: flex;
     flex-direction: column;
-    justify-content: end;
-    gap: var(--space-4);
-    padding: var(--space-4);
+    justify-content: space-between;
     pointer-events: none;
-    color: var(--light-100);
+    color: var(--text);
   }
 
   .camille_slider_overlay > * {
     pointer-events: auto;
   }
 
+  .camille_slider_top {
+    flex: 0 0 auto;
+    min-width: 0;
+  }
+
   .camille_slider_rail {
-    display: flex;
-    flex-direction: row;
-    align-items: center;
-    align-self: start;
-    justify-self: start;
-    gap: var(--space-3);
+    flex: 0 0 auto;
+  }
+
+  .camille_slider_index {
+    flex: none;
+    color: inherit;
+    white-space: nowrap;
   }
 
   /* One dashed tile for every control on the slide: both arrows. */
@@ -92,8 +96,8 @@
     align-items: center;
     justify-content: center;
     margin: 0;
-    border: var(--border-width) dashed color-mix(in lab, var(--light-100) 75%, transparent);
-    border-radius: var(--radius-small);
+    border: var(--border-width) dashed color-mix(in lab, var(--text) 75%, transparent);
+    border-radius: 0;
     background-color: transparent;
     color: inherit;
     cursor: pointer;
@@ -105,13 +109,14 @@
 
   .camille_slider_prev:hover,
   .camille_slider_next:hover {
-    background-color: var(--light-100);
-    border-color: var(--light-100);
-    color: var(--dark-900);
+    background-color: var(--text);
+    border-color: var(--text);
+    color: var(--background);
   }
 
   .camille_slider_copy {
     min-width: 0;
+    flex: 1 1 auto;
   }
 
   .camille_slider_title {
@@ -169,11 +174,8 @@
   }
 
   .camille_slider_pills {
-    display: none;
-    grid-column: 1 / -1;
-    flex-wrap: nowrap;
-    justify-content: center;
-    gap: var(--space-2);
+    flex: 0 0 auto;
+    align-self: stretch;
     max-width: 100%;
     overflow-x: auto;
     scrollbar-width: none;
@@ -187,10 +189,10 @@
     flex: none;
     margin: 0;
     padding: var(--space-2) var(--space-4);
-    border: var(--border-width) dashed color-mix(in lab, var(--light-100) 75%, transparent);
-    border-radius: var(--radius-round);
-    background-color: transparent;
-    color: inherit;
+    border: var(--border-width) solid var(--text);
+    border-radius: 0;
+    background-color: var(--text);
+    color: var(--background);
     cursor: pointer;
     white-space: nowrap;
     transition:
@@ -201,34 +203,15 @@
   }
 
   .camille_slider_pill.is-active {
-    background-color: var(--light-100);
-    border-color: var(--light-100);
-    border-style: solid;
-    color: var(--dark-900);
+    background-color: transparent;
+    border-color: var(--text);
+    border-style: dashed;
+    color: var(--text);
   }
 
   @container camille (width >= 40rem) {
     .camille_slider_frame {
       aspect-ratio: 16 / 10;
-    }
-
-    /* Rail | copy along the bottom of the media, pills beneath. */
-    .camille_slider_overlay {
-      display: grid;
-      grid-template-columns: auto minmax(0, 1fr);
-      grid-template-rows: minmax(0, 1fr) auto;
-      align-items: end;
-    }
-
-    /* Reversed so `next` sits above the counter and `prev` below it, while the
-       DOM keeps the prev-then-next order the narrow row reads in. */
-    .camille_slider_rail {
-      flex-direction: column-reverse;
-      align-self: end;
-    }
-
-    .camille_slider_pills {
-      display: flex;
     }
   }
 }
