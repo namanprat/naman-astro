@@ -1,4 +1,15 @@
 @layer components {
+/* Desktop overlay only — the mobile `/about` route never sets `about-open`.
+   Lenis is stopped in AboutPanel; this is the native-scroll backup so a
+   wheel that leaks past still has nowhere to go. */
+@media (width >= 48rem) {
+  html:has(.about_panel.is-open:not(.is-in-menu)),
+  html:has(.about_panel.is-open:not(.is-in-menu)) body {
+    overflow: hidden;
+    overscroll-behavior: none;
+  }
+}
+
 .about_panel_backdrop {
   position: fixed;
   inset: 0;
@@ -257,15 +268,16 @@ html.theme-light .about_panel.is-in-menu {
   row-gap: var(--space-8);
 }
 
-/* The ride/padded card chrome. Cut at 48rem with the nav (Menu.tsx's
+/* Desktop overlay chrome. Cut at 48rem with the nav (Menu.tsx's
    DESKTOP_NAV_MQ), not at the site's 64rem grid cut — the 8-col content map
    further down already covers the 48–64rem band. */
 @media (width >= 48rem) {
   .about_panel:not(.is-in-menu) {
     padding: 0;
     /* Ride mode (desktop About) is not --padded. Side gap is --about--inset
-       (margin − gutter); mirror it on top. Do not use --nav-offset here: it
-       tracks the transformed nav as it docks to the card and would feed back. */
+       (margin − gutter); mirror it on top so the card covers the nav. Do not
+       use --nav-offset here: it tracks the transformed nav as it docks to the
+       card and would feed back. */
     padding-top: var(--about--inset);
   }
 

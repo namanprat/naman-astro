@@ -16,6 +16,7 @@ import { Canvas, useFrame } from "@react-three/fiber";
 import {
   Suspense,
   Component,
+  useEffect,
   useLayoutEffect,
   useMemo,
   useRef,
@@ -26,9 +27,20 @@ import {
 } from "react";
 import * as THREE from "three";
 import AsciiField from "../ascii/AsciiField";
-import { SWATCH_LIGHT, SWATCH_LIGHT_NUM } from "@/lib/site/siteColors";
+import {
+  SWATCH_BRAND,
+  SWATCH_LIGHT,
+  SWATCH_LIGHT_NUM,
+} from "@/lib/site/siteColors";
 import { getAboutCanvasMaxDpr, BUST_URL } from "@/lib/site/aboutBust";
 import { prefersReducedMotion } from "@/lib/site/prefersReducedMotion";
+import gsap from "gsap";
+import { ScrollTrigger } from "gsap/ScrollTrigger";
+
+gsap.registerPlugin(ScrollTrigger);
+
+/** Same px/s → radians scale the Team cylinder uses for its scroll spin. */
+const SCROLL_SPIN_SCALE = 0.000012;
 
 /** Render settings for the About model canvas. */
 const CANVAS = {
@@ -331,10 +343,33 @@ function BustReadyGate({ onReady }: { onReady?: () => void }) {
 function SpinY({ speed, children }: { speed: number; children: ReactNode }) {
   const ref = useRef<THREE.Group>(null);
   const reduced = prefersReducedMotion();
+  const scrollSpin = useRef(0);
+
+  useEffect(() => {
+    if (reduced) return;
+    const panel = document.querySelector<HTMLElement>(".about_panel_scroll");
+    const st = ScrollTrigger.create({
+      scroller:
+        panel && panel.scrollHeight > panel.clientHeight + 1
+          ? panel
+          : undefined,
+      start: 0,
+      end: "max",
+      onUpdate(self) {
+        const v = self.getVelocity();
+        if (!v) return;
+        scrollSpin.current += v * SCROLL_SPIN_SCALE;
+      },
+    });
+    return () => {
+      st.kill();
+    };
+  }, [reduced]);
 
   useFrame((_, delta) => {
     if (reduced || !ref.current || speed === 0) return;
-    ref.current.rotation.y += delta * speed;
+    ref.current.rotation.y += delta * speed + scrollSpin.current;
+    scrollSpin.current = 0;
   });
 
   return <group ref={ref}>{children}</group>;
@@ -344,11 +379,13 @@ function AboutAsciiScene({ onReady }: { onReady?: () => void }) {
   return (
     /* ponytail: ink is the fixed light swatch, never `--text`. The plate under
        this canvas is `--dark-900` in both themes and the canvas composites with
-       `mix-blend-mode: screen`, so dark ink would blend away to nothing. */
+       `mix-blend-mode: screen`, so dark ink would blend away to nothing.
+       The pointer trail is `--brand-500` so it reads as the accent, not the
+       blue fill light. */
     <AsciiField
       surface="about"
       ink={SWATCH_LIGHT}
-      hoverHighlight={CANVAS.highlight}
+      hoverHighlight={SWATCH_BRAND}
       fov={65}
       cameraPosition={[0, 0, 4]}
     >

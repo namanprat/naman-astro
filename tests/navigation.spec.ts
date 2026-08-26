@@ -96,6 +96,103 @@ test("About opens and closes without stranding its state", async ({ page }) => {
     .not.toContain("about-open");
 });
 
+test("desktop About docks the nav under the card", async ({ page }) => {
+  test.skip(
+    isNarrowNav(),
+    "About is a route at this width — there is no overlay to dock onto",
+  );
+
+  await page.goto("/");
+  await expectRevealed(page);
+
+  await page.evaluate(() => {
+    window.location.hash = "#about";
+  });
+  await expect.poll(() => rootClasses(page)).toContain("about-open");
+
+  await expect
+    .poll(async () => {
+      return page.evaluate(() => {
+        const nav = document.querySelector<HTMLElement>(".nav_wrap");
+        const surface = document.querySelector<HTMLElement>(
+          ".about_panel_surface",
+        );
+        if (!nav || !surface) return "missing";
+        const navTop = nav.getBoundingClientRect().top;
+        const cardBottom = surface.getBoundingClientRect().bottom;
+        /* Docked: the bar's top sits on the orange edge, not above the card
+           in the hero. A few pixels of subpixel / padding slack. */
+        if (navTop < 80) return `still at top ${Math.round(navTop)}`;
+        if (Math.abs(navTop - cardBottom) > 8) {
+          return `gap ${Math.round(navTop - cardBottom)}`;
+        }
+        return "ok";
+      });
+    }, { timeout: 15_000 })
+    .toBe("ok");
+
+  const restTop = await page.evaluate(() => {
+    const nav = document.querySelector<HTMLElement>(".nav_wrap")!;
+    const t = getComputedStyle(nav).transform;
+    const y = t && t !== "none" ? new DOMMatrix(t).f : 0;
+    return nav.getBoundingClientRect().top - y;
+  });
+
+  await page.keyboard.press("Escape");
+  await expect
+    .poll(() => rootClasses(page), { timeout: 10_000 })
+    .not.toContain("about-open");
+  await expect
+    .poll(async () =>
+      page.evaluate(() => {
+        const nav = document.querySelector<HTMLElement>(".nav_wrap")!;
+        const t = getComputedStyle(nav).transform;
+        const y = t && t !== "none" ? new DOMMatrix(t).f : 0;
+        return Math.round(y);
+      }),
+    )
+    .toBe(0);
+  await expect
+    .poll(async () =>
+      page.evaluate(() =>
+        Math.round(
+          document
+            .querySelector<HTMLElement>(".nav_wrap")!
+            .getBoundingClientRect().top,
+        ),
+      ),
+    )
+    .toBe(Math.round(restTop));
+});
+
+test("opening About on desktop locks scroll behind the overlay", async ({
+  page,
+}) => {
+  test.skip(
+    isNarrowNav(),
+    "About is a route at this width — the document is meant to scroll",
+  );
+
+  await page.goto("/");
+  await expectRevealed(page);
+
+  await page.evaluate(() => {
+    window.location.hash = "#about";
+  });
+  await expect.poll(() => rootClasses(page)).toContain("about-open");
+
+  const overflow = await page.evaluate(
+    () => getComputedStyle(document.documentElement).overflow,
+  );
+  expect(overflow).toBe("hidden");
+
+  const y0 = await page.evaluate(() => window.scrollY);
+  await page.mouse.wheel(0, 1200);
+  await expect
+    .poll(async () => page.evaluate(() => window.scrollY))
+    .toBe(y0);
+});
+
 /**
  * Opening the Contact dropdown must not move the rest of the nav.
  *
@@ -386,4 +483,30 @@ test("archive theme-color stays dark regardless of the stored theme", async ({
     "content",
     "#101010",
   );
+});
+
+test("the page-transition cover sits above the nav and ticker", async ({
+  page,
+}) => {
+  await page.goto("/");
+  await expectRevealed(page);
+  await expectNavVisible(page);
+
+  const stacking = await page.evaluate(() => {
+    document.documentElement.classList.add("is-page-transitioning");
+    const nav = document.querySelector<HTMLElement>(".nav_wrap");
+    const marquee = document.querySelector<HTMLElement>(".nav_marquee");
+    const panel = document.querySelector<HTMLElement>(".transition_panel");
+    if (!nav || !panel) return null;
+    const z = (el: HTMLElement) => Number.parseFloat(getComputedStyle(el).zIndex);
+    return {
+      navZ: z(nav),
+      marqueeZ: marquee ? z(marquee) : 0,
+      panelZ: z(panel),
+    };
+  });
+
+  expect(stacking).not.toBeNull();
+  expect(stacking!.panelZ).toBeGreaterThan(stacking!.navZ);
+  expect(stacking!.panelZ).toBeGreaterThan(stacking!.marqueeZ);
 });

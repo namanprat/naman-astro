@@ -12,6 +12,11 @@
   display: block;
   width: 100%;
   height: 100%;
+  /* WebKit/Chromium invert <canvas> under html { color-scheme: dark }. The
+     shader already paints white-in-light / black-in-dark; without this those
+     colours flip. `only light` opts the bitmap out of that pass. */
+  color-scheme: light;
+  color-scheme: only light;
 }
 
 @media (prefers-reduced-motion: reduce) {

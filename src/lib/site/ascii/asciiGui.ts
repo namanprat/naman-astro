@@ -2,12 +2,14 @@
  * lil-gui panel for the ASCII field — the Archive's `setUpSettings`, rebuilt
  * against the shared tuning store.
  *
- * ponytail: opt-in, and lazily imported. It mounts on `astro dev` or when the
- * URL carries `?ascii-gui`, so a production page never downloads lil-gui unless
- * someone asks for it by hand. Values live in sessionStorage, so they survive
- * the hard navigations `pageTransition.ts` does between routes.
+ * ponytail: opt-in, and lazily imported. It mounts on `astro dev` above phone
+ * width, or anywhere the URL carries `?ascii-gui`, so a production page never
+ * downloads lil-gui unless someone asks for it by hand. Values live in
+ * sessionStorage, so they survive the hard navigations `pageTransition.ts` does
+ * between routes.
  */
 import type GUI from "lil-gui";
+import { MOBILE_LAYOUT_MQ } from "../isMobileLayout";
 import {
   ASCII_DEFAULTS,
   getAsciiTuning,
@@ -31,8 +33,12 @@ const RANGES: Record<
 
 function guiEnabled(): boolean {
   if (typeof window === "undefined") return false;
-  if (import.meta.env.DEV) return true;
-  return new URLSearchParams(window.location.search).has("ascii-gui");
+  // Asked for by hand: honour it at any width, including production.
+  if (new URLSearchParams(window.location.search).has("ascii-gui")) return true;
+  // Phone width has no room for the panel beside the nav — even collapsed it
+  // lands on the four links in row 2. `astro dev` alone is not enough there.
+  if (window.matchMedia(MOBILE_LAYOUT_MQ).matches) return false;
+  return import.meta.env.DEV;
 }
 
 let guiPromise: Promise<GUI | null> | null = null;
@@ -43,6 +49,12 @@ async function getGui(): Promise<GUI | null> {
     .then(({ default: Gui }) => {
       const gui = new Gui({ title: "ASCII" });
       gui.domElement.style.zIndex = "2147483647";
+      // Bottom-right and collapsed: lil-gui's own corner is the nav's last
+      // column, so an open panel sits on the Archive link and the theme toggle.
+      gui.domElement.style.top = "auto";
+      gui.domElement.style.bottom = "0";
+      gui.domElement.style.right = "0";
+      gui.close();
       gui.add({ reset: () => resetAsciiTuning() }, "reset").name("Reset all");
       gui
         .add(

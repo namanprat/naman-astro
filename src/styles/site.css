@@ -27,6 +27,14 @@
   --site--column-count: var(--site-column-count);
   --site--safe-area-top: env(safe-area-inset-top, 0px);
   --site--safe-area-bottom: env(safe-area-inset-bottom, 0px);
+  /* Paint height for the layers that own the whole screen — the WebGL stages and
+     the transition cover. `dvh` stops where mobile Safari's chrome starts, so a
+     layer sized to it leaves the status-bar and toolbar strips showing bare
+     page ground; the large viewport reaches under both, and `viewport-fit=cover`
+     (BaseHead) is what lets it. Content boxes stay on `dvh` plus the safe-area
+     insets — a control parked at the bottom of this box would sit under the
+     toolbar. */
+  --site--screen-height: 100dvh;
   --site--grid-width: min(var(--max-width-main), calc(100vw - var(--site-margin) * 2));
   --site--column-width: calc((var(--site--grid-width) - (var(--site-gutter) * (var(--site-column-count) - 1))) / var(--site-column-count));
   --site--column-width-plus-gutter: calc(var(--site--column-width) + var(--site-gutter));
@@ -38,6 +46,10 @@
   --site--span-8: calc(var(--site--column-width-plus-gutter) * 8 - var(--site-gutter));
   --muted: color-mix(in srgb, var(--text) 70%, transparent);
   --site--nav-offset: 0px;
+  --nav-marquee-height: calc(
+    var(--site--safe-area-top) + var(--space-2) * 2 + 1em
+  );
+  --nav-height: 0px;
 
   --z--negative: -10;
   --z--default: 0;
@@ -49,6 +61,17 @@
   --z--menu: 210;
   --z--overlay: 999;
   --z--modal: 9999;
+  /* Page-transition cover — above nav, ticker, overlays, and the scrollbar. */
+  --z--transition: 2000000;
+}
+
+/* Guarded, not declared straight into `:root`: a custom property swallows any
+   token, so on an engine without `lvh` the unit would survive here and then
+   invalidate every `height` that reads it, collapsing the layer to `auto`. */
+@supports (height: 100lvh) {
+  :root {
+    --site--screen-height: 100lvh;
+  }
 }
 
 @media (width >= 30rem) {
@@ -254,14 +277,17 @@
     position: fixed;
     inset: 0;
     width: 100%;
-    height: 100svh;
+    /* Over-constrained on purpose: `inset` gives the anchor, the height wins and
+       `bottom` drops out, so the cover runs past mobile Safari's toolbar instead
+       of leaving a strip of the outgoing page showing under it. */
+    height: var(--site--screen-height);
     display: flex;
     justify-content: center;
     align-items: center;
     background-color: var(--brand-500);
     transform: translateY(100%);
     pointer-events: none;
-    z-index: 1000001;
+    z-index: var(--z--transition);
     will-change: transform;
   }
 
@@ -297,7 +323,7 @@
     position: fixed;
     inset: 0;
     width: 100%;
-    height: 100%;
+    height: var(--site--screen-height);
     margin-top: 0;
     z-index: 0;
     visibility: visible;
@@ -312,7 +338,7 @@
     visibility: hidden;
   }
 
-  html.is-gooey-arming :is(h1, h2, h3):not(:is(.nav_wrap, .footer_wrap, .menu_wrap, .about_panel, .content_group, .transition_panel, [data-no-reveal]) *) {
+  html.is-gooey-arming :is(h1, h2, h3):not(:is(.nav_wrap, .footer_wrap, .menu_wrap, .about_panel, .camille_slider_wrap, .content_group, .transition_panel, [data-no-reveal]) *) {
     visibility: hidden;
   }
 
@@ -383,8 +409,8 @@
     overflow: clip;
   }
 
-  /* Static `.gooey_reveal` (gallery label, Camille titles) still names the
-     filter in markup. Kill it on the phone layout so a morph cannot melt. */
+  /* Static `.gooey_reveal` (gallery label) still names the filter in markup.
+     Kill it on the phone layout so a morph cannot melt. */
   @media (width < 48rem) {
     .gooey_reveal .gooey_reveal_inner,
     .gooey_reveal_soft .gooey_reveal_inner,
@@ -410,9 +436,9 @@
 
   .overlay_scrollbar {
     position: fixed;
-    top: 0.625rem;
+    top: calc(0.625rem + var(--site--safe-area-top));
     right: 0.25rem;
-    bottom: 0.625rem;
+    bottom: calc(0.625rem + var(--site--safe-area-bottom));
     width: 0.3125rem;
     z-index: 1000002;
     pointer-events: none;

@@ -19,6 +19,7 @@ import {
   closeAboutPanel,
   installAboutInterceptors,
 } from "@/lib/site/aboutPanel";
+import { followAboutNav, releaseAboutNav } from "@/lib/site/aboutNavDock";
 import { getSiteLenis, subscribeSiteLenis } from "@/lib/site/lenisBridge";
 import { bootHomeIntro, replayHomeIntro } from "@/lib/site/heroIntro";
 import { useCopyEmail } from "@/lib/site/copyEmail";
@@ -36,6 +37,9 @@ import AboutPanel, { type AboutPanelMode } from "./AboutPanel";
 import RollingText from "./RollingText";
 import ThemeToggle from "./ThemeToggle";
 import "@/lib/site/eases";
+
+const AVAILABILITY_LINE = "available for projects from october ’26";
+const AVAILABILITY_COPIES = 6;
 
 gsap.registerPlugin(SplitText);
 
@@ -107,9 +111,9 @@ const SECTION_IDS = ["hero", "team", "contact"];
 
 /**
  * Where the chrome switches between the compact mobile nav and the desktop
- * stacks, and with it the About panel's `ride` vs `padded` mode. Tablet
- * portrait sits above it, so this is 48rem — deliberately *not* the site's
- * 64rem grid cut, which still hands this band 8 columns. Mirrored by
+ * stacks, and with it the About panel's overlay (`ride`) vs in-menu mode.
+ * Tablet portrait sits above it, so this is 48rem — deliberately *not* the
+ * site's 64rem grid cut, which still hands this band 8 columns. Mirrored by
  * `Menu.css`'s `< 48rem` block and `AboutPanel.css`'s `>= 48rem` block.
  */
 export const DESKTOP_NAV_MQ = "(width >= 48rem)";
@@ -193,6 +197,7 @@ export default function Menu({ initialPathname = "/" }: MenuProps) {
   const toggleTrackRef = useRef<HTMLSpanElement>(null);
   const menuItemsRef = useRef<HTMLDivElement>(null);
   const navContainerRef = useRef<HTMLDivElement>(null);
+  const marqueeRef = useRef<HTMLDivElement>(null);
   const heroChromeRef = useRef<HTMLDivElement>(null);
   const overlayTlRef = useRef<gsap.core.Timeline | null>(null);
   const closePromiseRef = useRef<Promise<void> | null>(null);
@@ -270,89 +275,31 @@ export default function Menu({ initialPathname = "/" }: MenuProps) {
     };
   }, []);
 
-  const aboutNavTlRef = useRef<gsap.core.Timeline | null>(null);
-
+  /* Keep the bar glued after the slide as well — bust mount can change the
+     card's height, and the ticker still runs while `is-open` outlives
+     `aboutOpen` on close. The card tween also calls `followAboutNav` onUpdate
+     so a starved rAF cannot leave the bar at the dock. */
   useEffect(() => {
-    const nav = navContainerRef.current;
-    if (!nav) return;
+    if (!isDesktopNav) return;
 
-    if (aboutOpen && aboutMode !== "ride") {
-      setAboutMode("ride");
-      return;
-    }
-
-    if (!aboutOpen || aboutMode !== "ride") {
-      if (aboutNavTlRef.current) {
-        aboutNavTlRef.current.reverse();
-      } else if (!isOpen) {
-        gsap.set(nav, { clearProps: "transform" });
+    const follow = () => {
+      const panel = document.querySelector<HTMLElement>(
+        ".about_panel.is-open:not(.is-in-menu)",
+      );
+      const surface = panel?.querySelector<HTMLElement>(".about_panel_surface");
+      if (!panel || !surface) {
+        releaseAboutNav();
+        return;
       }
-      return;
-    }
-
-    const panel = document.querySelector<HTMLElement>(".about_panel");
-    if (!panel) return;
-
-    aboutNavTlRef.current?.kill();
-    gsap.set(nav, { y: 0 });
-
-    /*
-      Ride to the card's visible bottom edge, not the padded panel shell.
-      Same gutter as hero logo → nav: nav_grid padding-block sits under this.
-      cardBottom strips the panel's bottom gutter padding so we dock to the
-      accent surface, matching the hero lockup → nav air.
-    */
-    const cardBottom = (el: HTMLElement) =>
-      el.offsetHeight - (parseFloat(getComputedStyle(el).paddingBottom) || 0);
-
-    const dockNav = () => {
-      /* Mobile chrome puts extra padding-top on the wrap (SVG lockup slot).
-         Dock the grid, not the wrap, or the links land a mark-height too low. */
-      const anchor = isDesktopNav
-        ? nav
-        : (nav.querySelector<HTMLElement>(".nav_grid") ?? nav);
-      const navTop = anchor.getBoundingClientRect().top;
-      const panelTop = panel.getBoundingClientRect().top;
-      return Math.max(0, panelTop + cardBottom(panel) - navTop);
+      followAboutNav(surface);
     };
 
-    const targetY = dockNav();
-
-    const tl = gsap.timeline({
-      onReverseComplete: () => {
-        gsap.set(nav, { clearProps: "transform" });
-        /* The ride's `y` transform doesn't touch nav's size or the root
-           class, so the `--nav-offset` effect's ResizeObserver/MutationObserver
-           never re-fire once it clears. Nudge its `window resize` listener so
-           `is-stuck` (and `--nav-offset`) get re-measured against the real,
-           untransformed position — otherwise closing About while scrolled can
-           leave `.nav_fade` stuck hidden even though the bar is genuinely
-           pinned to the top. */
-        window.dispatchEvent(new Event("resize"));
-      },
-    });
-    tl.to(nav, {
-      y: targetY,
-      duration: 0.6,
-      ease: "introHop",
-      onComplete: () => window.dispatchEvent(new Event("resize")),
-    });
-    aboutNavTlRef.current = tl;
-
-    // Panel height is content-driven — keep Close docked to the card bottom.
-    const ro = new ResizeObserver(() => {
-      if (!aboutNavTlRef.current || aboutNavTlRef.current.isActive()) return;
-      gsap.set(nav, { y: 0 });
-      gsap.set(nav, { y: dockNav() });
-    });
-    ro.observe(panel);
-    const surface = panel.querySelector(".about_panel_surface");
-    if (surface) ro.observe(surface);
-
+    gsap.ticker.add(follow);
+    follow();
     return () => {
-      ro.disconnect();
+      gsap.ticker.remove(follow);
     };
-  }, [aboutOpen, aboutMode, isDesktopNav, isOpen]);
+  }, [isDesktopNav]);
 
   useEffect(() => {
     const chrome = heroChromeRef.current;
@@ -417,6 +364,28 @@ export default function Menu({ initialPathname = "/" }: MenuProps) {
   }, []);
 
   useEffect(() => {
+    const el = marqueeRef.current;
+    if (!el) return;
+
+    const setHeight = () => {
+      document.documentElement.style.setProperty(
+        "--nav-marquee-height",
+        `${el.offsetHeight}px`,
+      );
+    };
+
+    setHeight();
+    const ro = new ResizeObserver(setHeight);
+    ro.observe(el);
+    window.addEventListener("resize", setHeight);
+    return () => {
+      ro.disconnect();
+      window.removeEventListener("resize", setHeight);
+      document.documentElement.style.removeProperty("--nav-marquee-height");
+    };
+  }, []);
+
+  useEffect(() => {
     const nav = navContainerRef.current;
     if (!nav) return;
 
@@ -426,10 +395,10 @@ export default function Menu({ initialPathname = "/" }: MenuProps) {
         "--nav-offset",
         `${rect.bottom}px`,
       );
-      /* Sticky bar has reached the top. Home keys its readability fade off
-         this; routes that pin the bar with `position: fixed` read stuck from
-         the start. */
-      setNavStuck(rect.top <= 1);
+      /* Sticky bar has reached its dock. On the phone that dock is under the
+         availability ticker (`top: var(--nav-marquee-height)`), not 0. */
+      const dock = Number.parseFloat(getComputedStyle(nav).top) || 0;
+      setNavStuck(rect.top <= dock + 1);
     };
 
     setOffset();
@@ -546,8 +515,8 @@ export default function Menu({ initialPathname = "/" }: MenuProps) {
   const resetNavDock = () => {
     const nav = navContainerRef.current;
     if (!nav) return;
-    gsap.killTweensOf(nav);
     if (aboutOpenRef.current && aboutModeRef.current === "ride") return;
+    gsap.killTweensOf(nav);
     gsap.set(nav, { clearProps: "transform" });
   };
 
@@ -650,9 +619,9 @@ export default function Menu({ initialPathname = "/" }: MenuProps) {
     { scope: menuRef },
   );
 
-  /* Parks the wordmark + nav at mount and plays them once the preloader hands
-     over. Not scoped to menuRef — the lockup and nav_wrap are siblings of
-     .menu_wrap, not children. Runs at mount so nothing is unparked for a frame. */
+  /* Parks the wordmark at mount and plays it once the page is visible. Nav
+     copy only masks up on the first load of this tab. Not scoped to menuRef —
+     the lockup and nav_wrap are siblings of .menu_wrap, not children. */
   useEffect(() => bootHomeIntro(), []);
 
   useEffect(() => {
@@ -1077,6 +1046,20 @@ export default function Menu({ initialPathname = "/" }: MenuProps) {
 
   return (
     <>
+      <div className="nav_marquee" ref={marqueeRef}>
+        <p className="sr-only">{AVAILABILITY_LINE}</p>
+        <div className="nav_marquee_track" aria-hidden="true">
+          {[0, 1].map((group) => (
+            <div className="nav_marquee_group" key={group}>
+              {Array.from({ length: AVAILABILITY_COPIES }, (_, i) => (
+                <span key={i} className="nav_marquee_copy text-style-small">
+                  {AVAILABILITY_LINE}
+                </span>
+              ))}
+            </div>
+          ))}
+        </div>
+      </div>
       <div className="hero_chrome" ref={heroChromeRef}>
         <div className="name_hero">
           <div className="name_hero_contain container gap-0">

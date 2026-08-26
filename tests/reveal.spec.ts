@@ -3,6 +3,7 @@ import {
   expectNavVisible,
   expectRevealed,
   isNarrowNav,
+  isTouch,
   rootClasses,
   seedSession,
   skipPreloader,
@@ -48,7 +49,9 @@ test("cold session: the preloader hands over and the nav appears", async ({
   await expect(cta).toHaveAttribute("data-ready", "1", { timeout: 60_000 });
   await cta.click();
 
-  await expect(page.locator(".preloader_wrap")).toHaveCount(0, { timeout: 90_000 });
+  await expect(page.locator(".preloader_wrap")).toHaveCount(0, {
+    timeout: 90_000,
+  });
   await expectRevealed(page);
   await expectNavVisible(page);
 });
@@ -183,4 +186,125 @@ test("phone headings clip up from below on the heading scroll trigger", async ({
   if (!before.ok) throw new Error(before.reason);
   expect(before.filter === "none" || before.filter === "").toBe(true);
   expect(before.overflow).toMatch(/clip|hidden/);
+});
+
+/**
+ * Featured-work titles used to hardcode `.gooey_reveal` and a local
+ * `text-shadow`, which skipped `revealClass()` (soft / slide) and ran a
+ * different melt than every other heading. They now park / arm / settle
+ * through `gooeyReveal.ts` like Footer, and hops go through `gooeyMorph`.
+ */
+test("featured slider copy uses the shared gooey, not a custom chain", async ({
+  page,
+}) => {
+  await skipPreloader(page);
+  await page.goto("/");
+  await expectRevealed(page);
+
+  const title = page.locator(".camille_slider_title");
+  await title.scrollIntoViewIfNeeded();
+
+  const slide = isNarrowNav();
+
+  const snapshot = () =>
+    page.evaluate(() => {
+      const el = document.querySelector<HTMLElement>(".camille_slider_title");
+      const inner = document.querySelector<HTMLElement>(
+        ".camille_slider_title_inner",
+      );
+      const kicker = document.querySelector<HTMLElement>(
+        ".camille_slider_kicker",
+      );
+      if (!el || !inner || !kicker) return null;
+      const official = [
+        "gooey_reveal",
+        "gooey_reveal_soft",
+        "gooey_reveal_slide",
+      ] as const;
+      const hostUsed = official.filter((c) => el.classList.contains(c));
+      const kickerUsed = official.filter((c) => kicker.classList.contains(c));
+      return {
+        reduced: window.matchMedia("(prefers-reduced-motion: reduce)").matches,
+        hostUsed,
+        kickerUsed,
+        inner: inner.className,
+        filter: getComputedStyle(inner).filter,
+        shadow: getComputedStyle(el).textShadow,
+        text: (inner.textContent ?? "").trim(),
+      };
+    });
+
+  await expect
+    .poll(async () => {
+      const s = await snapshot();
+      if (!s) return "missing";
+      if (!s.inner.includes("gooey_reveal_inner")) return "no inner";
+      if (s.shadow !== "none" && s.shadow !== "") return `shadow ${s.shadow}`;
+      if (s.hostUsed.length > 1) return `host ${s.hostUsed.join(",")}`;
+      if (s.reduced) {
+        return s.hostUsed.length === 0 ? "ok" : "armed under reduced motion";
+      }
+      if (slide) {
+        if (s.hostUsed.includes("gooey_reveal")) return "melt on phone";
+        return "ok";
+      }
+      if (s.hostUsed.includes("gooey_reveal_slide")) return "slide on desktop";
+      return "ok";
+    })
+    .toBe("ok");
+
+  const first = await snapshot();
+  if (!first) throw new Error("missing slider title");
+
+  await page.locator(".camille_slider_next").click();
+
+  await expect
+    .poll(async () => {
+      const s = await snapshot();
+      if (!s) return "missing";
+      if (s.text === first.text) return "same title";
+      if (s.shadow !== "none" && s.shadow !== "") return `shadow ${s.shadow}`;
+      const filter = s.filter;
+      if (filter.includes("url(") && !filter.includes("blur-matrix")) {
+        return `custom url ${filter}`;
+      }
+      if (!s.reduced && !slide) {
+        if (
+          s.hostUsed.includes("gooey_reveal") &&
+          !filter.includes("blur-matrix") &&
+          !filter.includes("blur(")
+        ) {
+          return `armed without chain ${filter}`;
+        }
+      }
+      if (!s.reduced && slide && s.hostUsed.includes("gooey_reveal")) {
+        return "melt on phone after hop";
+      }
+      return "ok";
+    })
+    .toBe("ok");
+});
+
+test("featured slider shows a view cursor on the photo, not View project", async ({
+  page,
+}) => {
+  test.skip(isTouch(), "view cursor is a hover chip");
+
+  await skipPreloader(page);
+  await page.goto("/");
+  await expectRevealed(page);
+
+  const frame = page.locator(".camille_slider_frame");
+  await frame.scrollIntoViewIfNeeded();
+
+  await expect(page.locator(".camille_slider_view")).toHaveCount(0);
+  await expect(page.locator(".camille_slider_view_label")).toHaveCount(0);
+
+  const photo = page.locator(".camille_slider_img.is-active .camille_slider_photo");
+  await photo.hover();
+
+  const cursor = page.locator(".camille_slider_cursor");
+  await expect(frame).toHaveClass(/is-view-cursor/);
+  await expect(cursor).toBeVisible();
+  await expect(cursor).toHaveText(/^view$/i);
 });

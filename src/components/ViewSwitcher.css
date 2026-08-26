@@ -3,7 +3,9 @@
     --view_switcher_ink: var(--text);
     --view_switcher_ground: var(--background);
     position: fixed;
-    bottom: var(--space-4);
+    /* The stage behind this paints the whole screen, so the gap alone would park
+       the pill under mobile Safari's toolbar / the home indicator. */
+    bottom: calc(var(--space-4) + var(--site--safe-area-bottom));
     left: 0;
     right: 0;
     width: max-content;

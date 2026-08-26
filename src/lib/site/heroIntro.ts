@@ -2,17 +2,21 @@
  * Page entrance: the wordmark resolves out of a gooey alpha threshold while the
  * nav copy masks up on the shared `introHop` ease.
  *
+ * The wordmark melt can replay (in-page Home, a later home load). The nav
+ * masks up once per tab — the first time a page becomes visible — and then
+ * stays put across hard navigations. Parking it again on every route was
+ * hiding labels (Archive especially) behind `overflow: clip` for the length
+ * of the stagger.
+ *
  * Plays at the moment the page becomes visible, which pageTransition decides:
  * straight away on a plain load, after ENTER when the preloader is up, and
- * after the cover panel finishes clearing when arriving from another page.
- *
- * Also replays from `0.450em` on every in-page trip back to Home — chrome lives
- * in BaseLayout, so clicking Home while already on `/` does not remount it.
+ * after the cover panel finishes clearing on that first arrival.
  */
 import gsap from "gsap";
 import { parkLines } from "./lineMask";
 import { prefersReducedMotion } from "./prefersReducedMotion";
 import { PAGE_REVEALED_EVENT, isPageRevealed } from "./pageReveal";
+import { readFlag, writeFlag } from "./sessionFlag";
 import {
   GOOEY_BLUR_VAR,
   blurPx,
@@ -33,6 +37,9 @@ const GOOEY_ARMED = "is-gooey-armed";
  */
 const NAV_LINES =
   ".nav_grid .nav_stack > .nav_link h5, .nav_grid .nav_contact_toggle h5, .nav_grid .nav_archive h5, .nav_grid .nav_logo_wordmark h5, .nav_grid .nav_theme_toggle_label h5";
+
+/** Survives hard navigations in this tab; first visible page plays the nav. */
+const NAV_INTRO_KEY = "nav:intro-done";
 
 /** codegrid's timing — the melt needs the full 1.5s to read as gooey. */
 const GOOEY_S = 1.5;
@@ -91,6 +98,18 @@ function createSession(): HomeIntroSession {
 
   let tl: gsap.core.Timeline | null = null;
   let waiting = false;
+  let skipNav = readFlag(NAV_INTRO_KEY) === "1";
+
+  const settleNav = () => {
+    if (!lines.length) return;
+    gsap.killTweensOf(lines);
+    gsap.set(lines, { yPercent: 0 });
+  };
+
+  const markNavIntroDone = () => {
+    skipNav = true;
+    writeFlag(NAV_INTRO_KEY, "1");
+  };
 
   /** Final state: no filter at all, so the mark ends pixel-crisp. */
   const settle = () => {
@@ -103,23 +122,11 @@ function createSession(): HomeIntroSession {
       gooeyEl.style.filter = "";
       gooeyEl.classList.add(GOOEY_PARKED);
     }
-    if (lines.length) {
-      gsap.killTweensOf(lines);
-      gsap.set(lines, { yPercent: 0 });
-    }
+    settleNav();
   };
 
-  const park = () => {
-    tl?.kill();
-    tl = null;
-    if (lines.length) {
-      gsap.killTweensOf(lines);
-      parkLines(lines);
-    }
+  const parkGooey = () => {
     if (!gooeyEl) return;
-
-    // Hidden until parked+armed with the start blur set, so a leftover sharp
-    // frame (cleared custom property, killed timeline) cannot paint.
     gooeyEl.classList.remove(GOOEY_ARMED, GOOEY_PARKED);
     gsap.killTweensOf(gooeyEl);
     clearGooeyBlur(gooeyEl);
@@ -133,7 +140,19 @@ function createSession(): HomeIntroSession {
     gooeyEl.classList.add(GOOEY_PARKED);
   };
 
-  const play = () => {
+  const park = (includeNav: boolean) => {
+    tl?.kill();
+    tl = null;
+    if (includeNav && !skipNav && lines.length) {
+      gsap.killTweensOf(lines);
+      parkLines(lines);
+    } else {
+      settleNav();
+    }
+    parkGooey();
+  };
+
+  const play = (includeNav: boolean) => {
     waiting = false;
     tl?.kill();
     tl = gsap.timeline();
@@ -158,7 +177,8 @@ function createSession(): HomeIntroSession {
     } else if (gooeyEl) {
       gooeyEl.classList.add(GOOEY_PARKED);
     }
-    if (lines.length) {
+    if (includeNav && !skipNav && lines.length) {
+      markNavIntroDone();
       tl.to(
         lines,
         {
@@ -169,11 +189,13 @@ function createSession(): HomeIntroSession {
         },
         gooey ? 0.15 : 0,
       );
+    } else {
+      settleNav();
     }
   };
 
   const onReveal = () => {
-    play();
+    play(!skipNav);
   };
 
   const armWait = () => {
@@ -185,13 +207,14 @@ function createSession(): HomeIntroSession {
   const replay = () => {
     if (prefersReducedMotion()) {
       settle();
+      markNavIntroDone();
       return;
     }
     window.removeEventListener(PAGE_REVEALED_EVENT, onReveal);
     waiting = false;
-    park();
+    park(false);
     if (isPageRevealed()) {
-      play();
+      play(false);
       return;
     }
     armWait();
@@ -205,11 +228,12 @@ function createSession(): HomeIntroSession {
 
   if (prefersReducedMotion()) {
     settle();
+    markNavIntroDone();
     return { replay: settle, dispose };
   }
 
-  park();
-  if (isPageRevealed()) play();
+  park(!skipNav);
+  if (isPageRevealed()) play(!skipNav);
   else armWait();
 
   return { replay, dispose };
@@ -228,8 +252,9 @@ export function bootHomeIntro(): () => void {
 }
 
 /**
- * Restart the homepage entrance from `0.450em`. Safe to call when already on
- * `/` (chrome does not remount) and a no-op if intro has not booted yet.
+ * Restart the homepage wordmark from `0.450em`. The nav is left where it is.
+ * Safe to call when already on `/` (chrome does not remount) and a no-op if
+ * intro has not booted yet.
  */
 export function replayHomeIntro(): void {
   session?.replay();

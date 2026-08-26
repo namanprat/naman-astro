@@ -60,6 +60,8 @@ uniform float uGlyphScale;
 uniform float uJitter;
 uniform float uTime;
 uniform float uNoise;
+uniform float uCharNoise;
+uniform float uOpaqueGlyphs;
 
 varying vec2 vUv;
 varying vec2 vPixelUV;
@@ -92,7 +94,16 @@ void main() {
   // Archive read the red channel off a greyscale portrait. A lit render is
   // not greyscale, so weight the channels; alpha fades cells the mesh clips.
   float lum = dot(src.rgb, LUMA) * src.a;
-  float brightness = clamp(pow(lum, uGamma) + vRandom * uJitter, 0., 0.99);
+  float n = 0.;
+  if (uNoise > 0.001 || uCharNoise > 0.001) {
+    n = noise2d(vPixelUV * 1000. + uTime * 3.0);
+  }
+  // uCharNoise walks the glyph index so cells shuffle character, not just alpha.
+  float brightness = clamp(
+    pow(lum, uGamma) + vRandom * uJitter + (n - 0.5) * uCharNoise,
+    0.,
+    0.99
+  );
 
   float index = floor(brightness * uGlyphCount);
 
@@ -108,12 +119,12 @@ void main() {
 
   float flicker = 1.;
   if (uNoise > 0.001) {
-    float n = noise2d(vPixelUV * 1000. + uTime);
     flicker = mix(1., mix(0.7, 1.15, smoothstep(0.5, 1., n)), uNoise);
   }
 
   float alpha = chr * flicker;
   if (alpha < 0.01) discard;
+  if (uOpaqueGlyphs > 0.5) alpha = 1.;
   float hi = uHasHighlight > 0.5 ? texture2D(uHighlight, vPixelUV).r : 0.;
   gl_FragColor = vec4(mix(uColor, uHighlightColor, hi), alpha);
 }

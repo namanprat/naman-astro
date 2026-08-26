@@ -1,8 +1,8 @@
 ---
 /**
  * Featured-work carousel. 8-col Lumos stage; clip-path hop + gooey titles.
- * Overlay chrome matches the dashed-control / pill format; slides stay
- * `featuredWorkItems`.
+ * Overlay: title top-left, white-filled arrows bottom-right; chips sit
+ * centered under the image. Slides stay `featuredWorkItems`.
  */
 import { featuredWorkItems } from "@/content/work";
 import "./CamilleSlider.css";
@@ -27,7 +27,7 @@ const first = SLIDES[0];
 >
   <div class="camille_slider_contain container gap-0">
     <div class="camille_slider_layout studio_layout grid is-12">
-      <div class="camille_slider_stage">
+      <div class="camille_slider_stage gap-row-4">
         <div class="camille_slider_frame">
           <div class="camille_slider_images">
             {
@@ -52,8 +52,25 @@ const first = SLIDES[0];
             }
           </div>
 
-          <div class="camille_slider_overlay">
-            <div class="camille_slider_rail">
+          <div class="camille_slider_overlay padding-4">
+            <div class="camille_slider_copy">
+              {
+                /* Host class is parked by initCamilleSlider via revealClass(),
+                  not hardcoded — same hand-built inner as Footer. */
+              }
+              <h2 class="camille_slider_title text-style-h1">
+                <span class="camille_slider_title_inner gooey_reveal_inner"
+                  >{first?.title ?? ""}</span
+                >
+              </h2>
+              <p class="camille_slider_kicker text-style-small">
+                <span class="camille_slider_kicker_inner gooey_reveal_inner"
+                  >{first?.kicker ? `[ ${first.kicker} ]` : ""}</span
+                >
+              </p>
+            </div>
+
+            <div class="camille_slider_rail flex-horizontal-nowrap gap-2">
               <button
                 type="button"
                 class="camille_slider_prev padding-4"
@@ -84,72 +101,38 @@ const first = SLIDES[0];
                 </svg>
               </button>
             </div>
-
-            <div class="camille_slider_copy">
-              <h2
-                class="camille_slider_title gooey_reveal text-style-h2"
-                data-no-reveal
-              >
-                <span class="camille_slider_title_inner gooey_reveal_inner"
-                  >{first?.title ?? ""}</span
-                >
-              </h2>
-              <p
-                class="camille_slider_kicker gooey_reveal text-style-small"
-                data-no-reveal
-              >
-                <span class="camille_slider_kicker_inner gooey_reveal_inner"
-                  >{first?.kicker ? `[ ${first.kicker} ]` : ""}</span
-                >
-              </p>
-            </div>
-
-            <a
-              class="camille_slider_view"
-              href={first?.href ?? "/work"}
-              data-no-reveal
-            >
-              <span class="camille_slider_view_box padding-4">
-                <svg
-                  class="camille_slider_icon"
-                  xmlns="http://www.w3.org/2000/svg"
-                  viewBox="0 -960 960 960"
-                  aria-hidden="true"
-                >
-                  <path
-                    d="M647-440H160v-80h487L423-744l57-56 320 320-320 320-57-56 224-224Z"
-                  ></path>
-                </svg>
-              </span>
-              <span class="camille_slider_view_label text-style-small"
-                >View project</span
-              >
-            </a>
-
-            <div
-              class="camille_slider_pills"
-              role="tablist"
-              aria-label="Featured projects"
-            >
-              {
-                SLIDES.map((slide, i) => (
-                  <button
-                    type="button"
-                    class:list={[
-                      "camille_slider_pill",
-                      "text-style-small",
-                      { "is-active": i === 0 },
-                    ]}
-                    role="tab"
-                    aria-selected={i === 0 ? "true" : "false"}
-                    data-slide-index={i}
-                  >
-                    {slide.title}
-                  </button>
-                ))
-              }
-            </div>
           </div>
+          <div class="camille_slider_cursor" aria-hidden="true">view</div>
+          <a
+            class="camille_slider_hit sr-only"
+            href={first?.href ?? "/work"}
+            data-no-reveal
+          >
+            View project
+          </a>
+        </div>
+        <div
+          class="camille_slider_pills flex-horizontal-nowrap gap-2 alignment-center"
+          role="tablist"
+          aria-label="Featured projects"
+        >
+          {
+            SLIDES.map((slide, i) => (
+              <button
+                type="button"
+                class:list={[
+                  "camille_slider_pill",
+                  "text-style-small",
+                  { "is-active": i === 0 },
+                ]}
+                role="tab"
+                aria-selected={i === 0 ? "true" : "false"}
+                data-slide-index={i}
+              >
+                {slide.title}
+              </button>
+            ))
+          }
         </div>
       </div>
     </div>

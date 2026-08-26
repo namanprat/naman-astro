@@ -122,12 +122,12 @@ html.theme-light.menu-open {
 
 .nav_wrap {
   position: sticky;
-  top: 0;
+  top: var(--nav-marquee-height, 0px);
   width: 100%;
   height: auto;
   z-index: var(--z--nav);
   pointer-events: none;
-  padding-top: var(--site--safe-area-top);
+  padding-top: 0;
   box-sizing: border-box;
   overflow: visible;
 }
@@ -160,6 +160,12 @@ html.theme-light.menu-open {
   );
 }
 
+/* Light mode only: the warm-grey wash reads twice as strong as the dark
+   fade, so cut it in half. Hide rules below still win on specificity. */
+html.theme-light .nav_fade {
+  opacity: 0.5;
+}
+
 /* Home only: float clean over the SVG wordmark until the sticky bar reaches
    the top, then dissolve the fade in. `html:has(.hero)` is the same
    home/inner-page test `.name_hero` uses above. */
@@ -169,19 +175,68 @@ html:has(.hero) .nav_wrap:not(.is-stuck) .nav_fade {
 
 /* About open, either mode. Mobile's in-menu overlay owns this strip itself
    (see AboutPanel.css's `.about_panel.is-in-menu`, which reserves this exact
-   height as transparent padding). Desktop's "ride" mode is the other reason:
-   it translates `.nav_wrap` itself down to dock at the card's bottom edge
-   (Menu.tsx's `dockNav`/`aboutNavTlRef`), dragging this absolutely-positioned
-   fade down with it, which would otherwise paint the gradient across the
-   card's content as the nav rides onto it. Either way: dissolve the fade out
-   while About is open, back in on close. */
-.nav_wrap.is-about-open .nav_fade {
+   height as transparent padding). Desktop's ride mode is the other reason:
+   it translates `.nav_wrap` down to dock at the card's bottom edge, dragging
+   this absolutely-positioned fade with it, which would otherwise paint the
+   gradient across the card. Dissolve it while About is open, back in on close. */
+.nav_wrap.is-about-open .nav_fade,
+html:has(.about_panel.is-open:not(.is-in-menu)) .nav_wrap .nav_fade {
   opacity: 0;
 }
 
 .nav_wrap.is-menu-open .nav_fade {
   opacity: 0;
   transition: none;
+}
+
+/* Availability ticker. Independent of the nav — fixed to the viewport top
+   on every breakpoint, painted above the bar. Dissolves while About is open. */
+.nav_marquee {
+  display: block;
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  z-index: calc(var(--z--nav) + 1);
+  overflow: clip;
+  background-color: var(--brand-500);
+  color: var(--dark-900);
+  padding-top: var(--site--safe-area-top);
+  pointer-events: none;
+  opacity: 1;
+  transition: opacity 0.45s ease;
+}
+
+html.about-open .nav_marquee,
+html.page-about .nav_marquee {
+  opacity: 0;
+}
+
+.nav_marquee_track {
+  display: flex;
+  width: max-content;
+  animation: nav-marquee 28s linear infinite;
+}
+
+.nav_marquee_group {
+  display: flex;
+  flex: none;
+  align-items: center;
+  gap: 2em;
+  padding-block: var(--space-2);
+  padding-inline: 1em;
+}
+
+.nav_marquee_copy {
+  margin: 0;
+  color: inherit;
+  line-height: 1;
+  white-space: nowrap;
+}
+
+.nav_marquee_copy::before,
+.nav_marquee_copy::after {
+  content: none;
 }
 
 .nav_contain {
@@ -610,25 +665,43 @@ html:not(:has(.hero)) .name_hero {
   }
 
   /* No phone-only sticky lockup. The SVG scrolls away with the hero and the
-     bar sticks on its own — the base `.name_hero` (relative) and `.nav_wrap`
-     (sticky, `top: 0`) rules already do that, so every breakpoint now shares
-     one hero/nav interaction and there is nothing to override here. */
+     bar sticks under the ticker (`top: var(--nav-marquee-height)`), so every
+     breakpoint now shares one hero/nav interaction. */
 
   /* Inner pages: the bar alone, overlaying the stage so overflow-hidden routes
      don't get pushed down. The SVG lockup is a home-page element now, so there
      is no mark height to reserve above the links. */
   html:not(:has(.hero)) .nav_wrap {
     position: fixed;
-    top: 0;
+    top: var(--nav-marquee-height, 0px);
     left: 0;
     width: 100%;
-    padding-top: var(--lockup-top);
+    padding-top: 0;
+  }
+}
+
+@keyframes nav-marquee {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(-50%);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .nav_marquee {
+    transition: none;
   }
 
-  /* Card takes the top of the viewport; the lockup would paint over it. */
-  html.about-open .name_hero {
-    visibility: hidden;
-    pointer-events: none;
+  .nav_marquee_track {
+    animation: none;
+    width: 100%;
+    justify-content: center;
+  }
+
+  .nav_marquee_group + .nav_marquee_group {
+    display: none;
   }
 }
 
@@ -661,7 +734,12 @@ img.logo-img {
   top: 0;
   left: 0;
   width: 100%;
-  height: 100dvh;
+  /* Whole screen, so the accent runs under mobile Safari's chrome rather than
+     handing the toolbar strip a band of the page below. Everything inside is
+     top-anchored (`flex-start`, no auto margins), so the extra height moves no
+     content — the About sheet stays on `dvh` for exactly that reason: its
+     scroller would end up parked under the toolbar. */
+  height: var(--site--screen-height);
   overflow: clip;
   background-color: var(--brand-500);
   backdrop-filter: blur(var(--surface-frost-blur));

@@ -69,6 +69,7 @@ const SKIP = [
   ".menu_wrap",
   ".footer_wrap",
   ".about_panel",
+  ".camille_slider_wrap",
   ".content_group",
   ".transition_panel",
   "[data-no-reveal]",
@@ -85,7 +86,8 @@ const REVEAL_S = 1.5;
  *  a slide uses the same beat as `lineReveal` / the nav mask-up. */
 const SLIDE_S = 0.9;
 const REVEAL_STAGGER = 0.1;
-const REVEAL_START = "top 80%";
+/** Same ScrollTrigger start every owned entrance uses. */
+export const REVEAL_START = "top 80%";
 const SLIDE = "gooey_reveal_slide";
 
 /** Blur peak for a swap. Lower than the entrance — it is a shorter beat. */
@@ -305,7 +307,11 @@ export function addGooeyReveal(
   const list = Array.isArray(target) ? target : [target];
   const inners = innersOf(target);
   if (!inners.length) return;
-  tl.to(inners, revealTweenVars(() => settleGooey(list)), position);
+  tl.to(
+    inners,
+    revealTweenVars(() => settleGooey(list)),
+    position,
+  );
 }
 
 export function addGooeyUnreveal(

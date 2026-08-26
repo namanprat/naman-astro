@@ -13,7 +13,6 @@ import { createPortal, useFrame, useThree } from "@react-three/fiber";
 import type { ReactNode } from "react";
 import * as THREE from "three";
 import { shaderColor } from "@/lib/site/cssColor";
-import { FINE_HOVER_QUERY } from "@/lib/site/hasFinePointerHover";
 import { prefersReducedMotion } from "@/lib/site/prefersReducedMotion";
 import { getDufornAsciiAtlas } from "@/lib/site/ascii/asciiAtlas";
 import {
@@ -26,6 +25,10 @@ import {
   subscribeAsciiTuning,
   type AsciiSurface,
 } from "@/lib/site/ascii/asciiTuning";
+import gsap from "gsap";
+import { ScrollTrigger } from "gsap/ScrollTrigger";
+
+gsap.registerPlugin(ScrollTrigger);
 
 type AsciiFieldProps = {
   /** Which entry of `asciiTuning` drives the look, and which GUI folder. */
@@ -48,8 +51,22 @@ type Grid = {
   rows: number;
 };
 
-const CLUSTER_SIZE = 10;
-const HIGHLIGHT_LIFETIME = 300;
+/**
+ * Brush, in cells. A fat disk every pointer sample (radius 22) filled ~1500
+ * cells and scanned the whole lattice every frame, so the canvas hitch made
+ * the trail look slow and gappy. A smaller falloff disk, stamped along the
+ * pointer path each frame, reads as a thicker ribbon than the old 10-cell
+ * random walk without stalling the loop. Same density as the Team lattice
+ * (~183 rows): radius 7 is ~4% of the short axis.
+ */
+const BRUSH_RADIUS = 7;
+/** Fade window. Binary on/off at 1.1s felt sticky; this matches the fluid's
+ *  dissipation beat more closely. */
+const LIFE_MS = 720;
+/** Cap interpolated stamps so a huge pointer jump cannot hitch a frame. */
+const MAX_STROKE_STEPS = 48;
+/** px of scroll velocity → 0–1 of a sweep across the grid. */
+const SCROLL_TRAIL_SCALE = 0.00022;
 
 const blankHighlight = (() => {
   const tex = new THREE.DataTexture(new Uint8Array([0, 0, 0, 255]), 1, 1);
@@ -59,40 +76,113 @@ const blankHighlight = (() => {
   return tex;
 })();
 
-function highlightCluster(
+function markCell(
   until: Float32Array,
+  live: number[],
+  index: number,
+  expires: number,
+  now: number,
+): void {
+  if (expires <= until[index]) return;
+  if (until[index] <= now) live.push(index);
+  until[index] = expires;
+}
+
+/** Soft disk: centre stays lit for `LIFE_MS`, the rim dies sooner. */
+function stampDisk(
+  until: Float32Array,
+  live: number[],
   cols: number,
   rows: number,
   startCol: number,
   startRow: number,
   now: number,
-) {
-  const key = (c: number, r: number) => r * cols + c;
-  const start = key(startCol, startRow);
-  until[start] = now + HIGHLIGHT_LIFETIME;
-  const lit = [start];
-  let col = startCol;
-  let row = startRow;
-  const steps = Math.floor(Math.random() * CLUSTER_SIZE) + 1;
-  for (let step = 0; step < steps; step++) {
-    const neighbours: number[] = [];
-    for (let dy = -1; dy <= 1; dy++) {
-      for (let dx = -1; dx <= 1; dx++) {
-        if (dx === 0 && dy === 0) continue;
-        const nc = col + dx;
-        const nr = row + dy;
-        if (nc < 0 || nr < 0 || nc >= cols || nr >= rows) continue;
-        const ni = key(nc, nr);
-        if (!lit.includes(ni)) neighbours.push(ni);
-      }
+): void {
+  const radius2 = BRUSH_RADIUS * BRUSH_RADIUS;
+  const radius = BRUSH_RADIUS;
+  for (let dy = -radius; dy <= radius; dy++) {
+    for (let dx = -radius; dx <= radius; dx++) {
+      const d2 = dx * dx + dy * dy;
+      if (d2 > radius2) continue;
+      const nc = startCol + dx;
+      const nr = startRow + dy;
+      if (nc < 0 || nr < 0 || nc >= cols || nr >= rows) continue;
+      const fall = 1 - Math.sqrt(d2) / (radius + 0.001);
+      markCell(
+        until,
+        live,
+        nr * cols + nc,
+        now + LIFE_MS * (0.35 + 0.65 * fall),
+        now,
+      );
     }
-    if (neighbours.length === 0) break;
-    const next = neighbours[Math.floor(Math.random() * neighbours.length)];
-    until[next] = now + HIGHLIGHT_LIFETIME + step * 10;
-    lit.push(next);
-    col = next % cols;
-    row = Math.floor(next / cols);
   }
+}
+
+/** NDC segment → cell stamps, so a fast move is a stroke not a dotted line. */
+function stampSegment(
+  until: Float32Array,
+  live: number[],
+  cols: number,
+  rows: number,
+  x0: number,
+  y0: number,
+  x1: number,
+  y1: number,
+  now: number,
+): void {
+  const dx = x1 - x0;
+  const dy = y1 - y0;
+  const dist = Math.hypot((dx * cols) / 2, (dy * rows) / 2);
+  const steps = Math.min(MAX_STROKE_STEPS, Math.max(1, Math.ceil(dist)));
+  for (let i = 1; i <= steps; i++) {
+    const t = i / steps;
+    const col = Math.floor(((x0 + dx * t + 1) / 2) * cols);
+    const row = Math.floor(((y0 + dy * t + 1) / 2) * rows);
+    if (col < 0 || row < 0 || col >= cols || row >= rows) continue;
+    stampDisk(until, live, cols, rows, col, row, now);
+  }
+}
+
+function writeLiveCells(
+  until: Float32Array,
+  live: number[],
+  pixels: Uint8Array,
+  now: number,
+): boolean {
+  let dirty = false;
+  let write = 0;
+  for (let r = 0; r < live.length; r++) {
+    const i = live[r];
+    const remain = until[i] - now;
+    if (remain <= 0) {
+      until[i] = 0;
+      const p = i * 4;
+      if (pixels[p] !== 0) {
+        pixels[p] = 0;
+        pixels[p + 1] = 0;
+        pixels[p + 2] = 0;
+        pixels[p + 3] = 255;
+        dirty = true;
+      }
+      continue;
+    }
+    live[write++] = i;
+    const v =
+      remain >= LIFE_MS
+        ? 255
+        : Math.max(1, Math.round((remain / LIFE_MS) * 255));
+    const p = i * 4;
+    if (pixels[p] !== v) {
+      pixels[p] = v;
+      pixels[p + 1] = v;
+      pixels[p + 2] = v;
+      pixels[p + 3] = 255;
+      dirty = true;
+    }
+  }
+  live.length = write;
+  return dirty;
 }
 
 /** One instanced quad per cell, filling [-aspect, aspect] x [-1, 1]. */
@@ -228,13 +318,18 @@ export default function AsciiField({
       uJitter: { value: tuning.jitter },
       uTime: { value: 0 },
       uNoise: { value: reducedMotion ? 0 : tuning.noise },
+      uCharNoise: { value: 0 },
+      uOpaqueGlyphs: { value: 0 },
     }),
     // Tuning is re-pushed every frame; only the texture binding is fixed here.
     [target],
   );
 
   useEffect(() => {
-    uniforms.uColor.value.copy(shaderColor(ink));
+    const color = shaderColor(ink);
+    uniforms.uColor.value.copy(color);
+    const material = materialRef.current;
+    if (material) material.uniforms.uColor.value.copy(color);
   }, [uniforms, ink]);
 
   useEffect(() => {
@@ -264,17 +359,23 @@ export default function AsciiField({
     };
   }, [uniforms]);
 
-  const hoverOn = Boolean(hoverHighlight) && !reducedMotion;
+  const trailOn = Boolean(hoverHighlight) && !reducedMotion;
   const hoveringRef = useRef(false);
-  const fineHoverRef = useRef(false);
-  const lastPointer = useRef({ x: 999, y: 999 });
+  const pointerNdc = useRef({ x: 0, y: 0 });
+  const lastStamp = useRef<{ x: number; y: number } | null>(null);
+  const lastR3f = useRef<{ x: number; y: number } | null>(null);
   const highlightUntil = useRef<Float32Array>(new Float32Array(0));
   const highlightPixels = useRef<Uint8Array>(new Uint8Array(4));
+  const liveCells = useRef<number[]>([]);
+  const scrollSweep = useRef(0);
+  const scrollVel = useRef(0);
 
   const highlightTex = useMemo(() => {
     const data = new Uint8Array(grid.cols * grid.rows * 4);
     highlightPixels.current = data;
     highlightUntil.current = new Float32Array(grid.cols * grid.rows);
+    liveCells.current = [];
+    lastStamp.current = null;
     const tex = new THREE.DataTexture(
       data,
       grid.cols,
@@ -290,39 +391,100 @@ export default function AsciiField({
   useEffect(() => () => highlightTex.dispose(), [highlightTex]);
 
   useEffect(() => {
-    uniforms.uHighlight.value = hoverOn ? highlightTex : blankHighlight;
-    uniforms.uHasHighlight.value = hoverOn ? 1 : 0;
-  }, [uniforms, hoverOn, highlightTex]);
+    uniforms.uHighlight.value = trailOn ? highlightTex : blankHighlight;
+    uniforms.uHasHighlight.value = trailOn ? 1 : 0;
+  }, [uniforms, trailOn, highlightTex]);
 
   useEffect(() => {
-    if (!hoverOn) return;
+    if (!trailOn) return;
     const el = (events.connected as HTMLElement | null) ?? gl.domElement;
+
+    const contains = (clientX: number, clientY: number) => {
+      const box = el.getBoundingClientRect();
+      return (
+        clientX >= box.left &&
+        clientX <= box.right &&
+        clientY >= box.top &&
+        clientY <= box.bottom
+      );
+    };
+
+    const writeNdc = (clientX: number, clientY: number) => {
+      const box = el.getBoundingClientRect();
+      if (box.width < 1 || box.height < 1) return;
+      pointerNdc.current = {
+        x: ((clientX - box.left) / box.width) * 2 - 1,
+        y: 1 - ((clientY - box.top) / box.height) * 2,
+      };
+    };
+
+    const onMove = (event: MouseEvent) => {
+      const inside = contains(event.clientX, event.clientY);
+      if (!inside && !hoveringRef.current) return;
+      hoveringRef.current = inside;
+      if (inside) writeNdc(event.clientX, event.clientY);
+    };
+    const onDown = (event: PointerEvent) => {
+      if (!contains(event.clientX, event.clientY)) return;
+      hoveringRef.current = true;
+      writeNdc(event.clientX, event.clientY);
+      lastStamp.current = null;
+    };
     const onEnter = () => {
       hoveringRef.current = true;
     };
+    const onUp = (event: PointerEvent) => {
+      if (event.pointerType !== "mouse") hoveringRef.current = false;
+    };
     const onLeave = () => {
       hoveringRef.current = false;
+      lastStamp.current = null;
     };
+
+    /* pointermove *and* mousemove: some drivers only fire one, and the
+       homepage fluid listens on window for the same reason. */
+    window.addEventListener("pointermove", onMove, { passive: true });
+    window.addEventListener("mousemove", onMove, { passive: true });
     el.addEventListener("pointerenter", onEnter);
+    el.addEventListener("pointerdown", onDown);
     el.addEventListener("pointerleave", onLeave);
+    window.addEventListener("pointerup", onUp);
+    window.addEventListener("pointercancel", onUp);
     return () => {
+      window.removeEventListener("pointermove", onMove);
+      window.removeEventListener("mousemove", onMove);
       el.removeEventListener("pointerenter", onEnter);
+      el.removeEventListener("pointerdown", onDown);
       el.removeEventListener("pointerleave", onLeave);
+      window.removeEventListener("pointerup", onUp);
+      window.removeEventListener("pointercancel", onUp);
       hoveringRef.current = false;
+      lastStamp.current = null;
     };
-  }, [hoverOn, gl, events]);
+  }, [trailOn, gl, events]);
 
   useEffect(() => {
-    if (!hoverOn) return;
-    const mq = window.matchMedia(FINE_HOVER_QUERY);
-    const sync = () => {
-      fineHoverRef.current = mq.matches;
-      if (!mq.matches) hoveringRef.current = false;
+    if (!trailOn) return;
+    const panel = gl.domElement.closest(".about_panel_scroll");
+    const scroller =
+      panel instanceof HTMLElement &&
+      panel.scrollHeight > panel.clientHeight + 1
+        ? panel
+        : undefined;
+    const st = ScrollTrigger.create({
+      scroller,
+      start: 0,
+      end: "max",
+      onUpdate(self) {
+        const v = self.getVelocity();
+        if (!v) return;
+        scrollVel.current += v;
+      },
+    });
+    return () => {
+      st.kill();
     };
-    sync();
-    mq.addEventListener("change", sync);
-    return () => mq.removeEventListener("change", sync);
-  }, [hoverOn]);
+  }, [trailOn, gl]);
 
   // ponytail: a non-zero priority takes R3F's automatic render away, so this
   // callback owns both passes — offscreen first, then the glyph grid to screen.
@@ -349,41 +511,69 @@ export default function AsciiField({
       u.uJitter.value = tuning.jitter;
       u.uNoise.value = reducedMotion ? 0 : tuning.noise;
       if (!reducedMotion) u.uTime.value += dt;
+      if (trailOn) {
+        u.uHasHighlight.value = 1;
+        u.uHighlight.value = highlightTex;
+      }
     }
 
-    if (hoverOn) {
+    if (trailOn) {
       const now = performance.now();
       const { cols, rows } = grid;
       const until = highlightUntil.current;
       const pixels = highlightPixels.current;
-      const fine = fineHoverRef.current;
-      if (hoveringRef.current && fine) {
-        if (
-          pointer.x !== lastPointer.current.x ||
-          pointer.y !== lastPointer.current.y
-        ) {
-          lastPointer.current = { x: pointer.x, y: pointer.y };
-          const col = Math.floor(((pointer.x + 1) / 2) * cols);
-          const row = Math.floor(((pointer.y + 1) / 2) * rows);
+      const live = liveCells.current;
+
+      let r3fMoved = false;
+      if (!lastR3f.current) {
+        lastR3f.current = { x: pointer.x, y: pointer.y };
+      } else if (
+        lastR3f.current.x !== pointer.x ||
+        lastR3f.current.y !== pointer.y
+      ) {
+        lastR3f.current = { x: pointer.x, y: pointer.y };
+        r3fMoved = true;
+      }
+
+      if (hoveringRef.current || r3fMoved) {
+        const px = pointer.x;
+        const py = pointer.y;
+        const prev = lastStamp.current;
+        if (!prev) {
+          const col = Math.floor(((px + 1) / 2) * cols);
+          const row = Math.floor(((py + 1) / 2) * rows);
           if (col >= 0 && row >= 0 && col < cols && row < rows) {
-            highlightCluster(until, cols, rows, col, row, now);
+            stampDisk(until, live, cols, rows, col, row, now);
           }
+          lastStamp.current = { x: px, y: py };
+        } else if (prev.x !== px || prev.y !== py) {
+          stampSegment(until, live, cols, rows, prev.x, prev.y, px, py, now);
+          lastStamp.current = { x: px, y: py };
         }
       }
-      let dirty = false;
-      for (let i = 0; i < until.length; i++) {
-        const live = until[i] > now;
-        const v = live ? 255 : 0;
-        const p = i * 4;
-        if (pixels[p] !== v) {
-          pixels[p] = v;
-          pixels[p + 1] = v;
-          pixels[p + 2] = v;
-          pixels[p + 3] = 255;
-          dirty = true;
+
+      const vel = scrollVel.current;
+      if (vel !== 0) {
+        scrollVel.current = 0;
+        const from = scrollSweep.current;
+        const to = from + vel * SCROLL_TRAIL_SCALE;
+        scrollSweep.current = ((to % 1) + 1) % 1;
+        const dist = Math.abs(to - from) * Math.max(cols, rows);
+        const steps = Math.min(MAX_STROKE_STEPS, Math.max(1, Math.ceil(dist)));
+        for (let i = 1; i <= steps; i++) {
+          const s = (((from + ((to - from) * i) / steps) % 1) + 1) % 1;
+          const col = Math.floor(
+            (0.3 + 0.4 * Math.sin(s * Math.PI * 2)) * cols,
+          );
+          const row = Math.floor((0.2 + 0.6 * s) * rows);
+          if (col < 0 || row < 0 || col >= cols || row >= rows) continue;
+          stampDisk(until, live, cols, rows, col, row, now);
         }
       }
-      if (dirty) highlightTex.needsUpdate = true;
+
+      if (writeLiveCells(until, live, pixels, now)) {
+        highlightTex.needsUpdate = true;
+      }
     }
 
     state.gl.setRenderTarget(target);

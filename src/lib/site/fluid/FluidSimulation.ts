@@ -3,6 +3,7 @@
  * theme ink/surface from CSS tokens instead of a difference-blend overlay.
  */
 import * as THREE from "three";
+import { ABOUT_OPEN_CLASS } from "../aboutPanel";
 import { readCssColor, shaderColor } from "../cssColor";
 import { prefersReducedMotion } from "../prefersReducedMotion";
 import { reportHomeCanvasReady } from "../preloadAssets";
@@ -139,6 +140,9 @@ export class FluidSimulation {
    *  visitor is painting trails themselves. */
   private lastPointerAt = 0;
   private ambientPhase = 0;
+  /** About overlay covers the homepage; keep this sim parked so the bust
+   *  trail isn't fighting another WebGL loop for the same GPU. */
+  private overlayOpen = false;
 
   constructor(canvas: HTMLCanvasElement) {
     this.renderer = new THREE.WebGLRenderer({
@@ -179,6 +183,7 @@ export class FluidSimulation {
     signal.addEventListener("abort", () => observer.disconnect());
 
     this.startLoop();
+    this.syncOverlay();
 
     // Opening bloom so the first preloader frame isn't a flat dark plane —
     // deferred one tick so DPR size is committed.
@@ -330,7 +335,17 @@ export class FluidSimulation {
 
   private onThemeMutation = (): void => {
     this.readTheme(true);
+    this.syncOverlay();
   };
+
+  private syncOverlay(): void {
+    const open = document.documentElement.classList.contains(ABOUT_OPEN_CLASS);
+    if (open === this.overlayOpen) return;
+    this.overlayOpen = open;
+    this.mouse.moved = false;
+    if (open) this.stopLoop();
+    else this.startLoop();
+  }
 
   private onResize = (): void => {
     const prevW = this.width;
@@ -342,7 +357,7 @@ export class FluidSimulation {
   };
 
   private onPointerMove = (event: PointerEvent): void => {
-    if (this.reduced) return;
+    if (this.reduced || this.overlayOpen) return;
 
     const x = event.clientX * this.dpr;
     const y = event.clientY * this.dpr;
@@ -387,6 +402,7 @@ export class FluidSimulation {
   }
 
   private frame(dt: number): void {
+    if (this.overlayOpen) return;
     const follow = lerpFactor(dt, COLOR_FOLLOW);
     this.inkColor.lerp(this.inkTarget, follow);
     this.surfaceColor.lerp(this.surfaceTarget, follow);

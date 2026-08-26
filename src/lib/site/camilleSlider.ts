@@ -1,14 +1,28 @@
 /**
  * Featured carousel: clip-path hops + gooey titles.
  * Pre-rendered layers; pendingIndex queues nav while a hop runs.
+ *
+ * Title and kicker are owned gooey targets — same park / arm / settle /
+ * addGooeyReveal / gooeyMorph path as every other heading. The inners are
+ * hand-built (Footer-style) rather than SplitText, because a hop swaps
+ * `textContent` and a second split would fight that.
  */
 import gsap from "gsap";
 import CustomEase from "gsap/CustomEase";
-import { gooeyMorph } from "./gooeyReveal";
+import { ScrollTrigger } from "gsap/ScrollTrigger";
+import {
+  addGooeyReveal,
+  armGooey,
+  gooeyMorph,
+  parkGooey,
+  REVEAL_START,
+  settleGooey,
+  type GooeyTarget,
+} from "./gooeyReveal";
 import { go } from "./navigate";
 import { prefersReducedMotion } from "./prefersReducedMotion";
 
-gsap.registerPlugin(CustomEase);
+gsap.registerPlugin(CustomEase, ScrollTrigger);
 if (!CustomEase.get("camilleHop")) {
   CustomEase.create(
     "camilleHop",
@@ -36,15 +50,16 @@ export function initCamilleSlider(root: HTMLElement): CamilleSliderHandle {
   const prevBtn = root.querySelector<HTMLElement>(".camille_slider_prev");
   const nextBtn = root.querySelector<HTMLElement>(".camille_slider_next");
   const indexEl = root.querySelector<HTMLElement>(".camille_slider_index");
+  const titleEl = root.querySelector<HTMLElement>(".camille_slider_title");
   const titleInner = root.querySelector<HTMLElement>(
     ".camille_slider_title_inner",
   );
+  const kickerEl = root.querySelector<HTMLElement>(".camille_slider_kicker");
   const kickerInner = root.querySelector<HTMLElement>(
     ".camille_slider_kicker_inner",
   );
-  const viewLink = root.querySelector<HTMLAnchorElement>(
-    ".camille_slider_view",
-  );
+  const hitLink = root.querySelector<HTMLAnchorElement>(".camille_slider_hit");
+  const cursorEl = root.querySelector<HTMLElement>(".camille_slider_cursor");
   const pills = [
     ...root.querySelectorAll<HTMLButtonElement>(".camille_slider_pill"),
   ];
@@ -73,11 +88,86 @@ export function initCamilleSlider(root: HTMLElement): CamilleSliderHandle {
   let pendingIndex: number | null = null;
   let morphTl: gsap.core.Timeline | null = null;
   let kickerTl: gsap.core.Timeline | null = null;
+  let revealTl: gsap.core.Timeline | null = null;
+  let revealSt: ScrollTrigger | null = null;
   let autoplayTimer = 0;
 
   const reduced = prefersReducedMotion();
 
+  /* Hand-built: the inner already sits in markup, same as Footer links.
+     `prepareGooey` would SplitText the heading and then a hop's textContent
+     swap would leave the split pointing at the old string. */
+  const titleTarget: GooeyTarget | null =
+    !reduced && titleEl && titleInner
+      ? { el: titleEl, inners: [titleInner] }
+      : null;
+  const kickerTarget: GooeyTarget | null =
+    !reduced && kickerEl && kickerInner
+      ? { el: kickerEl, inners: [kickerInner] }
+      : null;
+  const gooeyTargets = [titleTarget, kickerTarget].filter(
+    (t): t is GooeyTarget => t !== null,
+  );
+
+  if (gooeyTargets.length) {
+    parkGooey(gooeyTargets);
+    revealSt = ScrollTrigger.create({
+      trigger: titleEl ?? root,
+      start: REVEAL_START,
+      once: true,
+      onEnter: () => {
+        revealTl = gsap.timeline();
+        addGooeyReveal(revealTl, gooeyTargets);
+      },
+    });
+  }
+
+  const cancelEntrance = () => {
+    const inFlight = revealTl?.isActive() ?? false;
+    const notYetEntered = !!revealSt && !revealTl;
+    revealTl?.kill();
+    revealTl = null;
+    revealSt?.kill();
+    revealSt = null;
+    if ((inFlight || notYetEntered) && gooeyTargets.length) {
+      settleGooey(gooeyTargets);
+    }
+  };
+
   const wrap = (index: number) => ((index % total) + total) % total;
+
+  const chromeSel =
+    ".camille_slider_prev, .camille_slider_next, .camille_slider_rail, .camille_slider_copy, .camille_slider_pills, .camille_slider_hit";
+
+  const overChrome = (target: EventTarget | null) =>
+    target instanceof Element && !!target.closest(chromeSel);
+
+  const hideViewCursor = () => {
+    frame.classList.remove("is-view-cursor");
+  };
+
+  const onPointerMove = (event: PointerEvent) => {
+    if (event.pointerType !== "mouse" || !cursorEl) {
+      hideViewCursor();
+      return;
+    }
+    if (overChrome(event.target)) {
+      hideViewCursor();
+      return;
+    }
+    frame.classList.add("is-view-cursor");
+    cursorEl.style.left = `${event.clientX}px`;
+    cursorEl.style.top = `${event.clientY}px`;
+  };
+
+  const onPointerLeave = () => {
+    hideViewCursor();
+  };
+
+  const openCurrent = () => {
+    const href = hrefs[current];
+    if (href) void go(href);
+  };
 
   const stopAutoplay = () => {
     window.clearInterval(autoplayTimer);
@@ -111,7 +201,7 @@ export function initCamilleSlider(root: HTMLElement): CamilleSliderHandle {
 
   const syncChrome = () => {
     if (indexEl) indexEl.textContent = padIndex(current);
-    if (viewLink) viewLink.href = hrefs[current] ?? "/work";
+    if (hitLink) hitLink.href = hrefs[current] ?? "/work";
     pills.forEach((pill, i) => {
       const on = i === current;
       pill.classList.toggle("is-active", on);
@@ -121,21 +211,28 @@ export function initCamilleSlider(root: HTMLElement): CamilleSliderHandle {
     const nextTitle = titles[current] ?? "";
     const nextKicker = kickers[current] ?? "";
     const instant = reduced;
+    const titleChanged = !!titleInner && titleInner.textContent !== nextTitle;
+    const kickerChanged =
+      !!kickerInner && kickerInner.textContent !== nextKicker;
 
-    if (titleInner && titleInner.textContent !== nextTitle) {
+    if (titleChanged || kickerChanged) cancelEntrance();
+
+    if (titleChanged && titleInner) {
       morphTl?.kill();
       if (instant) titleInner.textContent = nextTitle;
       else {
+        if (titleTarget) armGooey(titleTarget);
         morphTl = gooeyMorph(titleInner, () => {
           titleInner.textContent = nextTitle;
         });
       }
     }
 
-    if (kickerInner && kickerInner.textContent !== nextKicker) {
+    if (kickerChanged && kickerInner) {
       kickerTl?.kill();
       if (instant) kickerInner.textContent = nextKicker;
       else {
+        if (kickerTarget) armGooey(kickerTarget);
         kickerTl = gooeyMorph(kickerInner, () => {
           kickerInner.textContent = nextKicker;
         });
@@ -243,11 +340,13 @@ export function initCamilleSlider(root: HTMLElement): CamilleSliderHandle {
     e.stopPropagation();
     goTo(current + 1);
   };
-  const onView = (e: MouseEvent) => {
+  const onHit = (e: MouseEvent) => {
     e.preventDefault();
-    e.stopPropagation();
-    const href = viewLink?.href;
-    if (href) void go(href);
+    openCurrent();
+  };
+  const onFrameClick = (e: MouseEvent) => {
+    if (overChrome(e.target)) return;
+    openCurrent();
   };
   const onPill = (e: MouseEvent) => {
     const pill = e.currentTarget;
@@ -259,7 +358,10 @@ export function initCamilleSlider(root: HTMLElement): CamilleSliderHandle {
 
   prevBtn?.addEventListener("click", onPrev);
   nextBtn?.addEventListener("click", onNext);
-  viewLink?.addEventListener("click", onView);
+  hitLink?.addEventListener("click", onHit);
+  frame.addEventListener("click", onFrameClick);
+  frame.addEventListener("pointermove", onPointerMove);
+  frame.addEventListener("pointerleave", onPointerLeave);
   for (const pill of pills) pill.addEventListener("click", onPill);
 
   startAutoplay();
@@ -268,10 +370,15 @@ export function initCamilleSlider(root: HTMLElement): CamilleSliderHandle {
     destroy: () => {
       morphTl?.kill();
       kickerTl?.kill();
+      cancelEntrance();
       stopAutoplay();
       prevBtn?.removeEventListener("click", onPrev);
       nextBtn?.removeEventListener("click", onNext);
-      viewLink?.removeEventListener("click", onView);
+      hitLink?.removeEventListener("click", onHit);
+      frame.removeEventListener("click", onFrameClick);
+      frame.removeEventListener("pointermove", onPointerMove);
+      frame.removeEventListener("pointerleave", onPointerLeave);
+      hideViewCursor();
       for (const pill of pills) pill.removeEventListener("click", onPill);
       gsap.killTweensOf(
         images.querySelectorAll(".camille_slider_photo, .camille_slider_img"),

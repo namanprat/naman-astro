@@ -5,19 +5,22 @@
  */
 import * as THREE from "three";
 import { shaderColor } from "../cssColor";
+import { footerAsciiInk } from "../siteColors";
 import { getDufornAsciiAtlas } from "./asciiAtlas";
 import { ASCII_FIELD_FRAG, ASCII_FIELD_VERT } from "./asciiFieldShader";
 
 const CELL_SIZE = 8;
 const CELL_GAP = 2;
-const CELL_STEP = CELL_SIZE + CELL_GAP;
+/** 30% more cells than the original 10px lattice. */
+const CELL_STEP = (CELL_SIZE + CELL_GAP) / 1.3;
 const BRIGHTNESS_THRESHOLD = 0.5;
 const PUSH_RADIUS = 5;
 const PUSH_FORCE = 30;
 const SPRING = 0.025;
 const DAMPING = 0.5;
 const FLICKER_MS = 50;
-const CHAR_COLOR_FALLBACK = "#f14827";
+const CHAR_NOISE = 0.85;
+const CHAR_JITTER = 0.12;
 
 const blankHighlight = (() => {
   const tex = new THREE.DataTexture(new Uint8Array([0, 0, 0, 255]), 1, 1);
@@ -101,6 +104,9 @@ export class FooterAsciiField {
     });
     this.renderer.setClearColor(0x000000, 0);
     this.renderer.outputColorSpace = THREE.SRGBColorSpace;
+    // Same as `.footer_ascii_canvas { color-scheme: only light }` — keep the
+    // authored ink if a parent ever restyles the canvas.
+    canvas.style.colorScheme = "only light";
 
     const { signal } = this.abort;
     this.box.addEventListener("pointermove", this.onPointerMove, {
@@ -155,9 +161,13 @@ export class FooterAsciiField {
           uWarp: { value: 1 },
           uGamma: { value: 0.8 },
           uGlyphScale: { value: 1.15 },
-          uJitter: { value: 0.02 },
+          uJitter: { value: this.reduced ? 0 : CHAR_JITTER },
           uTime: { value: 0 },
           uNoise: { value: this.reduced ? 0 : 0.45 },
+          uCharNoise: { value: this.reduced ? 0 : CHAR_NOISE },
+          // Holey glyphs at atlas alpha wash to grey on the frost card; opaque
+          // ink is what makes --light-100 actually read as white.
+          uOpaqueGlyphs: { value: 1 },
         },
         transparent: true,
         depthTest: false,
@@ -241,6 +251,8 @@ export class FooterAsciiField {
     this.sampleLogo(positions);
     this.syncInk();
     this.material.uniforms.uNoise.value = this.reduced ? 0 : 0.45;
+    this.material.uniforms.uCharNoise.value = this.reduced ? 0 : CHAR_NOISE;
+    this.material.uniforms.uJitter.value = this.reduced ? 0 : CHAR_JITTER;
     this.render();
   }
 
@@ -332,11 +344,17 @@ export class FooterAsciiField {
   }
 
   private readInk(): string {
-    return getComputedStyle(this.box).color || CHAR_COLOR_FALLBACK;
+    return footerAsciiInk(
+      document.documentElement.classList.contains("theme-light"),
+    );
   }
 
   private syncInk = (): void => {
-    this.material?.uniforms.uColor.value.copy(shaderColor(this.readInk()));
+    if (!this.material) return;
+    const color = shaderColor(this.readInk());
+    this.material.uniforms.uColor.value.copy(color);
+    this.material.uniforms.uHighlightColor.value.copy(color);
+    this.render();
   };
 
   private onPointerMove = (event: PointerEvent): void => {
@@ -443,7 +461,8 @@ export class FooterAsciiField {
       "aRandom",
     ) as THREE.InstancedBufferAttribute;
     for (const cell of this.lit) {
-      this.random[cell.index] = Math.pow(Math.random(), 4);
+      // Unbiased — pow(random, 4) sat near 0 and the glyph never jumped.
+      this.random[cell.index] = Math.random();
     }
     attr.needsUpdate = true;
   }
