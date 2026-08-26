@@ -21,7 +21,7 @@ const ts = readFileSync(
 
 assert.match(
   astro,
-  /class="camille_slider_title text-style-h2"/,
+  /class="camille_slider_title text-style-h1"/,
   "title host is unmarked — parkGooey / revealClass() own the melt class",
 );
 assert.match(

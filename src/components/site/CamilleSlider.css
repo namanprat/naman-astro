@@ -23,7 +23,7 @@
     aspect-ratio: 10 / 16;
     overflow: clip;
     background-color: var(--background-skeleton);
-    color: var(--text);
+    color: var(--light-100);
     container-type: inline-size;
   }
 
@@ -57,8 +57,8 @@
     background-color: var(--background-skeleton);
   }
 
-  /* Title + kicker top-left, arrow cluster top-right, chips along the
-     bottom of the image. Padding and row gaps come from Lumos utilities. */
+  /* Title top-left, white-filled arrows bottom-right. Chips live under
+     the frame, not on the photo. Padding comes from Lumos utilities. */
   .camille_slider_overlay {
     position: absolute;
     inset: 0;
@@ -67,39 +67,34 @@
     flex-direction: column;
     justify-content: space-between;
     pointer-events: none;
-    color: var(--text);
+    color: var(--light-100);
   }
 
   .camille_slider_overlay > * {
     pointer-events: auto;
   }
 
-  .camille_slider_top {
-    flex: 0 0 auto;
-    min-width: 0;
-  }
-
   .camille_slider_rail {
     flex: 0 0 auto;
+    align-self: end;
   }
 
   .camille_slider_index {
     flex: none;
-    color: inherit;
+    color: var(--light-100);
     white-space: nowrap;
   }
 
-  /* One dashed tile for every control on the slide: both arrows. */
   .camille_slider_prev,
   .camille_slider_next {
     display: flex;
     align-items: center;
     justify-content: center;
     margin: 0;
-    border: var(--border-width) dashed color-mix(in lab, var(--text) 75%, transparent);
+    border: var(--border-width) solid var(--light-100);
     border-radius: 0;
-    background-color: transparent;
-    color: inherit;
+    background-color: var(--light-100);
+    color: var(--dark-900);
     cursor: pointer;
     transition:
       background-color 200ms ease,
@@ -109,25 +104,26 @@
 
   .camille_slider_prev:hover,
   .camille_slider_next:hover {
-    background-color: var(--text);
-    border-color: var(--text);
-    color: var(--background);
+    background-color: var(--dark-900);
+    border-color: var(--dark-900);
+    color: var(--light-100);
   }
 
   .camille_slider_copy {
     min-width: 0;
-    flex: 1 1 auto;
+    flex: 0 1 auto;
+    color: var(--light-100);
   }
 
   .camille_slider_title {
     margin: 0;
     text-align: start;
-    color: inherit;
+    color: var(--light-100);
   }
 
   .camille_slider_kicker {
     margin: var(--space-2) 0 0;
-    color: inherit;
+    color: var(--light-100);
   }
 
   .camille_slider_icon {
@@ -176,6 +172,7 @@
   .camille_slider_pills {
     flex: 0 0 auto;
     align-self: stretch;
+    justify-content: center;
     max-width: 100%;
     overflow-x: auto;
     scrollbar-width: none;

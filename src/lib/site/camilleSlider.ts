@@ -137,7 +137,7 @@ export function initCamilleSlider(root: HTMLElement): CamilleSliderHandle {
   const wrap = (index: number) => ((index % total) + total) % total;
 
   const chromeSel =
-    ".camille_slider_prev, .camille_slider_next, .camille_slider_rail, .camille_slider_copy, .camille_slider_pills, .camille_slider_top, .camille_slider_hit";
+    ".camille_slider_prev, .camille_slider_next, .camille_slider_rail, .camille_slider_copy, .camille_slider_pills, .camille_slider_hit";
 
   const overChrome = (target: EventTarget | null) =>
     target instanceof Element && !!target.closest(chromeSel);

@@ -1,8 +1,8 @@
 ---
 /**
  * Featured-work carousel. 8-col Lumos stage; clip-path hop + gooey titles.
- * Overlay: title top-left, arrows in a row top-right, chips along the
- * image bottom. Slides stay `featuredWorkItems`.
+ * Overlay: title top-left, white-filled arrows bottom-right; chips sit
+ * centered under the image. Slides stay `featuredWorkItems`.
  */
 import { featuredWorkItems } from "@/content/work";
 import "./CamilleSlider.css";
@@ -27,7 +27,7 @@ const first = SLIDES[0];
 >
   <div class="camille_slider_contain container gap-0">
     <div class="camille_slider_layout studio_layout grid is-12">
-      <div class="camille_slider_stage">
+      <div class="camille_slider_stage gap-row-4">
         <div class="camille_slider_frame">
           <div class="camille_slider_images">
             {
@@ -52,82 +52,54 @@ const first = SLIDES[0];
             }
           </div>
 
-          <div class="camille_slider_overlay padding-4 gap-2">
-            <div
-              class="camille_slider_top flex-horizontal-nowrap justify-content-between gap-2"
-            >
-              <div class="camille_slider_copy">
-                {
-                  /* Host class is parked by initCamilleSlider via revealClass(),
-                    not hardcoded — same hand-built inner as Footer. */
-                }
-                <h2 class="camille_slider_title text-style-h2">
-                  <span class="camille_slider_title_inner gooey_reveal_inner"
-                    >{first?.title ?? ""}</span
-                  >
-                </h2>
-                <p class="camille_slider_kicker text-style-small">
-                  <span class="camille_slider_kicker_inner gooey_reveal_inner"
-                    >{first?.kicker ? `[ ${first.kicker} ]` : ""}</span
-                  >
-                </p>
-              </div>
-
-              <div class="camille_slider_rail flex-horizontal-nowrap gap-2">
-                <button
-                  type="button"
-                  class="camille_slider_prev padding-4"
-                  aria-label="Previous slide"
+          <div class="camille_slider_overlay padding-4">
+            <div class="camille_slider_copy">
+              {
+                /* Host class is parked by initCamilleSlider via revealClass(),
+                  not hardcoded — same hand-built inner as Footer. */
+              }
+              <h2 class="camille_slider_title text-style-h1">
+                <span class="camille_slider_title_inner gooey_reveal_inner"
+                  >{first?.title ?? ""}</span
                 >
-                  <svg
-                    class="camille_slider_icon"
-                    xmlns="http://www.w3.org/2000/svg"
-                    viewBox="0 -960 960 960"
-                    aria-hidden="true"
-                  >
-                    <path d="M640-200 200-480l440-280v560Z"></path>
-                  </svg>
-                </button>
-                <span class="camille_slider_index text-style-small">01</span>
-                <button
-                  type="button"
-                  class="camille_slider_next padding-4"
-                  aria-label="Next slide"
+              </h2>
+              <p class="camille_slider_kicker text-style-small">
+                <span class="camille_slider_kicker_inner gooey_reveal_inner"
+                  >{first?.kicker ? `[ ${first.kicker} ]` : ""}</span
                 >
-                  <svg
-                    class="camille_slider_icon"
-                    xmlns="http://www.w3.org/2000/svg"
-                    viewBox="0 -960 960 960"
-                    aria-hidden="true"
-                  >
-                    <path d="M320-200v-560l440 280-440 280Z"></path>
-                  </svg>
-                </button>
-              </div>
+              </p>
             </div>
 
-            <div
-              class="camille_slider_pills flex-horizontal-nowrap gap-2"
-              role="tablist"
-              aria-label="Featured projects"
-            >
-              {
-                SLIDES.map((slide, i) => (
-                  <button
-                    type="button"
-                    class:list={[
-                      "camille_slider_pill",
-                      "text-style-small",
-                      { "is-active": i === 0 },
-                    ]}
-                    role="tab"
-                    aria-selected={i === 0 ? "true" : "false"}
-                    data-slide-index={i}
-                  >
-                    {slide.title}
-                  </button>
-                ))
-              }
+            <div class="camille_slider_rail flex-horizontal-nowrap gap-2">
+              <button
+                type="button"
+                class="camille_slider_prev padding-4"
+                aria-label="Previous slide"
+              >
+                <svg
+                  class="camille_slider_icon"
+                  xmlns="http://www.w3.org/2000/svg"
+                  viewBox="0 -960 960 960"
+                  aria-hidden="true"
+                >
+                  <path d="M640-200 200-480l440-280v560Z"></path>
+                </svg>
+              </button>
+              <span class="camille_slider_index text-style-small">01</span>
+              <button
+                type="button"
+                class="camille_slider_next padding-4"
+                aria-label="Next slide"
+              >
+                <svg
+                  class="camille_slider_icon"
+                  xmlns="http://www.w3.org/2000/svg"
+                  viewBox="0 -960 960 960"
+                  aria-hidden="true"
+                >
+                  <path d="M320-200v-560l440 280-440 280Z"></path>
+                </svg>
+              </button>
             </div>
           </div>
           <div class="camille_slider_cursor" aria-hidden="true">view</div>
@@ -138,6 +110,29 @@ const first = SLIDES[0];
           >
             View project
           </a>
+        </div>
+        <div
+          class="camille_slider_pills flex-horizontal-nowrap gap-2 alignment-center"
+          role="tablist"
+          aria-label="Featured projects"
+        >
+          {
+            SLIDES.map((slide, i) => (
+              <button
+                type="button"
+                class:list={[
+                  "camille_slider_pill",
+                  "text-style-small",
+                  { "is-active": i === 0 },
+                ]}
+                role="tab"
+                aria-selected={i === 0 ? "true" : "false"}
+                data-slide-index={i}
+              >
+                {slide.title}
+              </button>
+            ))
+          }
         </div>
       </div>
     </div>
