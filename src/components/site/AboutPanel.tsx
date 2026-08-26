@@ -90,8 +90,8 @@ export default function AboutPanel({ open, mode, onClose }: AboutPanelProps) {
     const surface = surfaceRef.current;
     if (!panel) return;
 
-    /* Before paint so desktop CSS can pin the nav without a frame of the bar
-       sitting in the hero while the card starts sliding. Left on through the
+    /* Before paint so the card covers the bar on the first frame rather than
+       sitting in the hero for one tick, then sliding. Left on through the
        exit tween — hideChrome drops it when the reverse finishes. */
     panel.classList.add("is-open");
 

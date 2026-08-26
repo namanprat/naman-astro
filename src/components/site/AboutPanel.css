@@ -274,13 +274,15 @@ html.theme-light .about_panel.is-in-menu {
 @media (width >= 48rem) {
   .about_panel:not(.is-in-menu) {
     padding: 0;
-    /* Bar stays pinned at the top of the viewport; clear it with its height
-       (Menu.tsx `--nav-height`), not `--nav-offset` (viewport bottom). */
-    padding-top: calc(var(--nav-height, 0px) + var(--about--inset));
+    /* Ride mode (desktop About) is not --padded. Side gap is --about--inset
+       (margin − gutter); mirror it on top so the card covers the nav. Do not
+       use --nav-offset here: it tracks the transformed nav as it docks to the
+       card and would feed back. */
+    padding-top: var(--about--inset);
   }
 
   .about_panel.is-padded:not(.is-in-menu) {
-    padding-top: calc(var(--nav-height, var(--nav-offset, 0px)) + var(--about--inset));
+    padding-top: calc(var(--nav-offset, var(--site--nav-offset)) + var(--about--inset));
   }
 
   .about_panel:not(.is-in-menu) .about_panel_surface {

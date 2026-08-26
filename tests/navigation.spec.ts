@@ -96,6 +96,42 @@ test("About opens and closes without stranding its state", async ({ page }) => {
     .not.toContain("about-open");
 });
 
+test("desktop About docks the nav under the card", async ({ page }) => {
+  test.skip(
+    isNarrowNav(),
+    "About is a route at this width — there is no overlay to dock onto",
+  );
+
+  await page.goto("/");
+  await expectRevealed(page);
+
+  await page.evaluate(() => {
+    window.location.hash = "#about";
+  });
+  await expect.poll(() => rootClasses(page)).toContain("about-open");
+
+  await expect
+    .poll(async () => {
+      return page.evaluate(() => {
+        const nav = document.querySelector<HTMLElement>(".nav_wrap");
+        const surface = document.querySelector<HTMLElement>(
+          ".about_panel_surface",
+        );
+        if (!nav || !surface) return "missing";
+        const navTop = nav.getBoundingClientRect().top;
+        const cardBottom = surface.getBoundingClientRect().bottom;
+        /* Docked: the bar's top sits on the orange edge, not above the card
+           in the hero. A few pixels of subpixel / padding slack. */
+        if (navTop < 80) return `still at top ${Math.round(navTop)}`;
+        if (Math.abs(navTop - cardBottom) > 8) {
+          return `gap ${Math.round(navTop - cardBottom)}`;
+        }
+        return "ok";
+      });
+    }, { timeout: 15_000 })
+    .toBe("ok");
+});
+
 test("opening About on desktop locks scroll behind the overlay", async ({
   page,
 }) => {

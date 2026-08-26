@@ -169,9 +169,10 @@ html:has(.hero) .nav_wrap:not(.is-stuck) .nav_fade {
 
 /* About open, either mode. Mobile's in-menu overlay owns this strip itself
    (see AboutPanel.css's `.about_panel.is-in-menu`, which reserves this exact
-   height as transparent padding). Desktop pins the bar to the top of the
-   viewport while the card is up, so the fade would otherwise paint across
-   the card. Dissolve it while About is open, back in on close. */
+   height as transparent padding). Desktop's ride mode is the other reason:
+   it translates `.nav_wrap` down to dock at the card's bottom edge, dragging
+   this absolutely-positioned fade with it, which would otherwise paint the
+   gradient across the card. Dissolve it while About is open, back in on close. */
 .nav_wrap.is-about-open .nav_fade,
 html:has(.about_panel.is-open:not(.is-in-menu)) .nav_wrap .nav_fade {
   opacity: 0;
@@ -621,17 +622,6 @@ html:not(:has(.hero)) .name_hero {
     left: 0;
     width: 100%;
     padding-top: var(--lockup-top);
-  }
-}
-
-@media (width >= 48rem) {
-  /* Pin the bar to the viewport while the desktop About card is up (including
-     the exit slide). No GSAP dock — the lockup stays put behind the overlay. */
-  html:has(.about_panel.is-open:not(.is-in-menu)) .nav_wrap {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
   }
 }
 
