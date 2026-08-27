@@ -301,11 +301,7 @@ test("featured slider trails a view chip behind the pointer, not a replacement c
   await expect(page.locator(".camille_slider_view_label")).toHaveCount(0);
 
   const photo = page.locator(".camille_slider_img.is-active .camille_slider_photo");
-  const box = await photo.boundingBox();
-  if (!box) throw new Error("no photo box");
-  const pointerX = box.x + box.width * 0.4;
-  const pointerY = box.y + box.height * 0.45;
-  await page.mouse.move(pointerX, pointerY);
+  await photo.hover();
 
   const cursor = page.locator(".camille_slider_cursor");
   await expect(frame).toHaveClass(/is-view-cursor/);
@@ -315,10 +311,16 @@ test("featured slider trails a view chip behind the pointer, not a replacement c
   const photoCursor = await photo.evaluate((el) => getComputedStyle(el).cursor);
   expect(photoCursor).not.toBe("none");
 
-  const chip = await cursor.boundingBox();
-  if (!chip) throw new Error("no view chip box");
-  expect(chip.x).toBeGreaterThan(pointerX);
-  expect(chip.y).toBeGreaterThan(pointerY);
+  await expect
+    .poll(async () => {
+      const box = await photo.boundingBox();
+      const chip = await cursor.boundingBox();
+      if (!box || !chip) return "missing";
+      const pointerX = box.x + box.width / 2;
+      const pointerY = box.y + box.height / 2;
+      return chip.x > pointerX && chip.y > pointerY ? "trailed" : "catching-up";
+    })
+    .toBe("trailed");
 
   const [cursorPad, pillPad] = await Promise.all([
     cursor.evaluate((el) => getComputedStyle(el).padding),
