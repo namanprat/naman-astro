@@ -134,32 +134,36 @@
     fill: currentColor;
   }
 
-  /* Trails the pointer over the photo. The system cursor stays visible —
-     this chip lags behind it rather than replacing it. */
+  /* Trails the pointer over the photo. Same box as the chips under the
+     image — square corners, space-1 / space-3 pad — so the label reads as
+     one of those, not a different control. System cursor stays visible. */
   .camille_slider_cursor {
     position: fixed;
     top: 0;
     left: 0;
     z-index: var(--z--overlay);
     display: none;
+    align-items: center;
     pointer-events: none;
+    margin: 0;
+    padding: var(--space-1) var(--space-3);
+    border: var(--border-width) solid var(--brand-500);
+    border-radius: 0;
     background-color: var(--brand-500);
     color: var(--brand-text);
-    padding: 0.12rem 0.35rem;
-    border-radius: 0.15rem;
-    font-family: var(--mono-family);
-    font-size: var(--text-small);
-    font-weight: var(--primary-regular);
     line-height: 1;
-    letter-spacing: var(--letter-spacing-normal);
-    text-transform: uppercase;
     white-space: nowrap;
     will-change: transform;
   }
 
+  .camille_slider_cursor::before,
+  .camille_slider_cursor::after {
+    content: none;
+  }
+
   @media (hover: hover) and (pointer: fine) {
     .camille_slider_frame.is-view-cursor .camille_slider_cursor {
-      display: block;
+      display: flex;
     }
 
     .camille_slider_frame,
