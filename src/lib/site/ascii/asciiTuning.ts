@@ -40,7 +40,7 @@ export const ASCII_DEFAULTS: Record<AsciiSurface, AsciiTuning> = {
     density: 96,
     glyphScale: 2,
     warp: 1,
-    gamma: 0.75,
+    gamma: 0.65,
     jitter: 0.02,
     noise: 0.6,
   },

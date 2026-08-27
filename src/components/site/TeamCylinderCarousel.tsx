@@ -51,13 +51,13 @@ function getFraming(width: number): Framing {
   const isMobile = width < 768;
   const isTablet = width >= 768 && width < 1024;
   return {
-    cameraZ: isMobile ? 7.4 : isTablet ? 6.9 : 6.5,
-    fov: isMobile ? 50 : 45,
-    radiusX: isMobile ? 3.1 : isTablet ? 3.8 : 4.5,
-    radiusZ: isMobile ? 2.5 : isTablet ? 3.0 : 3.5,
-    minScale: isMobile ? 0.26 : 0.3,
-    maxScale: isMobile ? 1.05 : 1.38,
-    spread: isMobile ? 1.05 : 1.18,
+    cameraZ: isMobile ? 5.6 : isTablet ? 6.2 : 6.5,
+    fov: isMobile ? 48 : 45,
+    radiusX: isMobile ? 2.8 : isTablet ? 3.8 : 4.5,
+    radiusZ: isMobile ? 2.2 : isTablet ? 3.0 : 3.5,
+    minScale: isMobile ? 0.34 : 0.28,
+    maxScale: isMobile ? 1.28 : 1.45,
+    spread: isMobile ? 1.0 : 1.18,
   };
 }
 
