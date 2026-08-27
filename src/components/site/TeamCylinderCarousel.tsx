@@ -55,7 +55,7 @@ function getFraming(width: number): Framing {
     fov: isMobile ? 48 : 45,
     radiusX: isMobile ? 2.8 : isTablet ? 3.8 : 4.5,
     radiusZ: isMobile ? 2.2 : isTablet ? 3.0 : 3.5,
-    minScale: isMobile ? 0.34 : 0.28,
+    minScale: isMobile ? 0.5 : 0.48,
     maxScale: isMobile ? 1.28 : 1.45,
     spread: isMobile ? 1.0 : 1.18,
   };
@@ -67,7 +67,7 @@ function initProgress(): { t: Float32Array; signs: Float32Array } {
   const half = Math.ceil(PLANE_COUNT / 2);
   for (let i = 0; i < PLANE_COUNT; i++) {
     const lane = Math.floor(i / 2);
-    const absT = ((lane + 0.45) / half) * 0.92;
+    const absT = Math.pow((lane + 0.15) / half, 0.72) * 0.94;
     const sign = i % 2 === 0 ? 1 : -1;
     signs[i] = sign;
     t[i] = sign * absT;
@@ -229,8 +229,8 @@ function PlaneStrip() {
       for (let i = 0; i < t.length; i++) {
         const sign = signs[i] ?? 1;
         let next = t[i] + sign * delta;
-        if (next * sign > 1) next = sign * 0.02;
-        else if (next * sign < 0) next = sign * 0.02;
+        if (next * sign > 1) next = sign * 0.08;
+        else if (next * sign < 0) next = sign * 0.08;
         t[i] = next;
       }
     }
