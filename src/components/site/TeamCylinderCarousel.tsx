@@ -1,9 +1,9 @@
 /**
  * Discrete portrait planes on a concave U-path, as an R3F island.
  *
- * Planes spawn at the screen center (small, far) and travel to the left and
- * right edges (large, near). Glyphs come from the shared `AsciiField` — same
- * treatment as the About bust and the Process cards.
+ * Planes ride a concave U as one infinite row: small and far at center,
+ * large and yawed at the edges. They wrap from one lip to the other so the
+ * series never runs out. Glyphs come from the shared `AsciiField`.
  */
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Canvas, useFrame, useThree } from "@react-three/fiber";
@@ -24,18 +24,18 @@ const IMAGE_SRCS = [
   "/work/money-me/money-cover.webp",
 ];
 const IMAGE_COUNT = IMAGE_SRCS.length;
-/** Two of each cover so the U stays packed while tiles recycle. */
-const PLANE_COUNT = IMAGE_COUNT * 2;
+/** One looping row — enough to read as a series, spaced so they stay separate. */
+const PLANE_COUNT = 11;
 /** Portrait tile — 3:4 width:height. */
 const TILE_ASPECT = 3 / 4;
 const TILE_W = 768;
 const TILE_H = Math.round(TILE_W / TILE_ASPECT);
-const PLANE_H = 1.7;
+const PLANE_H = 1.2;
 const PLANE_W = PLANE_H * TILE_ASPECT;
 /** px/s scroll velocity → progress along the U. */
 const VELOCITY_T_SCALE = 0.00003;
-/** Idle crawl (progress/s) so tiles keep leaving the center off-scroll. */
-const IDLE_T_PER_SEC = 0.11;
+/** Idle crawl (progress/s) so the row keeps moving off-scroll. */
+const IDLE_T_PER_SEC = 0.08;
 
 type Framing = {
   cameraZ: number;
@@ -51,28 +51,22 @@ function getFraming(width: number): Framing {
   const isMobile = width < 768;
   const isTablet = width >= 768 && width < 1024;
   return {
-    cameraZ: isMobile ? 5.6 : isTablet ? 6.2 : 6.5,
-    fov: isMobile ? 48 : 45,
-    radiusX: isMobile ? 2.8 : isTablet ? 3.8 : 4.5,
-    radiusZ: isMobile ? 2.2 : isTablet ? 3.0 : 3.5,
-    minScale: isMobile ? 0.5 : 0.48,
-    maxScale: isMobile ? 1.28 : 1.45,
-    spread: isMobile ? 1.0 : 1.18,
+    cameraZ: isMobile ? 5.8 : isTablet ? 6.4 : 6.8,
+    fov: isMobile ? 48 : 42,
+    radiusX: isMobile ? 3.2 : isTablet ? 4.4 : 5.4,
+    radiusZ: isMobile ? 2.4 : isTablet ? 3.2 : 3.8,
+    minScale: isMobile ? 0.42 : 0.4,
+    maxScale: isMobile ? 1.05 : 1.15,
+    spread: isMobile ? 1.12 : 1.28,
   };
 }
 
-function initProgress(): { t: Float32Array; signs: Float32Array } {
+function initProgress(): Float32Array {
   const t = new Float32Array(PLANE_COUNT);
-  const signs = new Float32Array(PLANE_COUNT);
-  const half = Math.ceil(PLANE_COUNT / 2);
   for (let i = 0; i < PLANE_COUNT; i++) {
-    const lane = Math.floor(i / 2);
-    const absT = Math.pow((lane + 0.15) / half, 0.72) * 0.94;
-    const sign = i % 2 === 0 ? 1 : -1;
-    signs[i] = sign;
-    t[i] = sign * absT;
+    t[i] = -1 + ((i + 0.5) / PLANE_COUNT) * 2;
   }
-  return { t, signs };
+  return t;
 }
 
 function drawImageCover(
@@ -156,7 +150,7 @@ function posePlane(mesh: THREE.Mesh, t: number, framing: Framing) {
 function PlaneStrip() {
   const { camera, size } = useThree();
   const meshRefs = useRef<(THREE.Mesh | null)[]>([]);
-  const path = useRef(initProgress());
+  const progress = useRef(initProgress());
   const velocityT = useRef(0);
   const imagesRef = useRef<HTMLImageElement[] | null>(null);
   const [imagesReady, setImagesReady] = useState(false);
@@ -225,18 +219,17 @@ function PlaneStrip() {
     if (!reducedMotion) {
       const delta = IDLE_T_PER_SEC * dt + velocityT.current;
       velocityT.current = 0;
-      const { t, signs } = path.current;
+      const t = progress.current;
       for (let i = 0; i < t.length; i++) {
-        const sign = signs[i] ?? 1;
-        let next = t[i] + sign * delta;
-        if (next * sign > 1) next = sign * 0.08;
-        else if (next * sign < 0) next = sign * 0.08;
+        let next = t[i] + delta;
+        if (next > 1) next -= 2;
+        else if (next < -1) next += 2;
         t[i] = next;
       }
     }
 
     const meshes = meshRefs.current;
-    const t = path.current.t;
+    const t = progress.current;
     for (let i = 0; i < PLANE_COUNT; i++) {
       const mesh = meshes[i];
       if (mesh) posePlane(mesh, t[i] ?? 0, framing);
