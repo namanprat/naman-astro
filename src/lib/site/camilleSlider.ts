@@ -100,6 +100,17 @@ export function initCamilleSlider(root: HTMLElement): CamilleSliderHandle {
 
   const reduced = prefersReducedMotion();
 
+  const cursorOffsetX = 16;
+  const cursorOffsetY = 18;
+  const cursorDuration = reduced ? 0 : 0.4;
+  let cursorArmed = false;
+  const cursorXTo = cursorEl
+    ? gsap.quickTo(cursorEl, "x", { duration: cursorDuration, ease: "power3.out" })
+    : null;
+  const cursorYTo = cursorEl
+    ? gsap.quickTo(cursorEl, "y", { duration: cursorDuration, ease: "power3.out" })
+    : null;
+
   /* Hand-built: the inner already sits in markup, same as Footer links.
      `prepareGooey` would SplitText the heading and then a hop's textContent
      swap would leave the split pointing at the old string. */
@@ -150,10 +161,11 @@ export function initCamilleSlider(root: HTMLElement): CamilleSliderHandle {
 
   const hideViewCursor = () => {
     frame.classList.remove("is-view-cursor");
+    cursorArmed = false;
   };
 
   const onPointerMove = (event: PointerEvent) => {
-    if (event.pointerType !== "mouse" || !cursorEl) {
+    if (event.pointerType !== "mouse" || !cursorEl || !cursorXTo || !cursorYTo) {
       hideViewCursor();
       return;
     }
@@ -161,9 +173,15 @@ export function initCamilleSlider(root: HTMLElement): CamilleSliderHandle {
       hideViewCursor();
       return;
     }
+    const x = event.clientX + cursorOffsetX;
+    const y = event.clientY + cursorOffsetY;
+    if (!cursorArmed) {
+      gsap.set(cursorEl, { x, y });
+      cursorArmed = true;
+    }
     frame.classList.add("is-view-cursor");
-    cursorEl.style.left = `${event.clientX}px`;
-    cursorEl.style.top = `${event.clientY}px`;
+    cursorXTo(x);
+    cursorYTo(y);
   };
 
   const onPointerLeave = () => {
@@ -385,6 +403,7 @@ export function initCamilleSlider(root: HTMLElement): CamilleSliderHandle {
       frame.removeEventListener("pointermove", onPointerMove);
       frame.removeEventListener("pointerleave", onPointerLeave);
       hideViewCursor();
+      if (cursorEl) gsap.killTweensOf(cursorEl);
       for (const pill of pills) pill.removeEventListener("click", onPill);
       for (const dispose of rollDisposes) dispose();
       gsap.killTweensOf(

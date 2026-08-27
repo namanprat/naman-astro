@@ -134,8 +134,8 @@
     fill: currentColor;
   }
 
-  /* Follows the pointer over the photo. Tight orange chip, not the old
-     dashed "View project" control. */
+  /* Trails the pointer over the photo. The system cursor stays visible —
+     this chip lags behind it rather than replacing it. */
   .camille_slider_cursor {
     position: fixed;
     top: 0;
@@ -154,7 +154,7 @@
     letter-spacing: var(--letter-spacing-normal);
     text-transform: uppercase;
     white-space: nowrap;
-    transform: translate(-50%, -50%);
+    will-change: transform;
   }
 
   @media (hover: hover) and (pointer: fine) {
@@ -162,10 +162,10 @@
       display: block;
     }
 
-    .camille_slider_frame.is-view-cursor,
-    .camille_slider_frame.is-view-cursor .camille_slider_images,
-    .camille_slider_frame.is-view-cursor .camille_slider_photo {
-      cursor: none;
+    .camille_slider_frame,
+    .camille_slider_images,
+    .camille_slider_photo {
+      cursor: pointer;
     }
   }
 

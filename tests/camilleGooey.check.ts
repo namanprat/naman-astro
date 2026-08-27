@@ -86,6 +86,11 @@ assert.match(
   /camille_slider_cursor/,
   "photo hover uses the view cursor chip",
 );
-assert.match(ts, /is-view-cursor/, "slider drives the view cursor from pointermove");
+assert.doesNotMatch(
+  css,
+  /cursor:\s*none/,
+  "view chip trails the pointer — do not hide the system cursor",
+);
+assert.match(ts, /quickTo/, "view chip lerps behind the pointer");
 
 console.log("camilleGooey: all assertions passed");
