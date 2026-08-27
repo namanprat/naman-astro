@@ -285,7 +285,7 @@ test("featured slider copy uses the shared gooey, not a custom chain", async ({
     .toBe("ok");
 });
 
-test("featured slider shows a view cursor on the photo, not View project", async ({
+test("featured slider trails a view chip behind the pointer, not a replacement cursor", async ({
   page,
 }) => {
   test.skip(isTouch(), "view cursor is a hover chip");
@@ -307,4 +307,24 @@ test("featured slider shows a view cursor on the photo, not View project", async
   await expect(frame).toHaveClass(/is-view-cursor/);
   await expect(cursor).toBeVisible();
   await expect(cursor).toHaveText(/^view$/i);
+
+  const photoCursor = await photo.evaluate((el) => getComputedStyle(el).cursor);
+  expect(photoCursor).not.toBe("none");
+
+  await expect
+    .poll(async () => {
+      const box = await photo.boundingBox();
+      const chip = await cursor.boundingBox();
+      if (!box || !chip) return "missing";
+      const pointerX = box.x + box.width / 2;
+      const pointerY = box.y + box.height / 2;
+      return chip.x > pointerX && chip.y > pointerY ? "trailed" : "catching-up";
+    })
+    .toBe("trailed");
+
+  const [cursorPad, pillPad] = await Promise.all([
+    cursor.evaluate((el) => getComputedStyle(el).padding),
+    page.locator(".camille_slider_pill").first().evaluate((el) => getComputedStyle(el).padding),
+  ]);
+  expect(cursorPad).toBe(pillPad);
 });

@@ -166,38 +166,42 @@
     fill: currentColor;
   }
 
-  /* Follows the pointer over the photo. Tight orange chip, not the old
-     dashed "View project" control. */
+  /* Trails the pointer over the photo. Same box as the chips under the
+     image — square corners, space-1 / space-3 pad — so the label reads as
+     one of those, not a different control. System cursor stays visible. */
   .camille_slider_cursor {
     position: fixed;
     top: 0;
     left: 0;
     z-index: var(--z--overlay);
     display: none;
+    align-items: center;
     pointer-events: none;
+    margin: 0;
+    padding: var(--space-1) var(--space-3);
+    border: var(--border-width) solid var(--brand-500);
+    border-radius: 0;
     background-color: var(--brand-500);
     color: var(--brand-text);
-    padding: 0.12rem 0.35rem;
-    border-radius: 0.15rem;
-    font-family: var(--mono-family);
-    font-size: var(--text-small);
-    font-weight: var(--primary-regular);
     line-height: 1;
-    letter-spacing: var(--letter-spacing-normal);
-    text-transform: uppercase;
     white-space: nowrap;
-    transform: translate(-50%, -50%);
+    will-change: transform;
+  }
+
+  .camille_slider_cursor::before,
+  .camille_slider_cursor::after {
+    content: none;
   }
 
   @media (hover: hover) and (pointer: fine) {
     .camille_slider_frame.is-view-cursor .camille_slider_cursor {
-      display: block;
+      display: flex;
     }
 
-    .camille_slider_frame.is-view-cursor,
-    .camille_slider_frame.is-view-cursor .camille_slider_images,
-    .camille_slider_frame.is-view-cursor .camille_slider_photo {
-      cursor: none;
+    .camille_slider_frame,
+    .camille_slider_images,
+    .camille_slider_photo {
+      cursor: pointer;
     }
   }
 
@@ -215,20 +219,30 @@
   }
 
   .camille_slider_pill {
+    display: flex;
+    align-items: center;
     flex: none;
     margin: 0;
-    padding: var(--space-2) var(--space-4);
+    padding: var(--space-1) var(--space-3);
     border: var(--border-width) solid var(--text);
     border-radius: 0;
     background-color: var(--text);
     color: var(--background);
     cursor: pointer;
     white-space: nowrap;
+    line-height: 1;
     transition:
       background-color 200ms ease,
       color 200ms ease,
       border-color 200ms ease,
       border-style 200ms ease;
+  }
+
+  /* text-style-small's leading-trim ::before/::after would inflate the
+     chip past the view label's 1lh box. Kill the same pair as the cursor. */
+  .camille_slider_pill::before,
+  .camille_slider_pill::after {
+    content: none;
   }
 
   .camille_slider_pill.is-active {
