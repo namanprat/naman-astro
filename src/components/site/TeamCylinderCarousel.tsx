@@ -40,10 +40,12 @@ const IDLE_UV_PER_SEC = 0.12 / TAU;
 /** Extra mesh scale below 768px so the oval fits a phone viewport. */
 const MOBILE_SCALE = 0.75;
 
-/** Strip transform. Pose is fixed apart from the scroll-driven spin. */
+/** Strip transform. Pose is fixed apart from the scroll-driven spin.
+ *  Y is 0 so the ring sits in the gap between the title (top) and copy (bottom),
+ *  not up behind the headline. */
 const STRIP = {
   posX: 0,
-  posY: 1.1,
+  posY: 0,
   posZ: 0,
   rotX: 0,
   rotY: 0,

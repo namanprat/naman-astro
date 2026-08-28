@@ -9,8 +9,38 @@
     overflow: clip;
     display: flex;
     flex-direction: column;
-    justify-content: center;
+    justify-content: space-between;
     align-items: stretch;
+    gap: var(--space-8);
+  }
+
+  .team_head,
+  .team_foot {
+    position: relative;
+    z-index: 1;
+    flex: none;
+    color: var(--text);
+    width: 100%;
+  }
+
+  .team_head {
+    padding-top: var(--section-space-large);
+  }
+
+  .team_foot {
+    padding-bottom: var(--section-space-large);
+  }
+
+  /* Sized box for the R3F island. Absolute so the canvas fills the section
+     behind the copy; without this the stage collapses (the canvas is itself
+     `position: absolute`) and the ring renders at 0×0. */
+  .team_stage {
+    position: absolute;
+    inset: 0;
+    z-index: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
   }
 
   .team_cylinder {
@@ -27,14 +57,6 @@
     display: block;
     width: 100%;
     height: 100%;
-  }
-
-  .team_copy {
-    position: relative;
-    z-index: 1;
-    width: 100%;
-    min-width: 0;
-    color: var(--text);
   }
 
   .team_layout {
