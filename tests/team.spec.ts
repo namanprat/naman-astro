@@ -54,24 +54,30 @@ test("team cylinder fills the section and copy does not overlap", async ({
   await expectTeamTitleSettled(page);
 
   await expect
-    .poll(async () => {
-      const sectionBox = await section.boundingBox();
-      const titleBox = await title.boundingBox();
-      const bodyBox = await body.boundingBox();
-      if (!sectionBox || !titleBox || !bodyBox) return "missing boxes";
-      const overlap =
-        titleBox.y + titleBox.height > bodyBox.y + 1 &&
-        bodyBox.y + bodyBox.height > titleBox.y + 1;
-      if (overlap) return "title overlaps body";
-      if (titleBox.y >= bodyBox.y) return "title is not above body";
-      const titleMid = titleBox.y + titleBox.height / 2;
-      const wrapMid = sectionBox.y + sectionBox.height / 2;
-      // Old lockup: headline sits in the wrap, not pinned to the top/bottom.
-      if (Math.abs(titleMid - wrapMid) > sectionBox.height * 0.35) {
-        return "title is not in the wrap";
-      }
-      return "ok";
-    })
+    .poll(
+      () =>
+        page.evaluate(() => {
+          const wrap = document.getElementById("team");
+          const title = document.querySelector(".team_title");
+          const body = document.querySelector(".team_copy_stack");
+          if (!wrap || !title || !body) return "missing boxes";
+          const sectionBox = wrap.getBoundingClientRect();
+          const titleBox = title.getBoundingClientRect();
+          const bodyBox = body.getBoundingClientRect();
+          const overlap =
+            titleBox.y + titleBox.height > bodyBox.y + 1 &&
+            bodyBox.y + bodyBox.height > titleBox.y + 1;
+          if (overlap) return "title overlaps body";
+          if (titleBox.y >= bodyBox.y) return "title is not above body";
+          const titleMid = titleBox.y + titleBox.height / 2;
+          const wrapMid = sectionBox.y + sectionBox.height / 2;
+          // Old lockup: headline sits in the wrap, not pinned to the top/bottom.
+          if (Math.abs(titleMid - wrapMid) > sectionBox.height * 0.35) {
+            return "title is not in the wrap";
+          }
+          return "ok";
+        }),
+    )
     .toBe("ok");
 
   await expect
