@@ -272,16 +272,6 @@ html.page-about .nav_marquee {
   z-index: calc(var(--z--menu) + 1);
 }
 
-/* Stay above the rising cover so a navigation never blanks the bar. */
-html.is-page-transitioning .nav_wrap,
-html.is-page-transitioning .nav_wrap.is-menu-open {
-  z-index: calc(var(--z--transition) + 1);
-}
-
-html.is-page-transitioning .nav_marquee {
-  z-index: calc(var(--z--transition) + 2);
-}
-
 .nav_wrap.is-menu-open .nav_grid a,
 .nav_wrap.is-menu-open .nav_grid .nav_menu_toggle,
 .nav_wrap.is-menu-open .nav_grid .nav_theme_toggle,

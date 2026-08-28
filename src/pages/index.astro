@@ -27,6 +27,7 @@ import Preloader from "@/components/site/Preloader.astro";
         if (sessionStorage.getItem("pt:cover") === "1") {
           sessionStorage.removeItem("pt:cover");
           document.documentElement.classList.remove("is-page-transitioning");
+          document.documentElement.classList.remove("is-page-covered");
         }
       } catch (e) {}
     }

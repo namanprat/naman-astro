@@ -18,42 +18,76 @@ import "./eases";
 export const PT_COVER_KEY = "pt:cover";
 
 const DURATION = 0.9;
+const COVERED = "is-page-covered";
+const LOCKED = "is-page-transitioning";
 
 function panelEl() {
   return document.querySelector<HTMLElement>(".transition_panel");
 }
 
 function lockScroll() {
-  document.documentElement.classList.add("is-page-transitioning");
+  document.documentElement.classList.add(LOCKED);
   getSiteLenis()?.stop();
 }
 
 function unlockScroll() {
-  document.documentElement.classList.remove("is-page-transitioning");
+  document.documentElement.classList.remove(LOCKED, COVERED);
   getSiteLenis()?.start();
+}
+
+function markCoveredClass() {
+  document.documentElement.classList.add(COVERED);
 }
 
 /** Snap the panel to fully covering — used when the mobile menu is already the cover. */
 export function markCovered(): void {
   const panel = panelEl();
   lockScroll();
+  markCoveredClass();
   if (!panel) return;
   gsap.set(panel, { pointerEvents: "all", y: 0, yPercent: 0 });
 }
 
 export function animateIn(): Promise<void> {
   const panel = panelEl();
-  lockScroll();
-  if (!panel || prefersReducedMotion()) return Promise.resolve();
+  if (!panel || prefersReducedMotion()) {
+    lockScroll();
+    markCoveredClass();
+    return Promise.resolve();
+  }
+
+  /* Stop Lenis now so the page cannot drift under the rise. Do not add
+     `is-page-transitioning` yet: overflow:hidden unsticks the home nav, and
+     `is-page-covered` would CSS-snap the panel over it before this tween. */
+  getSiteLenis()?.stop();
 
   return new Promise((resolve) => {
+    let locked = false;
+    const lockOnce = () => {
+      if (locked) return;
+      locked = true;
+      lockScroll();
+    };
+
     gsap
-      .timeline({ onComplete: resolve })
+      .timeline({
+        onComplete: () => {
+          lockOnce();
+          resolve();
+        },
+      })
       // y: 0 is load-bearing — without it GSAP inherits the CSS
       // `translateY(100%)` park position as `y` and yPercent stacks on top,
       // leaving the panel a full viewport below where it should be.
       .set(panel, { pointerEvents: "all", y: 0, yPercent: 100 })
-      .to(panel, { yPercent: 0, duration: DURATION, ease: "introHop" });
+      .to(panel, {
+        yPercent: 0,
+        duration: DURATION,
+        ease: "introHop",
+        onUpdate() {
+          if (panel.getBoundingClientRect().top <= 0) lockOnce();
+        },
+      });
   });
 }
 

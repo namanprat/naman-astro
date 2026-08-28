@@ -485,7 +485,7 @@ test("archive theme-color stays dark regardless of the stored theme", async ({
   );
 });
 
-test("the page-transition cover sits below the nav and ticker", async ({
+test("the page-transition cover sits above the nav and ticker", async ({
   page,
 }) => {
   await page.goto("/");
@@ -493,20 +493,57 @@ test("the page-transition cover sits below the nav and ticker", async ({
   await expectNavVisible(page);
 
   const stacking = await page.evaluate(() => {
-    document.documentElement.classList.add("is-page-transitioning");
     const nav = document.querySelector<HTMLElement>(".nav_wrap");
     const marquee = document.querySelector<HTMLElement>(".nav_marquee");
     const panel = document.querySelector<HTMLElement>(".transition_panel");
     if (!nav || !panel) return null;
     const z = (el: HTMLElement) => Number.parseFloat(getComputedStyle(el).zIndex);
-    return {
+    document.documentElement.classList.add("is-page-transitioning");
+    const locked = {
       navZ: z(nav),
       marqueeZ: marquee ? z(marquee) : 0,
       panelZ: z(panel),
     };
+    document.documentElement.classList.remove("is-page-transitioning");
+    return {
+      rest: { navZ: z(nav), panelZ: z(panel) },
+      locked,
+    };
   });
 
   expect(stacking).not.toBeNull();
-  expect(stacking!.navZ).toBeGreaterThan(stacking!.panelZ);
-  expect(stacking!.marqueeZ).toBeGreaterThan(stacking!.panelZ);
+  expect(stacking!.rest.panelZ).toBeGreaterThan(stacking!.rest.navZ);
+  expect(stacking!.locked.panelZ).toBeGreaterThan(stacking!.locked.navZ);
+  expect(stacking!.locked.panelZ).toBeGreaterThan(stacking!.locked.marqueeZ);
+});
+
+test("arming the cover lock does not snap the panel over the nav", async ({
+  page,
+}) => {
+  await page.goto("/");
+  await expectRevealed(page);
+  await expectNavVisible(page);
+
+  const shot = await page.evaluate(() => {
+    const nav = document.querySelector<HTMLElement>(".nav_wrap");
+    const panel = document.querySelector<HTMLElement>(".transition_panel");
+    if (!nav || !panel) return null;
+    const navBefore = nav.getBoundingClientRect();
+    document.documentElement.classList.add("is-page-transitioning");
+    const navAfter = nav.getBoundingClientRect();
+    const panelBox = panel.getBoundingClientRect();
+    const navStyle = getComputedStyle(nav);
+    document.documentElement.classList.remove("is-page-transitioning");
+    return {
+      navTopShift: Math.abs(navAfter.top - navBefore.top),
+      navHidden:
+        navStyle.visibility === "hidden" || Number.parseFloat(navStyle.opacity) === 0,
+      panelTop: panelBox.top,
+      view: window.innerHeight,
+    };
+  });
+
+  expect(shot).not.toBeNull();
+  expect(shot!.navHidden).toBe(false);
+  expect(shot!.panelTop).toBeGreaterThan(shot!.view * 0.5);
 });
