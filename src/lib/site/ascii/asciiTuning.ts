@@ -24,7 +24,7 @@ export type AsciiTuning = {
   noise: number;
 };
 
-/** Look tuned on the Team plane band. About uses the same lattice, far sparser. */
+/** Look tuned on the Team cylinder. About uses the same lattice, far sparser. */
 const TEAM_LOOK: AsciiTuning = {
   density: 183,
   glyphScale: 2.2,
@@ -49,7 +49,7 @@ export const ASCII_DEFAULTS: Record<AsciiSurface, AsciiTuning> = {
 
 export const ASCII_SURFACES = Object.keys(ASCII_DEFAULTS) as AsciiSurface[];
 
-const STORAGE_KEY = "ascii-tuning-v6";
+const STORAGE_KEY = "ascii-tuning-v8";
 
 const tuning: Record<AsciiSurface, AsciiTuning> = {
   about: { ...ASCII_DEFAULTS.about },

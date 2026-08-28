@@ -1,39 +1,34 @@
 ---
 /**
- * Studio closer. Copy is server-rendered above and below the plane band;
- * the vanishing-point emitter is an R3F island, same split as archive.astro
- * / CamilleSlider.
+ * Studio closer. Copy is server-rendered; the cylinder is an R3F island,
+ * same split as archive.astro / CamilleSlider.
  */
-import TeamVanishingPlanes from "./TeamVanishingPlanes";
+import TeamCylinderCarousel from "./TeamCylinderCarousel";
 import AnimeLink from "./AnimeLink";
 import "./Team.css";
 ---
 
 <section class="team_wrap" id="team" aria-label="Studio">
-  <div class="team_head container">
-    <div class="team_layout grid is-12">
-      <h2 class="team_title text-style-h1 alignment-center">
-        I close
-        <br />
-        that gap.
-      </h2>
-    </div>
-  </div>
-  <div class="team_stage">
-    <TeamVanishingPlanes client:only="react" />
-  </div>
-  <div class="team_foot container">
-    <div class="team_layout grid is-12">
-      <div class="team_copy_stack">
-        <p class="text-style-main alignment-center">
-          Your website is where the right people decide whether you're worth
-          their time. I find what makes you irreplaceable, build the whole
-          experience around it, and make sure they feel it before they read a
-          word.
-        </p>
-        <AnimeLink client:only="react" href="/work" className="team_cta">
-          View Work
-        </AnimeLink>
+  <TeamCylinderCarousel client:only="react" />
+  <div class="team_copy">
+    <div class="team_contain container">
+      <div class="team_layout grid is-12">
+        <h2 class="team_title text-style-h1 alignment-center">
+          I close
+          <br />
+          that gap.
+        </h2>
+        <div class="team_copy_stack">
+          <p class="text-style-main alignment-center">
+            Your website is where the right people decide whether you're worth
+            their time. I find what makes you irreplaceable, build the whole
+            experience around it, and make sure they feel it before they read a
+            word.
+          </p>
+          <AnimeLink client:only="react" href="/work" className="team_cta">
+            View Work
+          </AnimeLink>
+        </div>
       </div>
     </div>
   </div>
