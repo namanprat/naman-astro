@@ -199,7 +199,6 @@
     cursor: pointer;
     white-space: nowrap;
     line-height: 1;
-    overflow: clip;
     transition:
       background-color 200ms ease,
       color 200ms ease,
@@ -207,8 +206,8 @@
       border-style 200ms ease;
   }
 
-  /* text-style-small's leading-trim ::before/::after would sit outside the
-     1em RollingText mask and inflate the chip. Nav kills the same pair. */
+  /* text-style-small's leading-trim ::before/::after would inflate the
+     chip past the view label's 1lh box. Kill the same pair as the cursor. */
   .camille_slider_pill::before,
   .camille_slider_pill::after {
     content: none;
