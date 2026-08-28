@@ -4,6 +4,7 @@
  */
 import * as THREE from "three";
 import { readCssColor, shaderColor } from "../cssColor";
+import { MOBILE_LAYOUT_MQ } from "../isMobileLayout";
 import { prefersReducedMotion } from "../prefersReducedMotion";
 import { reportHomeCanvasReady } from "../preloadAssets";
 import { SWATCH_DARK, SWATCH_LIGHT } from "../siteColors";
@@ -120,6 +121,7 @@ export class FluidSimulation {
   private readonly materials: Materials;
   private readonly abort = new AbortController();
   private readonly motionQuery: MediaQueryList;
+  private readonly layoutQuery: MediaQueryList;
 
   private readonly inkColor = shaderColor(SWATCH_LIGHT);
   private readonly surfaceColor = shaderColor(SWATCH_DARK);
@@ -185,6 +187,11 @@ export class FluidSimulation {
 
     this.motionQuery = window.matchMedia("(prefers-reduced-motion: reduce)");
     this.motionQuery.addEventListener("change", this.onMotionChange, {
+      signal,
+    });
+
+    this.layoutQuery = window.matchMedia(MOBILE_LAYOUT_MQ);
+    this.layoutQuery.addEventListener("change", this.onLayoutChange, {
       signal,
     });
 
@@ -368,6 +375,7 @@ export class FluidSimulation {
 
   private onPointerMove = (event: PointerEvent): void => {
     if (this.reduced) return;
+    if (this.layoutQuery.matches) return;
 
     const x = event.clientX * this.dpr;
     const y = event.clientY * this.dpr;
@@ -387,6 +395,10 @@ export class FluidSimulation {
   private onMotionChange = (): void => {
     this.reduced = this.motionQuery.matches;
     if (this.reduced) this.mouse.moved = false;
+  };
+
+  private onLayoutChange = (): void => {
+    if (this.layoutQuery.matches) this.mouse.moved = false;
   };
 
   private startLoop(): void {
