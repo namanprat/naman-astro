@@ -18,19 +18,19 @@ const CARDS: ReadonlyArray<{
   {
     title: "Uncover story",
     description:
-      "I dig until I find what makes you irreplaceable. That becomes the strategy.",
+      "I dig until I find the one thing only you can say. That becomes the strategy.",
     shape: "box",
   },
   {
     title: "Shape presence",
     description:
-      "I design a brand and a site that feel considered, and worth staying on.",
+      "I design the identity and everything it touches, so it holds together.",
     shape: "box",
   },
   {
     title: "Send it",
     description:
-      "The site goes live and keeps working as you grow. No rebuild in a year.",
+      "It ships as one system, and it keeps working as you grow. No rebuild in a year.",
     shape: "box",
   },
 ];
@@ -62,8 +62,9 @@ export default function Process() {
         <div className="process_layout studio_layout grid is-12">
           <div className="process_statement studio_statement">
             <h2 className="process_title studio_title text-style-h2">
-              <span className="studio_title_indent" aria-hidden="true" />I make
-              websites that finally match what you&apos;ve actually built.
+              <span className="studio_title_indent" aria-hidden="true" />I build
+              brands and everything they live on, so you look like yourself from
+              day one.
             </h2>
           </div>
 
