@@ -9,26 +9,30 @@ import "./Team.css";
 ---
 
 <section class="team_wrap" id="team" aria-label="Studio">
-  <TeamCylinderCarousel client:only="react" />
-  <div class="team_copy">
-    <div class="team_contain container">
-      <div class="team_layout grid is-12">
-        <h2 class="team_title text-style-h1 alignment-center">
-          I close
-          <br />
-          that gap.
-        </h2>
-        <div class="team_copy_stack">
-          <p class="text-style-main alignment-center">
-            Your website is where the right people decide whether you're worth
-            their time. I find what makes you irreplaceable, build the whole
-            experience around it, and make sure they feel it before they read a
-            word.
-          </p>
-          <AnimeLink client:only="react" href="/work" className="team_cta">
-            View Work
-          </AnimeLink>
-        </div>
+  <div class="team_head container">
+    <div class="team_layout grid is-12">
+      <h2 class="team_title text-style-h1 alignment-center">
+        I close
+        <br />
+        that gap.
+      </h2>
+    </div>
+  </div>
+  <div class="team_stage">
+    <TeamCylinderCarousel client:only="react" />
+  </div>
+  <div class="team_foot container">
+    <div class="team_layout grid is-12">
+      <div class="team_copy_stack">
+        <p class="text-style-main alignment-center">
+          Early on, every impression counts double. People decide whether
+          you're worth their time before they read a word. I find what makes you
+          different, build the whole presence around it, and make sure they feel
+          that first.
+        </p>
+        <AnimeLink client:only="react" href="/work" className="team_cta">
+          View Work
+        </AnimeLink>
       </div>
     </div>
   </div>

@@ -58,8 +58,6 @@ export default function Process() {
         <div className="process_layout studio_layout grid is-12">
           <div className="process_statement studio_statement">
             <h2 className="process_title studio_title text-style-h2">
-              <span className="studio_title_indent" aria-hidden="true" />I make
-              websites that finally match what you&apos;ve actually built.
             </h2>
           </div>
 
