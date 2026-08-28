@@ -1,6 +1,6 @@
 # duforn
 
-Studio site for [duforn](https://namanprat.com). Astro + React.
+Practice site for [duforn](https://namanprat.com). Astro + React.
 
 ```sh
 npm install

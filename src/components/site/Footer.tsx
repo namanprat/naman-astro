@@ -170,7 +170,7 @@ export default function Footer() {
             <div className="footer_contain container gap-0">
               <div className="footer_layout grid is-12">
                 <h3 className="footer_tagline text-style-main">
-                  We&apos;re a design studio. We work with early-stage brands on
+                  We&apos;re a design practice. We work with early-stage brands on
                   identity, web, and motion, and we care more about what gets
                   left out than what gets added.
                 </h3>
