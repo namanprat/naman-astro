@@ -36,14 +36,7 @@ const TEAM_LOOK: AsciiTuning = {
 
 export const ASCII_DEFAULTS: Record<AsciiSurface, AsciiTuning> = {
   about: { ...TEAM_LOOK, density: 46 },
-  team: {
-    density: 56,
-    glyphScale: 1.35,
-    warp: 1,
-    gamma: 0.9,
-    jitter: 0.02,
-    noise: 0.28,
-  },
+  team: { ...TEAM_LOOK },
   process: {
     density: 40,
     glyphScale: 1.2,
@@ -56,7 +49,7 @@ export const ASCII_DEFAULTS: Record<AsciiSurface, AsciiTuning> = {
 
 export const ASCII_SURFACES = Object.keys(ASCII_DEFAULTS) as AsciiSurface[];
 
-const STORAGE_KEY = "ascii-tuning-v5";
+const STORAGE_KEY = "ascii-tuning-v6";
 
 const tuning: Record<AsciiSurface, AsciiTuning> = {
   about: { ...ASCII_DEFAULTS.about },
