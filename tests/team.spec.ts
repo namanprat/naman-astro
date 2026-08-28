@@ -2,9 +2,8 @@ import { expect, test } from "@playwright/test";
 import { expectRevealed, skipPreloader, stubWebGL } from "./helpers";
 
 /**
- * Team closer: the cylinder fills the section, title sits at the top, body
- * at the bottom. A merge dropped the stage CSS, so the canvas collapsed to
- * 0×0 and the two copy blocks stacked on top of each other in the centre.
+ * Team closer: the cylinder fills the section behind the centred lockup.
+ * Title and body stack over the ring and must not overlap.
  */
 test.beforeEach(async ({ page }) => {
   await stubWebGL(page);

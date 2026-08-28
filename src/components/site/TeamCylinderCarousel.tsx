@@ -41,11 +41,10 @@ const IDLE_UV_PER_SEC = 0.12 / TAU;
 const MOBILE_SCALE = 0.75;
 
 /** Strip transform. Pose is fixed apart from the scroll-driven spin.
- *  Y is 0 so the ring sits in the gap between the title (top) and copy (bottom),
- *  not up behind the headline. */
+ *  Lifted so the ring sits behind the centred "We close that gap." lockup. */
 const STRIP = {
   posX: 0,
-  posY: 0,
+  posY: 1.1,
   posZ: 0,
   rotX: 0,
   rotY: 0,

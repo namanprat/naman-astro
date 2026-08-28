@@ -1,7 +1,7 @@
 ---
 /**
- * Studio closer. Copy is server-rendered; the cylinder is an R3F island,
- * same split as archive.astro / CamilleSlider.
+ * Studio closer. Copy is server-rendered over the cylinder; the ring is an
+ * R3F island, same split as archive.astro / CamilleSlider.
  */
 import TeamCylinderStage from "./TeamCylinderStage";
 import AnimeLink from "./AnimeLink";
@@ -9,23 +9,19 @@ import "./Team.css";
 ---
 
 <section class="team_wrap" id="team" aria-label="Practice">
-  <div class="team_head container">
-    <div class="team_layout grid is-12">
-      <h2 class="team_title text-style-h1 alignment-center">
-        We close
-        <br />
-        that gap.
-      </h2>
-    </div>
-  </div>
   <div class="team_stage">
     {/* `client:only` rather than `client:visible`: the island SSRs nothing, so
         Astro's visible observer has no child box and never hydrates. The stage
         component's own IntersectionObserver on `#team` is the actual gate. */}
     <TeamCylinderStage client:only="react" />
   </div>
-  <div class="team_foot container">
+  <div class="team_copy container">
     <div class="team_layout grid is-12">
+      <h2 class="team_title text-style-h1 alignment-center">
+        We close
+        <br />
+        that gap.
+      </h2>
       <div class="team_copy_stack">
         <p class="text-style-main alignment-center">
           Early on, every impression counts double. People decide whether

@@ -9,29 +9,11 @@
     overflow: clip;
     display: flex;
     flex-direction: column;
-    justify-content: space-between;
-    align-items: stretch;
-    gap: var(--space-8);
+    justify-content: center;
+    align-items: center;
   }
 
-  .team_head,
-  .team_foot {
-    position: relative;
-    z-index: 1;
-    flex: none;
-    color: var(--text);
-    width: 100%;
-  }
-
-  .team_head {
-    padding-top: var(--section-space-large);
-  }
-
-  .team_foot {
-    padding-bottom: var(--section-space-large);
-  }
-
-  /* Sized box for the R3F island. Absolute so the canvas fills the section
+  /* Sized box for the R3F island. Absolute so the ring fills the section
      behind the copy; without this the stage collapses (the canvas is itself
      `position: absolute`) and the ring renders at 0×0. */
   .team_stage {
@@ -59,10 +41,18 @@
     height: 100%;
   }
 
+  .team_copy {
+    position: relative;
+    z-index: 1;
+    width: 100%;
+    min-width: 0;
+    color: var(--text);
+  }
+
   .team_layout {
     width: 100%;
     align-content: center;
-    row-gap: var(--space-5);
+    row-gap: var(--space-8);
   }
 
   /* Span `--site-column-count`, not 12 — a 4-col `.grid.is-12` must not grow
