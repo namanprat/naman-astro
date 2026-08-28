@@ -193,6 +193,18 @@ export function initCamilleSlider(root: HTMLElement): CamilleSliderHandle {
     if (href) void go(href);
   };
 
+  const onPageShow = (event: Event) => {
+    if (!("persisted" in event) || !(event as PageTransitionEvent).persisted) {
+      return;
+    }
+    /* Back from `/work/[slug]` restores this document mid-hop with `busy`
+       latched. Finish the hop so the frame is clickable again; the cover is
+       parked in `pageTransition`. */
+    busy = false;
+    pendingIndex = null;
+    showOnly(current);
+  };
+
   const stopAutoplay = () => {
     window.clearInterval(autoplayTimer);
     autoplayTimer = 0;
@@ -386,6 +398,7 @@ export function initCamilleSlider(root: HTMLElement): CamilleSliderHandle {
   frame.addEventListener("click", onFrameClick);
   frame.addEventListener("pointermove", onPointerMove);
   frame.addEventListener("pointerleave", onPointerLeave);
+  window.addEventListener("pageshow", onPageShow);
   for (const pill of pills) pill.addEventListener("click", onPill);
 
   startAutoplay();
@@ -402,6 +415,7 @@ export function initCamilleSlider(root: HTMLElement): CamilleSliderHandle {
       frame.removeEventListener("click", onFrameClick);
       frame.removeEventListener("pointermove", onPointerMove);
       frame.removeEventListener("pointerleave", onPointerLeave);
+      window.removeEventListener("pageshow", onPageShow);
       hideViewCursor();
       if (cursorEl) gsap.killTweensOf(cursorEl);
       for (const pill of pills) pill.removeEventListener("click", onPill);

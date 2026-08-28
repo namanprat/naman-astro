@@ -18,6 +18,8 @@ import "./eases";
 export const PT_COVER_KEY = "pt:cover";
 
 const DURATION = 0.9;
+/** Wall-clock ceiling so a starved rAF cannot hold `go()` or the uncover. */
+const FAILSAFE_MS = DURATION * 1000 + 400;
 const COVERED = "is-page-covered";
 const LOCKED = "is-page-transitioning";
 
@@ -39,29 +41,96 @@ function markCoveredClass() {
   document.documentElement.classList.add(COVERED);
 }
 
+function parkPanel() {
+  const panel = panelEl();
+  if (!panel) return;
+  gsap.killTweensOf(panel);
+  gsap.set(panel, { pointerEvents: "none", y: 0, yPercent: 100 });
+}
+
+/**
+ * Put the cover back in its CSS rest (below the viewport) and clear leave
+ * bookkeeping. Browser Back restores this document from bfcache *after*
+ * `animateIn` has already covered it — without this the panel sits on top
+ * of the home slider with `pointer-events: all` and the next project click
+ * never fires.
+ */
+export function resetPageTransition(): void {
+  leavePending = false;
+  covering = null;
+  unlockScroll();
+  parkPanel();
+}
+
+let historyResetInstalled = false;
+
+function installHistoryReset() {
+  if (historyResetInstalled) return;
+  historyResetInstalled = true;
+  window.addEventListener("pagehide", () => {
+    resetPageTransition();
+  });
+  window.addEventListener("pageshow", (event) => {
+    if (event.persisted) resetPageTransition();
+  });
+}
+
+/** `go()` has started covering; a second click should assign, not re-tween. */
+let leavePending = false;
+let covering: Promise<void> | null = null;
+
+export function isLeavePending(): boolean {
+  return leavePending;
+}
+
+export function markLeavePending(): void {
+  leavePending = true;
+}
+
 /** Snap the panel to fully covering — used when the mobile menu is already the cover. */
 export function markCovered(): void {
   const panel = panelEl();
   lockScroll();
   markCoveredClass();
   if (!panel) return;
+  gsap.killTweensOf(panel);
   gsap.set(panel, { pointerEvents: "all", y: 0, yPercent: 0 });
 }
 
+function withFailsafe(run: (finish: () => void) => void): Promise<void> {
+  return new Promise((resolve) => {
+    let settled = false;
+    const finish = () => {
+      if (settled) return;
+      settled = true;
+      resolve();
+    };
+    const failsafe = window.setTimeout(finish, FAILSAFE_MS);
+    run(() => {
+      window.clearTimeout(failsafe);
+      finish();
+    });
+  });
+}
+
 export function animateIn(): Promise<void> {
+  if (covering) return covering;
+
   const panel = panelEl();
   if (!panel || prefersReducedMotion()) {
     lockScroll();
     markCoveredClass();
-    return Promise.resolve();
+    covering = Promise.resolve();
+    return covering;
   }
 
   /* Stop Lenis now so the page cannot drift under the rise. Do not add
      `is-page-transitioning` yet: overflow:hidden unsticks the home nav, and
      `is-page-covered` would CSS-snap the panel over it before this tween. */
   getSiteLenis()?.stop();
+  gsap.killTweensOf(panel);
 
-  return new Promise((resolve) => {
+  covering = withFailsafe((finish) => {
     let locked = false;
     const lockOnce = () => {
       if (locked) return;
@@ -73,7 +142,7 @@ export function animateIn(): Promise<void> {
       .timeline({
         onComplete: () => {
           lockOnce();
-          resolve();
+          finish();
         },
       })
       // y: 0 is load-bearing — without it GSAP inherits the CSS
@@ -89,20 +158,23 @@ export function animateIn(): Promise<void> {
         },
       });
   });
+
+  return covering;
 }
 
 function animateOut(): Promise<void> {
   const panel = panelEl();
   const clear = () => {
     unlockScroll();
-    if (panel) gsap.set(panel, { pointerEvents: "none" });
+    parkPanel();
   };
   if (!panel || prefersReducedMotion()) {
     clear();
     return Promise.resolve();
   }
 
-  return new Promise((resolve) => {
+  gsap.killTweensOf(panel);
+  return withFailsafe((finish) => {
     gsap.fromTo(
       panel,
       { y: 0, yPercent: 0 },
@@ -112,10 +184,14 @@ function animateOut(): Promise<void> {
         ease: "introHop",
         onComplete: () => {
           clear();
-          resolve();
+          finish();
         },
       },
     );
+  }).then(() => {
+    /* Failsafe path skips onComplete — still park so a starved tween cannot
+       leave the cover sitting on the next page. */
+    if (document.documentElement.classList.contains(COVERED)) clear();
   });
 }
 
@@ -159,13 +235,18 @@ function preloaderHandover(): Promise<void> {
  * from playing behind the overlay.
  */
 export async function bootIfCovered(): Promise<void> {
+  installHistoryReset();
+
   if (isPreloading()) {
     await preloaderHandover();
     markPageRevealed();
     return;
   }
 
-  // Plain load: nothing is hiding the page, so it is already revealed.
-  if (takeFlag(PT_COVER_KEY) === "1") await animateOut();
+  const flagged = takeFlag(PT_COVER_KEY) === "1";
+  const stuck =
+    document.documentElement.classList.contains(COVERED) ||
+    document.documentElement.classList.contains(LOCKED);
+  if (flagged || stuck) await animateOut();
   markPageRevealed();
 }
