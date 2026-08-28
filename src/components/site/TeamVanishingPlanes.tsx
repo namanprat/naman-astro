@@ -2,9 +2,10 @@
  * Vanishing-point emitter of discrete portrait planes, as an R3F island.
  *
  * Two streams leave screen center: small and far at u=0, larger and yawed
- * at u=1. When a plane exits a lip it recycles to the center with the next
- * image. Nothing spins — no cylinder mesh, no group yaw, no edge-to-edge
- * wrap. Glyphs come from the shared `AsciiField`.
+ * at u=1. Scroll sign drives direction — outward on the way down, back
+ * toward the vanishing point on the way up. Crossing either end recycles
+ * that plane on the same arm with the next/previous image, so both sides
+ * stay infinite either way. Nothing spins. Glyphs come from `AsciiField`.
  */
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Canvas, useFrame, useThree } from "@react-three/fiber";
@@ -37,10 +38,10 @@ const PLANE_W = PLANE_H * TILE_ASPECT;
 /** Must match the AsciiField offscreen camera — that is the lens that sees these planes. */
 const OFF_FOV = 45;
 const OFF_CAM_Z = 6.5;
-/** px/s scroll velocity → extra outward speed. Sign is discarded. */
-const VELOCITY_U_SCALE = 0.00003;
+/** px/s scroll velocity → signed progress. Down is outward, up is inward. */
+const VELOCITY_U_SCALE = 0.000015;
 /** Idle crawl (progress/s) from center toward each lip. */
-const IDLE_U_PER_SEC = 0.08;
+const IDLE_U_PER_SEC = 0.04;
 
 type Framing = {
   cameraZ: number;
@@ -179,7 +180,6 @@ function PlaneEmitter() {
   const { camera, size } = useThree();
   const meshRefs = useRef<(THREE.Mesh | null)[]>([]);
   const slotsRef = useRef<Slot[]>(initSlots());
-  const nextImageRef = useRef(PLANE_COUNT);
   const velocityU = useRef(0);
   const imagesRef = useRef<HTMLImageElement[] | null>(null);
   const texturesRef = useRef<THREE.CanvasTexture[] | null>(null);
@@ -238,7 +238,7 @@ function PlaneEmitter() {
       onUpdate(self) {
         const v = self.getVelocity();
         if (!v) return;
-        velocityU.current += Math.abs(v) * VELOCITY_U_SCALE;
+        velocityU.current += v * VELOCITY_U_SCALE;
       },
     });
     return () => {
@@ -256,10 +256,15 @@ function PlaneEmitter() {
       velocityU.current = 0;
       for (const slot of slots) {
         slot.u += delta;
-        if (slot.u > 1) {
+        let guard = 0;
+        while (slot.u > 1 && guard++ < 8) {
           slot.u -= 1;
-          slot.imageIndex = nextImageRef.current % IMAGE_COUNT;
-          nextImageRef.current += 1;
+          slot.imageIndex = (slot.imageIndex + 1) % IMAGE_COUNT;
+        }
+        while (slot.u < 0 && guard++ < 8) {
+          slot.u += 1;
+          slot.imageIndex =
+            (slot.imageIndex - 1 + IMAGE_COUNT) % IMAGE_COUNT;
         }
       }
     }
