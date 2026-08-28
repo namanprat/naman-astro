@@ -1,9 +1,10 @@
 /**
- * Discrete portrait planes on a concave U-path, as an R3F island.
+ * Vanishing-point emitter of discrete portrait planes, as an R3F island.
  *
- * Planes ride a concave U as one infinite row: small and far at center,
- * large and yawed at the edges. They wrap from one lip to the other so the
- * series never runs out. Glyphs come from the shared `AsciiField`.
+ * Two streams leave screen center: small and far at u=0, larger and yawed
+ * at u=1. When a plane exits a lip it recycles to the center with the next
+ * image. Nothing spins — no cylinder mesh, no group yaw, no edge-to-edge
+ * wrap. Glyphs come from the shared `AsciiField`.
  */
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Canvas, useFrame, useThree } from "@react-three/fiber";
@@ -17,25 +18,26 @@ import AsciiField from "./ascii/AsciiField";
 
 gsap.registerPlugin(ScrollTrigger);
 
-/** Work covers plus detail stills so the row reads wide, not sparse. */
+/** Work covers plus detail stills so both streams stay dense. */
 const IMAGE_SRCS = [
   ...workItems.map((item) => item.image),
   "/work/haptic/haptic-hero.webp",
   "/work/money-me/money-cover.webp",
 ];
 const IMAGE_COUNT = IMAGE_SRCS.length;
-/** One looping row — enough to read as a series, spaced so they stay separate. */
-const PLANE_COUNT = 11;
+/** Independent left and right streams, staggered along u. */
+const PLANES_PER_SIDE = 5;
+const PLANE_COUNT = PLANES_PER_SIDE * 2;
 /** Portrait tile — 3:4 width:height. */
 const TILE_ASPECT = 3 / 4;
 const TILE_W = 768;
 const TILE_H = Math.round(TILE_W / TILE_ASPECT);
-const PLANE_H = 1.2;
+const PLANE_H = 1.05;
 const PLANE_W = PLANE_H * TILE_ASPECT;
-/** px/s scroll velocity → progress along the U. */
-const VELOCITY_T_SCALE = 0.00003;
-/** Idle crawl (progress/s) so the row keeps moving off-scroll. */
-const IDLE_T_PER_SEC = 0.08;
+/** px/s scroll velocity → extra outward speed. Sign is discarded. */
+const VELOCITY_U_SCALE = 0.00003;
+/** Idle crawl (progress/s) from center toward each lip. */
+const IDLE_U_PER_SEC = 0.08;
 
 type Framing = {
   cameraZ: number;
@@ -45,6 +47,12 @@ type Framing = {
   minScale: number;
   maxScale: number;
   spread: number;
+};
+
+type Slot = {
+  side: -1 | 1;
+  u: number;
+  imageIndex: number;
 };
 
 function getFraming(width: number): Framing {
@@ -61,12 +69,19 @@ function getFraming(width: number): Framing {
   };
 }
 
-function initProgress(): Float32Array {
-  const t = new Float32Array(PLANE_COUNT);
-  for (let i = 0; i < PLANE_COUNT; i++) {
-    t[i] = -1 + ((i + 0.5) / PLANE_COUNT) * 2;
+function initSlots(): Slot[] {
+  const slots: Slot[] = [];
+  let imageIndex = 0;
+  for (const side of [-1, 1] as const) {
+    for (let i = 0; i < PLANES_PER_SIDE; i++) {
+      slots.push({
+        side,
+        u: (i + 0.5) / PLANES_PER_SIDE,
+        imageIndex: imageIndex++ % IMAGE_COUNT,
+      });
+    }
   }
-  return t;
+  return slots;
 }
 
 function drawImageCover(
@@ -130,29 +145,32 @@ function buildTileTexture(
   return texture;
 }
 
-function posePlane(mesh: THREE.Mesh, t: number, framing: Framing) {
-  const theta = t * framing.spread;
+function posePlane(
+  mesh: THREE.Mesh,
+  side: -1 | 1,
+  u: number,
+  framing: Framing,
+) {
+  const theta = side * u * framing.spread;
   mesh.position.set(
     Math.sin(theta) * framing.radiusX,
     0,
     -Math.cos(theta) * framing.radiusZ,
   );
   mesh.rotation.set(0, Math.PI - theta, 0);
-  const s = THREE.MathUtils.lerp(
-    framing.minScale,
-    framing.maxScale,
-    Math.abs(t),
-  );
+  const s = THREE.MathUtils.lerp(framing.minScale, framing.maxScale, u);
   mesh.scale.setScalar(s);
 }
 
 /** Photo planes — no ASCII here; they render into the field's target. */
-function PlaneStrip() {
+function PlaneEmitter() {
   const { camera, size } = useThree();
   const meshRefs = useRef<(THREE.Mesh | null)[]>([]);
-  const progress = useRef(initProgress());
-  const velocityT = useRef(0);
+  const slotsRef = useRef<Slot[]>(initSlots());
+  const nextImageRef = useRef(PLANE_COUNT);
+  const velocityU = useRef(0);
   const imagesRef = useRef<HTMLImageElement[] | null>(null);
+  const texturesRef = useRef<THREE.CanvasTexture[] | null>(null);
   const [imagesReady, setImagesReady] = useState(false);
   const [textures, setTextures] = useState<THREE.CanvasTexture[] | null>(null);
 
@@ -192,8 +210,10 @@ function PlaneStrip() {
     const next = imagesRef.current.map((img) =>
       buildTileTexture(img, themeLight),
     );
+    texturesRef.current = next;
     setTextures(next);
     return () => {
+      texturesRef.current = null;
       for (const tex of next) tex.dispose();
     };
   }, [imagesReady, themeLight]);
@@ -206,7 +226,7 @@ function PlaneStrip() {
       onUpdate(self) {
         const v = self.getVelocity();
         if (!v) return;
-        velocityT.current += v * VELOCITY_T_SCALE;
+        velocityU.current += Math.abs(v) * VELOCITY_U_SCALE;
       },
     });
     return () => {
@@ -216,23 +236,36 @@ function PlaneStrip() {
 
   useFrame((_, dt) => {
     const framing = getFraming(size.width);
+    const slots = slotsRef.current;
+    const maps = texturesRef.current;
+
     if (!reducedMotion) {
-      const delta = IDLE_T_PER_SEC * dt + velocityT.current;
-      velocityT.current = 0;
-      const t = progress.current;
-      for (let i = 0; i < t.length; i++) {
-        let next = t[i] + delta;
-        if (next > 1) next -= 2;
-        else if (next < -1) next += 2;
-        t[i] = next;
+      const delta = IDLE_U_PER_SEC * dt + velocityU.current;
+      velocityU.current = 0;
+      for (const slot of slots) {
+        slot.u += delta;
+        if (slot.u > 1) {
+          slot.u -= 1;
+          slot.imageIndex = nextImageRef.current % IMAGE_COUNT;
+          nextImageRef.current += 1;
+        }
       }
     }
 
     const meshes = meshRefs.current;
-    const t = progress.current;
     for (let i = 0; i < PLANE_COUNT; i++) {
       const mesh = meshes[i];
-      if (mesh) posePlane(mesh, t[i] ?? 0, framing);
+      const slot = slots[i];
+      if (!mesh || !slot) continue;
+      posePlane(mesh, slot.side, slot.u, framing);
+      const mat = mesh.material;
+      if (maps && mat instanceof THREE.MeshBasicMaterial) {
+        const tex = maps[slot.imageIndex];
+        if (tex && mat.map !== tex) {
+          mat.map = tex;
+          mat.needsUpdate = true;
+        }
+      }
     }
 
     if (camera instanceof THREE.PerspectiveCamera) {
@@ -246,7 +279,7 @@ function PlaneStrip() {
 
   return (
     <group>
-      {Array.from({ length: PLANE_COUNT }, (_, i) => (
+      {slotsRef.current.map((slot, i) => (
         <mesh
           key={i}
           ref={(node) => {
@@ -256,7 +289,7 @@ function PlaneStrip() {
           frustumCulled={false}
         >
           <meshBasicMaterial
-            map={textures[i % IMAGE_COUNT]}
+            map={textures[slot.imageIndex]}
             side={THREE.DoubleSide}
             toneMapped={false}
           />
@@ -266,7 +299,7 @@ function PlaneStrip() {
   );
 }
 
-export default function TeamCylinderCarousel() {
+export default function TeamVanishingPlanes() {
   const [inView, setInView] = useState(false);
   const ink = useThemeInk();
 
@@ -311,7 +344,7 @@ export default function TeamCylinderCarousel() {
         fov={45}
         cameraPosition={[0, 0, 6.5]}
       >
-        <PlaneStrip />
+        <PlaneEmitter />
       </AsciiField>
     </Canvas>
   );

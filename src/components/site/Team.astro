@@ -1,9 +1,10 @@
 ---
 /**
  * Studio closer. Copy is server-rendered above and below the plane band;
- * the carousel is an R3F island, same split as archive.astro / CamilleSlider.
+ * the vanishing-point emitter is an R3F island, same split as archive.astro
+ * / CamilleSlider.
  */
-import TeamCylinderCarousel from "./TeamCylinderCarousel";
+import TeamVanishingPlanes from "./TeamVanishingPlanes";
 import AnimeLink from "./AnimeLink";
 import "./Team.css";
 ---
@@ -19,7 +20,7 @@ import "./Team.css";
     </div>
   </div>
   <div class="team_stage">
-    <TeamCylinderCarousel client:only="react" />
+    <TeamVanishingPlanes client:only="react" />
   </div>
   <div class="team_foot container">
     <div class="team_layout grid is-12">
