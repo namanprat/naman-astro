@@ -1,0 +1,7 @@
+@layer components {
+.hero_model_canvas {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+}

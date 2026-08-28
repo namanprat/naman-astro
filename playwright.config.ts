@@ -52,9 +52,9 @@ export default defineConfig({
   /**
    * Half the cores, not all of them.
    *
-   * `stubWebGL` only takes the fluid canvas out of the frame budget — the team
-   * carousel and the About dither are three.js too, and nulling their context
-   * takes the islands down with them. On a machine with no GPU those run
+ * `stubWebGL` only takes the fluid canvas and the hero glass island out of
+ * the frame budget — the team carousel and the About dither are three.js too,
+ * and nulling their context takes the islands down with them. On a machine with no GPU those run
    * through software rendering, so one worker per core leaves every browser
    * fighting for the same CPU and rAF starves: entrance animations that finish
    * in under a second normally stall long enough to time out. The suite was

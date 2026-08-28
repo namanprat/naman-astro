@@ -1,5 +1,5 @@
 import "./Menu.css";
-import { useRef, useState, useEffect } from "react";
+import { lazy, Suspense, useRef, useState, useEffect } from "react";
 import { flushSync } from "react-dom";
 import { useLenis } from "lenis/react";
 import type Lenis from "lenis";
@@ -38,6 +38,8 @@ import RollingText from "./RollingText";
 import ThemeToggle from "./ThemeToggle";
 import { SITE_NAME } from "@/consts.ts";
 import "@/lib/site/eases";
+
+const HeroGlassCanvas = lazy(() => import("./HeroGlassCanvas"));
 
 /**
  * Write a custom property on `<html>` only when it actually moved.
@@ -346,14 +348,17 @@ export default function Menu({ initialPathname = "/" }: MenuProps) {
     const setChromeHeight = () => {
       let height = 0;
       for (const child of chrome.children) {
-        height += (child as HTMLElement).offsetHeight;
+        const el = child as HTMLElement;
+        /* The 3D slot sizes from this var — counting it here would recurse. */
+        if (el.classList.contains("hero_model")) continue;
+        height += el.offsetHeight;
       }
       setRootVar("--hero-chrome-height", `${height}px`);
 
-      /* Cluster height *without* .name_hero's centering pad. The pad is derived
-         from this in CSS, so it has to be measured from the inner boxes —
-         reading --hero-chrome-height instead would feed the pad into its own
-         input and oscillate. */
+      /* Cluster height *without* the centering pad and *without* the 3D slot.
+         The pad and `.hero_model` height are derived from this in CSS, so it
+         has to be measured from the inner boxes — reading the slot or
+         --hero-chrome-height instead would feed those into their own input. */
       const lockup = chrome.querySelector<HTMLElement>(".name_hero_contain");
       const nav = navContainerRef.current;
       const content = (lockup?.offsetHeight ?? 0) + (nav?.offsetHeight ?? 0);
@@ -377,7 +382,10 @@ export default function Menu({ initialPathname = "/" }: MenuProps) {
 
     setChromeHeight();
     const chromeRo = new ResizeObserver(setChromeHeight);
-    for (const child of chrome.children) chromeRo.observe(child);
+    for (const child of chrome.children) {
+      if ((child as HTMLElement).classList.contains("hero_model")) continue;
+      chromeRo.observe(child);
+    }
     const lockup = chrome.querySelector(".name_hero_contain");
     if (lockup) chromeRo.observe(lockup);
     document.fonts?.ready?.then(setChromeHeight);
@@ -999,7 +1007,9 @@ export default function Menu({ initialPathname = "/" }: MenuProps) {
     if (chrome) {
       let reserve = 0;
       for (const child of chrome.children) {
-        reserve += (child as HTMLElement).offsetHeight;
+        const el = child as HTMLElement;
+        if (el.classList.contains("hero_model")) continue;
+        reserve += el.offsetHeight;
       }
       document.documentElement.style.setProperty(
         "--menu-chrome-reserve",
@@ -1086,39 +1096,7 @@ export default function Menu({ initialPathname = "/" }: MenuProps) {
         </div>
       </div>
       <div className="hero_chrome" ref={heroChromeRef}>
-        <div className="name_hero">
-          <div className="name_hero_contain container gap-0">
-            <div className="name_hero_grid grid is-12">
-              {/* Carries the gooey reveal itself rather than wrapping a child
-                    that does: CSS applies `filter` before `mask`, so the chain
-                    has to sit above the masked lockup. heroIntro arms it. */}
-              <div className="name_hero_gooey">
-                {/* The lockup is Home: on inner pages it is the only mark, and
-                    on home it still has to replay the intro / scroll to top. */}
-                <a
-                  className="name_hero_home"
-                  href="/"
-                  onClick={(e) => {
-                    e.preventDefault();
-                    goTo("/");
-                  }}
-                >
-                  <span
-                    className="name_hero_lockup"
-                    role="img"
-                    aria-label={SITE_NAME}
-                  >
-                    <img
-                      src="/main-assets/name-hero.svg"
-                      alt=""
-                      aria-hidden="true"
-                    />
-                  </span>
-                </a>
-              </div>
-            </div>
-          </div>
-        </div>
+        <div className="hero_chrome_pad" aria-hidden="true" />
         <div
           className={`nav_wrap${isOpen ? " is-menu-open" : ""}${aboutOpen ? " is-about-open" : ""}${navStuck ? " is-stuck" : ""}`}
           ref={navContainerRef}
@@ -1285,7 +1263,50 @@ export default function Menu({ initialPathname = "/" }: MenuProps) {
             </nav>
           </div>
         </div>
+
+        {pathname === "/" ? (
+          <div className="hero_model" aria-hidden="true">
+            <Suspense fallback={null}>
+              <HeroGlassCanvas />
+            </Suspense>
+          </div>
+        ) : null}
+
+        <div className="name_hero">
+          <div className="name_hero_contain container gap-0">
+            <div className="name_hero_grid grid is-12">
+              {/* Carries the gooey reveal itself rather than wrapping a child
+                    that does: CSS applies `filter` before `mask`, so the chain
+                    has to sit above the masked lockup. heroIntro arms it. */}
+              <div className="name_hero_gooey">
+                {/* The lockup is Home: on inner pages it is the only mark, and
+                    on home it still has to replay the intro / scroll to top. */}
+                <a
+                  className="name_hero_home"
+                  href="/"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    goTo("/");
+                  }}
+                >
+                  <span
+                    className="name_hero_lockup"
+                    role="img"
+                    aria-label={SITE_NAME}
+                  >
+                    <img
+                      src="/main-assets/name-hero.svg"
+                      alt=""
+                      aria-hidden="true"
+                    />
+                  </span>
+                </a>
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
+
       <div className="menu_wrap" ref={menuRef} aria-hidden="true" inert>
         <div
           className={`menu_overlay${aboutInMenu ? " is-about-open" : ""}`}
