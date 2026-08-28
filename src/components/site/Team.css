@@ -3,12 +3,13 @@
     position: relative;
     width: 100%;
     min-height: 100svh;
+    min-height: 100dvh;
     margin: 0;
     background-color: transparent;
     overflow: clip;
     display: flex;
     flex-direction: column;
-    justify-content: center;
+    justify-content: space-between;
     align-items: stretch;
     gap: var(--space-8);
   }
@@ -31,11 +32,11 @@
   }
 
   .team_stage {
-    position: relative;
+    position: absolute;
+    inset: 0;
     z-index: 0;
     width: 100%;
-    height: clamp(16rem, 48svh, 32rem);
-    flex: none;
+    height: 100%;
   }
 
   .team_cylinder {
