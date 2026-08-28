@@ -1,6 +1,8 @@
 ---
 import type { WorkItem } from "@/content/work";
-import WorkProject from "./WorkProject.tsx";
+import WorkProjectScroll from "./WorkProject.tsx";
+import ProjectDetail from "./ProjectDetail.tsx";
+import Footer from "../site/Footer.tsx";
 
 interface Props {
   item: WorkItem;
@@ -9,4 +11,17 @@ interface Props {
 const { item } = Astro.props;
 ---
 
-<WorkProject client:only="react" item={item} />
+<WorkProjectScroll client:only="react" />
+{/* No client directive: `ProjectDetail` is markup only, so the whole case
+    study ships as HTML. It used to live inside the island above, which meant
+    `/work/[slug]` served no content at all until React had booted. */}
+<article class="work_project">
+  <ProjectDetail item={item} />
+</article>
+<Footer client:only="react" />
+<script>
+  import { bootLazyVideos } from "@/lib/site/lazyVideo";
+  // The case study is server-rendered, so its video is in the document before
+  // any island boots — no need to wait for one.
+  bootLazyVideos();
+</script>

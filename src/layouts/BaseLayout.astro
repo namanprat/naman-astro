@@ -11,15 +11,25 @@ import type { SeoProps } from "@/types.ts";
 type Props = SeoProps & {
   /** Theme for the whole page. `inherit` leaves the root defaults in place. */
   theme?: "inherit" | "light" | "dark";
+  /**
+   * Route class on `<html>`, server-rendered so the layout rules keyed off it
+   * (`Work.css`, `FluidCanvas.css`) apply pre-paint. Setting it from an island
+   * effect instead lands it after hydration, which is a visible reflow on any
+   * page whose content is server-rendered.
+   */
+  rootClass?: string;
 };
 
-const { theme = "inherit", ...seo } = Astro.props;
+const { theme = "inherit", rootClass, ...seo } = Astro.props;
 
 const isArchive = Astro.url.pathname === "/archive";
 ---
 
 <!doctype html>
-<html lang="en" class:list={[theme !== "inherit" && `theme-${theme}`]}>
+<html
+  lang="en"
+  class:list={[theme !== "inherit" && `theme-${theme}`, rootClass]}
+>
   <head>
     <BaseHead {...seo} />
     <script is:inline>

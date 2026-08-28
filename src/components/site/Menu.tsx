@@ -6,14 +6,14 @@ import type Lenis from "lenis";
 import gsap from "gsap";
 import { SplitText } from "gsap/SplitText";
 import { useGSAP } from "@gsap/react";
-import { go, type GoOptions } from "@/lib/site/navigate";
-import { hashId, scrollToSection } from "@/lib/site/scrollToSection";
+import { type GoOptions } from "@/lib/site/navigate";
+import { goToRoute } from "@/lib/site/navRoutes";
+import { hashId } from "@/lib/site/scrollToSection";
 import { LINE_PARK_PERCENT, parkLines } from "@/lib/site/lineMask";
 import { prefersReducedMotion } from "@/lib/site/prefersReducedMotion";
-import { markWorkReturn } from "@/lib/site/workSession";
 import {
+  ABOUT_OPEN_CLASS,
   ABOUT_PATH,
-  openAbout,
   registerAboutPanel,
   openAboutPanel,
   closeAboutPanel,
@@ -21,7 +21,7 @@ import {
 } from "@/lib/site/aboutPanel";
 import { followAboutNav, releaseAboutNav } from "@/lib/site/aboutNavDock";
 import { getSiteLenis, subscribeSiteLenis } from "@/lib/site/lenisBridge";
-import { bootHomeIntro, replayHomeIntro } from "@/lib/site/heroIntro";
+import { bootHomeIntro } from "@/lib/site/heroIntro";
 import { useCopyEmail } from "@/lib/site/copyEmail";
 import {
   addGooeyReveal,
@@ -37,6 +37,27 @@ import AboutPanel, { type AboutPanelMode } from "./AboutPanel";
 import RollingText from "./RollingText";
 import ThemeToggle from "./ThemeToggle";
 import "@/lib/site/eases";
+
+/**
+ * Write a custom property on `<html>` only when it actually moved.
+ *
+ * Every one of these invalidates style for the whole inherited tree, and the
+ * measurement callbacks below re-run on resize, on font load and on root class
+ * changes — several of which fire in bursts with an unchanged value. The
+ * `FluidSimulation` MutationObserver also used to wake on each write.
+ */
+const rootVars = new Map<string, string>();
+
+function setRootVar(name: string, value: string): void {
+  if (rootVars.get(name) === value) return;
+  rootVars.set(name, value);
+  document.documentElement.style.setProperty(name, value);
+}
+
+function clearRootVar(name: string): void {
+  rootVars.delete(name);
+  document.documentElement.style.removeProperty(name);
+}
 
 const AVAILABILITY_LINE = "available for projects from october ’26";
 const AVAILABILITY_COPIES = 6;
@@ -282,15 +303,30 @@ export default function Menu({ initialPathname = "/" }: MenuProps) {
   useEffect(() => {
     if (!isDesktopNav) return;
 
+    /* Was: two document-wide selector matches plus a `releaseAboutNav()` —
+       which itself queries and writes `clearProps: transform` on the nav — on
+       every single ticker frame, open panel or not. Now the root class gates
+       the whole thing, and the release fires once on the open→closed edge
+       rather than 60 times a second forever. */
+    let docked = false;
+
     const follow = () => {
-      const panel = document.querySelector<HTMLElement>(
-        ".about_panel.is-open:not(.is-in-menu)",
-      );
+      const open =
+        document.documentElement.classList.contains(ABOUT_OPEN_CLASS);
+      const panel = open
+        ? document.querySelector<HTMLElement>(
+            ".about_panel.is-open:not(.is-in-menu)",
+          )
+        : null;
       const surface = panel?.querySelector<HTMLElement>(".about_panel_surface");
-      if (!panel || !surface) {
-        releaseAboutNav();
+      if (!surface) {
+        if (docked) {
+          docked = false;
+          releaseAboutNav();
+        }
         return;
       }
+      docked = true;
       followAboutNav(surface);
     };
 
@@ -298,6 +334,7 @@ export default function Menu({ initialPathname = "/" }: MenuProps) {
     follow();
     return () => {
       gsap.ticker.remove(follow);
+      if (docked) releaseAboutNav();
     };
   }, [isDesktopNav]);
 
@@ -310,10 +347,7 @@ export default function Menu({ initialPathname = "/" }: MenuProps) {
       for (const child of chrome.children) {
         height += (child as HTMLElement).offsetHeight;
       }
-      document.documentElement.style.setProperty(
-        "--hero-chrome-height",
-        `${height}px`,
-      );
+      setRootVar("--hero-chrome-height", `${height}px`);
 
       /* Cluster height *without* .name_hero's centering pad. The pad is derived
          from this in CSS, so it has to be measured from the inner boxes —
@@ -322,10 +356,7 @@ export default function Menu({ initialPathname = "/" }: MenuProps) {
       const lockup = chrome.querySelector<HTMLElement>(".name_hero_contain");
       const nav = navContainerRef.current;
       const content = (lockup?.offsetHeight ?? 0) + (nav?.offsetHeight ?? 0);
-      document.documentElement.style.setProperty(
-        "--hero-chrome-content",
-        `${content}px`,
-      );
+      setRootVar("--hero-chrome-content", `${content}px`);
 
       /* Mobile About clients col 2 sits on the Archive/Contact cluster.
          Measure the label, not the link box — `.nav_link` hangs an active-dot
@@ -337,12 +368,9 @@ export default function Menu({ initialPathname = "/" }: MenuProps) {
         const inset =
           label.getBoundingClientRect().left -
           grid.getBoundingClientRect().left;
-        document.documentElement.style.setProperty(
-          "--nav-mid-inset",
-          `${Math.max(0, inset)}px`,
-        );
+        setRootVar("--nav-mid-inset", `${Math.max(0, inset)}px`);
       } else {
-        document.documentElement.style.removeProperty("--nav-mid-inset");
+        clearRootVar("--nav-mid-inset");
       }
     };
 
@@ -357,9 +385,9 @@ export default function Menu({ initialPathname = "/" }: MenuProps) {
     return () => {
       chromeRo.disconnect();
       window.removeEventListener("resize", setChromeHeight);
-      document.documentElement.style.removeProperty("--hero-chrome-height");
-      document.documentElement.style.removeProperty("--hero-chrome-content");
-      document.documentElement.style.removeProperty("--nav-mid-inset");
+      clearRootVar("--hero-chrome-height");
+      clearRootVar("--hero-chrome-content");
+      clearRootVar("--nav-mid-inset");
     };
   }, []);
 
@@ -368,10 +396,7 @@ export default function Menu({ initialPathname = "/" }: MenuProps) {
     if (!el) return;
 
     const setHeight = () => {
-      document.documentElement.style.setProperty(
-        "--nav-marquee-height",
-        `${el.offsetHeight}px`,
-      );
+      setRootVar("--nav-marquee-height", `${el.offsetHeight}px`);
     };
 
     setHeight();
@@ -381,7 +406,7 @@ export default function Menu({ initialPathname = "/" }: MenuProps) {
     return () => {
       ro.disconnect();
       window.removeEventListener("resize", setHeight);
-      document.documentElement.style.removeProperty("--nav-marquee-height");
+      clearRootVar("--nav-marquee-height");
     };
   }, []);
 
@@ -389,20 +414,56 @@ export default function Menu({ initialPathname = "/" }: MenuProps) {
     const nav = navContainerRef.current;
     if (!nav) return;
 
+    /* This ran twice per frame (native `scroll` *and* Lenis' own per-frame
+       `scroll`), and each run wrote a custom property on `<html>` — which
+       invalidates style for every element that could inherit it — and then
+       immediately read layout back with `getComputedStyle`. Invalidate, force
+       reflow, repeat: that was the scroll freeze.
+
+       Three things fix it and none of them change behaviour:
+       - `--nav-offset` is read only by `AboutPanel.css`, so it is written only
+         while the panel is open, and only when the value actually moved.
+       - the dock offset moves on resize / root-class change, not on scroll, so
+         it is cached and refreshed from those listeners instead.
+       - the scroll path is rAF-coalesced and subscribes to Lenis *or* the
+         native event, never both. */
+    let dock = 0;
+    let lastOffset = -1;
+    let raf = 0;
+
+    const readDock = () => {
+      dock = Number.parseFloat(getComputedStyle(nav).top) || 0;
+    };
+
     const setOffset = () => {
+      raf = 0;
       const rect = nav.getBoundingClientRect();
-      document.documentElement.style.setProperty(
-        "--nav-offset",
-        `${rect.bottom}px`,
-      );
+      if (document.documentElement.classList.contains(ABOUT_OPEN_CLASS)) {
+        const offset = Math.round(rect.bottom);
+        if (offset !== lastOffset) {
+          lastOffset = offset;
+          setRootVar("--nav-offset", `${offset}px`);
+        }
+      }
       /* Sticky bar has reached its dock. On the phone that dock is under the
          availability ticker (`top: var(--nav-marquee-height)`), not 0. */
-      const dock = Number.parseFloat(getComputedStyle(nav).top) || 0;
       setNavStuck(rect.top <= dock + 1);
     };
 
+    const schedule = () => {
+      if (raf) return;
+      raf = requestAnimationFrame(setOffset);
+    };
+
+    /* Layout-affecting inputs: re-read the dock, then measure. */
+    const remeasure = () => {
+      readDock();
+      setOffset();
+    };
+
+    readDock();
     setOffset();
-    const ro = new ResizeObserver(setOffset);
+    const ro = new ResizeObserver(remeasure);
     ro.observe(nav);
     /* `html.menu-open` re-homes the nav from `sticky` to `fixed; top: 0`. The
        box moves without resizing, so the ResizeObserver never sees it and the
@@ -410,21 +471,25 @@ export default function Menu({ initialPathname = "/" }: MenuProps) {
        mobile, which squeezed the About panel into the strip below it. Watch the
        class rather than re-measuring on `isOpen`: the class lands a commit or
        more after the state flips, so any rAF guess reads the stale position. */
-    const classMo = new MutationObserver(setOffset);
+    const classMo = new MutationObserver(remeasure);
     classMo.observe(document.documentElement, {
       attributes: true,
       attributeFilter: ["class"],
     });
-    window.addEventListener("scroll", setOffset, { passive: true });
-    window.addEventListener("resize", setOffset);
-    const unsub = lenis?.on?.("scroll", setOffset);
+    window.addEventListener("resize", remeasure);
+    /* Lenis already fires once per frame; doubling up with the native event
+       just paid for the same measurement twice. */
+    const unsub = lenis?.on?.("scroll", schedule);
+    if (!lenis) window.addEventListener("scroll", schedule, { passive: true });
 
     return () => {
+      cancelAnimationFrame(raf);
       ro.disconnect();
       classMo.disconnect();
-      window.removeEventListener("scroll", setOffset);
-      window.removeEventListener("resize", setOffset);
+      window.removeEventListener("scroll", schedule);
+      window.removeEventListener("resize", remeasure);
       unsub?.();
+      clearRootVar("--nav-offset");
     };
   }, [lenis]);
 
@@ -449,18 +514,34 @@ export default function Menu({ initialPathname = "/" }: MenuProps) {
   }, [lenis, isOpen, aboutOpen]);
 
   useEffect(() => {
-    const pickHomeSection = () => {
-      // Route / About ownership is handled by `activeId` — only track home scroll here.
-      if (aboutOpen) return;
-      if (window.location.pathname !== "/") return;
+    // Route / About ownership is handled by `activeId` — only track home scroll here.
+    if (aboutOpen || window.location.pathname !== "/") return;
 
+    /* Same shape as the nav-offset effect above: resolve the section elements
+       once instead of re-querying the document on every scroll frame, and
+       coalesce into one rAF so Lenis' per-frame `scroll` can't stack. The
+       `client:only` studio sections mount after this effect, so a null entry is
+       re-resolved on the next pass rather than cached as missing. */
+    const nodes = new Map<string, Element>();
+    let raf = 0;
+
+    const resolve = (id: string): Element | null => {
+      const cached = nodes.get(id);
+      if (cached?.isConnected) return cached;
+      const el =
+        id === "hero"
+          ? document.querySelector(".hero")
+          : document.getElementById(id);
+      if (el) nodes.set(id, el);
+      return el;
+    };
+
+    const pickHomeSection = () => {
+      raf = 0;
       const marker = window.innerHeight * 0.28;
       let current = "hero";
       for (const id of SECTION_IDS) {
-        const el =
-          id === "hero"
-            ? document.querySelector(".hero")
-            : document.getElementById(id);
+        const el = resolve(id);
         if (!el) continue;
         /* Use viewport top — offsetTop breaks when a section sits inside
            position:relative (e.g. .team inside .studio → offsetTop ≈ 0). */
@@ -469,12 +550,18 @@ export default function Menu({ initialPathname = "/" }: MenuProps) {
       setHomeSectionId(current);
     };
 
+    const schedule = () => {
+      if (raf) return;
+      raf = requestAnimationFrame(pickHomeSection);
+    };
+
     pickHomeSection();
-    requestAnimationFrame(pickHomeSection);
-    window.addEventListener("scroll", pickHomeSection, { passive: true });
-    const unsub = lenis?.on?.("scroll", pickHomeSection);
+    schedule();
+    const unsub = lenis?.on?.("scroll", schedule);
+    if (!lenis) window.addEventListener("scroll", schedule, { passive: true });
     return () => {
-      window.removeEventListener("scroll", pickHomeSection);
+      cancelAnimationFrame(raf);
+      window.removeEventListener("scroll", schedule);
       unsub?.();
     };
   }, [lenis, aboutOpen, pathname]);
@@ -757,72 +844,9 @@ export default function Menu({ initialPathname = "/" }: MenuProps) {
     setAboutOpen(false);
   };
 
-  const goTo = (path: string, options?: GoOptions) => {
-    const id = hashId(path);
-    const onHome = window.location.pathname === "/";
-
-    if (path === "/archive") {
-      closeAboutPanel();
-      if (window.location.pathname === "/archive") return;
-      void go("/archive", options);
-      return;
-    }
-
-    if (path === "/work") {
-      // Mid Flip (overlay open on /work) — reverse in place.
-      if (document.documentElement.classList.contains("work-project-open")) {
-        window.dispatchEvent(new CustomEvent("work:close"));
-        return;
-      }
-      // Hard-loaded `/work/[slug]` — no overlay in this document to reverse,
-      // so flag it and let /work replay the close on arrival.
-      if (/^\/work\/[^/]+/.test(window.location.pathname)) {
-        markWorkReturn();
-        void go("/work", options);
-        return;
-      }
-      if (window.location.pathname === "/work") return;
-      void go("/work", options);
-      return;
-    }
-
-    if (path === "/" || id === "hero") {
-      closeAboutPanel();
-      if (!onHome) {
-        void go("/", options);
-        return;
-      }
-      replayHomeIntro();
-      scrollToSection(lenis, "hero");
-      return;
-    }
-
-    if (id === "about") {
-      /* Overlay on desktop, real route on phones — `openAbout` owns the fork so
-         nav, footer and stray `#about` anchors cannot disagree. */
-      openAbout();
-      return;
-    }
-
-    if (id === "team") {
-      closeAboutPanel();
-      if (!onHome) {
-        void go("/#team", options);
-        return;
-      }
-      scrollToSection(lenis, "team");
-      return;
-    }
-
-    if (id === "contact") {
-      closeAboutPanel();
-      if (!onHome) {
-        void go("/#contact", options);
-        return;
-      }
-      scrollToSection(lenis, "contact");
-    }
-  };
+  /* Shared with the footer — see `lib/site/navRoutes.ts`. */
+  const goTo = (path: string, options?: GoOptions) =>
+    goToRoute(path, { lenis, options });
 
   const finishClose = () => {
     phaseRef.current = "closed";

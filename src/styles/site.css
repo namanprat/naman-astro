@@ -206,9 +206,16 @@
 
   .site-grain {
     position: fixed;
-    inset: -50%;
-    width: 200%;
-    height: 200%;
+    /* Overhang, sized to the shift below and nothing more. This was -50% /
+       200%, i.e. four viewports of `mix-blend-mode: overlay` for a jitter that
+       never exceeds 4% of the layer's own width. Blend area is the cost here:
+       the compositor re-blends this layer whenever anything under it changes,
+       and the fluid backdrop changes every frame. 120% leaves 10% of overhang
+       each side against a worst-case 4.8% travel, and cuts the blended area
+       from 4x the viewport to 1.44x. */
+    inset: -10%;
+    width: 120%;
+    height: 120%;
     z-index: 1000000;
     pointer-events: none;
     opacity: 0.4;

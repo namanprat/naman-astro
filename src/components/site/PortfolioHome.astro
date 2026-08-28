@@ -16,9 +16,20 @@ import Footer from "./Footer.tsx";
 <HomeLenis client:only="react" />
 <section class="hero" id="hero" aria-label="Home"></section>
 <div class="studio">
-  <Manifesto client:only="react" />
+  {/* No client directive: markup only, no hooks — Astro renders it to HTML.
+      It was `client:only`, which kept the page's `h1` out of the document
+      entirely until React had booted. */}
+  <Manifesto />
   <CamilleSlider />
+  {/* Must stay `client:only`. `revealLines` and `bootGooeyHeadings` run from
+      BaseLayout's boot script and rewrite headings and body copy with SplitText
+      before React hydrates, so a server-rendered React subtree mismatches and
+      React throws the whole thing away — which also loses the split. Astro
+      markup (Team) and never-hydrated components (Manifesto, ProjectDetail) are
+      free to server-render because nothing hydrates over them. The WebGL win
+      here is independent: `ProcessCardCanvas` is lazy and mount-gated. */}
   <Process client:only="react" />
+  {/* `client:only` for the same reason as `Process` above. */}
   <Faq client:only="react" />
   <Team />
 </div>

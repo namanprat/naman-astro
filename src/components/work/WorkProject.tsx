@@ -1,28 +1,16 @@
-import { useEffect } from "react";
-import type { WorkItem } from "@/content/work";
+/**
+ * Scroll shell for `/work/[slug]`.
+ *
+ * Markup-only, so the case study itself is server-rendered as a sibling in
+ * `WorkProject.astro` — same split `PortfolioHome.astro` uses. It cannot be a
+ * child of this island: `client:only` puts slot content in an inert
+ * `<template data-astro-template>`, so nothing paints until React boots.
+ * `SiteScroll` mounts `<ReactLenis root>`, which attaches to the document, so
+ * the copy does not need to sit inside the tree.
+ */
 import { SiteScroll } from "@/lib/site/lenisBoot";
-import Footer from "../site/Footer";
-import ProjectDetail from "./ProjectDetail";
 import "./Work.css";
 
-type Props = {
-  item: WorkItem;
-};
-
-export default function WorkProject({ item }: Props) {
-  useEffect(() => {
-    document.documentElement.classList.add("page-work-project");
-    return () => {
-      document.documentElement.classList.remove("page-work-project");
-    };
-  }, []);
-
-  return (
-    <SiteScroll>
-      <article className="work_project">
-        <ProjectDetail item={item} variant="page" />
-      </article>
-      <Footer />
-    </SiteScroll>
-  );
+export default function WorkProjectScroll() {
+  return <SiteScroll>{null}</SiteScroll>;
 }

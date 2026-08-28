@@ -12,11 +12,28 @@ import shaders from "./shaders";
 
 const COLOR_FOLLOW = 6;
 
+/**
+ * Idle cadence. The backdrop paints at `opacity: 0.4` behind everything and
+ * nothing is looking at it while the pointer is still, so a still sim does not
+ * need 60 full simulate+render passes a second. Halving it while idle is the
+ * single cheapest cut available here; a pointer move restores full rate on the
+ * very next frame.
+ */
+const IDLE_AFTER_MS = 1000;
+const IDLE_FRAME_MS = 1000 / 30;
+
 const CONFIG = {
   simResolution: 256,
-  dyeResolution: 1024,
+  /* Was 1024. The dye target is advected and then blurred into a two-colour
+     display pass — at 0.4 opacity there is no detail at 1024 that survives to
+     the screen, and the advection cost is quadratic in this number. */
+  dyeResolution: 512,
   curl: 50,
-  pressureIterations: 40,
+  /* Was 40. This is the Jacobi solve, and it is the whole per-frame budget:
+     every iteration is another full-screen pass over the sim target. Twenty is
+     the usual stable-fluids working number and the difference is not visible
+     through the display pass. */
+  pressureIterations: 20,
   velocityDissipation: 0.95,
   dyeDissipation: 0.95,
   splatRadius: 0.3,
@@ -175,10 +192,15 @@ export class FluidSimulation {
       signal,
     });
 
+    /* Class only. Theme and the About overlay are both class state, but the
+       filter used to include `style` — and `Menu` writes custom properties on
+       `<html>`, so every one of those woke this callback into two
+       `getComputedStyle` reads. On a scroll frame that was a forced style
+       recalc per frame for nothing. */
     const observer = new MutationObserver(this.onThemeMutation);
     observer.observe(document.documentElement, {
       attributes: true,
-      attributeFilter: ["class", "style"],
+      attributeFilter: ["class"],
     });
     signal.addEventListener("abort", () => observer.disconnect());
 
@@ -270,7 +292,10 @@ export class FluidSimulation {
   private syncSize(): void {
     const w = window.innerWidth;
     const h = window.innerHeight;
-    this.renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+    /* Pinned to 1, not the device ratio. The display pass covers the whole
+       viewport, so DPR 2 quadrupled its fill rate — for a soft two-colour
+       gradient at 0.4 opacity with nothing in it to resolve. */
+    this.renderer.setPixelRatio(1);
     this.renderer.setSize(w, h);
     this.dpr = this.renderer.getPixelRatio();
     this.width = Math.max(1, w * this.dpr);
@@ -386,6 +411,11 @@ export class FluidSimulation {
     const tick = (now: number) => {
       if (!this.running) return;
       this.raf = requestAnimationFrame(tick);
+      // Idle: half rate. `lastTime` is only advanced on a frame we actually
+      // run, so `dt` stays the true elapsed time and the sim evolves at the
+      // same speed either way.
+      const idle = now - this.lastPointerAt > IDLE_AFTER_MS;
+      if (idle && now - this.lastTime < IDLE_FRAME_MS) return;
       const dt = Math.min((now - this.lastTime) / 1000, 1 / 30);
       this.lastTime = now;
       this.frame(dt);

@@ -14,6 +14,7 @@ import {
   type WorkView,
 } from "@/lib/site/workSession";
 import ProjectDetail from "./ProjectDetail";
+import { bootLazyVideos } from "@/lib/site/lazyVideo";
 import Reveal from "./slider/Reveal";
 import Slider, { isWorkGridMobile, WORK_GRID_MOBILE_MQ } from "./slider/Slider";
 import WheelView from "./slider/WheelView";
@@ -93,6 +94,11 @@ export default function WorkGallery() {
     if (!root) return;
 
     document.documentElement.classList.add("page-work");
+
+    /* Every project's `ProjectDetail` is in this tree for the Flip overlay, so
+       their cover videos all live here too. Hand them their `src` on approach
+       rather than on arrival. */
+    const stopLazyVideos = bootLazyVideos(root);
 
     /* Consumed synchronously on every /work mount, not just the returning
        one — an inline script in work.astro has already hidden the gallery
@@ -555,6 +561,7 @@ export default function WorkGallery() {
 
     return () => {
       cancelled = true;
+      stopLazyVideos();
       document.documentElement.classList.remove("page-work");
       document.documentElement.classList.remove("work-project-open");
       document.documentElement.classList.remove("work-morphing");

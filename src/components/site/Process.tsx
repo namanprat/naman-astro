@@ -1,6 +1,14 @@
-import { useEffect, useState } from "react";
-import ProcessCardCanvas from "./ProcessCardCanvas";
+import { lazy, Suspense, useEffect, useRef, useState } from "react";
 import "./Process.css";
+
+/**
+ * `three`, `@react-three/fiber` and `@react-three/drei` are ~900KB between
+ * them, and this section sits well below the fold. Statically imported (and
+ * mounted three times unconditionally, with only `frameloop` gated) it put
+ * three live WebGL contexts and the whole 3D stack on the home boot path.
+ * Lazy + mount-on-approach keeps all of it off the critical path.
+ */
+const ProcessCardCanvas = lazy(() => import("./ProcessCardCanvas"));
 
 /**
  * The section heading is an ordinary `h2` and each card title an `h3`, so both
@@ -36,12 +44,20 @@ const CARD_INK = "#101010";
 
 export default function Process() {
   const [inView, setInView] = useState(false);
+  /* Latched: once a canvas exists, keep it. Unmounting on every scroll-past
+     would tear down and rebuild three WebGL contexts each time, which costs
+     far more than leaving them parked at `frameloop: "never"`. */
+  const [mounted, setMounted] = useState(false);
+  const rootRef = useRef<HTMLElement>(null);
 
   useEffect(() => {
-    const el = document.getElementById("process");
+    const el = rootRef.current;
     if (!el) return;
     const io = new IntersectionObserver(
-      ([entry]) => setInView(entry.isIntersecting),
+      ([entry]) => {
+        setInView(entry.isIntersecting);
+        if (entry.isIntersecting) setMounted(true);
+      },
       { rootMargin: "20% 0px", threshold: 0 },
     );
     io.observe(el);
@@ -53,6 +69,7 @@ export default function Process() {
       className="process_wrap studio_section"
       id="process"
       aria-label="Process"
+      ref={rootRef}
     >
       <div className="process_contain container gap-0">
         <div className="process_layout studio_layout grid is-12">
@@ -80,7 +97,11 @@ export default function Process() {
                 </div>
                 <div className="process_card_media">
                   <div className="process_card_stage">
-                    <ProcessCardCanvas ink={CARD_INK} active={inView} />
+                    {mounted ? (
+                      <Suspense fallback={null}>
+                        <ProcessCardCanvas ink={CARD_INK} active={inView} />
+                      </Suspense>
+                    ) : null}
                   </div>
                 </div>
                 <p className="process_card_copy text-style-main">

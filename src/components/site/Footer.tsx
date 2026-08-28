@@ -57,6 +57,13 @@ export default function Footer() {
      mount rather than hiding the canvas matters: the field owns a WebGL
      context and a rAF loop. Starts false so SSR and first paint agree. */
   const [asciiOn, setAsciiOn] = useState(false);
+  /* Second gate, same reasoning applied to distance rather than viewport
+     width: the footer is the last thing on every long page, so booting its
+     WebGL context at page load meant one more live context and rAF loop
+     competing with the backdrop for the entire time nobody could see it.
+     Latched — once built, the field stays, so scrolling past does not churn
+     contexts. */
+  const [nearView, setNearView] = useState(false);
   const lenisFromContext = useLenis();
   const [bridgedLenis, setBridgedLenis] = useState(() => getSiteLenis());
   const lenis = lenisFromContext ?? bridgedLenis;
@@ -70,6 +77,21 @@ export default function Footer() {
     sync();
     mq.addEventListener("change", sync);
     return () => mq.removeEventListener("change", sync);
+  }, []);
+
+  useEffect(() => {
+    const footer = footerRef.current;
+    if (!footer) return;
+    const io = new IntersectionObserver(
+      ([entry]) => {
+        if (!entry.isIntersecting) return;
+        setNearView(true);
+        io.disconnect();
+      },
+      { rootMargin: "50% 0px", threshold: 0 },
+    );
+    io.observe(footer);
+    return () => io.disconnect();
   }, []);
 
   const onNavClick = (e: React.MouseEvent, href: string) => {
@@ -166,7 +188,9 @@ export default function Footer() {
         <div className="footer_scale">
           {/* Panel is the floating card; the container inside keeps content on grid. */}
           <div className="footer_box">
-            {asciiOn && <FooterAsciiLogo sourceRef={asciiSourceRef} />}
+            {asciiOn && nearView && (
+              <FooterAsciiLogo sourceRef={asciiSourceRef} />
+            )}
             <div className="footer_contain container gap-0">
               <div className="footer_layout grid is-12">
                 <h3 className="footer_tagline text-style-main">

@@ -3,7 +3,7 @@
  * Studio closer. Copy is server-rendered; the cylinder is an R3F island,
  * same split as archive.astro / CamilleSlider.
  */
-import TeamCylinderCarousel from "./TeamCylinderCarousel";
+import TeamCylinderStage from "./TeamCylinderStage";
 import AnimeLink from "./AnimeLink";
 import "./Team.css";
 ---
@@ -19,7 +19,9 @@ import "./Team.css";
     </div>
   </div>
   <div class="team_stage">
-    <TeamCylinderCarousel client:only="react" />
+    {/* The stage is the gate — see `TeamCylinderStage.tsx` for why
+        `client:visible` on the carousel itself does not defer anything. */}
+    <TeamCylinderStage client:visible />
   </div>
   <div class="team_foot container">
     <div class="team_layout grid is-12">

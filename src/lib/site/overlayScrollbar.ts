@@ -22,30 +22,43 @@ export function bootOverlayScrollbar(): (() => void) | undefined {
   document.body.appendChild(root);
 
   let raf = 0;
-  const paint = () => {
-    raf = 0;
-    if (document.documentElement.classList.contains("is-page-transitioning")) {
-      root.hidden = true;
-      return;
-    }
+  /* Geometry, refreshed only when the document or the viewport changes.
+     `paint` used to read `documentElement.scrollHeight` — a forced layout — on
+     every scroll frame, and it runs alongside the nav measurements, so the two
+     traded invalidations back and forth. Scroll only needs `scrollY` now. */
+  let maxScroll = 0;
+  let maxTop = 0;
 
+  const measure = () => {
     const scrollHeight = document.documentElement.scrollHeight;
     const view = window.innerHeight;
-    const maxScroll = Math.max(scrollHeight - view, 0);
+    maxScroll = Math.max(scrollHeight - view, 0);
     if (maxScroll <= 1) {
       root.hidden = true;
       return;
     }
-
     root.hidden = false;
     const track = Math.max(view - EDGE * 2, 0);
     const thumbH = Math.min(
       track,
       Math.max(MIN_THUMB, (view / scrollHeight) * track),
     );
-    const maxTop = track - thumbH;
-    const progress = Math.min(Math.max(window.scrollY / maxScroll, 0), 1);
+    maxTop = track - thumbH;
     thumb.style.height = `${thumbH}px`;
+  };
+
+  const paint = () => {
+    raf = 0;
+    if (document.documentElement.classList.contains("is-page-transitioning")) {
+      root.hidden = true;
+      return;
+    }
+    if (maxScroll <= 1) {
+      root.hidden = true;
+      return;
+    }
+    root.hidden = false;
+    const progress = Math.min(Math.max(window.scrollY / maxScroll, 0), 1);
     thumb.style.transform = `translate3d(0, ${progress * maxTop}px, 0)`;
   };
 
@@ -54,9 +67,14 @@ export function bootOverlayScrollbar(): (() => void) | undefined {
     raf = requestAnimationFrame(paint);
   };
 
+  const remeasure = () => {
+    measure();
+    schedule();
+  };
+
   window.addEventListener("scroll", schedule, { passive: true });
-  window.addEventListener("resize", schedule);
-  const ro = new ResizeObserver(schedule);
+  window.addEventListener("resize", remeasure);
+  const ro = new ResizeObserver(remeasure);
   ro.observe(document.documentElement);
 
   let detachLenis: (() => void) | undefined;
@@ -71,12 +89,12 @@ export function bootOverlayScrollbar(): (() => void) | undefined {
     attributeFilter: ["class"],
   });
 
-  schedule();
+  remeasure();
 
   return () => {
     cancelAnimationFrame(raf);
     window.removeEventListener("scroll", schedule);
-    window.removeEventListener("resize", schedule);
+    window.removeEventListener("resize", remeasure);
     ro.disconnect();
     mo.disconnect();
     detachLenis?.();

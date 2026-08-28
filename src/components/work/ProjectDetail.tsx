@@ -19,14 +19,16 @@ function CoverFigure({ item }: { item: WorkItem }) {
 function CoverVideo({ src, title }: { src: string; title: string }) {
   return (
     <figure className="project_cover_video">
+      {/* `data-lazy-src`, not `src`: see `lib/site/lazyVideo.ts`. `/work`
+          renders every project's markup for the Flip overlay, so a real `src`
+          with `autoPlay` downloaded all of them on arrival. */}
       <video
-        src={src}
+        data-lazy-src={src}
         aria-label={`${title} reveal`}
-        autoPlay
         muted
         loop
         playsInline
-        preload="metadata"
+        preload="none"
       />
     </figure>
   );
@@ -52,7 +54,10 @@ function CopyBlock({ title, body }: { title: string; body: string }) {
 function PanelMedia({ src, alt }: { src: string; alt: string }) {
   return (
     <figure className="project_panel_media">
-      <img src={src} alt={alt} draggable={false} />
+      {/* Body panels only. The cover above stays eager — it is the Flip
+          morph's source and target, so it has to be decoded before the
+          transition runs. */}
+      <img src={src} alt={alt} draggable={false} loading="lazy" />
     </figure>
   );
 }

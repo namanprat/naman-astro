@@ -18,8 +18,19 @@
   .roll_char_inner {
     display: flex;
     flex-direction: column;
-    will-change: transform;
     line-height: var(--line-height-small);
+  }
+
+  /* Scoped to hover, not standing. Unscoped, this promoted *every character* of
+     every nav link, footer link and CTA to its own compositor layer for the
+     life of the page — hundreds of them on home, each one re-blended by the
+     `mix-blend-mode: overlay` grain above. The hint is only worth anything for
+     the moment the roll is actually tweening. */
+  .roll_text:hover .roll_char_inner,
+  a:hover .roll_char_inner,
+  button:hover .roll_char_inner,
+  .anime_link:hover .roll_char_inner {
+    will-change: transform;
   }
 
   .roll_char_glyph {
