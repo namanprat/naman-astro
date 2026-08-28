@@ -3,11 +3,10 @@ import { lazy, Suspense, useEffect, useState } from "react";
 /**
  * Mount gate for the Team cylinder.
  *
- * `client:visible` alone does not defer this. Astro's placeholder
- * `<astro-island>` is `display: contents` and the carousel server-renders
- * nothing, so the island has no box for Astro's own IntersectionObserver to
- * miss — it hydrates at once however far down the page it sits. The gate has to
- * be a real element, which is what `#team` is.
+ * Do not put `client:visible` on this island. It SSRs nothing, Astro's visible
+ * observer watches the island's children, and with no child box it never
+ * hydrates — which is why the cylinder vanished. `client:only` hydrates the
+ * gate; this observer on `#team` is what actually defers the WebGL mount.
  *
  * Lazy, so `three` and `@react-three/fiber` are not fetched until the section
  * is approached, and mount-gated, so no WebGL context or rAF loop exists before
