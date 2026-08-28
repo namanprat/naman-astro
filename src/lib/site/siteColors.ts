@@ -7,7 +7,7 @@ export const SWATCH_DARK = "#1a1a1a";
 /** `--dark-900` — footer/About ink black, not the fluid plate (`SWATCH_DARK`). */
 export const SWATCH_BLACK = "#101010";
 /** `--brand-500` — About pointer trail and other accent fills. */
-export const SWATCH_BRAND = "#ec4d2d";
+export const SWATCH_BRAND = "#fe522f";
 
 export const SWATCH_LIGHT_NUM = 0xe2e2dd;
 export const SWATCH_BLACK_NUM = 0x101010;
