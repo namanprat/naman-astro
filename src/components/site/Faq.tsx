@@ -14,7 +14,7 @@ const FAQ_ITEMS = [
   {
     question: "Who will actually be working on the project?",
     answer:
-      "I lead every project myself: strategy, creative direction, and your point of contact the whole way through. Depending on scope, a few trusted collaborators help on design and build. The level of care doesn't change with project size.",
+      "I lead every project myself: strategy, creative direction, and your point of contact throughout. Depending on scope, a few trusted collaborators help on design and build. You get someone in the work with you, not a vendor you brief and wait on. Small projects get the same attention as large ones.",
   },
   {
     question: "How long do projects usually take?",
@@ -34,7 +34,7 @@ const FAQ_ITEMS = [
   {
     question: "What happens after launch?",
     answer:
-      "A stretch of hands-on support while everything settles, plus notes clear enough that you can update the site yourself. After that it's yours to run. If you'd rather I stay on, that's a separate conversation.",
+      "A stretch of hands-on support while everything settles, plus notes clear enough that you can update it yourself. After that it's yours to run. If you'd rather I stay on, that's a separate conversation.",
   },
   {
     question: "Can you handle branding, design and development?",
@@ -44,7 +44,7 @@ const FAQ_ITEMS = [
   {
     question: "Who do you work with?",
     answer:
-      "Founders and brands whose reputation has outgrown their website. Real, established work that still looks smaller online than it is. If the site no longer matches what you've built, that's the brief.",
+      "Early-stage brands and startups, usually right before they meet the world properly for the first time. I'm in Mumbai and Bangalore, and work with clients anywhere. If you'd rather not look like every other company in your category, that's the brief.",
   },
 ];
 
