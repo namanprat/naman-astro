@@ -151,13 +151,15 @@ export default function WorkGallery() {
       }
     };
 
-    /* The gallery is only ever `<img>`, so `complete` plus load/error events are
-       the whole of what imagesLoaded gave us. Deliberately NOT `decode()`: a
-       decode stays pending indefinitely while the tab is hidden, so /work opened
-       in a background tab would never boot and the gallery would stay hidden.
-       Load events fire either way, and "settled" — not "succeeded" — is the
-       signal boot wants, so error resolves too. */
-    const pending = [...root.querySelectorAll("img")].filter(
+    /* Gallery thumbs only. `.content` holds every project's case-study markup
+       for the Flip overlay, including `loading="lazy"` panels inside a
+       `display: none` scroller. Those images are not in the layout, so they
+       never fire load/error — waiting on `img` at the root stranded boot on
+       `is-loading` and left the ring unplaced, which is why clicks did nothing.
+       Deliberately NOT `decode()`: a decode stays pending indefinitely while
+       the tab is hidden. Load events fire either way, and "settled" — not
+       "succeeded" — is the signal boot wants, so error resolves too. */
+    const pending = [...root.querySelectorAll(".gallery_slide img")].filter(
       (img) => !img.complete,
     );
     const imgsSettled = () =>
