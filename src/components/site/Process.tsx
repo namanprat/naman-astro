@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import ProcessCardCanvas, { type ProcessCardShape } from "./ProcessCardCanvas";
+import ProcessCardCanvas from "./ProcessCardCanvas";
 import "./Process.css";
 
 /**
@@ -13,25 +13,21 @@ import "./Process.css";
 const CARDS: ReadonlyArray<{
   title: string;
   description: string;
-  shape: ProcessCardShape;
 }> = [
   {
     title: "Uncover story",
     description:
       "I dig until I find what makes you irreplaceable. That becomes the strategy.",
-    shape: "box",
   },
   {
     title: "Shape presence",
     description:
       "I design a brand and a site that feel considered, and worth staying on.",
-    shape: "box",
   },
   {
     title: "Send it",
     description:
       "The site goes live and keeps working as you grow. No rebuild in a year.",
-    shape: "box",
   },
 ];
 
@@ -68,17 +64,23 @@ export default function Process() {
           </div>
 
           <ul className="process_cards">
-            {CARDS.map((card) => (
+            {CARDS.map((card, i) => (
               <li className="process_card" key={card.title}>
-                <h3 className="process_card_title text-style-h3">
-                  {card.title}
-                </h3>
+                <div className="process_card_head">
+                  <h3 className="process_card_title text-style-h3">
+                    {card.title}
+                  </h3>
+                  <span
+                    className="process_card_index text-style-small"
+                    aria-hidden="true"
+                  >
+                    {String(i + 1).padStart(3, "0")}
+                  </span>
+                </div>
                 <div className="process_card_media">
-                  <ProcessCardCanvas
-                    shape={card.shape}
-                    ink={CARD_INK}
-                    active={inView}
-                  />
+                  <div className="process_card_stage">
+                    <ProcessCardCanvas ink={CARD_INK} active={inView} />
+                  </div>
                 </div>
                 <p className="process_card_copy text-style-main">
                   {card.description}

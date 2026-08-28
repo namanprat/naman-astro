@@ -1,11 +1,11 @@
 /**
- * One ASCII-shaded primitive per Process card.
+ * One ASCII-shaded wireframe sphere per Process card.
  *
- * The primitive is now an ordinary lit mesh — the ASCII lives entirely in
- * `AsciiField`, shared with About and Team. Frameloop is paused while
- * `#process` is off-screen.
+ * The GLB is an ordinary lit mesh — the ASCII lives entirely in `AsciiField`,
+ * shared with About and Team. Frameloop is paused while `#process` is off-screen.
  */
-import { useEffect, useMemo, useRef } from "react";
+import { Suspense, useEffect, useMemo, useRef } from "react";
+import { Center, useGLTF } from "@react-three/drei";
 import { Canvas, useFrame } from "@react-three/fiber";
 import * as THREE from "three";
 import gsap from "gsap";
@@ -15,34 +15,45 @@ import AsciiField from "./ascii/AsciiField";
 
 gsap.registerPlugin(ScrollTrigger);
 
-export type ProcessCardShape = "icosahedron" | "box" | "torus";
-
-/**
- * Scroll velocity (px/s) → radians, signed, so the shapes turn with the scroll
- * and reverse when it does. Half the cylinder carousel's 0.000012 so the cards
- * read as slower than the strip. There is deliberately no idle term — unlike
- * the cylinder, a page at rest leaves these still.
- */
+const SPHERE_URL = "/models/wireframe_sphere.glb";
+/** Longest-axis size after normalize — same ballpark as the old 1.15 box. */
+const MODEL_SIZE = 1.6;
 const SPIN_RAD_PER_VELOCITY = 0.000006;
 const TILT_X = 0.4;
 const TILT_Z = 0.12;
 
+useGLTF.preload(SPHERE_URL);
+
 type ProcessCardCanvasProps = {
-  shape: ProcessCardShape;
   ink: string;
   active: boolean;
 };
 
-function ShapeGeometry({ shape }: { shape: ProcessCardShape }) {
-  if (shape === "box") return <boxGeometry args={[1.15, 1.15, 1.15]} />;
-  if (shape === "torus") return <torusGeometry args={[0.72, 0.28, 16, 48]} />;
-  return <icosahedronGeometry args={[1, 1]} />;
-}
-
-function SpinningShape({ shape }: { shape: ProcessCardShape }) {
-  const meshRef = useRef<THREE.Mesh>(null);
+function SpinningSphere() {
+  const groupRef = useRef<THREE.Group>(null);
   const spinDelta = useRef(0);
   const reducedMotion = useMemo(() => prefersReducedMotion(), []);
+  const { scene } = useGLTF(SPHERE_URL);
+
+  const fitted = useMemo(() => {
+    const root = scene.clone(true);
+    const material = new THREE.MeshStandardMaterial({
+      color: "#ffffff",
+      roughness: 0.35,
+      metalness: 0,
+    });
+    root.traverse((child) => {
+      const mesh = child as THREE.Mesh;
+      if (!mesh.isMesh) return;
+      mesh.material = material;
+    });
+    root.updateMatrixWorld(true);
+    const size = new THREE.Box3()
+      .setFromObject(root)
+      .getSize(new THREE.Vector3());
+    const scale = MODEL_SIZE / Math.max(size.x, size.y, size.z, 1e-6);
+    return { root, scale };
+  }, [scene]);
 
   useEffect(() => {
     if (reducedMotion) return;
@@ -61,25 +72,24 @@ function SpinningShape({ shape }: { shape: ProcessCardShape }) {
   }, [reducedMotion]);
 
   useFrame(() => {
-    const mesh = meshRef.current;
-    if (!mesh) return;
-    mesh.rotation.x = TILT_X;
-    mesh.rotation.z = TILT_Z;
-    // Drained every frame: no scroll since the last one means no turn.
-    mesh.rotation.y += spinDelta.current;
+    const group = groupRef.current;
+    if (!group) return;
+    group.rotation.x = TILT_X;
+    group.rotation.z = TILT_Z;
+    group.rotation.y += spinDelta.current;
     spinDelta.current = 0;
   });
 
   return (
-    <mesh ref={meshRef}>
-      <ShapeGeometry shape={shape} />
-      <meshStandardMaterial color="#ffffff" roughness={0.35} metalness={0} />
-    </mesh>
+    <group ref={groupRef}>
+      <Center>
+        <primitive object={fitted.root} scale={fitted.scale} />
+      </Center>
+    </group>
   );
 }
 
 export default function ProcessCardCanvas({
-  shape,
   ink,
   active,
 }: ProcessCardCanvasProps) {
@@ -116,11 +126,11 @@ export default function ProcessCardCanvas({
         cameraPosition={[0, 0, 2.8]}
         far={20}
       >
-        {/* Archive's rig: a near-black ambient with one hard key, so the
-            brightness ramp the glyphs read off is wide. */}
         <ambientLight intensity={0.05} />
         <directionalLight position={[1, 0, 0.866]} intensity={2.5} />
-        <SpinningShape shape={shape} />
+        <Suspense fallback={null}>
+          <SpinningSphere />
+        </Suspense>
       </AsciiField>
     </Canvas>
   );

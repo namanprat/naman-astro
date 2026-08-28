@@ -192,7 +192,8 @@ html:has(.about_panel.is-open:not(.is-in-menu)) .nav_wrap .nav_fade {
 /* Availability ticker. Independent of the nav — fixed to the viewport top
    on every breakpoint, painted above the bar. Dissolves while About is open. */
 .nav_marquee {
-  display: block;
+  /* ponytail: parked. Restore: display: block and the --nav-marquee-height calc. */
+  display: none;
   position: fixed;
   top: 0;
   left: 0;
