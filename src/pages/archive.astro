@@ -3,7 +3,11 @@ import Layout from "@/layouts/BaseLayout.astro";
 import ArchiveCanvas from "@/components/archive/ArchiveCanvas";
 ---
 
-<Layout title="Archive" description="Poster archive." theme="dark">
+<Layout
+  title="Archive"
+  description="Posters, stickers, and other loose ends."
+  theme="dark"
+>
   {/* Paint black + white nav before the island mounts — otherwise light theme
       flashes grey ground and ink-colored chrome for a frame. Head slot so
       theme-color sync (after this slot) sees `page-archive`. */}

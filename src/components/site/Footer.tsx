@@ -170,9 +170,9 @@ export default function Footer() {
             <div className="footer_contain container gap-0">
               <div className="footer_layout grid is-12">
                 <h3 className="footer_tagline text-style-main">
-                  I&apos;m a digital designer who makes things look good and
-                  work better. Good design isn&apos;t about adding more.
-                  It&apos;s about knowing what to leave out.
+                  I&apos;m a digital designer. I make things look good and work
+                  better, and I care more about what gets left out than what
+                  gets added.
                 </h3>
 
                 <nav className="footer_col is-nav" aria-label="Footer">

@@ -14,37 +14,37 @@ const FAQ_ITEMS = [
   {
     question: "Who will actually be working on the project?",
     answer:
-      "I lead every engagement: strategy, creative direction, and your primary point of contact throughout. Depending on scope, a small set of collaborators supports on design and development. The level of care stays consistent, regardless of project size.",
+      "I lead every project myself: strategy, creative direction, and your point of contact the whole way through. Depending on scope, a few trusted collaborators help on design and build. The level of care doesn't change with project size.",
   },
   {
     question: "How long do projects usually take?",
     answer:
-      "Most projects run 10–14 weeks end-to-end. Timelines flex with scope, but milestones are set from day one so there are no surprises.",
+      "Most projects run 10 to 14 weeks start to finish. Timelines move with scope, but milestones are set on day one so nothing catches you off guard.",
   },
   {
-    question: "How do you communicate and manage work?",
+    question: "How do you keep me in the loop?",
     answer:
-      "Simple and transparent. You'll get async updates and weekly communication; calls are scheduled to review important decisions or milestones. We can work in your tools so the process stays structured without getting heavy.",
+      "Simple and transparent. You get written updates as things move, plus a weekly check-in, and we get on a call for the decisions that actually need one. I'll work in whatever tools you already use.",
   },
   {
     question: "What do you need to start?",
     answer:
-      "We'll talk through your needs on a call and I'll send a tailored proposal. After that, a signed agreement and the initial deposit. That's all. Onboarding stays short so we can get to the work.",
+      "We get on a call, you tell me what you need, and I send back a proposal built for it. Then a signed agreement and the deposit. That's it. Onboarding stays short so we can get to the actual work.",
   },
   {
     question: "What happens after launch?",
     answer:
-      "A stretch of hands-on support so everything runs, plus the notes you need to update the site yourself. After that you're equipped to run it in-house. If you want ongoing care, we can talk about that separately.",
+      "A stretch of hands-on support while everything settles, plus notes clear enough that you can update the site yourself. After that it's yours to run. If you'd rather I stay on, that's a separate conversation.",
   },
   {
     question: "Can you handle branding, design and development?",
     answer:
-      "Yes. The work is delivering them together. Narrative, identity, visuals and functionality get aligned from day one, so the final experience is one thing, not three handoffs.",
+      "Yes, and doing them together is the point. Story, identity, visuals and build line up from day one, so what you end up with is one thing instead of three handoffs.",
   },
   {
     question: "Who do you work with?",
     answer:
-      "Founders and brands whose reputation has outgrown their digital presence: established work that still looks smaller than it is. If the site no longer matches what you've built, that's the brief.",
+      "Founders and brands whose reputation has outgrown their website. Real, established work that still looks smaller online than it is. If the site no longer matches what you've built, that's the brief.",
   },
 ];
 
@@ -125,14 +125,14 @@ export default function Faq() {
         <div className="faq_layout studio_layout grid is-12">
           <div className="faq_statement studio_statement">
             <h2 className="faq_title studio_title text-style-h2">
-              <span className="studio_title_indent" aria-hidden="true" />
-              Fewer projects, fully present. Intention over speed. Every layer
-              earns its place before we move to the next.
+              <span className="studio_title_indent" aria-hidden="true" />I take
+              on fewer projects so I can be fully present on each one. Every
+              layer earns its place before I move to the next.
             </h2>
           </div>
 
           <p className="faq_lead text-style-h4">
-            Here&apos;s what you need to consider before we start.
+            Here&apos;s what&apos;s worth knowing before we start.
           </p>
 
           <ul className="faq_items">
