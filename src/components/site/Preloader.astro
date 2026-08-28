@@ -1,4 +1,6 @@
 ---
+import { SITE_NAME } from "@/consts.ts";
+
 /**
  * Home boot overlay. Static markup so it paints on first paint — no island, no
  * hydration gap. Driven by `@/lib/site/preloader`.
@@ -16,7 +18,7 @@
   <div class="preloader_clip">
     <div class="preloader_card padding-4">
       <div class="preloader_grid grid is-12 gap-2 gap-row-4">
-        <div class="preloader_mark" role="img" aria-label="Naman Pratulya">
+        <div class="preloader_mark" role="img" aria-label={SITE_NAME}>
         </div>
 
         <div
@@ -115,7 +117,7 @@
      same trick .name_hero_lockup uses in Menu.css. */
   .preloader_mark {
     width: min(16rem, 55%);
-    aspect-ratio: 446 / 70;
+    aspect-ratio: 100 / 29;
     background-color: var(--card-ink);
     -webkit-mask: url(/main-assets/name-hero.svg) left center / contain no-repeat;
     mask: url(/main-assets/name-hero.svg) left center / contain no-repeat;

@@ -740,8 +740,8 @@ html.theme-light .about_panel.is-in-menu {
   above (both 0-3-0), so source order is what makes them win. Do not hoist.
 */
 /* Route wrapper (about.astro). Exists so the footer has a real previous flow
-   sibling for `NavHideOnFooter`'s ScrollTrigger — same role `.studio` plays on
-   home. `z-index` matches `.studio` so it stacks over the fixed fluid sim. */
+   sibling for its scale scrub — same role `.studio` plays on home. `z-index`
+   matches `.studio` so it stacks over the fixed fluid sim. */
 .about_page {
   position: relative;
   z-index: 2;

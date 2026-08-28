@@ -36,6 +36,7 @@ import {
 import AboutPanel, { type AboutPanelMode } from "./AboutPanel";
 import RollingText from "./RollingText";
 import ThemeToggle from "./ThemeToggle";
+import { SITE_NAME } from "@/consts.ts";
 import "@/lib/site/eases";
 
 const AVAILABILITY_LINE = "available for projects from october ’26";
@@ -1081,7 +1082,7 @@ export default function Menu({ initialPathname = "/" }: MenuProps) {
                   <span
                     className="name_hero_lockup"
                     role="img"
-                    aria-label="Naman Pratulya"
+                    aria-label={SITE_NAME}
                   >
                     <img
                       src="/main-assets/name-hero.svg"
@@ -1112,7 +1113,7 @@ export default function Menu({ initialPathname = "/" }: MenuProps) {
                   >
                     <span className="nav_logo_target">
                       <span className="nav_logo_wordmark">
-                        <h5 className="text-style-main">Naman Pratulya</h5>
+                        <h5 className="text-style-main">{SITE_NAME}</h5>
                       </span>
                     </span>
                   </a>
@@ -1283,7 +1284,7 @@ export default function Menu({ initialPathname = "/" }: MenuProps) {
                 }}
               >
                 <span className="menu_overlay_title text-style-main">
-                  Naman Pratulya
+                  {SITE_NAME}
                 </span>
               </a>
             </div>

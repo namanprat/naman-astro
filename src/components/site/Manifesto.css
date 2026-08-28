@@ -13,9 +13,12 @@
   }
 
   .manifesto_lead {
-    grid-column: calc(3 * var(--_responsive---large) + 1) / span calc(8 * var(--_responsive---large) + 12 * (1 - var(--_responsive---large)));
+    grid-column: 1 / span calc(10 * var(--_responsive---large) + 12 * (1 - var(--_responsive---large)));
     margin: 0;
     max-width: none;
     color: var(--text);
+    /* Same greedy wrap as `.studio_title`: the gooey split freezes each line,
+       and `balance` would not reproduce those breaks. */
+    text-wrap: wrap;
   }
 }

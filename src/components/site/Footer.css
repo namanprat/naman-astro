@@ -240,7 +240,7 @@ html.theme-light .footer_box {
     resolve to nothing on WebKit.
   */
   .footer_logo {
-    aspect-ratio: 446 / 70;
+    aspect-ratio: 100 / 29;
     background-color: var(--text);
     -webkit-mask: url("/main-assets/name-hero.svg") left center / contain
       no-repeat;

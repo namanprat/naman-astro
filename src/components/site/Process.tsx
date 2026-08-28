@@ -17,12 +17,12 @@ const CARDS: ReadonlyArray<{
   {
     title: "Uncover story",
     description:
-      "I dig until I find what makes you irreplaceable. That becomes the strategy.",
+      "We dig until we find what makes you irreplaceable. That becomes the strategy.",
   },
   {
     title: "Shape presence",
     description:
-      "I design a brand and a site that feel considered, and worth staying on.",
+      "We design a brand and a site that feel considered, and worth staying on.",
   },
   {
     title: "Send it",
@@ -58,9 +58,9 @@ export default function Process() {
         <div className="process_layout studio_layout grid is-12">
           <div className="process_statement studio_statement">
             <h2 className="process_title studio_title text-style-h2">
-              <span className="studio_title_indent" aria-hidden="true" />I build
-              brands and everything they live on, so you look like yourself from
-              day one.
+              <span className="studio_title_indent" aria-hidden="true" />We
+              build brands and everything they live on, so you look like
+              yourself from day one.
             </h2>
           </div>
 

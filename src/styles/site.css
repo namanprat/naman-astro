@@ -59,7 +59,8 @@
   --z--menu: 210;
   --z--overlay: 999;
   --z--modal: 9999;
-  /* Page-transition cover — above nav, ticker, overlays, and the scrollbar. */
+  /* Page-transition cover — above page content, below the nav so the bar
+     stays visible for the whole cover / uncover. */
   --z--transition: 2000000;
 }
 

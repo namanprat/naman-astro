@@ -1,5 +1,5 @@
 /** Site name. Appended to every page title and used as `og:site_name`. */
-export const SITE_NAME = "Naman Pratulya";
+export const SITE_NAME = "duforn";
 /** Fallback meta description for pages that don't set their own. */
 export const SITE_DESCRIPTION =
   "Based in Mumbai and Bangalore, working with clients everywhere. Brand, web, and motion for early-stage companies that refuse to look like everyone else.";
