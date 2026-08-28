@@ -12,7 +12,7 @@ export default function Manifesto() {
       <div className="manifesto_contain container gap-0">
         <div className="manifesto_layout grid is-12">
           <h1 className="manifesto_lead text-style-h2">
-            I&apos;m a digital designer for early-stage brands, closing the gap
+            We&apos;re a design studio for early-stage brands, closing the gap
             between who you already are and how the world sees you. Good design
             isn&apos;t about adding more. It&apos;s about knowing what to leave
             out.

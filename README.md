@@ -1,6 +1,6 @@
-# namanprat.com
+# duforn
 
-Personal site for [Naman Pratulya](https://namanprat.com). Astro + React.
+Studio site for [duforn](https://namanprat.com). Astro + React.
 
 ```sh
 npm install

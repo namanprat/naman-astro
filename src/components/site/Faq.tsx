@@ -14,7 +14,7 @@ const FAQ_ITEMS = [
   {
     question: "Who will actually be working on the project?",
     answer:
-      "I lead every project myself: strategy, creative direction, and your point of contact throughout. Depending on scope, a few trusted collaborators help on design and build. You get someone in the work with you, not a vendor you brief and wait on. Small projects get the same attention as large ones.",
+      "We lead every project: strategy, creative direction, and your point of contact throughout. Depending on scope, a few trusted collaborators help on design and build. You get us in the work with you, not a vendor you brief and wait on. Small projects get the same attention as large ones.",
   },
   {
     question: "How long do projects usually take?",
@@ -24,17 +24,17 @@ const FAQ_ITEMS = [
   {
     question: "How do you keep me in the loop?",
     answer:
-      "Simple and transparent. You get written updates as things move, plus a weekly check-in, and we get on a call for the decisions that actually need one. I'll work in whatever tools you already use.",
+      "Simple and transparent. You get written updates as things move, plus a weekly check-in, and we get on a call for the decisions that actually need one. We'll work in whatever tools you already use.",
   },
   {
     question: "What do you need to start?",
     answer:
-      "We get on a call, you tell me what you need, and I send back a proposal built for it. Then a signed agreement and the deposit. That's it. Onboarding stays short so we can get to the actual work.",
+      "We get on a call, you tell us what you need, and we send back a proposal built for it. Then a signed agreement and the deposit. That's it. Onboarding stays short so we can get to the actual work.",
   },
   {
     question: "What happens after launch?",
     answer:
-      "A stretch of hands-on support while everything settles, plus notes clear enough that you can update it yourself. After that it's yours to run. If you'd rather I stay on, that's a separate conversation.",
+      "A stretch of hands-on support while everything settles, plus notes clear enough that you can update it yourself. After that it's yours to run. If you'd rather we stay on, that's a separate conversation.",
   },
   {
     question: "Can you handle branding, design and development?",
@@ -44,7 +44,7 @@ const FAQ_ITEMS = [
   {
     question: "Who do you work with?",
     answer:
-      "Early-stage brands and startups, usually right before they meet the world properly for the first time. I'm in Mumbai and Bangalore, and work with clients anywhere. If you'd rather not look like every other company in your category, that's the brief.",
+      "Early-stage brands and startups, usually right before they meet the world properly for the first time. We're in Mumbai and Bangalore, and work with clients anywhere. If you'd rather not look like every other company in your category, that's the brief.",
   },
 ];
 
@@ -125,9 +125,9 @@ export default function Faq() {
         <div className="faq_layout studio_layout grid is-12">
           <div className="faq_statement studio_statement">
             <h2 className="faq_title studio_title text-style-h2">
-              <span className="studio_title_indent" aria-hidden="true" />I take
-              on fewer projects so I can be fully present on each one. Every
-              layer earns its place before I move to the next.
+              <span className="studio_title_indent" aria-hidden="true" />We take
+              on fewer projects so we can be fully present on each one. Every
+              layer earns its place before we move to the next.
             </h2>
           </div>
 
