@@ -173,7 +173,10 @@
     }
   }
 
+  /* Chips sit under the frame on the landscape stage. Portrait/mobile
+     keeps only the overlay arrows — the pill row is too tight there. */
   .camille_slider_pills {
+    display: none;
     flex: 0 0 auto;
     align-self: stretch;
     justify-content: center;
@@ -223,6 +226,10 @@
   @container camille (width >= 40rem) {
     .camille_slider_frame {
       aspect-ratio: 16 / 10;
+    }
+
+    .camille_slider_pills {
+      display: flex;
     }
   }
 }
