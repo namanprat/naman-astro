@@ -378,7 +378,6 @@ html.theme-light .about_panel.is-in-menu {
   A definite width means no engine ever computes an intrinsic one. It resolves
   against the flex container in all three modes (ride / padded / inMenu), so
   the in-menu variant — same `align-items: flex-start` — is covered too.
-  `align-items` stays as it is: `.about_panel_cv_clip` hugs its text by it.
 */
 .about_panel_lead {
   margin: 0;
@@ -397,44 +396,6 @@ html.theme-light .about_panel.is-in-menu {
   content: none;
   display: none;
   margin: 0;
-}
-
-.about_panel_cv {
-  display: inline-flex;
-  /* Top, not baseline: RollingText clips each glyph to a 1em box, so its
-     baseline sits wherever the mask ends rather than on the text's. */
-  align-items: flex-start;
-  margin: var(--space-4) 0 0;
-  padding: 0;
-  color: var(--panel-ink);
-  text-decoration: none;
-  width: max-content;
-  align-self: flex-start;
-}
-
-.about_panel_cv_clip {
-  display: block;
-  width: max-content;
-}
-
-.about_panel.is-in-menu .about_panel_cv_clip {
-  overflow: clip;
-}
-
-/* `line-height: 1` so the box hugs the glyphs. Inheriting the 1.5 body leading
-   left the rule floating ~10px under the word, reading as a detached line. */
-.about_panel_cv_label {
-  display: inline-block;
-  line-height: 1;
-  border-bottom: var(--border-width) solid currentColor;
-  padding-bottom: 0.18em;
-}
-
-/* No gap — the arrow leaves the last glyph rather than hovering beside it. */
-.about_panel_cv_icon {
-  display: inline-block;
-  font-size: 0.5em;
-  line-height: 1;
 }
 
 .about_panel_col.is-services {
