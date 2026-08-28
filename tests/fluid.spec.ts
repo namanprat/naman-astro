@@ -17,6 +17,8 @@ test("studio intersection dims the fluid on desktop, not on phone", async ({
   await page.goto("/");
   await expectRevealed(page);
 
+  await expect(page.locator(".fluid_wrap canvas")).toBeAttached();
+
   const studio = page.locator(".studio");
   await studio.scrollIntoViewIfNeeded();
   await expect(studio).toBeVisible();

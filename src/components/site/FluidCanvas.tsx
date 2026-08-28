@@ -9,13 +9,6 @@ export default function FluidCanvas() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
   useEffect(() => {
-    const canvas = canvasRef.current;
-    if (!canvas) return;
-    const simulation = new FluidSimulation(canvas);
-    return () => simulation.dispose();
-  }, []);
-
-  useEffect(() => {
     const root = document.documentElement;
     const mq = window.matchMedia(MOBILE_LAYOUT_MQ);
     let io: IntersectionObserver | null = null;
@@ -79,6 +72,20 @@ export default function FluidCanvas() {
       mq.removeEventListener("change", apply);
       detach();
     };
+  }, []);
+
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    let simulation: FluidSimulation | null = null;
+    try {
+      simulation = new FluidSimulation(canvas);
+    } catch {
+      /* No WebGL (tests stub the fluid context) — keep the wrap so the
+         studio-intersection dim still attaches. */
+      return;
+    }
+    return () => simulation?.dispose();
   }, []);
 
   return (

@@ -42,7 +42,7 @@
   .team_layout {
     width: 100%;
     align-content: center;
-    row-gap: var(--space-5);
+    row-gap: var(--space-8);
   }
 
   /* Span `--site-column-count`, not 12 — a 4-col `.grid.is-12` must not grow
