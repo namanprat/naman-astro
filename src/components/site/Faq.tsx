@@ -57,8 +57,8 @@ const FAQ_ITEMS = [
  *
  * Panels animate to `height: "auto"` rather than a cached `scrollHeight`, so a
  * resize or a late font swap can't leave a panel clipped. Every settled toggle
- * refreshes ScrollTrigger: opening one changes `.studio`'s height, and both the
- * footer's scale scrub and the nav-hide trigger measure `.studio`'s bottom.
+ * refreshes ScrollTrigger: opening one changes `.studio`'s height, and the
+ * footer's scale scrub measures `.studio`'s bottom.
  */
 export default function Faq() {
   const rootRef = useRef<HTMLElement>(null);

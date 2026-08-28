@@ -49,12 +49,11 @@ import Footer from "@/components/site/Footer";
   </script>
   <SiteLenis client:only="react" />
   {
-    /* Real block wrapper, not the bare island. `NavHideOnFooter` (lenisBoot)
-       picks the footer's previous flow sibling as its ScrollTrigger, and an
+    /* Real block wrapper, not the bare island. The footer's scale scrub
+       picks the previous flow sibling as its ScrollTrigger, and an
        `<astro-island>` host has no layout box — so `start: "bottom bottom"`
-       resolved at the document top and fired `onEnter` on load, fading the nav
-       out before you had scrolled anywhere. Home dodges this because its
-       sibling is the real `.studio` div; this is that same shape. */
+       resolved at the document top. Home dodges this because its sibling is
+       the real `.studio` div; this is that same shape. */
   }
   <div class="about_page">
     <AboutPage client:only="react" />
