@@ -79,16 +79,18 @@ test("team cylinder fills the section and copy does not overlap", async ({
       async () => {
         return page.evaluate(() => {
           const wrap = document.getElementById("team");
-          const stage = document.querySelector<HTMLElement>(".team_stage");
-          if (!wrap || !stage) return { ok: false as const, reason: "no stage" };
-          const wrapBox = wrap.getBoundingClientRect();
-          const stageBox = stage.getBoundingClientRect();
-          const w = Math.round(stageBox.width);
-          const h = Math.round(stageBox.height);
-          if (w < wrapBox.width * 0.9 || h < wrapBox.height * 0.9) {
-            return { ok: false as const, reason: `stage ${w}x${h}` };
+          const cylinder = document.querySelector<HTMLElement>(".team_cylinder");
+          if (!wrap || !cylinder) {
+            return { ok: false as const, reason: "no cylinder" };
           }
-          const canvas = stage.querySelector("canvas");
+          const wrapBox = wrap.getBoundingClientRect();
+          const cylinderBox = cylinder.getBoundingClientRect();
+          const w = Math.round(cylinderBox.width);
+          const h = Math.round(cylinderBox.height);
+          if (w < wrapBox.width * 0.9 || h < wrapBox.height * 0.9) {
+            return { ok: false as const, reason: `cylinder ${w}x${h}` };
+          }
+          const canvas = cylinder.querySelector("canvas");
           if (!canvas) return { ok: false as const, reason: "no canvas" };
           const canvasBox = canvas.getBoundingClientRect();
           if (canvasBox.width < 200 || canvasBox.height < 200) {
