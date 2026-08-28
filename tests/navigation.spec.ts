@@ -485,7 +485,7 @@ test("archive theme-color stays dark regardless of the stored theme", async ({
   );
 });
 
-test("the page-transition cover sits above the nav and ticker", async ({
+test("the page-transition cover sits below the nav and ticker", async ({
   page,
 }) => {
   await page.goto("/");
@@ -507,6 +507,6 @@ test("the page-transition cover sits above the nav and ticker", async ({
   });
 
   expect(stacking).not.toBeNull();
-  expect(stacking!.panelZ).toBeGreaterThan(stacking!.navZ);
-  expect(stacking!.panelZ).toBeGreaterThan(stacking!.marqueeZ);
+  expect(stacking!.navZ).toBeGreaterThan(stacking!.panelZ);
+  expect(stacking!.marqueeZ).toBeGreaterThan(stacking!.panelZ);
 });

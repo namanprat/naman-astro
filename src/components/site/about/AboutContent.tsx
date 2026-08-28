@@ -80,9 +80,9 @@ export default function AboutContent({
       <div className="about_panel_reveal about_panel_intro">
         <div className="about_panel_reveal_inner">
           <h3 className="about_panel_lead text-style-h3">
-            I make things look good and work better. I get deep into your story,
-            stay ruthless about what actually moves people, and close the gap
-            between who you already are and how the world sees you.
+            We make things look good and work better. We get deep into your
+            story, stay ruthless about what actually moves people, and close the
+            gap between who you already are and how the world sees you.
           </h3>
           <span className="about_panel_cv_clip">
             <a
