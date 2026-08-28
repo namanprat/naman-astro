@@ -17,32 +17,17 @@ const CARDS: ReadonlyArray<{
   {
     title: "Uncover story",
     description:
-<<<<<<< HEAD
       "I dig until I find what makes you irreplaceable. That becomes the strategy.",
-=======
-      "I dig until I find the one thing only you can say. That becomes the strategy.",
-    shape: "box",
->>>>>>> f6fbc9f569fdba7090473951d7ec8a46952440be
   },
   {
     title: "Shape presence",
     description:
-<<<<<<< HEAD
       "I design a brand and a site that feel considered, and worth staying on.",
-=======
-      "I design the identity and everything it touches, so it holds together.",
-    shape: "box",
->>>>>>> f6fbc9f569fdba7090473951d7ec8a46952440be
   },
   {
     title: "Send it",
     description:
-<<<<<<< HEAD
       "The site goes live and keeps working as you grow. No rebuild in a year.",
-=======
-      "It ships as one system, and it keeps working as you grow. No rebuild in a year.",
-    shape: "box",
->>>>>>> f6fbc9f569fdba7090473951d7ec8a46952440be
   },
 ];
 
