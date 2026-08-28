@@ -34,6 +34,9 @@ const TILE_W = 768;
 const TILE_H = Math.round(TILE_W / TILE_ASPECT);
 const PLANE_H = 1.05;
 const PLANE_W = PLANE_H * TILE_ASPECT;
+/** Must match the AsciiField offscreen camera — that is the lens that sees these planes. */
+const OFF_FOV = 45;
+const OFF_CAM_Z = 6.5;
 /** px/s scroll velocity → extra outward speed. Sign is discarded. */
 const VELOCITY_U_SCALE = 0.00003;
 /** Idle crawl (progress/s) from center toward each lip. */
@@ -55,17 +58,26 @@ type Slot = {
   imageIndex: number;
 };
 
-function getFraming(width: number): Framing {
-  const isMobile = width < 768;
-  const isTablet = width >= 768 && width < 1024;
+function getFraming(width: number, height: number): Framing {
+  const aspect = width / Math.max(height, 1);
+  const portrait = aspect < 0.85;
+  const spread = portrait ? 1.05 : 1.22;
+  const radiusZ = portrait ? 2.8 : 3.5;
+  const edgeZ = -Math.cos(spread) * radiusZ;
+  const edgeDist = OFF_CAM_Z - edgeZ;
+  const halfH = Math.tan(((OFF_FOV * Math.PI) / 180) / 2) * edgeDist;
+  const halfW = halfH * aspect;
+  const maxScale = (halfH * 1.35) / PLANE_H;
+  const minScale = maxScale * 0.22;
+  const radiusX = (halfW * 0.96) / Math.max(Math.sin(spread), 0.2);
   return {
-    cameraZ: isMobile ? 5.8 : isTablet ? 6.4 : 6.8,
-    fov: isMobile ? 48 : 42,
-    radiusX: isMobile ? 3.2 : isTablet ? 4.4 : 5.4,
-    radiusZ: isMobile ? 2.4 : isTablet ? 3.2 : 3.8,
-    minScale: isMobile ? 0.42 : 0.4,
-    maxScale: isMobile ? 1.05 : 1.15,
-    spread: isMobile ? 1.12 : 1.28,
+    cameraZ: OFF_CAM_Z,
+    fov: OFF_FOV,
+    radiusX,
+    radiusZ,
+    minScale,
+    maxScale,
+    spread,
   };
 }
 
@@ -235,7 +247,7 @@ function PlaneEmitter() {
   }, [reducedMotion]);
 
   useFrame((_, dt) => {
-    const framing = getFraming(size.width);
+    const framing = getFraming(size.width, size.height);
     const slots = slotsRef.current;
     const maps = texturesRef.current;
 
@@ -341,8 +353,8 @@ export default function TeamVanishingPlanes() {
       <AsciiField
         surface="team"
         ink={ink}
-        fov={45}
-        cameraPosition={[0, 0, 6.5]}
+        fov={OFF_FOV}
+        cameraPosition={[0, 0, OFF_CAM_Z]}
       >
         <PlaneEmitter />
       </AsciiField>
