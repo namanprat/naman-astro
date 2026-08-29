@@ -223,11 +223,19 @@ function FluidBackdrop() {
      * a transparent identity. Target renders still get the plate to bend.
      */
     scene.onBeforeRender = (renderer) => {
+      /* ASCII's matte pass also renders to a target. The plate would fill
+         that buffer, every cell would pass `src.a`, and glyphs would paint
+         the page colour behind the characters. `HeroAsciiReveal` sets this
+         flag around that pass. */
+      if (
+        renderer.getRenderTarget() === null ||
+        scene.userData.skipFluidPlate
+      ) {
+        scene.background = null;
+        return;
+      }
       const current = simulation.current;
-      scene.background =
-        current && renderer.getRenderTarget()
-          ? current.output.texture
-          : null;
+      scene.background = current ? current.output.texture : null;
     };
     return () => {
       scene.onBeforeRender = () => {};

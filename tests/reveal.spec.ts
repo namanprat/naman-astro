@@ -106,6 +106,27 @@ test("a project page reveals and keeps its nav", async ({ page }) => {
  * preloaded — the phone layout must not paint it, and everything above that
  * cut still must.
  */
+test("studio copy besides the manifesto inverts with the trail", async ({
+  page,
+}) => {
+  await skipPreloader(page);
+  await page.goto("/");
+  await expectRevealed(page);
+
+  for (const selector of [
+    ".manifesto_lead",
+    ".process_title",
+    ".faq_title",
+    ".faq_lead",
+    ".team_title",
+  ]) {
+    await expect(page.locator(selector).first()).toHaveCSS(
+      "mix-blend-mode",
+      "difference",
+    );
+  }
+});
+
 test("grain is off on the phone layout and on above it", async ({ page }) => {
   await skipPreloader(page);
   await page.goto("/");

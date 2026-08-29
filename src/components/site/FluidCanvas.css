@@ -88,8 +88,18 @@ html.is-preloading .fluid_wrap {
  * see `styles/site.css`.
  *
  * Add a selector here to have the trail cut through something else.
+ *
+ * Process cards, the Camille stage and the footer card keep their own fill, so
+ * a blend on that copy would invert the card — not the trail.
  */
 .manifesto_lead,
+.studio_title,
+.team_title,
+.team_copy_stack,
+.faq_lead,
+.faq_question_text,
+.faq_answer_copy,
+.hero_note,
 .is-trail-invert {
   mix-blend-mode: difference;
 }
