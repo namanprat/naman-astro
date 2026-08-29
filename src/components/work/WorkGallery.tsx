@@ -183,9 +183,9 @@ export default function WorkGallery() {
        Deliberately NOT `decode()`: a decode stays pending indefinitely while
        the tab is hidden. Load events fire either way, and "settled" — not
        "succeeded" — is the signal boot wants, so error resolves too. */
-    const pending = [...root.querySelectorAll(".gallery_slide img")].filter(
-      (img) => !img.complete,
-    );
+    const pending = [
+      ...root.querySelectorAll<HTMLImageElement>(".gallery_slide img"),
+    ].filter((img) => !img.complete);
     const imgsSettled = () =>
       Promise.all(
         pending.map(
