@@ -251,7 +251,9 @@ test.describe("phone work locks to slider", () => {
     await page.goto("/work");
     await expect(page.locator(".work_wrap")).not.toHaveClass(/is-loading/);
     await expect(
-      page.locator('.gallery_slide[data-slug="haptic"] .gallery_img--film'),
+      page.locator(
+        '.gallery_slide[data-slug="haptic"]:not([data-wheel-clone]) .gallery_img--film',
+      ),
     ).toHaveCount(1);
   });
 });
