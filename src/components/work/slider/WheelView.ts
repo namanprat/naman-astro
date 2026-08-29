@@ -1,6 +1,7 @@
 import { gsap } from "gsap";
 import { Observer } from "gsap/Observer";
 import { scrollDelta } from "./scrollDelta";
+import { MOBILE_LAYOUT_MQ } from "@/lib/site/isMobileLayout";
 
 gsap.registerPlugin(Observer);
 
@@ -45,10 +46,49 @@ const MAX_COPIES = 2;
 const SPACING_RATIO = 2.13;
 
 /**
+ * The phone's own, and it has to be looser about packing than the desktop's.
+ *
+ * Copies come out of `circumference / (projects × tileHeight × ratio)`, rounded.
+ * Phone tiles are cards rather than thumbnails, so at 2.13 a tightened ring fell
+ * under 1.5 and dropped to a single copy — six positions instead of twelve,
+ * which doubles the angular step and leaves nothing sitting on the anchor. At
+ * 1.5 the ring keeps its twelve, and the gap that leaves between 62vw cards is
+ * still most of a card.
+ */
+const PHONE_SPACING_RATIO = 1.5;
+
+/**
  * Anchor sits at the top of the circle. Screen y grows downward, so that is
  * −90°. That tile is `.is-centered`; the rest sit desaturated behind it.
  */
 const ANCHOR_DEG = -90;
+
+/**
+ * The phone puts it at 9 o'clock instead, and pushes the circle's centre off the
+ * *right* edge so only its left flank is on screen. With a radius far larger
+ * than the viewport, that flank is close to a straight line: the tiles read as a
+ * column down the middle rather than a ring, and the anchored one lands dead
+ * centre with room for a marker beside it.
+ *
+ * Left flank rather than right, so the column bows away from the marker: the
+ * neighbours lean right of centre and the anchored tile is the leftmost point of
+ * the arc.
+ */
+const PHONE_ANCHOR_DEG = 180;
+/**
+ * Multiples of the viewport height.
+ *
+ * Sized against the gap, not the curve. Copies are capped at `MAX_COPIES`, so
+ * the ring carries twelve positions however big it gets and the gap between
+ * neighbours is `2πr / 12`, or about `0.52r`. At 1.35vh that came out at 574px
+ * on a 812pt screen — one tile visible and the rest off the bottom.
+ *
+ * Tightening it is what makes the arc read as an arc: the ring's proportions do
+ * not change with radius (a fixed angular step makes every size a similar
+ * figure), but a smaller circle fits more of its own curve on screen, so the
+ * column bows visibly instead of running nearly straight.
+ */
+const PHONE_RADIUS_VH = 0.75;
 
 /** Pixels of wheel per tile step, taken from the reference: it advanced one
     thumbnail per `innerWidth * 0.45` (≈576px at 1280 wide). Held as distance
@@ -98,6 +138,15 @@ export default class WheelView {
   private cx = 0;
   private cy = 0;
   private radius = RADIUS;
+  /** Where on the ring the focused tile sits. Re-read on every measure. */
+  private anchorDeg = ANCHOR_DEG;
+  /**
+   * Which way a scroll turns the ring. The phone's arc is the mirror of the
+   * desktop's — centre off the right edge instead of overhead — so the same
+   * rotation carries a tile up the screen there and down here. Flipping the
+   * sign is what keeps "scroll down, next project" true on both.
+   */
+  private scrollSign = -1;
   private snapTween: gsap.core.Tween | null = null;
   private resizeId?: ReturnType<typeof setTimeout>;
   private resizeSuspended = false;
@@ -131,7 +180,7 @@ export default class WheelView {
 
     /* Start anchored on the first project. At rotation 0 tile 0 sits at 3
        o'clock and the anchor falls between two tiles, so nothing is focused. */
-    this.rot = { value: ANCHOR_DEG };
+    this.rot = { value: this.anchorDeg };
 
     this.measure();
     this.createScrub();
@@ -150,6 +199,9 @@ export default class WheelView {
    * comes out as that literal string and `parseFloat` reads NaN.
    */
   private measure() {
+    const phone = window.matchMedia(MOBILE_LAYOUT_MQ).matches;
+    this.anchorDeg = phone ? PHONE_ANCHOR_DEG : ANCHOR_DEG;
+    this.scrollSign = phone ? 1 : -1;
     this.cx = window.innerWidth / 2;
     this.cy = window.innerHeight / 2;
 
@@ -163,10 +215,18 @@ export default class WheelView {
     const tileHeight = tile?.offsetHeight ?? 0;
     const widthCap = (window.innerWidth - tileWidth) / 2 - EDGE_GUTTER;
 
-    this.radius = Math.max(
-      0,
-      Math.min(RADIUS, window.innerHeight * RADIUS_VH_CAP, widthCap),
-    );
+    if (phone) {
+      /* No width cap: the ring is *meant* to overrun the screen here, and the
+         centre goes with it so the anchor at 3 o'clock lands on the middle of
+         the viewport. */
+      this.radius = window.innerHeight * PHONE_RADIUS_VH;
+      this.cx = window.innerWidth / 2 + this.radius;
+    } else {
+      this.radius = Math.max(
+        0,
+        Math.min(RADIUS, window.innerHeight * RADIUS_VH_CAP, widthCap),
+      );
+    }
 
     /* On the page root, not the gallery: the label is a sibling of `.gallery`
        and sizes itself against the ring, so it has to inherit this too. The
@@ -223,13 +283,14 @@ export default class WheelView {
     if (!tileHeight || !this.projectCount) return;
 
     const circumference = 2 * Math.PI * this.radius;
+    const ratio = window.matchMedia(MOBILE_LAYOUT_MQ).matches
+      ? PHONE_SPACING_RATIO
+      : SPACING_RATIO;
     const wanted = Math.min(
       MAX_COPIES,
       Math.max(
         1,
-        Math.round(
-          circumference / (this.projectCount * tileHeight * SPACING_RATIO),
-        ),
+        Math.round(circumference / (this.projectCount * tileHeight * ratio)),
       ),
     );
     if (wanted === this.copies) return;
@@ -258,7 +319,7 @@ export default class WheelView {
 
     this.tiles.forEach((el, i) => {
       const theta = this.baseAngle(i) + this.rot.value;
-      const offset = Math.abs(shortest(theta - ANCHOR_DEG));
+      const offset = Math.abs(shortest(theta - this.anchorDeg));
 
       gsap.set(el, {
         x: this.cx + this.radius * Math.cos(rad(theta)),
@@ -337,8 +398,9 @@ export default class WheelView {
     // A new scroll overrides a settle in progress, or the two fight over `rot`.
     this.killSnap();
 
-    // Negative so the ring turns with the scroll rather than against it.
-    const degPerPx = -(360 / this.tiles.length) / PX_PER_STEP;
+    // Signed so the ring turns with the scroll rather than against it — see
+    // `scrollSign`, which the phone's mirrored arc flips.
+    const degPerPx = (this.scrollSign * (360 / this.tiles.length)) / PX_PER_STEP;
 
     this.scrub.vars.value += scrollDelta(self) * degPerPx;
     this.scrub.invalidate().restart();
@@ -352,13 +414,14 @@ export default class WheelView {
   /**
    * Nearest rotation that leaves a tile sitting on the anchor.
    *
-   * A tile is anchored when `baseAngle(i) + rot === ANCHOR_DEG`, so the resting
-   * rotations are `ANCHOR_DEG − i × step`. Rounding `(rot − ANCHOR_DEG) / step`
+   * A tile is anchored when `baseAngle(i) + rot === anchorDeg`, so the resting
+   * rotations are `anchorDeg − i × step`. Rounding `(rot − anchorDeg) / step`
    * picks whichever of those is closest, which is also always the short way.
    */
   private snapTarget(from: number) {
     const step = 360 / this.tiles.length;
-    return Math.round((from - ANCHOR_DEG) / step) * step + ANCHOR_DEG;
+    const anchor = this.anchorDeg;
+    return Math.round((from - anchor) / step) * step + anchor;
   }
 
   /** Ease the ring onto the tile it came to rest nearest. */
@@ -392,7 +455,7 @@ export default class WheelView {
   private targetRotation(project: number) {
     let best = Infinity;
     for (let i = project; i < this.tiles.length; i += this.projectCount) {
-      const delta = shortest(ANCHOR_DEG - this.baseAngle(i) - this.rot.value);
+      const delta = shortest(this.anchorDeg - this.baseAngle(i) - this.rot.value);
       if (Math.abs(delta) < Math.abs(best)) best = delta;
     }
     return this.rot.value + (Number.isFinite(best) ? best : 0);

@@ -90,16 +90,33 @@ html.is-preloading .fluid_wrap {
   mix-blend-mode: difference;
 }
 
-html.page-work .fluid_wrap {
-  position: absolute;
-  inset: 0;
-  height: auto;
-  margin-top: 0;
-}
-
 /* Scrolling routes — keep the sim as a viewport backdrop, not extra height.
    Without this the wrap stays in flow at `100dvh` (plus its hero pull-up) and
-   pushes the whole document down by a viewport. */
+   pushes the whole document down by a viewport.
+
+   Work is in this list rather than stretched to the document, which is what it
+   used to do, from when the sim was an opaque plate that had to cover every
+   scrollable inch. As a trail it has to be exactly the viewport: the pointer is
+   recorded in client coordinates and the splat divides them by the canvas size,
+   so a canvas taller than the screen puts the trail somewhere it is not and
+   stretches the splat's aspect correction with it — on the work grid that was a
+   2917px-tall canvas against an 800px viewport, and a trail three times the
+   size it should be. */
+/*
+  Work: the trail is a colour window, not ink.
+
+  `mix-blend-mode: saturation` keeps the backdrop's hue and luminosity and takes
+  only the source's saturation, so the canvas painting a flat grey everywhere the
+  trail is *not* (`TrailOverlay`'s inverted mode) drains the page except under the
+  liquid. It has to sit over the content to reach it, hence the z-index — on home
+  the same layer stays underneath, where the copy opts into its own blend.
+*/
+html.page-work .fluid_wrap {
+  z-index: 3;
+  mix-blend-mode: saturation;
+}
+
+html.page-work .fluid_wrap,
 html.page-work-project .fluid_wrap,
 html.page-about .fluid_wrap {
   position: fixed;
