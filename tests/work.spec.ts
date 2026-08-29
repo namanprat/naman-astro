@@ -26,6 +26,10 @@ import {
 for (const view of ["slider", "grid"] as const) {
   test.describe(`${view} view`, () => {
     test.beforeEach(async ({ page }) => {
+      test.skip(
+        view === "grid" && isNarrowNav(),
+        "phone locks /work to slider; grid is desktop-only",
+      );
       await stubWebGL(page);
       await skipPreloader(page);
       await seedSession(page, { "work:view": view });
@@ -216,6 +220,39 @@ test.describe("returning from a hard-loaded project page", () => {
     await expect(page.locator(".gallery")).toHaveCSS("opacity", "1");
 
     expect(await galleryMoves(page, cdp, isTouch())).toBe(true);
+  });
+});
+
+test.describe("phone work locks to slider", () => {
+  test.skip(
+    () => !isNarrowNav(),
+    "below 48rem the gallery is slider-only",
+  );
+
+  test.beforeEach(async ({ page }) => {
+    await stubWebGL(page);
+    await skipPreloader(page);
+  });
+
+  test("a stored grid view still boots the slider and hides the switcher", async ({
+    page,
+  }) => {
+    await seedSession(page, { "work:view": "grid" });
+    await page.goto("/work");
+    await expect(page.locator(".work_wrap")).not.toHaveClass(/is-loading/);
+    await expect(page.locator(".work_wrap")).toHaveAttribute(
+      "data-work-view",
+      "slider",
+    );
+    await expect(page.locator(".work_wrap .view_switcher")).toBeHidden();
+  });
+
+  test("the haptic tile carries a film cover", async ({ page }) => {
+    await page.goto("/work");
+    await expect(page.locator(".work_wrap")).not.toHaveClass(/is-loading/);
+    await expect(
+      page.locator('.gallery_slide[data-slug="haptic"] .gallery_img--film'),
+    ).toHaveCount(1);
   });
 });
 

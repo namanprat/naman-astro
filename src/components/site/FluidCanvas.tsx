@@ -35,13 +35,9 @@ import * as THREE from "three";
  * the colour it is meant to be and only the opted-in text reacts to it. See
  * `.is-trail-invert` in `FluidCanvas.css`.
  *
- * Work runs it inverted, and that is the whole trick behind the colour there.
- * The wrap composites with `mix-blend-mode: saturation`, which takes the
- * *source's* saturation and the backdrop's hue and luminosity. Painting a flat
- * grey everywhere the trail is *not* therefore drains the colour out of the page
- * except under the liquid — images stay full colour where it has passed, and
- * nothing had to be masked or read back to do it. Transparent is the identity
- * for that blend, so the trail itself is simply a hole.
+ * Work used to invert this pass and blend the wrap as `saturation`, which
+ * drained the page and punched a hole for `.is-centered`. Safari mishandled
+ * that over WebGL; tiles now greyscale themselves in CSS.
  */
 const TRAIL_FRAG = /* glsl */ `
 precision highp float;
@@ -51,9 +47,6 @@ uniform vec3 uColor;
 uniform vec2 uResolution;
 uniform float uThreshold;
 uniform float uSoft;
-uniform float uInvert;
-/** Device px, origin bottom-left: x, y, width, height. Zero width disables. */
-uniform vec4 uKeep;
 
 void main() {
   float d = clamp(
@@ -61,19 +54,6 @@ void main() {
   float a = uSoft > 0.0
     ? smoothstep(uThreshold - uSoft * 0.5, uThreshold + uSoft * 0.5, d)
     : step(uThreshold, d);
-  a = mix(a, 1.0 - a, uInvert);
-
-  /* A hole in the drain. Inverted, this layer is what takes the colour out of
-     the page, so anything that has to keep its own is cut out of it rather than
-     lifted above it -- the slider's tiles sit inside a fixed-position gallery,
-     which is a stacking context, and cannot be raised over this canvas at all. */
-  if (uKeep.z > 0.0) {
-    vec2 p = gl_FragCoord.xy;
-    if (p.x >= uKeep.x && p.x <= uKeep.x + uKeep.z &&
-        p.y >= uKeep.y && p.y <= uKeep.y + uKeep.w) {
-      a = 0.0;
-    }
-  }
 
   if (a < 0.01) discard;
   gl_FragColor = vec4(uColor, a);
@@ -90,7 +70,7 @@ void main() {
  *  hero's glyph grid, which stands in the trail. */
 const TRAIL_RENDER_ORDER = 10;
 
-function TrailOverlay({ invert }: { invert: boolean }) {
+function TrailOverlay() {
   const overlay = useCameraOverlay();
   const fluid = useFluidSimStateRef();
   const size = useThree((state) => state.size);
@@ -113,8 +93,6 @@ function TrailOverlay({ invert }: { invert: boolean }) {
       uResolution: { value: new THREE.Vector2(1, 1) },
       uThreshold: { value: 1 },
       uSoft: { value: 0 },
-      uInvert: { value: 0 },
-      uKeep: { value: new THREE.Vector4() },
     }),
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [],
@@ -124,32 +102,7 @@ function TrailOverlay({ invert }: { invert: boolean }) {
     const node = material.current;
     if (!node) return;
     node.uniforms.uFluid.value = fluid.current.dye;
-    node.uniforms.uInvert.value = invert ? 1 : 0;
-
-    /* The focused slide keeps its colour. One `getBoundingClientRect` a frame,
-       and only on the route that drains — the slider is writing transforms every
-       frame anyway, so layout is already dirty. */
-    const keep = node.uniforms.uKeep.value as THREE.Vector4;
-    const active = invert
-      ? document.querySelector(".gallery_slide.is-centered")
-      : null;
-    if (active) {
-      const r = active.getBoundingClientRect();
-      const dpr = state.gl.getPixelRatio();
-      // gl_FragCoord counts from the bottom; a client rect counts from the top.
-      keep.set(
-        r.left * dpr,
-        (window.innerHeight - r.bottom) * dpr,
-        r.width * dpr,
-        r.height * dpr,
-      );
-    } else {
-      keep.set(0, 0, 0, 0);
-    }
-    /* Inverted, the fill is what drains the page. Its hue never lands — only its
-       saturation does — so any neutral serves. */
-    if (invert) node.uniforms.uColor.value.setRGB(0.5, 0.5, 0.5);
-    else node.uniforms.uColor.value.copy(color);
+    node.uniforms.uColor.value.copy(color);
     node.uniforms.uThreshold.value = fluid.current.threshold;
     node.uniforms.uSoft.value = fluid.current.edgeSoftness;
     state.gl.getDrawingBufferSize(node.uniforms.uResolution.value);
@@ -291,11 +244,6 @@ export default function FluidCanvas() {
   /* Hard navigation, no client router (`lib/site/pageTransition.ts`), so the
      island remounts per page and the path at mount is the path. */
   const [home] = useState(() => window.location.pathname === "/");
-  /* Work drains the colour from everything the trail has not touched — see the
-     note on `TrailOverlay`. */
-  const [work] = useState(
-    () => window.location.pathname.replace(/\/$/, "") === "/work",
-  );
 
   return (
     <div className="fluid_wrap" data-fluid aria-hidden="true" ref={setHost}>
@@ -319,7 +267,7 @@ export default function FluidCanvas() {
             resize={{ scroll: false }}
           >
             <FluidBackdrop />
-            <TrailOverlay invert={work} />
+            <TrailOverlay />
             {home && (
               <Suspense fallback={null}>
                 <HeroGlass mobile={mobile} />

@@ -102,18 +102,11 @@ html.is-preloading .fluid_wrap {
    stretches the splat's aspect correction with it — on the work grid that was a
    2917px-tall canvas against an 800px viewport, and a trail three times the
    size it should be. */
-/*
-  Work: the trail is a colour window, not ink.
-
-  `mix-blend-mode: saturation` keeps the backdrop's hue and luminosity and takes
-  only the source's saturation, so the canvas painting a flat grey everywhere the
-  trail is *not* (`TrailOverlay`'s inverted mode) drains the page except under the
-  liquid. It has to sit over the content to reach it, hence the z-index — on home
-  the same layer stays underneath, where the copy opts into its own blend.
-*/
+/* Work: ink over the gallery, same trail paint as home. Saturation lives on
+   the tiles (`.is-centered`), not on this blend — Safari + WebGL +
+   `mix-blend-mode: saturation` was the grey soup on a real iPhone. */
 html.page-work .fluid_wrap {
   z-index: 3;
-  mix-blend-mode: saturation;
 }
 
 html.page-work .fluid_wrap,

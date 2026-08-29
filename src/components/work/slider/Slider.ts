@@ -3,6 +3,7 @@ import { Observer } from "gsap/Observer";
 import verticalLoop from "./verticalLoop";
 import { scrollDelta } from "./scrollDelta";
 import type { RevealChange } from "./Reveal";
+import { isMobileLayout, MOBILE_LAYOUT_MQ } from "@/lib/site/isMobileLayout";
 
 gsap.registerPlugin(Observer);
 
@@ -29,13 +30,6 @@ const MAX_FACTOR = Math.max(...SPEEDS.map((s) => Math.abs(s - 1)));
     Must stay below 0.5 — at 0.5 two neighbours pushed opposite ways would
     exactly close the gap and touch. */
 const PARALLAX_CAP_RATIO = 0.45;
-
-/** Same cutoff as the wheel-label / centred-stack rules in Work.css. */
-export const WORK_GRID_MOBILE_MQ = "(width < 48rem)";
-
-export function isWorkGridMobile() {
-  return window.matchMedia(WORK_GRID_MOBILE_MQ).matches;
-}
 
 type ParallaxItem = {
   el: HTMLElement;
@@ -86,7 +80,7 @@ export default class Slider {
     this.enabled = enabled;
     this.onToggle = onToggle;
     this.onCenterChange = onCenterChange;
-    this.mobileMq = window.matchMedia(WORK_GRID_MOBILE_MQ);
+    this.mobileMq = window.matchMedia(MOBILE_LAYOUT_MQ);
     this.onResize = () => {
       if (this.resizeSuspended) return;
       clearTimeout(this.resizeId);
@@ -134,7 +128,7 @@ export default class Slider {
   /** Re-derive factors and cap for the current viewport. Desktop keeps the
       per-slide speed list; phones share one factor and pan the image instead. */
   private configureParallax() {
-    this.mobile = isWorkGridMobile();
+    this.mobile = isMobileLayout();
 
     const gallery = this.root.querySelector(".gallery") as HTMLElement;
     const gap = parseFloat(getComputedStyle(gallery).rowGap) || 0;

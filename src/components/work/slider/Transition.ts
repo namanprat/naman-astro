@@ -420,7 +420,7 @@ export default class Transition {
   }
 
   async fillContent(slide: HTMLElement, index: number) {
-    const img = slide.querySelector<HTMLImageElement>(".gallery_img");
+    const img = slide.querySelector<HTMLImageElement>("img.gallery_img");
     if (!img) return;
 
     this.groups.forEach((group) => {
