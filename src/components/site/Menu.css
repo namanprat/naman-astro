@@ -37,6 +37,22 @@ html.theme-light.menu-open {
   display: contents;
 }
 
+/*
+  Full-viewport glass overlay. Stacks above the wordmark (`--z--raised`) and
+  below sticky nav (`--z--nav`). Absolute (not fixed) so it scrolls away with
+  the first screen instead of covering manifesto / studio. pointer-events
+  none keeps the HTML lockup clickable and Lenis unblocked.
+*/
+.hero_glass {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: var(--site--screen-height);
+  z-index: calc(var(--z--raised) + 1);
+  pointer-events: none;
+}
+
 /* Name lockup — SVG mask, full grid width */
 .name_hero_contain {
   gap: 0;
@@ -68,12 +84,13 @@ html.theme-light.menu-open {
 /* The painted shape — `--ink` clipped by the mask. aspect-ratio matches
    name-hero.svg so the box has height on WebKit before the sizer <img>
    lays out; a 0-height lockup makes mask-size: 100% resolve to nothing. */
-/* The lockup is a span inside this link — both need to be blocks or the
+/* The lockup is a span inside this box — both need to be blocks or the
    `aspect-ratio` box collapses to an inline run. */
 .name_hero_home {
   display: block;
   width: 100%;
   min-width: 0;
+  pointer-events: none;
 }
 
 .name_hero_lockup {

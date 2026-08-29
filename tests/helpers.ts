@@ -42,7 +42,10 @@ export async function stubWebGL(page: Page) {
       type: string,
       ...rest: unknown[]
     ) {
-      if (String(type).includes("webgl") && this.closest(".fluid_wrap")) {
+      if (
+        String(type).includes("webgl") &&
+        (this.closest(".fluid_wrap") || this.closest(".hero_glass"))
+      ) {
         return null;
       }
       return (original as never as (...args: unknown[]) => unknown).call(

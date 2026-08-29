@@ -1,5 +1,5 @@
 import "./Menu.css";
-import { useRef, useState, useEffect } from "react";
+import { lazy, Suspense, useRef, useState, useEffect } from "react";
 import { flushSync } from "react-dom";
 import { useLenis } from "lenis/react";
 import type Lenis from "lenis";
@@ -38,6 +38,8 @@ import RollingText from "./RollingText";
 import ThemeToggle from "./ThemeToggle";
 import { SITE_NAME } from "@/consts.ts";
 import "@/lib/site/eases";
+
+const HeroGlassCanvas = lazy(() => import("./HeroGlassCanvas"));
 
 /**
  * Write a custom property on `<html>` only when it actually moved.
@@ -1080,6 +1082,13 @@ export default function Menu({ initialPathname = "/" }: MenuProps) {
           ))}
         </div>
       </div>
+      {pathname === "/" ? (
+        <div className="hero_glass" aria-hidden="true">
+          <Suspense fallback={null}>
+            <HeroGlassCanvas />
+          </Suspense>
+        </div>
+      ) : null}
       <div className="hero_chrome" ref={heroChromeRef}>
         <div className="name_hero">
           <div className="name_hero_contain container gap-0">
@@ -1088,16 +1097,9 @@ export default function Menu({ initialPathname = "/" }: MenuProps) {
                     that does: CSS applies `filter` before `mask`, so the chain
                     has to sit above the masked lockup. heroIntro arms it. */}
               <div className="name_hero_gooey">
-                {/* The lockup is Home: on inner pages it is the only mark, and
-                    on home it still has to replay the intro / scroll to top. */}
-                <a
-                  className="name_hero_home"
-                  href="/"
-                  onClick={(e) => {
-                    e.preventDefault();
-                    goTo("/");
-                  }}
-                >
+                {/* Decorative lockup — Home lives on the nav wordmark, which
+                    still replays the intro / scrolls to top. */}
+                <div className="name_hero_home">
                   <span
                     className="name_hero_lockup"
                     role="img"
@@ -1109,7 +1111,7 @@ export default function Menu({ initialPathname = "/" }: MenuProps) {
                       aria-hidden="true"
                     />
                   </span>
-                </a>
+                </div>
               </div>
             </div>
           </div>
@@ -1132,7 +1134,9 @@ export default function Menu({ initialPathname = "/" }: MenuProps) {
                   >
                     <span className="nav_logo_target">
                       <span className="nav_logo_wordmark">
-                        <h5 className="text-style-main">{SITE_NAME}</h5>
+                        <h5 className="text-style-main">
+                          <RollingText>{SITE_NAME}</RollingText>
+                        </h5>
                       </span>
                     </span>
                   </a>
@@ -1281,6 +1285,7 @@ export default function Menu({ initialPathname = "/" }: MenuProps) {
           </div>
         </div>
       </div>
+
       <div className="menu_wrap" ref={menuRef} aria-hidden="true" inert>
         <div
           className={`menu_overlay${aboutInMenu ? " is-about-open" : ""}`}
