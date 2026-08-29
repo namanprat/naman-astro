@@ -256,6 +256,42 @@ test.describe("phone work locks to slider", () => {
       ),
     ).toHaveCount(1);
   });
+
+  test("a tap on the centered tile opens the project", async ({
+    page,
+    context,
+  }) => {
+    await page.goto("/work");
+    await expect(page.locator(".work_wrap")).not.toHaveClass(/is-loading/);
+
+    const point = await page.evaluate(() => {
+      const el = document.querySelector<HTMLElement>(
+        ".gallery_slide.is-centered",
+      );
+      if (!el) return null;
+      const box = el.getBoundingClientRect();
+      return {
+        x: Math.round(box.x + box.width / 2),
+        y: Math.round(box.y + box.height / 2),
+      };
+    });
+    expect(point, "no centered tile to tap").not.toBeNull();
+
+    const cdp = await context.newCDPSession(page);
+    await cdp.send("Input.dispatchTouchEvent", {
+      type: "touchStart",
+      touchPoints: [{ x: point!.x, y: point!.y }],
+    });
+    await page.waitForTimeout(40);
+    await cdp.send("Input.dispatchTouchEvent", {
+      type: "touchEnd",
+      touchPoints: [],
+    });
+
+    await expect
+      .poll(() => rootClasses(page), { timeout: 30_000 })
+      .toContain("work-project-open");
+  });
 });
 
 test.describe("the mobile nav", () => {
