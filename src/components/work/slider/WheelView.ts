@@ -276,10 +276,8 @@ export default class WheelView {
       );
     }
 
-    /* Phone was tile-height (flew) then 2.5× (still too quick). 3× keeps
-       1:1 tracking, takes more finger to turn one slot, and a committed
-       swipe still lands on the next project. */
-    this.pxPerStep = phone ? Math.max(tileHeight * 3, 1) : PX_PER_STEP;
+    /* 1.75×: a mid-screen swipe turns one slot. 3× needed the whole phone. */
+    this.pxPerStep = phone ? Math.max(tileHeight * 1.75, 1) : PX_PER_STEP;
 
     /* On the page root, not the gallery: the label is a sibling of `.gallery`
        and sizes itself against the ring, so it has to inherit this too. The

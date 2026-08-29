@@ -263,6 +263,20 @@ test.describe("phone work locks to slider", () => {
     await expect(page.locator(".work_wrap .view_switcher")).toBeHidden();
   });
 
+  test("the work slug title sits below the nav", async ({ page }) => {
+    await page.goto("/work/t-bonk");
+    await expect(page.locator("html")).toHaveClass(/page-work-project/);
+
+    const gap = await page.evaluate(() => {
+      const nav = document.querySelector(".nav_wrap");
+      const title = document.querySelector(".project_title");
+      if (!nav || !title) return null;
+      return title.getBoundingClientRect().top - nav.getBoundingClientRect().bottom;
+    });
+    expect(gap, "missing nav or title").not.toBeNull();
+    expect(gap).toBeGreaterThan(8);
+  });
+
   test("a tap on the centered tile opens the project", async ({
     page,
     context,

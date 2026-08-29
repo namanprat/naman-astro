@@ -16,11 +16,17 @@ export function themeColorForRoot(
 export function syncThemeColor(
   root: HTMLElement = document.documentElement,
 ): void {
-  let meta = document.querySelector('meta[name="theme-color"]');
-  if (!meta) {
-    meta = document.createElement("meta");
+  const color = themeColorForRoot(root);
+  const metas = [
+    ...document.querySelectorAll('meta[name="theme-color"]'),
+  ];
+  if (!metas.length) {
+    const meta = document.createElement("meta");
     meta.setAttribute("name", "theme-color");
     document.head.appendChild(meta);
+    metas.push(meta);
   }
-  meta.setAttribute("content", themeColorForRoot(root));
+  /* Every tag, including the prefers-color-scheme copies — Safari will
+     otherwise keep a stale media colour and tint the bars brand-orange. */
+  for (const meta of metas) meta.setAttribute("content", color);
 }

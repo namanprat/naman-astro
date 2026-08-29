@@ -77,18 +77,19 @@ const isArchive = Astro.url.pathname === "/archive";
          bar is right before React hydrates. Archive is always dark. */
       (function () {
         var root = document.documentElement;
-        var meta = document.querySelector('meta[name="theme-color"]');
-        if (!meta) {
-          meta = document.createElement("meta");
-          meta.setAttribute("name", "theme-color");
-          document.head.appendChild(meta);
+        var metas = document.querySelectorAll('meta[name="theme-color"]');
+        if (!metas.length) {
+          var created = document.createElement("meta");
+          created.setAttribute("name", "theme-color");
+          document.head.appendChild(created);
+          metas = document.querySelectorAll('meta[name="theme-color"]');
         }
         var color = root.classList.contains("page-archive")
           ? "#101010"
           : root.classList.contains("theme-light")
             ? "#e2e2dd"
             : "#101010";
-        meta.setAttribute("content", color);
+        for (var i = 0; i < metas.length; i++) metas[i].setAttribute("content", color);
       })();
     </script>
   </head>

@@ -26,7 +26,7 @@ html.page-work-project body {
 html.page-work .nav_wrap,
 html.page-work-project .nav_wrap {
   position: fixed;
-  top: var(--nav-marquee-height, 0px);
+  top: var(--site--safe-area-top);
   left: 0;
   right: 0;
 }
@@ -649,15 +649,22 @@ html.work-returning .view_switcher {
     --project--content-start: 1;
   }
 
-  .project_hero {
-    min-height: 0;
-  }
-
   /* Phone only: the hero becomes a top-aligned stack — title in flow at the top
      with the copy beneath it — instead of the desktop lockup that centres
      services and description on an absolutely-centred title. This is also what
-     gives the title somewhere to travel to, so the morph carries it up here and
-     leaves it still on desktop. */
+     gives the title somewhere to travel to, so the morph carries it from the
+     gallery label down here and leaves it still on desktop.
+
+     `--hero-chrome-height` is 0 on these routes (the nav is fixed and skipped
+     by the chrome measure), so pad from the real nav + safe-area or the
+     display title sits on ARCHIVE / CONTACT. */
+  .project_hero {
+    min-height: 0;
+    padding-top: calc(
+      var(--site--safe-area-top) + max(var(--nav-height), 6.5rem) + var(--space-5)
+    );
+  }
+
   .project_hero_contain {
     position: relative;
     inset: auto;

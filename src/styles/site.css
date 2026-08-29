@@ -72,6 +72,36 @@
   }
 }
 
+/* Phone: do not paint WebGL / overlays under Safari's bars — that is how
+   the chrome sampled a cover or the brand and went orange. svh stops at
+   the toolbar; html/body `--background` plus theme-color own the strips. */
+@media (width < 64rem) {
+  :root {
+    --site--screen-height: 100svh;
+  }
+
+  html::before,
+  html::after {
+    content: "";
+    position: fixed;
+    left: 0;
+    right: 0;
+    z-index: var(--z--overlay);
+    background-color: var(--background);
+    pointer-events: none;
+  }
+
+  html::before {
+    top: 0;
+    height: var(--site--safe-area-top);
+  }
+
+  html::after {
+    bottom: 0;
+    height: var(--site--safe-area-bottom);
+  }
+}
+
 @media (width >= 30rem) {
   :root {
     --site-column-count: 6;

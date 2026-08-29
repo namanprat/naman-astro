@@ -43,9 +43,20 @@ const socialImage = image ? new URL(image, Astro.site) : null;
   content="width=device-width, initial-scale=1, viewport-fit=cover, interactive-widget=overlays-content"
 />
 <meta name="theme-color" content="#101010" />
+<meta
+  name="theme-color"
+  media="(prefers-color-scheme: light)"
+  content="#101010"
+/>
+<meta
+  name="theme-color"
+  media="(prefers-color-scheme: dark)"
+  content="#101010"
+/>
+<meta name="color-scheme" content="dark light" />
 <meta name="mobile-web-app-capable" content="yes" />
 <meta name="apple-mobile-web-app-capable" content="yes" />
-<meta name="apple-mobile-web-app-status-bar-style" content="default" />
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
 <title>{pageTitle}</title>
 <meta name="description" content={description} />
 <link rel="canonical" href={canonical} />

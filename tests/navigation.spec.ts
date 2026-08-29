@@ -455,6 +455,7 @@ test("theme-color follows the page theme so Safari chrome can match it", async (
     "content",
     /viewport-fit=cover/,
   );
+  await expect(page.locator('meta[name="theme-color"]')).toHaveCount(3);
   await expect(page.locator('meta[name="theme-color"]')).toHaveAttribute(
     "content",
     "#101010",
@@ -473,6 +474,7 @@ test("archive theme-color stays dark regardless of the stored theme", async ({
   await seedTheme(page, "light");
   await page.goto("/archive");
   await expect(page.locator("html")).toHaveClass(/page-archive/);
+  await expect(page.locator('meta[name="theme-color"]')).toHaveCount(3);
   await expect(page.locator('meta[name="theme-color"]')).toHaveAttribute(
     "content",
     "#101010",
