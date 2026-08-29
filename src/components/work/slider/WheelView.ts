@@ -103,7 +103,7 @@ const WHEEL_SCRUB_S = 0.28;
 
 /** Settle onto the nearest tile once scrolling stops. Soft and short — it is a
     correction to what you already chose, not a movement of its own. */
-const SNAP_S = 0.25;
+const SNAP_S = 0.4;
 const SNAP_EASE = "power2.out";
 
 /** Below this the ring is close enough that snapping would only read as drift. */
@@ -276,9 +276,10 @@ export default class WheelView {
       );
     }
 
-    /* Phone was tile-height (flew) then 2.5× (still too quick). 4× keeps
-       1:1 tracking but takes more finger to turn one slot. */
-    this.pxPerStep = phone ? Math.max(tileHeight * 4, 1) : PX_PER_STEP;
+    /* Phone was tile-height (flew) then 2.5× (still too quick). 3× keeps
+       1:1 tracking, takes more finger to turn one slot, and a committed
+       swipe still lands on the next project. */
+    this.pxPerStep = phone ? Math.max(tileHeight * 3, 1) : PX_PER_STEP;
 
     /* On the page root, not the gallery: the label is a sibling of `.gallery`
        and sizes itself against the ring, so it has to inherit this too. The
