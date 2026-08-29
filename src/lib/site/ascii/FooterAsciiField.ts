@@ -165,8 +165,9 @@ export class FooterAsciiField {
           uTime: { value: 0 },
           uNoise: { value: this.reduced ? 0 : 0.45 },
           uCharNoise: { value: this.reduced ? 0 : CHAR_NOISE },
-          // Holey glyphs at atlas alpha wash to grey on the frost card; opaque
-          // ink is what makes --light-100 actually read as white.
+          // Binary glyph ink (shader thresholds atlas coverage). Straight
+          // alpha wash turned --light-100 grey on the frost; filling the
+          // whole cell made missing-glyph tiles. Opaque silhouette is both.
           uOpaqueGlyphs: { value: 1 },
         },
         transparent: true,

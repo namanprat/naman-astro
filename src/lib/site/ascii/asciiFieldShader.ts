@@ -123,8 +123,15 @@ void main() {
   }
 
   float alpha = chr * flicker;
-  if (alpha < 0.01) discard;
-  if (uOpaqueGlyphs > 0.5) alpha = 1.;
+  if (uOpaqueGlyphs > 0.5) {
+    /* Binary ink: keep the glyph silhouette. Forcing alpha=1 on every
+       surviving fragment (including the 0.01 AA fringe) filled the cell
+       and read as missing-glyph tiles; coverage below half is a hole. */
+    if (chr < 0.5) discard;
+    alpha = 1.;
+  } else if (alpha < 0.01) {
+    discard;
+  }
   float hi = uHasHighlight > 0.5 ? texture2D(uHighlight, vPixelUV).r : 0.;
   gl_FragColor = vec4(mix(uColor, uHighlightColor, hi), alpha);
 }

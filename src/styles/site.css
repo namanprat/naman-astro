@@ -92,9 +92,12 @@
 }
 
 .theme-light {
-  /* Scrim over the frosted surfaces (About panel, footer). Keep enough ink
-     contrast for white type, but leave the liquid readable through the blur. */
-  --surface-accent: color-mix(in srgb, var(--text) 45%, transparent);
+  /* Scrim over the frosted surfaces (About panel, footer). Mix a dark plate,
+     not `--text`: in light mode `--text` is `--grey`, so a grey scrim can
+     never go darker than body copy, and `--light-100` type/ASCII on it
+     washes out. Same transparency as before, darker source, so the liquid
+     still reads through the blur. */
+  --surface-accent: color-mix(in srgb, var(--dark-800) 52%, transparent);
   /* Radius for every frosted surface. Kept shallow on purpose: a heavy one
      over the mostly-flat liquid sim averages the blobs into a uniform tint, so
      the frost stops reading as glass and reads as a plain fill.
