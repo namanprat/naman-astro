@@ -30,12 +30,12 @@ const CARDS: ReadonlyArray<{
   {
     title: "Shape presence",
     description:
-      "We design a brand and a site that feel considered, and worth staying on.",
+      "We design the identity and everywhere it shows up. One thing, not three that nearly match.",
   },
   {
     title: "Send it",
     description:
-      "The site goes live and keeps working as you grow. No rebuild in a year.",
+      "Everything ships together and keeps working as you grow. Nothing to redo in a year.",
   },
 ];
 
