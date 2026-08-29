@@ -77,6 +77,7 @@ import { SITE_NAME } from "@/consts.ts";
 
   .preloader_clip,
   .preloader_card,
+  .preloader_foot,
   .preloader_cta {
     pointer-events: auto;
   }
@@ -126,11 +127,6 @@ import { SITE_NAME } from "@/consts.ts";
   .preloader_foot {
     display: flex;
     flex-flow: row wrap;
-  }
-
-  .preloader_foot > p {
-    min-width: 0;
-    flex: 1 1 100%;
   }
 
   .preloader_cta {
@@ -190,6 +186,8 @@ import { SITE_NAME } from "@/consts.ts";
 
     .preloader_foot > p {
       width: 100%;
+      min-width: 0;
+      flex: 1 1 auto;
     }
 
     .preloader_cta {
