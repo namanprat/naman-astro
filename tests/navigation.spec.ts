@@ -1,4 +1,4 @@
-import { expect, test } from "@playwright/test";
+import { expect, test, type Page } from "@playwright/test";
 import {
   expectNavVisible,
   expectRevealed,
@@ -10,6 +10,16 @@ import {
   skipPreloader,
   stubWebGL,
 } from "./helpers";
+
+async function expectThemeColors(page: Page, color: string) {
+  const metas = page.locator('meta[name="theme-color"]');
+  await expect(metas).toHaveCount(3);
+  await expect
+    .poll(() =>
+      metas.evaluateAll((els) => els.map((el) => el.getAttribute("content"))),
+    )
+    .toEqual([color, color, color]);
+}
 
 /** Home's in-page section jumps and the About panel, which lives on every route. */
 test.beforeEach(async ({ page }) => {
@@ -455,17 +465,10 @@ test("theme-color follows the page theme so Safari chrome can match it", async (
     "content",
     /viewport-fit=cover/,
   );
-  await expect(page.locator('meta[name="theme-color"]')).toHaveCount(3);
-  await expect(page.locator('meta[name="theme-color"]')).toHaveAttribute(
-    "content",
-    "#101010",
-  );
+  await expectThemeColors(page, "#101010");
 
   await page.locator(".nav_wrap .nav_theme_toggle").first().click();
-  await expect(page.locator('meta[name="theme-color"]')).toHaveAttribute(
-    "content",
-    "#e2e2dd",
-  );
+  await expectThemeColors(page, "#e2e2dd");
 });
 
 test("archive theme-color stays dark regardless of the stored theme", async ({
@@ -474,17 +477,10 @@ test("archive theme-color stays dark regardless of the stored theme", async ({
   await seedTheme(page, "light");
   await page.goto("/archive");
   await expect(page.locator("html")).toHaveClass(/page-archive/);
-  await expect(page.locator('meta[name="theme-color"]')).toHaveCount(3);
-  await expect(page.locator('meta[name="theme-color"]')).toHaveAttribute(
-    "content",
-    "#101010",
-  );
+  await expectThemeColors(page, "#101010");
 
   await page.locator(".nav_wrap .nav_theme_toggle").first().click();
-  await expect(page.locator('meta[name="theme-color"]')).toHaveAttribute(
-    "content",
-    "#101010",
-  );
+  await expectThemeColors(page, "#101010");
 });
 
 test("the page-transition cover sits above the nav and ticker", async ({
