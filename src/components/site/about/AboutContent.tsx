@@ -1,5 +1,4 @@
 import { lazy, Suspense, type RefObject } from "react";
-import RollingText from "../RollingText";
 
 /**
  * The About layout, shared verbatim by the desktop overlay (`AboutPanel`) and
@@ -84,20 +83,6 @@ export default function AboutContent({
             story, stay ruthless about what actually moves people, and close the
             gap between who you already are and how the world sees you.
           </h3>
-          <span className="about_panel_cv_clip">
-            <a
-              className="about_panel_cv text-style-main"
-              href="/main-assets/cv.pdf"
-              download
-            >
-              <span className="about_panel_cv_label">
-                <RollingText>Download CV</RollingText>
-              </span>
-              <span className="about_panel_cv_icon" aria-hidden="true">
-                ↗
-              </span>
-            </a>
-          </span>
         </div>
       </div>
 

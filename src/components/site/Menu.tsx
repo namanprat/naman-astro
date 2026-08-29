@@ -152,9 +152,6 @@ const ABOUT_LINES = [
   ".about_panel.is-in-menu .about_panel_col_label",
   ".about_panel.is-in-menu .about_panel_col_list h5",
 ].join(", ");
-/* Rides with the lines but is never split — RollingText has already rewritten
-   it into per-character spans, and SplitText would re-wrap those. */
-const ABOUT_CV = ".about_panel.is-in-menu .about_panel_cv";
 
 /** In-page destinations close the overlay; everything else hands off to the cover. */
 function isInPageMenuNav(path: string): boolean {
@@ -625,9 +622,7 @@ export default function Menu({ initialPathname = "/" }: MenuProps) {
 
   /** Whatever is currently split — the close runs against the live wrappers. */
   const aboutLineTargets = (): Element[] => {
-    const lines = aboutSplitRef.current?.lines ?? [];
-    const cv = document.querySelector(ABOUT_CV);
-    return cv ? [...lines, cv] : [...lines];
+    return aboutSplitRef.current?.lines ?? [];
   };
 
   /* Re-split on every open: line breaks depend on the panel's width, and the

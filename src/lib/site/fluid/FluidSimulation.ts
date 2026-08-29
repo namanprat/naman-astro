@@ -3,8 +3,8 @@
  * theme ink/surface from CSS tokens instead of a difference-blend overlay.
  */
 import * as THREE from "three";
-import { ABOUT_OPEN_CLASS } from "../aboutPanel";
 import { readCssColor, shaderColor } from "../cssColor";
+import { MOBILE_LAYOUT_MQ } from "../isMobileLayout";
 import { prefersReducedMotion } from "../prefersReducedMotion";
 import { reportHomeCanvasReady } from "../preloadAssets";
 import { SWATCH_DARK, SWATCH_LIGHT } from "../siteColors";
@@ -121,6 +121,7 @@ export class FluidSimulation {
   private readonly materials: Materials;
   private readonly abort = new AbortController();
   private readonly motionQuery: MediaQueryList;
+  private readonly layoutQuery: MediaQueryList;
 
   private readonly inkColor = shaderColor(SWATCH_LIGHT);
   private readonly surfaceColor = shaderColor(SWATCH_DARK);
@@ -157,9 +158,6 @@ export class FluidSimulation {
    *  visitor is painting trails themselves. */
   private lastPointerAt = 0;
   private ambientPhase = 0;
-  /** About overlay covers the homepage; keep this sim parked so the bust
-   *  trail isn't fighting another WebGL loop for the same GPU. */
-  private overlayOpen = false;
 
   constructor(canvas: HTMLCanvasElement) {
     this.renderer = new THREE.WebGLRenderer({
@@ -192,11 +190,16 @@ export class FluidSimulation {
       signal,
     });
 
-    /* Class only. Theme and the About overlay are both class state, but the
-       filter used to include `style` — and `Menu` writes custom properties on
-       `<html>`, so every one of those woke this callback into two
-       `getComputedStyle` reads. On a scroll frame that was a forced style
-       recalc per frame for nothing. */
+    this.layoutQuery = window.matchMedia(MOBILE_LAYOUT_MQ);
+    this.layoutQuery.addEventListener("change", this.onLayoutChange, {
+      signal,
+    });
+
+    /* Class only. Theme is class state, but the filter used to include
+       `style` — and `Menu` writes custom properties on `<html>`, so every one
+       of those woke this callback into two `getComputedStyle` reads. On a
+       scroll frame that was a forced style recalc per frame for nothing.
+       About-open must not park this loop: the panel frost samples the sim. */
     const observer = new MutationObserver(this.onThemeMutation);
     observer.observe(document.documentElement, {
       attributes: true,
@@ -205,7 +208,6 @@ export class FluidSimulation {
     signal.addEventListener("abort", () => observer.disconnect());
 
     this.startLoop();
-    this.syncOverlay();
 
     // Opening bloom so the first preloader frame isn't a flat dark plane —
     // deferred one tick so DPR size is committed.
@@ -360,17 +362,7 @@ export class FluidSimulation {
 
   private onThemeMutation = (): void => {
     this.readTheme(true);
-    this.syncOverlay();
   };
-
-  private syncOverlay(): void {
-    const open = document.documentElement.classList.contains(ABOUT_OPEN_CLASS);
-    if (open === this.overlayOpen) return;
-    this.overlayOpen = open;
-    this.mouse.moved = false;
-    if (open) this.stopLoop();
-    else this.startLoop();
-  }
 
   private onResize = (): void => {
     const prevW = this.width;
@@ -382,7 +374,8 @@ export class FluidSimulation {
   };
 
   private onPointerMove = (event: PointerEvent): void => {
-    if (this.reduced || this.overlayOpen) return;
+    if (this.reduced) return;
+    if (this.layoutQuery.matches) return;
 
     const x = event.clientX * this.dpr;
     const y = event.clientY * this.dpr;
@@ -402,6 +395,10 @@ export class FluidSimulation {
   private onMotionChange = (): void => {
     this.reduced = this.motionQuery.matches;
     if (this.reduced) this.mouse.moved = false;
+  };
+
+  private onLayoutChange = (): void => {
+    if (this.layoutQuery.matches) this.mouse.moved = false;
   };
 
   private startLoop(): void {
@@ -432,7 +429,6 @@ export class FluidSimulation {
   }
 
   private frame(dt: number): void {
-    if (this.overlayOpen) return;
     const follow = lerpFactor(dt, COLOR_FOLLOW);
     this.inkColor.lerp(this.inkTarget, follow);
     this.surfaceColor.lerp(this.surfaceTarget, follow);

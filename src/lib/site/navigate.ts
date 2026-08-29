@@ -1,4 +1,11 @@
-import { animateIn, markCovered, PT_COVER_KEY } from "./pageTransition";
+import {
+  animateIn,
+  isLeavePending,
+  markCovered,
+  markLeavePending,
+  PT_COVER_KEY,
+  resetPageTransition,
+} from "./pageTransition";
 import { writeFlag } from "./sessionFlag";
 
 export type GoOptions = {
@@ -26,11 +33,25 @@ export async function go(href: string, options?: GoOptions): Promise<void> {
     return;
   }
 
-  if (options?.alreadyCovered) {
-    markCovered();
-  } else {
-    await animateIn();
+  /* A second click (home slider after Back restores a covered document, or
+     a double tap while the panel is rising) must still leave. Re-tweening
+     the same panel is what left `go()` waiting on a killed timeline. */
+  if (isLeavePending()) {
+    writeFlag(PT_COVER_KEY, "1");
+    window.location.assign(href);
+    return;
   }
-  writeFlag(PT_COVER_KEY, "1");
-  window.location.assign(href);
+
+  markLeavePending();
+  try {
+    if (options?.alreadyCovered) {
+      markCovered();
+    } else {
+      await animateIn();
+    }
+    writeFlag(PT_COVER_KEY, "1");
+    window.location.assign(href);
+  } catch {
+    resetPageTransition();
+  }
 }

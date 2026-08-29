@@ -5,12 +5,14 @@
     min-height: 100svh;
     min-height: 100dvh;
     margin: 0;
+    padding-top: 0;
+    padding-bottom: 0;
     background-color: transparent;
     overflow: clip;
     display: flex;
     flex-direction: column;
     justify-content: center;
-    align-items: stretch;
+    align-items: center;
   }
 
   .team_cylinder {
@@ -40,7 +42,7 @@
   .team_layout {
     width: 100%;
     align-content: center;
-    row-gap: var(--space-5);
+    row-gap: var(--space-8);
   }
 
   /* Span `--site-column-count`, not 12 — a 4-col `.grid.is-12` must not grow

@@ -55,10 +55,10 @@ html.theme-light.menu-open {
 .name_hero_gooey {
   grid-column: 1 / -1;
   min-width: 0;
-  /* em box for the melt: the lockup's height (grid width × 29/100). heroIntro
+  /* em box for the melt: the lockup's height (grid width × 44/363). heroIntro
      parks at 0.450em of this, so the start radius tracks the mark, not a bbox
      that can still be 0 when the island hydrates. */
-  font-size: calc(var(--site--grid-width) * 29 / 100);
+  font-size: calc(var(--site--grid-width) * 44 / 363);
 }
 
 .name_hero_gooey:not(.is-gooey-parked) {
@@ -80,7 +80,7 @@ html.theme-light.menu-open {
   display: block;
   width: 100%;
   min-width: 0;
-  aspect-ratio: 100 / 29;
+  aspect-ratio: 363 / 44;
   background-color: var(--text);
   -webkit-mask-image: url("/main-assets/name-hero.svg");
   -webkit-mask-repeat: no-repeat;
@@ -270,16 +270,6 @@ html.page-about .nav_marquee {
 
 .nav_wrap.is-menu-open {
   z-index: calc(var(--z--menu) + 1);
-}
-
-/* Stay above the rising cover so a navigation never blanks the bar. */
-html.is-page-transitioning .nav_wrap,
-html.is-page-transitioning .nav_wrap.is-menu-open {
-  z-index: calc(var(--z--transition) + 1);
-}
-
-html.is-page-transitioning .nav_marquee {
-  z-index: calc(var(--z--transition) + 2);
 }
 
 .nav_wrap.is-menu-open .nav_grid a,

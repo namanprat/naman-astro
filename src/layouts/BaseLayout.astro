@@ -39,6 +39,7 @@ const isArchive = Astro.url.pathname === "/archive";
         try {
           if (sessionStorage.getItem("pt:cover") === "1") {
             document.documentElement.classList.add("is-page-transitioning");
+            document.documentElement.classList.add("is-page-covered");
           }
         } catch (e) {}
       })();

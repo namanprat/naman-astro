@@ -59,8 +59,7 @@
   --z--menu: 210;
   --z--overlay: 999;
   --z--modal: 9999;
-  /* Page-transition cover — above page content, below the nav so the bar
-     stays visible for the whole cover / uncover. */
+  /* Page-transition cover — above nav, ticker, overlays, and the scrollbar. */
   --z--transition: 2000000;
 }
 
@@ -297,7 +296,10 @@
     will-change: transform;
   }
 
-  html.is-page-transitioning .transition_panel {
+  /* Arrival FOUC only — the departing page must not snap the panel over the
+     nav before GSAP starts the rise. `animateIn` parks at 100% with an inline
+     transform; this class is set pre-paint on the incoming document. */
+  html.is-page-covered .transition_panel {
     transform: translateY(0);
     pointer-events: all;
   }
