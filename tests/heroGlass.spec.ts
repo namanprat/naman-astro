@@ -25,6 +25,9 @@ test("home keeps the logo-then-nav lockup and overlays glass by z-index", async 
   expect(order).not.toContain("hero_glass");
   expect(order).not.toContain("hero_chrome_pad");
 
+  await expect(page.locator("a.name_hero_home")).toHaveCount(0);
+  await expect(page.locator("div.name_hero_home")).toHaveCount(1);
+
   await expect(page.locator(".hero_glass")).toBeVisible();
   await expect(page.locator(".name_hero")).toBeVisible();
   await expect(page.locator(".nav_wrap")).toBeVisible();

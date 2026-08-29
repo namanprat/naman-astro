@@ -84,12 +84,13 @@ html.theme-light.menu-open {
 /* The painted shape — `--ink` clipped by the mask. aspect-ratio matches
    name-hero.svg so the box has height on WebKit before the sizer <img>
    lays out; a 0-height lockup makes mask-size: 100% resolve to nothing. */
-/* The lockup is a span inside this link — both need to be blocks or the
+/* The lockup is a span inside this box — both need to be blocks or the
    `aspect-ratio` box collapses to an inline run. */
 .name_hero_home {
   display: block;
   width: 100%;
   min-width: 0;
+  pointer-events: none;
 }
 
 .name_hero_lockup {

@@ -1102,16 +1102,9 @@ export default function Menu({ initialPathname = "/" }: MenuProps) {
                     that does: CSS applies `filter` before `mask`, so the chain
                     has to sit above the masked lockup. heroIntro arms it. */}
               <div className="name_hero_gooey">
-                {/* The lockup is Home: on inner pages it is the only mark, and
-                    on home it still has to replay the intro / scroll to top. */}
-                <a
-                  className="name_hero_home"
-                  href="/"
-                  onClick={(e) => {
-                    e.preventDefault();
-                    goTo("/");
-                  }}
-                >
+                {/* Decorative lockup — Home lives on the nav wordmark, which
+                    still replays the intro / scrolls to top. */}
+                <div className="name_hero_home">
                   <span
                     className="name_hero_lockup"
                     role="img"
@@ -1123,7 +1116,7 @@ export default function Menu({ initialPathname = "/" }: MenuProps) {
                       aria-hidden="true"
                     />
                   </span>
-                </a>
+                </div>
               </div>
             </div>
           </div>
@@ -1146,7 +1139,9 @@ export default function Menu({ initialPathname = "/" }: MenuProps) {
                   >
                     <span className="nav_logo_target">
                       <span className="nav_logo_wordmark">
-                        <h5 className="text-style-main">{SITE_NAME}</h5>
+                        <h5 className="text-style-main">
+                          <RollingText>{SITE_NAME}</RollingText>
+                        </h5>
                       </span>
                     </span>
                   </a>
