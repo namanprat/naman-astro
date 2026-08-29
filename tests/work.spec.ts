@@ -223,6 +223,41 @@ test.describe("returning from a hard-loaded project page", () => {
   });
 });
 
+test("grid covers stay in colour so the trail can uncover them", async ({
+  page,
+}) => {
+  test.skip(isNarrowNav(), "grid is desktop-only");
+  await stubWebGL(page);
+  await skipPreloader(page);
+  await seedSession(page, { "work:view": "grid" });
+  await page.goto("/work");
+  await expect(page.locator(".work_wrap")).not.toHaveClass(/is-loading/);
+  await expect(page.locator(".work_wrap")).toHaveAttribute(
+    "data-work-view",
+    "grid",
+  );
+
+  await expect(page.locator(".fluid_wrap")).toHaveCSS(
+    "mix-blend-mode",
+    "saturation",
+  );
+  const filter = await page
+    .locator(".gallery_img")
+    .first()
+    .evaluate((el) => getComputedStyle(el).filter);
+  expect(filter).not.toMatch(/saturate\(\s*0/);
+
+  await page.getByRole("button", { name: "Slider" }).click();
+  await expect(page.locator(".work_wrap")).toHaveAttribute(
+    "data-work-view",
+    "slider",
+  );
+  await expect(page.locator(".fluid_wrap")).toHaveCSS(
+    "mix-blend-mode",
+    "normal",
+  );
+});
+
 test("haptic uses the still cover on /work, not the film", async ({
   page,
 }) => {

@@ -385,17 +385,18 @@ html.work-returning .view_switcher {
    the 48rem+ grid width (tablet) out of it, since a tap would otherwise leave a
    tile stuck dim with no hover-out to clear it.
 
-   Opacity only — the slider's binary saturate lives on the ring, not here. */
+   Opacity only. Do not `saturate(0)` the covers: the fluid canvas composites
+   in `saturation` and paints grey everywhere the trail has not reached, so
+   the images have to arrive in colour or there is nothing to uncover. */
 @media (width >= 48rem) and (hover: hover) and (pointer: fine) {
   .work_wrap[data-work-view="grid"] .gallery_img {
     opacity: 0.8;
-    transition: opacity 0.3s ease, filter 0.3s ease;
+    transition: opacity 0.3s ease;
   }
 
   .work_wrap[data-work-view="grid"] .gallery_slide:hover .gallery_img,
   .work_wrap[data-work-view="grid"] .gallery_slide:focus-visible .gallery_img {
     opacity: 1;
-    filter: saturate(1);
   }
 }
 

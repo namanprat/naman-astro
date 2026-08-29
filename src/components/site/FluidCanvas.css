@@ -106,8 +106,23 @@ html.is-preloading .fluid_wrap {
    stretches the splat's aspect correction with it — on the work grid that was a
    2917px-tall canvas against an 800px viewport, and a trail three times the
    size it should be. */
-/* Work: trail stays under the gallery so tiles keep their clicks. The
-   invert/saturation plate used to sit at z-index 3 and eat every tap. */
+/*
+  Work grid: the trail is a colour window, not ink.
+
+  `mix-blend-mode: saturation` keeps the backdrop's hue and luminosity and takes
+  only the source's saturation, so the canvas painting a flat grey everywhere the
+  trail is *not* drains the covers except under the liquid. It has to sit over
+  the tiles to reach them. Pointer-events stay none, so clicks still land.
+
+  Slider is left out on purpose — iPhone Safari + WebGL + this blend was a grey
+  soup, and the phone never opens the grid. The project overlay sits above this
+  layer (`--z--nav - 2`) so case-study colour is untouched.
+*/
+html.page-work:has(.work_wrap[data-work-view="grid"]):not(.work-project-open)
+  .fluid_wrap {
+  z-index: 3;
+  mix-blend-mode: saturation;
+}
 
 html.page-work .fluid_wrap,
 html.page-work-project .fluid_wrap,

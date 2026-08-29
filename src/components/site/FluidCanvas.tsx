@@ -35,9 +35,11 @@ import * as THREE from "three";
  * the colour it is meant to be and only the opted-in text reacts to it. See
  * `.is-trail-invert` in `FluidCanvas.css`.
  *
- * Work used to invert this pass and blend the wrap as `saturation`, which
- * drained the page and punched a hole for `.is-centered`. Safari mishandled
- * that over WebGL; tiles now greyscale themselves in CSS.
+ * Work's grid inverts this pass and blends the wrap as `saturation`. Grey
+ * everywhere the trail is not drains the covers; transparent is that blend's
+ * identity, so the liquid is a hole that lets the original colour through.
+ * The slider keeps CSS saturate — iPhone Safari + WebGL + this blend was the
+ * grey soup, and the phone never sees the grid.
  */
 const TRAIL_FRAG = /* glsl */ `
 precision highp float;
@@ -47,6 +49,7 @@ uniform vec3 uColor;
 uniform vec2 uResolution;
 uniform float uThreshold;
 uniform float uSoft;
+uniform float uInvert;
 
 void main() {
   float d = clamp(
@@ -54,6 +57,7 @@ void main() {
   float a = uSoft > 0.0
     ? smoothstep(uThreshold - uSoft * 0.5, uThreshold + uSoft * 0.5, d)
     : step(uThreshold, d);
+  a = mix(a, 1.0 - a, uInvert);
 
   if (a < 0.01) discard;
   gl_FragColor = vec4(uColor, a);
@@ -69,6 +73,18 @@ void main() {
 /** Above the glass — the trail lies on the logo, not behind it — and below the
  *  hero's glyph grid, which stands in the trail. */
 const TRAIL_RENDER_ORDER = 10;
+
+/** Grid view on `/work`: invert the trail and blend as saturation. Slider and
+ *  the project overlay keep the normal ink pass. */
+function workGridDrain(): boolean {
+  const root = document.documentElement;
+  if (!root.classList.contains("page-work")) return false;
+  if (root.classList.contains("work-project-open")) return false;
+  return (
+    document.querySelector(".work_wrap")?.getAttribute("data-work-view") ===
+    "grid"
+  );
+}
 
 function TrailOverlay() {
   const overlay = useCameraOverlay();
@@ -93,6 +109,7 @@ function TrailOverlay() {
       uResolution: { value: new THREE.Vector2(1, 1) },
       uThreshold: { value: 1 },
       uSoft: { value: 0 },
+      uInvert: { value: 0 },
     }),
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [],
@@ -101,12 +118,16 @@ function TrailOverlay() {
   useFrame((state) => {
     const node = material.current;
     if (!node) return;
+    const invert = workGridDrain();
     node.uniforms.uFluid.value = fluid.current.dye;
-    node.uniforms.uColor.value.copy(color);
+    node.uniforms.uInvert.value = invert ? 1 : 0;
+    /* Inverted, only saturation lands — any neutral serves. */
+    if (invert) node.uniforms.uColor.value.setRGB(0.5, 0.5, 0.5);
+    else node.uniforms.uColor.value.copy(color);
     node.uniforms.uThreshold.value = fluid.current.threshold;
     node.uniforms.uSoft.value = fluid.current.edgeSoftness;
     state.gl.getDrawingBufferSize(node.uniforms.uResolution.value);
-    node.visible = Boolean(fluid.current.dye);
+    node.visible = Boolean(fluid.current.dye) || invert;
   });
 
   return createPortal(
@@ -194,16 +215,19 @@ function FluidBackdrop() {
       threshold: sim.dyeThreshold,
       edgeSoftness: sim.dyeEdgeSoftness,
     };
-    scene.background = sim.output.texture;
+    scene.background = null;
     /*
      * The plate is for `MeshTransmissionMaterial`'s buffer, not for the page.
-     * The canvas composites with `mix-blend-mode: difference` over the content
-     * now, where anything opaque would repaint the whole page — so the screen
-     * pass gets no background at all and the real one shows through, while the
-     * refraction pass, which renders to a target, still gets the plate to bend.
+     * A screen-pass plate is opaque, which kills both home's difference on
+     * copy and work's saturation hole — discard would reveal the plate, not
+     * a transparent identity. Target renders still get the plate to bend.
      */
     scene.onBeforeRender = (renderer) => {
-      if (renderer.getRenderTarget() === null) scene.background = null;
+      const current = simulation.current;
+      scene.background =
+        current && renderer.getRenderTarget()
+          ? current.output.texture
+          : null;
     };
     return () => {
       scene.onBeforeRender = () => {};
@@ -230,9 +254,6 @@ function FluidBackdrop() {
     fluidState.current.active = sim.dyeActive;
     fluidState.current.threshold = sim.dyeThreshold;
     fluidState.current.edgeSoftness = sim.dyeEdgeSoftness;
-    /* Resize and MeshTransmissionMaterial both touch this slot; pin it every
-       frame so the display pass is what three actually draws. */
-    scene.background = sim.output.texture;
   }, -1);
   return null;
 }
