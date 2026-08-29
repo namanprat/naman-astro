@@ -22,7 +22,7 @@ import { createPortal, useFrame, useThree } from "@react-three/fiber";
 import * as THREE from "three";
 import { readCssColor, shaderColor } from "@/lib/site/cssColor";
 import { SWATCH_DARK } from "@/lib/site/siteColors";
-import { useThemeLight } from "@/lib/site/ascii/useThemeInk";
+import { useThemeInk, useThemeLight } from "@/lib/site/ascii/useThemeInk";
 import { getDufornAsciiAtlas } from "@/lib/site/ascii/asciiAtlas";
 import { buildAsciiGrid } from "@/lib/site/ascii/asciiGrid";
 import {
@@ -46,22 +46,39 @@ const ASCII_LAYER = 1;
  * two layers it gates. The glyphs' own look is the ASCII panel's `hero` folder,
  * which owns that lattice for every surface on the site. */
 
-export default function HeroAsciiReveal() {
+type HeroAsciiRevealProps = {
+  /**
+   * False to draw every glyph the matte reaches, rather than only the ones the
+   * liquid is over. The phone has no trail to mask with — the sim ignores
+   * pointer input at that width — so the mark is the ASCII, not a reveal of it.
+   */
+  masked?: boolean;
+};
+
+export default function HeroAsciiReveal({
+  masked = true,
+}: HeroAsciiRevealProps) {
   const { fitted } = useHeroLogo();
   const camera = useThree((state) => state.camera);
   const scene = useThree((state) => state.scene);
   const size = useThree((state) => state.size);
   const fluid = useFluidSimStateRef();
-  /* The glyphs take the page's own surface token. They are drawn into the trail,
-     which writes white for the difference blend, so they need a colour that
-     survives that inversion — and `--dark` is the one already defined against
-     `--background` on both themes.
-     `useThemeLight` is already subscribed to the theme class, so it doubles as
+  /* `useThemeLight` is already subscribed to the theme class, so it doubles as
      the signal to re-read the token. */
   const themeLight = useThemeLight();
-  const ground = useMemo(
-    () => shaderColor(readCssColor("--dark", SWATCH_DARK)),
-    [themeLight],
+  const ink = useThemeInk("#e2e2dd");
+  const glyph = useMemo(
+    () =>
+      /* Masked, the glyphs stand inside the trail, which writes white for the
+         difference blend — so they take the page's surface token, the one
+         colour that survives that inversion on both themes. Unmasked there is
+         no liquid under them, because they *are* the mark, so they take the
+         page's ink instead. `--dark` there would be black on black. */
+      masked
+        ? shaderColor(readCssColor("--dark", SWATCH_DARK))
+        : shaderColor(ink),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [themeLight, masked, ink],
   );
 
   const gridMaterial = useRef<THREE.ShaderMaterial>(null);
@@ -123,8 +140,8 @@ export default function HeroAsciiReveal() {
       uAtlas: { value: null as THREE.Texture | null },
       uHighlight: { value: null as THREE.Texture | null },
       uGlyphCount: { value: 1 },
-      uColor: { value: ground.clone() },
-      uHighlightColor: { value: ground.clone() },
+      uColor: { value: glyph.clone() },
+      uHighlightColor: { value: glyph.clone() },
       uHasHighlight: { value: 0 },
       uWarp: { value: tuning.warp },
       uGamma: { value: tuning.gamma },
@@ -212,8 +229,8 @@ export default function HeroAsciiReveal() {
     const material = gridMaterial.current;
     if (!material) return;
     const u = material.uniforms;
-    u.uColor.value.copy(ground);
-    u.uHighlightColor.value.copy(ground);
+    u.uColor.value.copy(glyph);
+    u.uHighlightColor.value.copy(glyph);
     u.uWarp.value = tuning.warp;
     u.uGamma.value = tuning.gamma;
     u.uGlyphScale.value = tuning.glyphScale;
@@ -221,7 +238,7 @@ export default function HeroAsciiReveal() {
     u.uNoise.value = tuning.noise;
     u.uTime.value += delta;
     u.uFluid.value = dye;
-    u.uHasFluid.value = dye ? 1 : 0;
+    u.uHasFluid.value = masked && dye ? 1 : 0;
     u.uFluidThreshold.value = reveal.maskThreshold;
     u.uFluidSoft.value = reveal.maskSoftness;
     u.uOpacity.value = reveal.glyphOpacity;

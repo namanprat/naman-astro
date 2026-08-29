@@ -592,6 +592,37 @@ html:not(:has(.hero)) .name_hero {
     display: none;
   }
 
+  /*
+    Home, phone: the nav cluster is pinned to the top of the screen and the
+    wordmark sits under it, rather than the two being centred as one block.
+
+    Pinned, not ordered. A flex column on the chrome puts the nav first just as
+    well, but it also becomes the sticky containing block — and then the nav
+    only sticks for as long as the chrome is on screen, which is to say it
+    scrolls away with the hero. `position: fixed` is the thing that actually
+    keeps it there for the whole page.
+
+    The cost is that a pinned nav reserves no space, and `.hero`'s pull-up and
+    the fluid wrap's are both computed from the chrome's in-flow height. That is
+    handled where it is measured: `Menu.tsx` drops any chrome child that is
+    `fixed` out of the total, so the pull-up follows on its own.
+  */
+  html:has(.hero) .nav_wrap {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    width: 100%;
+  }
+
+  /* Clear the pinned nav, then the gap. Every consumer reads this one var, so
+     `.hero`'s pull-up needs no second number. */
+  html:has(.hero) {
+    --hero-chrome-pad: calc(
+      var(--site--safe-area-top) + var(--nav-height, 0px) + var(--space-8)
+    );
+  }
+
   :root {
     /* `--site-margin`, not `--site-gutter`: the bar's block padding has to read
        as the same inset as the page's side padding, and the sides come from

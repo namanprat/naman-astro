@@ -59,53 +59,10 @@
   }
 
   .process_card_media {
-    --_mark: var(--space-3);
-    --_hair: var(--border-width);
-    --_dot: color-mix(in srgb, currentcolor 22%, transparent);
     position: relative;
     flex: none;
     width: 100%;
     aspect-ratio: 1;
-    background-image:
-      linear-gradient(currentcolor, currentcolor),
-      linear-gradient(currentcolor, currentcolor),
-      linear-gradient(currentcolor, currentcolor),
-      linear-gradient(currentcolor, currentcolor),
-      linear-gradient(currentcolor, currentcolor),
-      linear-gradient(currentcolor, currentcolor),
-      linear-gradient(currentcolor, currentcolor),
-      linear-gradient(currentcolor, currentcolor),
-      radial-gradient(circle, var(--_dot) 0.05rem, transparent 0.06rem);
-    background-size:
-      var(--_mark) var(--_hair),
-      var(--_hair) var(--_mark),
-      var(--_mark) var(--_hair),
-      var(--_hair) var(--_mark),
-      var(--_mark) var(--_hair),
-      var(--_hair) var(--_mark),
-      var(--_mark) var(--_hair),
-      var(--_hair) var(--_mark),
-      0.5rem 0.5rem;
-    background-position:
-      left top,
-      left top,
-      right top,
-      right top,
-      left bottom,
-      left bottom,
-      right bottom,
-      right bottom,
-      center;
-    background-repeat:
-      no-repeat,
-      no-repeat,
-      no-repeat,
-      no-repeat,
-      no-repeat,
-      no-repeat,
-      no-repeat,
-      no-repeat,
-      repeat;
   }
 
   .process_card_stage {

@@ -187,6 +187,57 @@
     pointer-events: none;
   }
 
+  /*
+    Hero footnotes, phone only — the tagline down one edge and a scroll cue on
+    the other, the way the reference lays them out. Desktop already carries the
+    tagline in the manifesto directly under the fold, so this is the width where
+    it earns the space.
+
+    Absolute inside `.hero`, which is the empty spacer that already reserves the
+    first viewport, so both sit against the screen edges without a second box to
+    keep in sync with the chrome.
+  */
+  .hero_note,
+  .hero_scroll {
+    display: none;
+  }
+
+  @media (width < 48rem) {
+    .hero_note,
+    .hero_scroll {
+      display: block;
+      position: absolute;
+      bottom: calc(var(--site--safe-area-bottom, 0px) + var(--site-margin));
+      color: var(--text);
+    }
+
+    .hero_note {
+      right: var(--site-margin);
+      margin: 0;
+      max-width: none;
+      /* Reads bottom-to-top up the right edge. */
+      writing-mode: vertical-rl;
+      transform: rotate(180deg);
+      text-align: left;
+    }
+
+    .hero_scroll {
+      left: var(--site-margin);
+      /* The section is `pointer-events: none` so a letterboxed edge cannot eat
+         a tap meant for the page; the one thing here that is pressable opts
+         back in. */
+      pointer-events: auto;
+      width: var(--space-6);
+      color: var(--text);
+    }
+
+    .hero_scroll svg {
+      display: block;
+      width: 100%;
+      height: auto;
+    }
+  }
+
   .studio {
     position: relative;
     /* No `z-index`, same reason as `.hero` above. */

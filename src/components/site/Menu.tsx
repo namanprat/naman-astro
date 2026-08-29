@@ -345,8 +345,11 @@ export default function Menu({ initialPathname = "/" }: MenuProps) {
       for (const child of chrome.children) {
         const el = child as HTMLElement;
         // In-flow children only: anything absolutely positioned reserves no
-        // space, so summing its `offsetHeight` would add it to the chrome twice.
-        if (getComputedStyle(el).position === "absolute") continue;
+        // space, so summing its `offsetHeight` would add it to the chrome
+        // twice. `fixed` is in for the same reason: the phone hero pins the nav
+        // to the viewport, and a pinned nav reserves nothing.
+        const position = getComputedStyle(el).position;
+        if (position === "absolute" || position === "fixed") continue;
         height += el.offsetHeight;
       }
       setRootVar("--hero-chrome-height", `${height}px`);
@@ -357,7 +360,14 @@ export default function Menu({ initialPathname = "/" }: MenuProps) {
          input and oscillate. */
       const lockup = chrome.querySelector<HTMLElement>(".name_hero_contain");
       const nav = navContainerRef.current;
-      const content = (lockup?.offsetHeight ?? 0) + (nav?.offsetHeight ?? 0);
+      const navHeight = nav?.offsetHeight ?? 0;
+      /* Its own var, because the phone hero pins the nav and then has to clear
+         it: the wordmark's pad is `nav height + gap` there, and CSS has no way
+         to measure a sibling. */
+      setRootVar("--nav-height", `${navHeight}px`);
+      const navFixed =
+        !!nav && getComputedStyle(nav).position === "fixed";
+      const content = (lockup?.offsetHeight ?? 0) + (navFixed ? 0 : navHeight);
       setRootVar("--hero-chrome-content", `${content}px`);
 
       /* Mobile About clients col 2 sits on the Archive/Contact cluster.

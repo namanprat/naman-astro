@@ -14,8 +14,26 @@ import Footer from "./Footer.tsx";
 ---
 
 <HomeLenis client:only="react" />
-<section class="hero" id="hero" aria-label="Home"></section>
-<div class="studio">
+<section class="hero" id="hero" aria-label="Home">
+  {/* Hero footnotes, phone only. The section is otherwise an empty spacer that
+      reserves the first viewport, which makes it the one box already sized to
+      the screen these two can hang off. */}
+  <p class="hero_note text-style-main">
+    Brand, web, and motion<br />for early-stage companies.
+  </p>
+  <a class="hero_scroll" href="#studio">
+    <span class="sr-only">Skip to the studio</span>
+    <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+      <path
+        d="M12 4v15m0 0 5.5-5.5M12 19l-5.5-5.5"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="1.5"
+        stroke-linecap="square"></path>
+    </svg>
+  </a>
+</section>
+<div class="studio" id="studio">
   {/* No client directive: markup only, no hooks — Astro renders it to HTML.
       It was `client:only`, which kept the page's `h1` out of the document
       entirely until React had booted. */}

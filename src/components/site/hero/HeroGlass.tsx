@@ -35,6 +35,9 @@ import { HeroLogoShell } from "./HeroLogoShell";
 import HeroWordmark from "./HeroWordmark";
 import "./HeroGlass.css";
 
+/** The phone runs the mark larger — it is the only thing in that viewport. */
+const MOBILE_SCALE = 1.2;
+
 /** True once the page is visible — the preloader hides the hero anyway, so
  *  painting behind it is a transmission FBO per frame for nothing. */
 function usePageRevealed(): boolean {
@@ -151,9 +154,13 @@ export default function HeroGlass({ mobile }: { mobile: boolean }) {
       <HeroWordmark />
 
       <Suspense fallback={null}>
-        <HeroLogoShell animate={!reduced}>
-          <HeroGlassModel material={material} />
-          {!reduced && !mobile && <HeroAsciiReveal />}
+        {/* The phone gets the mark as ASCII outright — no glass under it, and
+            no mask, since there is no pointer trail at that width to mask with.
+            It also costs less than the glass it replaces: one matte pass rather
+            than the transmission material's two full-scene renders. */}
+        <HeroLogoShell animate={!reduced} scale={mobile ? MOBILE_SCALE : 1}>
+          {!mobile && <HeroGlassModel material={material} />}
+          {!reduced && <HeroAsciiReveal masked={!mobile} />}
         </HeroLogoShell>
       </Suspense>
     </>

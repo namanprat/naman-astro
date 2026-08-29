@@ -68,10 +68,16 @@ function useHeroLogoFitted(): HeroLogoFitted | null {
 
 type HeroLogoShellProps = {
   animate: boolean;
+  /** Multiplies the tuned scale. The phone runs the mark larger. */
+  scale?: number;
   children: ReactNode;
 };
 
-export function HeroLogoShell({ animate, children }: HeroLogoShellProps) {
+export function HeroLogoShell({
+  animate,
+  scale = 1,
+  children,
+}: HeroLogoShellProps) {
   const groupRef = useRef<THREE.Group>(null);
   const scaleRef = useRef<THREE.Group>(null);
   const spin = useRef(0);
@@ -100,7 +106,7 @@ export function HeroLogoShell({ animate, children }: HeroLogoShellProps) {
     0,
     tuning.modelDepth,
   ]).width;
-  const worldScale = fitted ? fitted.unit * width * tuning.modelScale : 1;
+  const worldScale = fitted ? fitted.unit * width * tuning.modelScale * scale : 1;
 
   const value = useMemo(
     (): HeroLogoContextValue => ({
