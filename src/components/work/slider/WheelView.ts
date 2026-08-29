@@ -52,10 +52,10 @@ const SPACING_RATIO = 2.13;
  * Phone tiles are cards rather than thumbnails, so at 2.13 a tightened ring fell
  * under 1.5 and dropped to a single copy — six positions instead of twelve,
  * which doubles the angular step and leaves nothing sitting on the anchor. At
- * 1.5 the ring keeps its twelve. Dropped to 1.2 so a tighter radius (half
- * the old gap) still rounds to two copies on a short phone.
+ * 1.5 the ring keeps its twelve, and the gap that leaves between 62vw cards is
+ * still most of a card.
  */
-const PHONE_SPACING_RATIO = 1.2;
+const PHONE_SPACING_RATIO = 1.5;
 
 /**
  * Anchor sits at the top of the circle. Screen y grows downward, so that is
@@ -88,10 +88,10 @@ const PHONE_ANCHOR_DEG = 180;
  * figure), but a smaller circle fits more of its own curve on screen, so the
  * column bows visibly instead of running nearly straight.
  *
- * 0.75 left ~90px between 62vw cards on a 390pt phone; 0.71 cut 20%.
- * 0.63 is half that remaining gap.
+ * 0.63 put 62vw cards on top of each other. 0.75 is the last radius
+ * that still leaves a visible gap on a 390pt phone.
  */
-const PHONE_RADIUS_VH = 0.63;
+const PHONE_RADIUS_VH = 0.75;
 
 /** Pixels of wheel per tile step, taken from the reference: it advanced one
     thumbnail per `innerWidth * 0.45` (≈576px at 1280 wide). Held as distance

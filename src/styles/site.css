@@ -27,6 +27,13 @@
   --site--column-count: var(--site-column-count);
   --site--safe-area-top: env(safe-area-inset-top, 0px);
   --site--safe-area-bottom: env(safe-area-inset-bottom, 0px);
+  /* One top inset for the nav wordmark and the first block under it —
+     home lockup, /work label, /work/[slug] hero, /about. */
+  --lockup-top: calc(var(--site--safe-area-top) + var(--site-margin));
+  --lockup-gap: var(--site-margin);
+  --chrome-clear: calc(
+    var(--lockup-top) + var(--nav-height, 0px) + var(--site-margin)
+  );
   /* Paint height for the layers that own the whole screen — the WebGL stages and
      the transition cover. `dvh` stops where mobile Safari's chrome starts, so a
      layer sized to it leaves the status-bar and toolbar strips showing bare

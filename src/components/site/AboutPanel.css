@@ -752,7 +752,7 @@ html.theme-light .about_panel.is-in-menu {
      block axis. */
   width: var(--site-width);
   padding-block: 0;
-  padding-top: calc(var(--nav-offset, var(--site--nav-offset)) + var(--site-margin));
+  padding-top: var(--chrome-clear);
   padding-bottom: var(--section-space-small);
 }
 

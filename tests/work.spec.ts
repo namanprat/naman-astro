@@ -250,6 +250,46 @@ test.describe("phone work locks to slider", () => {
     await skipPreloader(page);
   });
 
+  test("the nav wordmark shares one top inset on home, work, slug, and about", async ({
+    page,
+  }) => {
+    const topOf = async (url: string) => {
+      await page.goto(url);
+      await expect(page.locator(".nav_logo").first()).toBeVisible();
+      return page
+        .locator(".nav_logo")
+        .first()
+        .evaluate((el) => Math.round(el.getBoundingClientRect().top));
+    };
+
+    const home = await topOf("/");
+    const work = await topOf("/work");
+    const slug = await topOf("/work/t-bonk");
+    const about = await topOf("/about");
+
+    expect(work, "work vs home").toBe(home);
+    expect(slug, "slug vs home").toBe(home);
+    expect(about, "about vs home").toBe(home);
+  });
+
+  test("phone slider tiles leave a gap", async ({ page }) => {
+    await page.goto("/work");
+    await expect(page.locator(".work_wrap")).not.toHaveClass(/is-loading/);
+
+    const minGap = await page.evaluate(() => {
+      const wrap = document.querySelector(".work_wrap");
+      const tile = document.querySelector<HTMLElement>(".gallery_slide");
+      if (!wrap || !tile) return 0;
+      const radius = Number.parseFloat(
+        getComputedStyle(wrap).getPropertyValue("--wheel-radius"),
+      );
+      const count = document.querySelectorAll(".gallery_slide").length;
+      return (2 * Math.PI * radius) / count - tile.offsetHeight;
+    });
+
+    expect(minGap).toBeGreaterThan(8);
+  });
+
   test("a stored grid view still boots the slider and hides the switcher", async ({
     page,
   }) => {

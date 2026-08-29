@@ -26,7 +26,7 @@ html.page-work-project body {
 html.page-work .nav_wrap,
 html.page-work-project .nav_wrap {
   position: fixed;
-  top: var(--site--safe-area-top);
+  top: var(--nav-marquee-height, 0px);
   left: 0;
   right: 0;
 }
@@ -258,6 +258,11 @@ html.work-returning .work_wrap[data-work-view="slider"] .gallery::after {
    by height instead and grows to ~330, so the bare ratio *enlarged* the label to
    137px rather than shrinking it. This can only ever take size away. */
 @media (width < 48rem) {
+  html.page-work .nav_wrap,
+  html.page-work-project .nav_wrap {
+    top: var(--lockup-top);
+  }
+
   /*
     Phone slider: the ring's centre is off the left edge and its anchor is at 3
     o'clock (`WheelView`), so the tiles run as a column down the middle and the
@@ -277,9 +282,7 @@ html.work-returning .work_wrap[data-work-view="slider"] .gallery::after {
   }
 
   .work_wrap[data-work-view="slider"] .gallery_label {
-    top: calc(
-      var(--site--safe-area-top) + var(--nav-height, 0px) + var(--space-3)
-    );
+    top: var(--chrome-clear);
     transform: translate(-50%, 0);
   }
 
@@ -674,12 +677,11 @@ html.work-returning .view_switcher {
      gallery label down here and leaves it still on desktop.
 
      `--hero-chrome-height` is 0 on these routes (the nav is fixed and skipped
-     by the chrome measure), so pad from the real nav + Lumos gutter. */
+     by the chrome measure). Same `--chrome-clear` as the gallery label,
+     the about page, and the home lockup. */
   .project_hero {
     min-height: 0;
-    padding-top: calc(
-      var(--site--safe-area-top) + var(--nav-height) + var(--site-gutter)
-    );
+    padding-top: var(--chrome-clear);
   }
 
   .project_hero_contain {
