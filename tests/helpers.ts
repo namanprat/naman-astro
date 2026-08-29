@@ -26,12 +26,20 @@ export function isNarrowNav(): boolean {
  * *between* two touch-move frames and pull the drag back to where it started,
  * so every timing-sensitive assertion here would be measuring the container.
  *
- * Scoped to the fluid canvas by its `.fluid_wrap` parent: the homepage's team
- * carousel and the archive are three.js too, and refusing every WebGL context
- * takes those islands down with it — the homepage then never mounts and has
- * nothing to scroll.
+ * Scoped by parent — `.fluid_wrap` for the sim, `.hero_glass` for the frosted
+ * hero — rather than refused outright: the homepage's team carousel and the
+ * archive are three.js too, and taking every WebGL context away takes those
+ * islands down with it, after which the homepage never mounts and has nothing
+ * to scroll.
  *
- * Set `E2E_WEBGL=1` to run against the real canvas where a GPU is available.
+ * The hero is here for the same 2fps reason, twice over: its transmission
+ * material renders the whole scene into an FBO on every frame, on top of the
+ * sim. `HeroGlassCanvas` probes for a context before it mounts anything and
+ * leaves the DOM lockup painting when there is none, so refusing it here is a
+ * supported path rather than a crash — which is also what a visitor with no
+ * WebGL2 gets.
+ *
+ * Set `E2E_WEBGL=1` to run against the real canvases where a GPU is available.
  */
 export async function stubWebGL(page: Page) {
   if (process.env.E2E_WEBGL === "1") return;
@@ -42,7 +50,10 @@ export async function stubWebGL(page: Page) {
       type: string,
       ...rest: unknown[]
     ) {
-      if (String(type).includes("webgl") && this.closest(".fluid_wrap")) {
+      if (
+        String(type).includes("webgl") &&
+        (this.closest(".fluid_wrap") || this.closest(".hero_glass"))
+      ) {
         return null;
       }
       return (original as never as (...args: unknown[]) => unknown).call(

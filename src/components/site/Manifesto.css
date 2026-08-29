@@ -5,7 +5,8 @@
     margin: 0;
     background-color: transparent;
     color: var(--text);
-    padding-bottom: 50vh;
+    padding-top: 10vh;
+    padding-bottom: 40vh;
   }
 
   .manifesto_layout {

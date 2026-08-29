@@ -41,6 +41,10 @@ const NAV_LINES =
 /** Survives hard navigations in this tab; first visible page plays the nav. */
 const NAV_INTRO_KEY = "nav:intro-done";
 
+/** Set while a WebGL surface owns the mark, so `Menu.css` can stop painting the
+ *  DOM lockup without taking it out of layout or the a11y tree. */
+const WEBGL_CLASS = "is-hero-webgl";
+
 /** codegrid's timing — the melt needs the full 1.5s to read as gooey. */
 const GOOEY_S = 1.5;
 const NAV_S = 0.9;
@@ -69,9 +73,73 @@ const GOOEY_MIN_MQ = "(width >= 64rem)";
 type HomeIntroSession = {
   replay: () => void;
   dispose: () => void;
+  /** Drop the DOM mark's filter when a WebGL surface takes the wordmark over. */
+  releaseDomWordmark: () => void;
 };
 
 let session: HomeIntroSession | null = null;
+
+/* ── Wordmark cue channel ──────────────────────────────────────────────────
+ *
+ * The glass hero renders the wordmark inside its own scene — that is the only
+ * way `MeshTransmissionMaterial` can refract it, since transmission samples the
+ * WebGL scene and never the DOM. The melt has to go with it.
+ *
+ * This module stays the single owner of *when*: it holds `PAGE_REVEALED_EVENT`,
+ * the once-per-tab nav flag, the reduced-motion bail and `replayHomeIntro`. A
+ * WebGL surface subscribes and gets told what to be doing; it decides how to
+ * paint it.
+ *
+ * `startedAt` is why a cue is a value rather than a callback. The surface is a
+ * lazy chunk behind a GLB fetch, so it can subscribe mid-melt or after it —
+ * carrying the start time lets it seek its own tween to the right frame instead
+ * of restarting the entrance under the visitor.
+ */
+
+export type WordmarkCue =
+  | { kind: "park"; blurPx: number; threshold: boolean }
+  | {
+      kind: "play";
+      blurPx: number;
+      threshold: boolean;
+      duration: number;
+      startedAt: number;
+    }
+  | { kind: "settle" };
+
+type WordmarkListener = (cue: WordmarkCue) => void;
+
+const wordmarkListeners = new Set<WordmarkListener>();
+let wordmarkCue: WordmarkCue = { kind: "settle" };
+
+function emitWordmark(cue: WordmarkCue): void {
+  wordmarkCue = cue;
+  wordmarkListeners.forEach((listener) => listener(cue));
+}
+
+/** True once a WebGL surface has claimed the mark. */
+function hasWordmarkSurface(): boolean {
+  return wordmarkListeners.size > 0;
+}
+
+/**
+ * Claim the wordmark for a WebGL surface. The current cue is delivered
+ * synchronously, so a late subscriber lands in the right state. Returns the
+ * unsubscribe, which hands the mark back to the DOM.
+ */
+export function subscribeWordmark(listener: WordmarkListener): () => void {
+  wordmarkListeners.add(listener);
+  document.documentElement.classList.add(WEBGL_CLASS);
+  // The DOM half may already be mid-melt or parked at a blur; drop it now that
+  // something else is painting the mark.
+  session?.releaseDomWordmark();
+  listener(wordmarkCue);
+  return () => {
+    wordmarkListeners.delete(listener);
+    if (hasWordmarkSurface()) return;
+    document.documentElement.classList.remove(WEBGL_CLASS);
+  };
+}
 
 /**
  * The mark carries the filter chain on itself rather than on a child, unlike
@@ -91,6 +159,26 @@ function startBlur(gooey: HTMLElement): string {
   return blurPx(gooey, GOOEY_BLUR_EM);
 }
 
+/**
+ * `canRunGooey`, restated for a surface that has no `#blur-matrix` to check —
+ * a WebGL scene resolves the threshold in its own shader, so the one branch
+ * that does not carry over is the missing-filter fallback.
+ *
+ * `blurPx: 0` is "no melt at all": the sub-`GOOEY_MIN_MQ` case the DOM path
+ * skips, for the same reason it skips it there.
+ */
+function meltPlan(gooeyEl: HTMLElement | null): {
+  blurPx: number;
+  threshold: boolean;
+} {
+  const radius = gooeyEl ? parseFloat(startBlur(gooeyEl)) || 0 : 0;
+  if (usesSoftGooey()) return { blurPx: radius, threshold: false };
+  if (window.matchMedia(GOOEY_MIN_MQ).matches) {
+    return { blurPx: radius, threshold: true };
+  }
+  return { blurPx: 0, threshold: false };
+}
+
 function createSession(): HomeIntroSession {
   const gooeyEl = document.querySelector<HTMLElement>(GOOEY);
   const lines = Array.from(document.querySelectorAll<HTMLElement>(NAV_LINES));
@@ -99,6 +187,22 @@ function createSession(): HomeIntroSession {
   let tl: gsap.core.Timeline | null = null;
   let waiting = false;
   let skipNav = readFlag(NAV_INTRO_KEY) === "1";
+
+  /**
+   * Strip the DOM half back to a plain, unfiltered mark. Called when a WebGL
+   * surface takes the wordmark over mid-flight — the nav timeline is left
+   * running, only the tween on the mark goes.
+   */
+  const releaseDomWordmark = () => {
+    if (!gooeyEl) return;
+    gsap.killTweensOf(gooeyEl);
+    clearGooeyBlur(gooeyEl);
+    gooeyEl.classList.remove(GOOEY_ARMED);
+    gooeyEl.style.filter = "";
+    // The visibility gate in `Menu.css` keys off this class, and
+    // `tests/helpers.ts` reads it. It stays on whoever is painting.
+    gooeyEl.classList.add(GOOEY_PARKED);
+  };
 
   const settleNav = () => {
     if (!lines.length) return;
@@ -115,13 +219,8 @@ function createSession(): HomeIntroSession {
   const settle = () => {
     tl?.kill();
     tl = null;
-    if (gooeyEl) {
-      gsap.killTweensOf(gooeyEl);
-      clearGooeyBlur(gooeyEl);
-      gooeyEl.classList.remove(GOOEY_ARMED);
-      gooeyEl.style.filter = "";
-      gooeyEl.classList.add(GOOEY_PARKED);
-    }
+    releaseDomWordmark();
+    emitWordmark({ kind: "settle" });
     settleNav();
   };
 
@@ -132,7 +231,12 @@ function createSession(): HomeIntroSession {
     clearGooeyBlur(gooeyEl);
     gooeyEl.style.filter = "";
 
-    if (gooey) {
+    emitWordmark({ kind: "park", ...meltPlan(gooeyEl) });
+
+    // A WebGL surface owns the mark: the lockup underneath is layout and a11y
+    // only, so park it visible and unfiltered rather than at a blur nothing
+    // will tween back down.
+    if (gooey && !hasWordmarkSurface()) {
       setGooeyBlur(gooey, startBlur(gooey));
       gooey.classList.add(GOOEY_ARMED, GOOEY_PARKED);
       return;
@@ -156,7 +260,19 @@ function createSession(): HomeIntroSession {
     waiting = false;
     tl?.kill();
     tl = gsap.timeline();
-    if (gooey) {
+
+    const webgl = hasWordmarkSurface();
+    // Emitted whichever half is painting, and before the DOM tween is built: a
+    // surface that subscribes mid-melt reads `startedAt` off this cue and seeks
+    // to the same frame instead of restarting the entrance.
+    emitWordmark({
+      kind: "play",
+      ...meltPlan(gooeyEl),
+      duration: GOOEY_S,
+      startedAt: performance.now(),
+    });
+
+    if (gooey && !webgl) {
       const from = startBlur(gooey);
       setGooeyBlur(gooey, from);
       gooey.classList.add(GOOEY_ARMED, GOOEY_PARKED);
@@ -175,7 +291,7 @@ function createSession(): HomeIntroSession {
         },
       );
     } else if (gooeyEl) {
-      gooeyEl.classList.add(GOOEY_PARKED);
+      releaseDomWordmark();
     }
     if (includeNav && !skipNav && lines.length) {
       markNavIntroDone();
@@ -187,7 +303,10 @@ function createSession(): HomeIntroSession {
           ease: "introHop",
           stagger: NAV_STAGGER,
         },
-        gooey ? 0.15 : 0,
+        // Let the mark start resolving before the links arrive. `gooey` alone
+        // is the DOM test; on the WebGL path the melt is real whenever
+        // `meltPlan` hands back a radius, including under soft mode.
+        gooey || meltPlan(gooeyEl).blurPx > 0 ? 0.15 : 0,
       );
     } else {
       settleNav();
@@ -229,14 +348,14 @@ function createSession(): HomeIntroSession {
   if (prefersReducedMotion()) {
     settle();
     markNavIntroDone();
-    return { replay: settle, dispose };
+    return { replay: settle, dispose, releaseDomWordmark };
   }
 
   park(!skipNav);
   if (isPageRevealed()) play(!skipNav);
   else armWait();
 
-  return { replay, dispose };
+  return { replay, dispose, releaseDomWordmark };
 }
 
 /** Parks the melt at `0.450em` and plays once the page is visible. */

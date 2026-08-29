@@ -117,6 +117,27 @@ function warmBust(): void {
   }
 }
 
+/**
+ * Same treatment for the hero glass, and for the same reason: importing the
+ * module runs its top-level `useGLTF.preload`, so the 300KB logo lands in drei's
+ * cache on idle time rather than in front of the ENTER button.
+ *
+ * ponytail: unlike the bust this one *is* on the page the visitor is looking at,
+ * so it is a warm rather than a gate only because the mark underneath it paints
+ * without it — the glass arriving a beat late costs nothing.
+ */
+function warmHeroGlass(): void {
+  if (window.location.pathname !== "/") return;
+  const run = () => {
+    void import("@/components/site/hero/HeroGlassCanvas");
+  };
+  if ("requestIdleCallback" in window) {
+    window.requestIdleCallback(run, { timeout: 2000 });
+  } else {
+    setTimeout(run, 600);
+  }
+}
+
 /** Kick off every segment. Resolves when all of them settle or the failsafe fires. */
 export function startPreload(): Promise<void> {
   // Grain is `display: none` below 48rem — do not register it, so its weight
@@ -148,7 +169,10 @@ export function startPreload(): Promise<void> {
     ).then(completeAll),
   ]);
   // Deliberately not chained into the returned promise: the caller gates ENTER
-  // on this, and the bust must not be part of that wait.
-  void settled.then(warmBust);
+  // on this, and neither warm may be part of that wait.
+  void settled.then(() => {
+    warmBust();
+    warmHeroGlass();
+  });
   return settled;
 }
