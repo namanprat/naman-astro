@@ -87,8 +87,11 @@ const PHONE_ANCHOR_DEG = 180;
  * not change with radius (a fixed angular step makes every size a similar
  * figure), but a smaller circle fits more of its own curve on screen, so the
  * column bows visibly instead of running nearly straight.
+ *
+ * 0.75 left ~90px between 62vw cards on a 390pt phone; 0.71 is that gap
+ * minus 20% without dropping a ring copy.
  */
-const PHONE_RADIUS_VH = 0.75;
+const PHONE_RADIUS_VH = 0.71;
 
 /** Pixels of wheel per tile step, taken from the reference: it advanced one
     thumbnail per `innerWidth * 0.45` (≈576px at 1280 wide). Held as distance

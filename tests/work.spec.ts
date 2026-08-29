@@ -263,6 +263,23 @@ test.describe("phone work locks to slider", () => {
     await expect(page.locator(".work_wrap .view_switcher")).toBeHidden();
   });
 
+  test("work and slug titles share the Lumos display size", async ({
+    page,
+  }) => {
+    await page.goto("/work");
+    await expect(page.locator(".work_wrap")).not.toHaveClass(/is-loading/);
+    const workSize = await page
+      .locator(".gallery_label")
+      .evaluate((el) => getComputedStyle(el).fontSize);
+
+    await page.goto("/work/t-bonk");
+    const slugSize = await page
+      .locator(".project_title")
+      .evaluate((el) => getComputedStyle(el).fontSize);
+
+    expect(slugSize).toBe(workSize);
+  });
+
   test("the work slug title sits below the nav", async ({ page }) => {
     await page.goto("/work/t-bonk");
     await expect(page.locator("html")).toHaveClass(/page-work-project/);

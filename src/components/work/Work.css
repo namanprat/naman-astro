@@ -108,6 +108,16 @@ html.page-work-project main {
   text-align: center;
   color: var(--text);
   transition: opacity 0.35s ease;
+  /* Lumos display — same tokens as `.project_title`. A phone `font-size`
+     override used to shrink this off `--display` and the slug h1 then
+     lost it to the `h1` rule. */
+  font-family: var(--display-font-family);
+  font-size: var(--display);
+  font-weight: var(--display-font-weight);
+  line-height: var(--display-line-height);
+  letter-spacing: var(--display-letter-spacing);
+  text-transform: var(--display-text-transform);
+  text-wrap: var(--display-text-wrap);
   /* No filter here: the `.gooey_reveal` class in the markup puts the chain on
      the inner instead, so the soft-mode rule in site.css already covers this
      label and it needs no `html.is-gooey-soft` override of its own.
@@ -271,7 +281,6 @@ html.work-returning .work_wrap[data-work-view="slider"] .gallery::after {
       var(--site--safe-area-top) + var(--nav-height, 0px) + var(--space-3)
     );
     transform: translate(-50%, 0);
-    font-size: min(3.2rem, 13vw);
   }
 
   /* Points left at the anchored tile, from just outside its right edge. The
@@ -501,6 +510,15 @@ html.work-returning .view_switcher {
   pointer-events: none;
   text-align: center;
   color: var(--text);
+  /* Beat the `h1` type rule so the slug matches the gallery label's Lumos
+     display, not `--h1`. */
+  font-family: var(--display-font-family);
+  font-size: var(--display);
+  font-weight: var(--display-font-weight);
+  line-height: var(--display-line-height);
+  letter-spacing: var(--display-letter-spacing);
+  text-transform: var(--display-text-transform);
+  text-wrap: var(--display-text-wrap);
 }
 
 .project_services {
@@ -656,12 +674,11 @@ html.work-returning .view_switcher {
      gallery label down here and leaves it still on desktop.
 
      `--hero-chrome-height` is 0 on these routes (the nav is fixed and skipped
-     by the chrome measure), so pad from the real nav + safe-area or the
-     display title sits on ARCHIVE / CONTACT. */
+     by the chrome measure), so pad from the real nav + Lumos gutter. */
   .project_hero {
     min-height: 0;
     padding-top: calc(
-      var(--site--safe-area-top) + max(var(--nav-height), 6.5rem) + var(--space-5)
+      var(--site--safe-area-top) + var(--nav-height) + var(--site-gutter)
     );
   }
 
@@ -696,8 +713,7 @@ html.work-returning .view_switcher {
     top: auto;
     left: auto;
     transform: none;
-    /* `%` band, same number as `--site--grid-width` inside a full-bleed hero. */
-    width: var(--site-width);
+    width: var(--site--grid-width);
     margin-inline: auto;
     pointer-events: auto;
     text-align: center;
