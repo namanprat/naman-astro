@@ -31,35 +31,26 @@ html.theme-light.menu-open {
 /*
   Chrome over the hero. display:contents so sticky nav is not trapped in a
   short parent — children participate in the page flow; ResizeObserver still
-  measures the pad + .nav_wrap + .name_hero via chrome.children (not the
-  3D slot, whose height is derived from those).
+  measures .name_hero + .nav_wrap via chrome.children.
 */
 .hero_chrome {
   display: contents;
 }
 
-.hero_chrome_pad {
-  height: var(--hero-chrome-pad);
-  pointer-events: none;
-}
-
-html:not(:has(.hero)) .hero_chrome_pad {
-  display: none;
-}
-
-.hero_model {
-  position: relative;
-  z-index: calc(var(--z--raised) + 1);
+/*
+  Full-viewport glass overlay. Stacks above the wordmark (`--z--raised`) and
+  below sticky nav (`--z--nav`). Absolute (not fixed) so it scrolls away with
+  the first screen instead of covering manifesto / studio. pointer-events
+  none keeps the HTML lockup clickable and Lenis unblocked.
+*/
+.hero_glass {
+  position: absolute;
+  top: 0;
+  left: 0;
   width: 100%;
-  height: calc(
-    100svh - var(--hero-chrome-pad, 0px) - var(--hero-chrome-content, 0px)
-  );
-  min-height: 12rem;
-  pointer-events: auto;
-}
-
-html:not(:has(.hero)) .hero_model {
-  display: none;
+  height: var(--site--screen-height);
+  z-index: calc(var(--z--raised) + 1);
+  pointer-events: none;
 }
 
 /* Name lockup — SVG mask, full grid width */
@@ -137,18 +128,11 @@ html:not(:has(.hero)) .hero_model {
   --hero-chrome-pad: max(calc(var(--site--safe-area-top) + var(--site-margin)), calc((100svh - var(--hero-chrome-content, 0px)) / 2));
 }
 
-/* Home: fill the first viewport (nav, sculpture, wordmark) instead of
-   vertically centering a short cluster. The pad is a non-sticky spacer
-   above the bar so sticky nav does not carry it. */
-html:has(.hero) {
-  --hero-chrome-pad: calc(var(--site--safe-area-top) + var(--site-margin));
-}
-
 .name_hero {
   position: relative;
   z-index: var(--z--raised);
   width: 100%;
-  padding-top: 0;
+  padding-top: var(--hero-chrome-pad);
   box-sizing: border-box;
 }
 
@@ -705,10 +689,6 @@ html:not(:has(.hero)) .name_hero {
 
   .name_hero_gooey {
     grid-column: 1 / -1;
-  }
-
-  .hero_model {
-    pointer-events: none;
   }
 
   /* No phone-only sticky lockup. The SVG scrolls away with the hero and the

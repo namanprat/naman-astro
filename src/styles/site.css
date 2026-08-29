@@ -185,14 +185,6 @@
     pointer-events: none;
   }
 
-  /* Chrome now fills the first viewport (pad + nav + model + lockup), so the
-     empty #hero spacer has to pull up by a full screen, not just the old
-     lockup+nav cluster. */
-  html:has(.hero_model) .hero {
-    margin-top: -100svh;
-    margin-top: -100dvh;
-  }
-
   .studio {
     position: relative;
     z-index: 2;

@@ -1,19 +1,21 @@
 /**
  * Home hero sculpture: duforn-old `newlogo.glb` with the baked chrome stripped
- * and a shared frosted MeshPhysicalMaterial in its place.
+ * and drei's MeshTransmissionMaterial in its place.
  *
- * Interaction matches logo-3d.js — OrbitControls (no pan/zoom, auto-rotate)
- * plus a scroll-linked yaw — without letting the rig steal Lenis on phones.
+ * The HTML lockup stays in the chrome (gooey intro, a11y, click). A matching
+ * wordmark plane is rendered only into the transmission buffer so refraction
+ * can see it without covering the DOM mark.
  */
 import "./HeroGlassCanvas.css";
 import {
-  Center,
   Environment,
   Lightformer,
-  OrbitControls,
+  MeshTransmissionMaterial,
   useGLTF,
+  useTexture,
 } from "@react-three/drei";
-import { Canvas, useFrame } from "@react-three/fiber";
+import { Canvas, useFrame, useThree } from "@react-three/fiber";
+import { Leva, useControls } from "leva";
 import {
   Component,
   Suspense,
@@ -25,142 +27,217 @@ import {
   type ReactNode,
 } from "react";
 import * as THREE from "three";
-import { prefersReducedMotion } from "@/lib/site/prefersReducedMotion";
-import { hasFinePointerHover } from "@/lib/site/hasFinePointerHover";
+import { useThemeInk } from "@/lib/site/ascii/useThemeInk";
 import {
   HERO_SCENE_URL,
+  HERO_WORDMARK_URL,
   canMountHeroGlass,
-  getHeroGlass,
-  subscribeHeroGlass,
-  type HeroGlassControls,
+  heroGlassGuiEnabled,
 } from "@/lib/site/heroGlass";
-import { ensureHeroGlassGui } from "@/lib/site/heroGlassGui";
+import { prefersReducedMotion } from "@/lib/site/prefersReducedMotion";
 
 const DRACO_PATH = "/draco/gltf/";
 const MODEL_UNIT = 1;
 const SCROLL_YAW = 0.001;
 const CAMERA_Z = 2.6;
 const CAMERA_FOV = 28;
+const WORDMARK_Z = -0.55;
+const AUTO_ROTATE = 0.25;
+
+const _origin = new THREE.Vector3();
+const _ndc = new THREE.Vector3();
+const _dir = new THREE.Vector3();
 
 useGLTF.setDecoderPath(DRACO_PATH);
 
-function applyGlass(
-  mat: THREE.MeshPhysicalMaterial,
-  c: HeroGlassControls,
-): void {
-  mat.color.set(c.color);
-  mat.transmission = c.transmission;
-  mat.roughness = c.roughness;
-  mat.thickness = c.thickness;
-  mat.ior = c.ior;
-  mat.envMapIntensity = c.envMapIntensity;
-  mat.opacity = c.opacity;
-  mat.transparent = c.opacity < 1 || c.transmission > 0;
-  mat.depthWrite = c.opacity >= 1;
-  mat.needsUpdate = true;
-}
-
-function prepareGlassScene(
-  scene: THREE.Object3D,
-  material: THREE.MeshPhysicalMaterial,
-): { root: THREE.Object3D; scale: number } {
-  const root = scene.clone(true);
-  let meshCount = 0;
-
-  root.traverse((child) => {
+function findFirstMesh(scene: THREE.Object3D): THREE.Mesh | null {
+  let found: THREE.Mesh | null = null;
+  scene.traverse((child) => {
+    if (found) return;
     const mesh = child as THREE.Mesh;
-    if (!mesh.isMesh) return;
-    const name = `${mesh.name} ${
-      Array.isArray(mesh.material) ? mesh.material[0]?.name : mesh.material?.name
-    }`;
-    if (/water/i.test(name)) {
-      mesh.visible = false;
-      return;
-    }
-    meshCount += 1;
-    mesh.material = material;
-    mesh.castShadow = false;
-    mesh.receiveShadow = false;
+    if (mesh.isMesh && mesh.geometry) found = mesh;
   });
+  return found;
+}
 
-  if (meshCount === 0) return { root, scale: 1 };
+function extractGeometry(scene: THREE.Object3D): THREE.BufferGeometry | null {
+  const source = findFirstMesh(scene);
+  if (!source) return null;
 
-  root.updateMatrixWorld(true);
-  const size = new THREE.Box3().setFromObject(root).getSize(new THREE.Vector3());
+  const geom = source.geometry.clone();
+  source.updateWorldMatrix(true, false);
+  const pos = new THREE.Vector3();
+  const quat = new THREE.Quaternion();
+  const scale = new THREE.Vector3();
+  source.matrixWorld.decompose(pos, quat, scale);
+  geom.applyQuaternion(quat);
+  geom.scale(scale.x, scale.y, scale.z);
+  geom.computeBoundingBox();
+  geom.center();
+  const size = geom.boundingBox?.getSize(new THREE.Vector3()) ?? new THREE.Vector3();
   const longest = Math.max(size.x, size.y, size.z, 1e-6);
-  return { root, scale: MODEL_UNIT / longest };
+  const fit = MODEL_UNIT / longest;
+  geom.scale(fit, fit, fit);
+  return geom;
 }
 
-function GlassModel({
-  material,
-}: {
-  material: THREE.MeshPhysicalMaterial;
-}) {
-  const { scene } = useGLTF(HERO_SCENE_URL, DRACO_PATH);
-  const fitted = useMemo(
-    () => prepareGlassScene(scene, material),
-    [scene, material],
-  );
-  return (
-    <Center>
-      <primitive object={fitted.root} scale={fitted.scale} />
-    </Center>
-  );
+function hitPlaneZ(
+  camera: THREE.Camera,
+  ndcX: number,
+  ndcY: number,
+  targetZ: number,
+  out: THREE.Vector3,
+): THREE.Vector3 {
+  _ndc.set(ndcX, ndcY, 0.5).unproject(camera);
+  _origin.copy(camera.position);
+  _dir.copy(_ndc).sub(_origin).normalize();
+  const t = Math.abs(_dir.z) < 1e-6 ? 0 : (targetZ - _origin.z) / _dir.z;
+  return out.copy(_origin).addScaledVector(_dir, t);
 }
 
-function HeroRig({
-  material,
-  reducedMotion,
-}: {
-  material: THREE.MeshPhysicalMaterial;
-  reducedMotion: boolean;
-}) {
-  const groupRef = useRef<THREE.Group>(null);
-  const autoYaw = useRef(0);
-  const finePointer = useMemo(() => hasFinePointerHover(), []);
+function WordmarkPlane() {
+  const meshRef = useRef<THREE.Mesh>(null);
+  const texture = useTexture(HERO_WORDMARK_URL);
+  const ink = useThemeInk("#ffffff");
+  const { camera, gl } = useThree();
 
   useEffect(() => {
-    const sync = () => applyGlass(material, getHeroGlass());
-    sync();
-    return subscribeHeroGlass(sync);
-  }, [material]);
+    texture.colorSpace = THREE.SRGBColorSpace;
+    texture.anisotropy = 8;
+    texture.premultiplyAlpha = true;
+    texture.needsUpdate = true;
+  }, [texture]);
+
+  /* Visible for MeshTransmissionMaterial's FBO pass (priority 0), hidden for
+     the main render so the HTML lockup shows through the transparent canvas. */
+  useFrame(() => {
+    const mesh = meshRef.current;
+    if (!mesh) return;
+    mesh.visible = true;
+
+    const el = document.querySelector(".name_hero_lockup");
+    if (!(el instanceof HTMLElement)) return;
+
+    const rect = el.getBoundingClientRect();
+    const canvas = gl.domElement.getBoundingClientRect();
+    if (canvas.width < 1 || canvas.height < 1) return;
+
+    const toNdc = (x: number, y: number) => ({
+      x: ((x - canvas.left) / canvas.width) * 2 - 1,
+      y: -((y - canvas.top) / canvas.height) * 2 + 1,
+    });
+
+    const mid = toNdc(rect.left + rect.width / 2, rect.top + rect.height / 2);
+    const east = toNdc(rect.right, rect.top + rect.height / 2);
+    const south = toNdc(rect.left + rect.width / 2, rect.bottom);
+
+    const center = hitPlaneZ(camera, mid.x, mid.y, WORDMARK_Z, new THREE.Vector3());
+    const right = hitPlaneZ(camera, east.x, east.y, WORDMARK_Z, new THREE.Vector3());
+    const bottom = hitPlaneZ(camera, south.x, south.y, WORDMARK_Z, new THREE.Vector3());
+
+    mesh.position.copy(center);
+    mesh.scale.set(
+      Math.max(right.distanceTo(center) * 2, 1e-4),
+      Math.max(bottom.distanceTo(center) * 2, 1e-4),
+      1,
+    );
+  }, -1);
+
+  useFrame(() => {
+    const mesh = meshRef.current;
+    if (mesh) mesh.visible = false;
+  }, 1);
+
+  return (
+    <mesh ref={meshRef} renderOrder={-1} frustumCulled={false}>
+      <planeGeometry args={[1, 1]} />
+      <meshBasicMaterial
+        map={texture}
+        color={ink}
+        transparent
+        depthWrite={false}
+        toneMapped={false}
+        side={THREE.DoubleSide}
+      />
+    </mesh>
+  );
+}
+
+function GlassMesh({
+  thickness,
+  roughness,
+  transmission,
+  ior,
+  chromaticAberration,
+  backside,
+  anisotropicBlur,
+}: {
+  thickness: number;
+  roughness: number;
+  transmission: number;
+  ior: number;
+  chromaticAberration: number;
+  backside: boolean;
+  anisotropicBlur: number;
+}) {
+  const { scene } = useGLTF(HERO_SCENE_URL, DRACO_PATH);
+  const geometry = useMemo(() => extractGeometry(scene), [scene]);
+
+  useEffect(() => {
+    return () => geometry?.dispose();
+  }, [geometry]);
+
+  if (!geometry) return null;
+
+  return (
+    <mesh geometry={geometry}>
+      <MeshTransmissionMaterial
+        thickness={thickness}
+        roughness={roughness}
+        transmission={transmission}
+        ior={ior}
+        chromaticAberration={chromaticAberration}
+        backside={backside}
+        anisotropicBlur={anisotropicBlur}
+        samples={6}
+        resolution={256}
+      />
+    </mesh>
+  );
+}
+
+function HeroRig({ reducedMotion }: { reducedMotion: boolean }) {
+  const groupRef = useRef<THREE.Group>(null);
+  const autoYaw = useRef(0);
+  const materialProps = useControls({
+    thickness: { value: 0.2, min: 0, max: 3, step: 0.05 },
+    roughness: { value: 0, min: 0, max: 1, step: 0.1 },
+    transmission: { value: 1, min: 0, max: 1, step: 0.1 },
+    ior: { value: 1.2, min: 0, max: 3, step: 0.1 },
+    chromaticAberration: { value: 0.02, min: 0, max: 1 },
+    backside: { value: true },
+    anisotropicBlur: { value: 0.3, min: 0, max: 1, step: 0.01 },
+  });
 
   useFrame((_, delta) => {
     const group = groupRef.current;
     if (!group) return;
-    const c = getHeroGlass();
-    applyGlass(material, c);
-    group.scale.setScalar(c.scale);
-
     const scrollYaw =
       typeof window === "undefined" ? 0 : window.scrollY * SCROLL_YAW;
-    const offset = (c.rotateY * Math.PI) / 180;
-
     if (reducedMotion) {
-      group.rotation.set(0, offset, 0);
+      group.rotation.set(0, scrollYaw, 0);
       return;
     }
-
-    autoYaw.current += (c.autoRotateSpeed * delta) / 4;
-    group.rotation.set(0, autoYaw.current + offset + scrollYaw, 0);
+    autoYaw.current += AUTO_ROTATE * delta;
+    group.rotation.set(0, autoYaw.current + scrollYaw, 0);
   });
 
   return (
     <>
+      <WordmarkPlane />
       <group ref={groupRef}>
-        <Suspense fallback={null}>
-          <GlassModel material={material} />
-        </Suspense>
+        <GlassMesh {...materialProps} />
       </group>
-      {!reducedMotion && (
-        <OrbitControls
-          enableDamping
-          enablePan={false}
-          enableZoom={false}
-          autoRotate={false}
-          enabled={finePointer}
-        />
-      )}
     </>
   );
 }
@@ -216,7 +293,7 @@ function useHeroVisible(): boolean {
   const [active, setActive] = useState(true);
 
   useEffect(() => {
-    const el = document.querySelector(".hero_model");
+    const el = document.querySelector(".hero_glass");
     if (!el) return;
     const io = new IntersectionObserver(
       ([entry]) => setActive(entry.isIntersecting),
@@ -233,30 +310,19 @@ export default function HeroGlassCanvas() {
   const [alive, setAlive] = useState(() => canMountHeroGlass());
   const reducedMotion = useMemo(() => prefersReducedMotion(), []);
   const active = useHeroVisible();
-  const material = useMemo(() => {
-    const mat = new THREE.MeshPhysicalMaterial({
-      metalness: 0,
-      side: THREE.DoubleSide,
-      toneMapped: true,
-    });
-    applyGlass(mat, getHeroGlass());
-    return mat;
-  }, []);
-
-  useEffect(() => {
-    void ensureHeroGlassGui();
-  }, []);
-
-  useEffect(() => {
-    return () => material.dispose();
-  }, [material]);
+  const showGui = useMemo(() => heroGlassGuiEnabled(), []);
 
   if (!alive) return null;
 
   return (
     <ModelErrorBoundary onError={() => setAlive(false)}>
+      <Leva
+        hidden={!showGui}
+        collapsed
+        titleBar={{ title: "Glass" }}
+      />
       <Canvas
-        className="hero_model_canvas"
+        className="hero_glass_canvas"
         frameloop={active ? "always" : "never"}
         dpr={[1, 1.5]}
         camera={{ fov: CAMERA_FOV, position: [0, 0, CAMERA_Z], near: 0.1, far: 40 }}
@@ -273,8 +339,10 @@ export default function HeroGlassCanvas() {
         }}
       >
         <ambientLight intensity={0.15} />
-        <HeroRig material={material} reducedMotion={reducedMotion} />
-        <GlassLights />
+        <Suspense fallback={null}>
+          <HeroRig reducedMotion={reducedMotion} />
+          <GlassLights />
+        </Suspense>
       </Canvas>
     </ModelErrorBoundary>
   );

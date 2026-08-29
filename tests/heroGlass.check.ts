@@ -1,29 +1,18 @@
 /**
- * Self-check for the hero glass tuning store.
+ * Self-check for the hero glass helpers.
  *   npm run test:unit
  */
 import assert from "node:assert/strict";
 import {
-  HERO_GLASS_DEFAULTS,
-  getHeroGlass,
-  resetHeroGlass,
-  serializeHeroGlass,
+  HERO_SCENE_URL,
+  HERO_WORDMARK_URL,
+  canMountHeroGlass,
+  heroGlassGuiEnabled,
 } from "../src/lib/site/heroGlass.ts";
 
-resetHeroGlass();
-const live = getHeroGlass();
-assert.equal(live.transmission, HERO_GLASS_DEFAULTS.transmission);
-assert.equal(live.roughness, HERO_GLASS_DEFAULTS.roughness);
-assert.equal(live.color, HERO_GLASS_DEFAULTS.color);
-
-live.roughness = 0.8;
-live.scale = 1.4;
-const json = serializeHeroGlass();
-assert.match(json, /"roughness": 0.8/);
-assert.match(json, /"scale": 1.4/);
-
-resetHeroGlass();
-assert.equal(getHeroGlass().roughness, HERO_GLASS_DEFAULTS.roughness);
-assert.equal(getHeroGlass().scale, HERO_GLASS_DEFAULTS.scale);
+assert.equal(HERO_SCENE_URL, "/models/hero-scene.glb");
+assert.equal(HERO_WORDMARK_URL, "/main-assets/name-hero.svg");
+assert.equal(canMountHeroGlass(), false);
+assert.equal(heroGlassGuiEnabled(), false);
 
 console.log("heroGlass: all assertions passed");

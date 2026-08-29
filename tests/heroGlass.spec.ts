@@ -6,7 +6,7 @@ test.beforeEach(async ({ page }) => {
   await skipPreloader(page);
 });
 
-test("the hero glass slot sits between the nav and the wordmark", async ({
+test("home keeps the logo-then-nav lockup and overlays glass by z-index", async ({
   page,
 }) => {
   await page.goto("/");
@@ -20,18 +20,31 @@ test("the hero glass slot sits between the nav and the wordmark", async ({
     );
   });
 
-  const nav = order.indexOf("nav_wrap");
-  const model = order.indexOf("hero_model");
-  const logo = order.indexOf("name_hero");
-  expect(nav).toBeGreaterThanOrEqual(0);
-  expect(model).toBeGreaterThan(nav);
-  expect(logo).toBeGreaterThan(model);
+  expect(order[0]).toBe("name_hero");
+  expect(order[1]).toBe("nav_wrap");
+  expect(order).not.toContain("hero_glass");
+  expect(order).not.toContain("hero_chrome_pad");
 
-  await expect(page.locator(".hero_model")).toBeVisible();
+  await expect(page.locator(".hero_glass")).toBeVisible();
+  await expect(page.locator(".name_hero")).toBeVisible();
+  await expect(page.locator(".nav_wrap")).toBeVisible();
+
+  const stack = await page.evaluate(() => {
+    const z = (sel: string) =>
+      Number.parseInt(getComputedStyle(document.querySelector(sel)!).zIndex, 10);
+    return {
+      logo: z(".name_hero"),
+      glass: z(".hero_glass"),
+      nav: z(".nav_wrap"),
+    };
+  });
+
+  expect(stack.glass).toBeGreaterThan(stack.logo);
+  expect(stack.nav).toBeGreaterThan(stack.glass);
 });
 
-test("inner pages do not mount the hero glass slot", async ({ page }) => {
+test("inner pages do not mount the hero glass overlay", async ({ page }) => {
   await page.goto("/work");
   await expectRevealed(page);
-  await expect(page.locator(".hero_model")).toHaveCount(0);
+  await expect(page.locator(".hero_glass")).toHaveCount(0);
 });
