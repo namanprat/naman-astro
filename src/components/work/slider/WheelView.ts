@@ -52,10 +52,10 @@ const SPACING_RATIO = 2.13;
  * Phone tiles are cards rather than thumbnails, so at 2.13 a tightened ring fell
  * under 1.5 and dropped to a single copy — six positions instead of twelve,
  * which doubles the angular step and leaves nothing sitting on the anchor. At
- * 1.5 the ring keeps its twelve, and the gap that leaves between 62vw cards is
- * still most of a card.
+ * 1.5 the ring keeps its twelve. Dropped to 1.2 so a tighter radius (half
+ * the old gap) still rounds to two copies on a short phone.
  */
-const PHONE_SPACING_RATIO = 1.5;
+const PHONE_SPACING_RATIO = 1.2;
 
 /**
  * Anchor sits at the top of the circle. Screen y grows downward, so that is
@@ -88,10 +88,10 @@ const PHONE_ANCHOR_DEG = 180;
  * figure), but a smaller circle fits more of its own curve on screen, so the
  * column bows visibly instead of running nearly straight.
  *
- * 0.75 left ~90px between 62vw cards on a 390pt phone; 0.71 is that gap
- * minus 20% without dropping a ring copy.
+ * 0.75 left ~90px between 62vw cards on a 390pt phone; 0.71 cut 20%.
+ * 0.63 is half that remaining gap.
  */
-const PHONE_RADIUS_VH = 0.71;
+const PHONE_RADIUS_VH = 0.63;
 
 /** Pixels of wheel per tile step, taken from the reference: it advanced one
     thumbnail per `innerWidth * 0.45` (≈576px at 1280 wide). Held as distance
@@ -104,10 +104,14 @@ const PX_PER_STEP = 576;
 /** Wheel inertia only. Touch is 1:1 while the finger is down. */
 const WHEEL_SCRUB_S = 0.28;
 
-/** Settle onto the nearest tile once scrolling stops. Soft and short — it is a
-    correction to what you already chose, not a movement of its own. */
-const SNAP_S = 0.4;
-const SNAP_EASE = "power2.out";
+/** Seconds of release velocity applied as a throw, then we snap. */
+const COAST_S = 0.22;
+
+/** Settle onto the nearest tile once scrolling stops. */
+const SNAP_S = 0.5;
+const SNAP_MIN_S = 0.32;
+const SNAP_MAX_S = 0.7;
+const SNAP_EASE = "power3.out";
 
 /** Below this the ring is close enough that snapping would only read as drift. */
 const SNAP_EPSILON_DEG = 0.2;
@@ -279,8 +283,8 @@ export default class WheelView {
       );
     }
 
-    /* 1.75×: a mid-screen swipe turns one slot. 3× needed the whole phone. */
-    this.pxPerStep = phone ? Math.max(tileHeight * 1.75, 1) : PX_PER_STEP;
+    /* Near 1:1 with the card. A flick's coast covers the rest of the slot. */
+    this.pxPerStep = phone ? Math.max(tileHeight * 1.4, 1) : PX_PER_STEP;
 
     /* On the page root, not the gallery: the label is a sibling of `.gallery`
        and sizes itself against the ring, so it has to inherit this too. The
@@ -455,7 +459,7 @@ export default class WheelView {
           this.dragPx = TAP_PX;
           return;
         }
-        this.snap();
+        this.coast(self);
       },
       onClick: (self) => {
         if (!this.enabled()) return;
@@ -504,15 +508,34 @@ export default class WheelView {
     return Math.round((from - anchor) / step) * step + anchor;
   }
 
-  /** Ease the ring onto the tile it came to rest nearest. */
-  private snap() {
-    const target = this.snapTarget(this.rot.value);
+  /**
+   * Finger-up: throw by the release velocity, then land on a tile.
+   * A slow lift throws ~0 and just eases to the nearest — a flick coasts.
+   */
+  private coast(self: Observer) {
+    const vx = self.velocityX;
+    const vy = self.velocityY;
+    const v = Math.abs(vx) > Math.abs(vy) ? vx : vy;
+    const throwDeg = -v * this.degPerPx() * COAST_S;
+    this.snap(this.rot.value + throwDeg);
+  }
+
+  /** Ease the ring onto the tile nearest `from` (current rotation if omitted). */
+  private snap(from = this.rot.value) {
+    const target = this.snapTarget(from);
     if (Math.abs(target - this.rot.value) < SNAP_EPSILON_DEG) return;
+
+    const step = 360 / Math.max(this.tiles.length, 1);
+    const slots = Math.abs(target - this.rot.value) / step;
+    const duration = Math.min(
+      SNAP_MAX_S,
+      Math.max(SNAP_MIN_S, SNAP_S * Math.min(slots, 1.4)),
+    );
 
     this.killSnap();
     this.snapTween = gsap.to(this.rot, {
       value: target,
-      duration: SNAP_S,
+      duration,
       ease: SNAP_EASE,
       onUpdate: () => this.place(),
       onComplete: () => {
