@@ -770,7 +770,16 @@ html.theme-light .about_panel.is-in-menu {
 }
 
 .about_panel.is-page .about_panel_intro {
+  grid-column: 1 / -1;
   grid-row: 2;
+  width: 100%;
+  min-width: 0;
+}
+
+.about_panel.is-page .about_panel_lead {
+  width: 100%;
+  max-width: 100%;
+  text-wrap: wrap;
 }
 
 /*

@@ -229,6 +229,12 @@ html.theme-light .footer_box {
     grid-column: 1 / -1;
   }
 
+  .footer_tagline {
+    width: 100%;
+    max-width: 100%;
+    text-wrap: wrap;
+  }
+
   /*
     Plain wordmark instead of the ASCII canvas, which is not mounted at this
     width (Footer.tsx). Masked rather than showing the `<img>` directly: the

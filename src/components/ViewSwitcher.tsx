@@ -31,7 +31,7 @@ export default function ViewSwitcher<T extends string>({
         <button
           key={id}
           type="button"
-          className="view_switcher_tab text-style-mono"
+          className="view_switcher_tab text-style-small"
           aria-pressed={view === id}
           disabled={busy}
           onClick={() => onSelect(id)}
