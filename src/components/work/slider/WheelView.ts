@@ -87,6 +87,9 @@ const PHONE_ANCHOR_DEG = 180;
  * not change with radius (a fixed angular step makes every size a similar
  * figure), but a smaller circle fits more of its own curve on screen, so the
  * column bows visibly instead of running nearly straight.
+ *
+ * 0.63 put 62vw cards on top of each other. 0.75 is the last radius
+ * that still leaves a visible gap on a 390pt phone.
  */
 const PHONE_RADIUS_VH = 0.75;
 
@@ -94,16 +97,28 @@ const PHONE_RADIUS_VH = 0.75;
     thumbnail per `innerWidth * 0.45` (≈576px at 1280 wide). Held as distance
     rather than degrees so the ring keeps this feel whatever it ends up
     holding — twelve positions today, so ~0.052°/px against the 0.15 this
-    started at. */
+    started at. Phone uses the tile's own height instead — 576px is a desktop
+    wheel constant and a swipe barely turns the ring. */
 const PX_PER_STEP = 576;
 
-/** Settle onto the nearest tile once scrolling stops. Soft and short — it is a
-    correction to what you already chose, not a movement of its own. */
-const SNAP_S = 0.45;
-const SNAP_EASE = "power2.out";
+/** Wheel inertia only. Touch is 1:1 while the finger is down. */
+const WHEEL_SCRUB_S = 0.28;
+
+/** Seconds of release velocity applied as a throw, then we snap. */
+const COAST_S = 0.22;
+
+/** Settle onto the nearest tile once scrolling stops. */
+const SNAP_S = 0.5;
+const SNAP_MIN_S = 0.32;
+const SNAP_MAX_S = 0.7;
+const SNAP_EASE = "power3.out";
 
 /** Below this the ring is close enough that snapping would only read as drift. */
 const SNAP_EPSILON_DEG = 0.2;
+
+/** Finger jitter under this is a tap, not a scroll. 1:1 drag used to eat
+    every click — Observer saw the noise and skipped `onClick`. */
+const TAP_PX = 12;
 
 const rad = (deg: number) => (deg * Math.PI) / 180;
 
@@ -151,6 +166,16 @@ export default class WheelView {
   private resizeId?: ReturnType<typeof setTimeout>;
   private resizeSuspended = false;
   private onResize: () => void;
+  /** Last width we measured against. Height-only changes are the iOS toolbar. */
+  private lastViewWidth = 0;
+  /** Pixels of gesture per tile. Phone re-reads this from the tile height. */
+  private pxPerStep = PX_PER_STEP;
+  /** Touch is down — `onRelease` snaps; wheel never sets this. */
+  private dragging = false;
+  /** Absolute gesture travel this press. Under `TAP_PX` we open, not turn. */
+  private dragPx = 0;
+  /** `100svh` probe — iOS `visualViewport.height` still grows with the toolbar. */
+  private svhBox: HTMLDivElement | null = null;
 
   constructor({
     root = document,
@@ -162,6 +187,9 @@ export default class WheelView {
     this.onCenterChange = onCenterChange;
     this.onResize = () => {
       if (this.resizeSuspended) return;
+      // iOS fires resize when the URL bar shows or hides. Width is unchanged;
+      // rebuilding then jumps the ring under the chrome.
+      if (this.viewSize().w === this.lastViewWidth) return;
       clearTimeout(this.resizeId);
       this.resizeId = setTimeout(() => this.rebuild(), 200);
     };
@@ -198,12 +226,38 @@ export default class WheelView {
    * custom property's *specified* text, so a `min(350px, 32vh)` authored in CSS
    * comes out as that literal string and `parseFloat` reads NaN.
    */
+  /**
+   * Width from the visual viewport; height from a `100svh` probe.
+   * `visualViewport.height` / `innerHeight` / `dvh` all grow when Safari
+   * hides the URL bar, which is what kept shifting the ring.
+   */
+  private viewSize() {
+    const w = window.visualViewport?.width ?? window.innerWidth;
+    if (!this.svhBox) {
+      const box = document.createElement("div");
+      box.setAttribute("aria-hidden", "true");
+      box.style.cssText =
+        "position:fixed;inset:0 auto auto 0;width:0;height:100svh;visibility:hidden;pointer-events:none";
+      document.body.appendChild(box);
+      this.svhBox = box;
+    }
+    return { w, h: this.svhBox.offsetHeight || window.innerHeight };
+  }
+
+  private openAt(x?: number, y?: number) {
+    if (x == null || y == null) return;
+    const hit = document.elementFromPoint(x, y);
+    hit?.closest<HTMLElement>(".gallery_slide")?.click();
+  }
+
   private measure() {
     const phone = window.matchMedia(MOBILE_LAYOUT_MQ).matches;
+    const { w, h } = this.viewSize();
+    this.lastViewWidth = w;
     this.anchorDeg = phone ? PHONE_ANCHOR_DEG : ANCHOR_DEG;
     this.scrollSign = phone ? 1 : -1;
-    this.cx = window.innerWidth / 2;
-    this.cy = window.innerHeight / 2;
+    this.cx = w / 2;
+    this.cy = h / 2;
 
     /* The ring occupies its diameter plus one tile, since tiles are centred on
        the circle and so hang half a width outside it. Capping on height alone
@@ -213,20 +267,24 @@ export default class WheelView {
     const tile = this.tiles[0];
     const tileWidth = tile?.offsetWidth ?? 0;
     const tileHeight = tile?.offsetHeight ?? 0;
-    const widthCap = (window.innerWidth - tileWidth) / 2 - EDGE_GUTTER;
+    const widthCap = (w - tileWidth) / 2 - EDGE_GUTTER;
 
     if (phone) {
       /* No width cap: the ring is *meant* to overrun the screen here, and the
          centre goes with it so the anchor at 3 o'clock lands on the middle of
-         the viewport. */
-      this.radius = window.innerHeight * PHONE_RADIUS_VH;
-      this.cx = window.innerWidth / 2 + this.radius;
+         the viewport. Height is the small/visual viewport, locked by ignoring
+         toolbar-only resizes, so the centred tile stays in the visible screen. */
+      this.radius = h * PHONE_RADIUS_VH;
+      this.cx = w / 2 + this.radius;
     } else {
       this.radius = Math.max(
         0,
-        Math.min(RADIUS, window.innerHeight * RADIUS_VH_CAP, widthCap),
+        Math.min(RADIUS, h * RADIUS_VH_CAP, widthCap),
       );
     }
+
+    /* Near 1:1 with the card. A flick's coast covers the rest of the slot. */
+    this.pxPerStep = phone ? Math.max(tileHeight * 1.4, 1) : PX_PER_STEP;
 
     /* On the page root, not the gallery: the label is a sibling of `.gallery`
        and sizes itself against the ring, so it has to inherit this too. The
@@ -361,7 +419,7 @@ export default class WheelView {
     // the ring lurches instead of nudging.
     this.scrub = gsap.to(this.rot, {
       value: this.rot.value,
-      duration: 0.75,
+      duration: WHEEL_SCRUB_S,
       ease: "power3.out",
       paused: true,
       onUpdate: () => this.place(),
@@ -371,23 +429,42 @@ export default class WheelView {
     });
   }
 
+  private degPerPx() {
+    return (this.scrollSign * (360 / this.tiles.length)) / this.pxPerStep;
+  }
+
   createObserver() {
     this.observer = Observer.create({
       target: window,
       type: "wheel,touch",
       preventDefault: true,
+      onPress: () => {
+        if (!this.enabled()) return;
+        this.dragging = true;
+        this.dragPx = 0;
+        this.killSnap();
+        this.scrub.pause();
+      },
       onChange: (self) => {
         this.scroll(self);
       },
-      // Same reason as Slider: touch + preventDefault swallows the browser
-      // click, but Observer still reports a tap that didn't drag.
+      onRelease: (self) => {
+        if (!this.dragging) return;
+        this.dragging = false;
+        if (!this.enabled()) return;
+        // Tap: open here. `onClick` will no-op because dragPx stays under
+        // the threshold — Observer often skips it once 1:1 drag has run.
+        if (this.dragPx < TAP_PX) {
+          this.openAt(self.x, self.y);
+          this.dragPx = TAP_PX;
+          return;
+        }
+        this.coast(self);
+      },
       onClick: (self) => {
         if (!this.enabled()) return;
-        const x = self.x;
-        const y = self.y;
-        if (x == null || y == null) return;
-        const hit = document.elementFromPoint(x, y);
-        hit?.closest<HTMLElement>(".gallery_slide")?.click();
+        if (this.dragPx >= TAP_PX) return;
+        this.openAt(self.x, self.y);
       },
     });
   }
@@ -398,12 +475,19 @@ export default class WheelView {
     // A new scroll overrides a settle in progress, or the two fight over `rot`.
     this.killSnap();
 
-    // Signed so the ring turns with the scroll rather than against it — see
-    // `scrollSign`, which the phone's mirrored arc flips.
-    const degPerPx = (this.scrollSign * (360 / this.tiles.length)) / PX_PER_STEP;
+    const delta = scrollDelta(self) * this.degPerPx();
+    if (self.event?.type === "wheel") {
+      this.scrub.vars.value += delta;
+      this.scrub.invalidate().restart();
+      return;
+    }
 
-    this.scrub.vars.value += scrollDelta(self) * degPerPx;
-    this.scrub.invalidate().restart();
+    // Touch: 1:1. Restarting a 750ms ease on every move was the molasses.
+    this.dragPx += Math.abs(scrollDelta(self));
+    if (this.dragPx < TAP_PX) return;
+    this.rot.value += delta;
+    this.scrub.vars.value = this.rot.value;
+    this.place();
   }
 
   private killSnap() {
@@ -424,15 +508,34 @@ export default class WheelView {
     return Math.round((from - anchor) / step) * step + anchor;
   }
 
-  /** Ease the ring onto the tile it came to rest nearest. */
-  private snap() {
-    const target = this.snapTarget(this.rot.value);
+  /**
+   * Finger-up: throw by the release velocity, then land on a tile.
+   * A slow lift throws ~0 and just eases to the nearest — a flick coasts.
+   */
+  private coast(self: Observer) {
+    const vx = self.velocityX;
+    const vy = self.velocityY;
+    const v = Math.abs(vx) > Math.abs(vy) ? vx : vy;
+    const throwDeg = -v * this.degPerPx() * COAST_S;
+    this.snap(this.rot.value + throwDeg);
+  }
+
+  /** Ease the ring onto the tile nearest `from` (current rotation if omitted). */
+  private snap(from = this.rot.value) {
+    const target = this.snapTarget(from);
     if (Math.abs(target - this.rot.value) < SNAP_EPSILON_DEG) return;
+
+    const step = 360 / Math.max(this.tiles.length, 1);
+    const slots = Math.abs(target - this.rot.value) / step;
+    const duration = Math.min(
+      SNAP_MAX_S,
+      Math.max(SNAP_MIN_S, SNAP_S * Math.min(slots, 1.4)),
+    );
 
     this.killSnap();
     this.snapTween = gsap.to(this.rot, {
       value: target,
-      duration: SNAP_S,
+      duration,
       ease: SNAP_EASE,
       onUpdate: () => this.place(),
       onComplete: () => {
@@ -479,6 +582,7 @@ export default class WheelView {
   }
 
   stop() {
+    this.dragging = false;
     this.observer.disable();
     this.freeze();
   }
@@ -508,6 +612,8 @@ export default class WheelView {
   destroy() {
     window.removeEventListener("resize", this.onResize);
     clearTimeout(this.resizeId);
+    this.svhBox?.remove();
+    this.svhBox = null;
     this.observer?.kill();
     this.scrub?.kill();
     this.killSnap();

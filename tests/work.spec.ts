@@ -26,6 +26,10 @@ import {
 for (const view of ["slider", "grid"] as const) {
   test.describe(`${view} view`, () => {
     test.beforeEach(async ({ page }) => {
+      test.skip(
+        view === "grid" && isNarrowNav(),
+        "phone locks /work to slider; grid is desktop-only",
+      );
       await stubWebGL(page);
       await skipPreloader(page);
       await seedSession(page, { "work:view": view });
@@ -216,6 +220,154 @@ test.describe("returning from a hard-loaded project page", () => {
     await expect(page.locator(".gallery")).toHaveCSS("opacity", "1");
 
     expect(await galleryMoves(page, cdp, isTouch())).toBe(true);
+  });
+});
+
+test("haptic uses the still cover on /work, not the film", async ({
+  page,
+}) => {
+  await stubWebGL(page);
+  await skipPreloader(page);
+  await page.goto("/work");
+  await expect(page.locator(".work_wrap")).not.toHaveClass(/is-loading/);
+
+  const haptic = page.locator('.gallery_slide[data-slug="haptic"]').first();
+  await expect(haptic.locator("img.gallery_img")).toHaveAttribute(
+    "src",
+    /haptic-cover\.webp$/,
+  );
+  await expect(page.locator(".gallery video")).toHaveCount(0);
+});
+
+test.describe("phone work locks to slider", () => {
+  test.skip(
+    () => !isNarrowNav(),
+    "below 48rem the gallery is slider-only",
+  );
+
+  test.beforeEach(async ({ page }) => {
+    await stubWebGL(page);
+    await skipPreloader(page);
+  });
+
+  test("the nav wordmark shares one top inset on home, work, slug, and about", async ({
+    page,
+  }) => {
+    const topOf = async (url: string) => {
+      await page.goto(url);
+      await expect(page.locator(".nav_logo").first()).toBeVisible();
+      return page
+        .locator(".nav_logo")
+        .first()
+        .evaluate((el) => Math.round(el.getBoundingClientRect().top));
+    };
+
+    const home = await topOf("/");
+    const work = await topOf("/work");
+    const slug = await topOf("/work/t-bonk");
+    const about = await topOf("/about");
+
+    expect(work, "work vs home").toBe(home);
+    expect(slug, "slug vs home").toBe(home);
+    expect(about, "about vs home").toBe(home);
+  });
+
+  test("phone slider tiles leave a gap", async ({ page }) => {
+    await page.goto("/work");
+    await expect(page.locator(".work_wrap")).not.toHaveClass(/is-loading/);
+
+    const minGap = await page.evaluate(() => {
+      const wrap = document.querySelector(".work_wrap");
+      const tile = document.querySelector<HTMLElement>(".gallery_slide");
+      if (!wrap || !tile) return 0;
+      const radius = Number.parseFloat(
+        getComputedStyle(wrap).getPropertyValue("--wheel-radius"),
+      );
+      const count = document.querySelectorAll(".gallery_slide").length;
+      return (2 * Math.PI * radius) / count - tile.offsetHeight;
+    });
+
+    expect(minGap).toBeGreaterThan(8);
+  });
+
+  test("a stored grid view still boots the slider and hides the switcher", async ({
+    page,
+  }) => {
+    await seedSession(page, { "work:view": "grid" });
+    await page.goto("/work");
+    await expect(page.locator(".work_wrap")).not.toHaveClass(/is-loading/);
+    await expect(page.locator(".work_wrap")).toHaveAttribute(
+      "data-work-view",
+      "slider",
+    );
+    await expect(page.locator(".work_wrap .view_switcher")).toBeHidden();
+  });
+
+  test("work and slug titles share the Lumos display size", async ({
+    page,
+  }) => {
+    await page.goto("/work");
+    await expect(page.locator(".work_wrap")).not.toHaveClass(/is-loading/);
+    const workSize = await page
+      .locator(".gallery_label")
+      .evaluate((el) => getComputedStyle(el).fontSize);
+
+    await page.goto("/work/t-bonk");
+    const slugSize = await page
+      .locator(".project_title")
+      .evaluate((el) => getComputedStyle(el).fontSize);
+
+    expect(slugSize).toBe(workSize);
+  });
+
+  test("the work slug title sits below the nav", async ({ page }) => {
+    await page.goto("/work/t-bonk");
+    await expect(page.locator("html")).toHaveClass(/page-work-project/);
+
+    const gap = await page.evaluate(() => {
+      const nav = document.querySelector(".nav_wrap");
+      const title = document.querySelector(".project_title");
+      if (!nav || !title) return null;
+      return title.getBoundingClientRect().top - nav.getBoundingClientRect().bottom;
+    });
+    expect(gap, "missing nav or title").not.toBeNull();
+    expect(gap).toBeGreaterThan(8);
+  });
+
+  test("a tap on the centered tile opens the project", async ({
+    page,
+    context,
+  }) => {
+    await page.goto("/work");
+    await expect(page.locator(".work_wrap")).not.toHaveClass(/is-loading/);
+
+    const point = await page.evaluate(() => {
+      const el = document.querySelector<HTMLElement>(
+        ".gallery_slide.is-centered",
+      );
+      if (!el) return null;
+      const box = el.getBoundingClientRect();
+      return {
+        x: Math.round(box.x + box.width / 2),
+        y: Math.round(box.y + box.height / 2),
+      };
+    });
+    expect(point, "no centered tile to tap").not.toBeNull();
+
+    const cdp = await context.newCDPSession(page);
+    await cdp.send("Input.dispatchTouchEvent", {
+      type: "touchStart",
+      touchPoints: [{ x: point!.x, y: point!.y }],
+    });
+    await page.waitForTimeout(40);
+    await cdp.send("Input.dispatchTouchEvent", {
+      type: "touchEnd",
+      touchPoints: [],
+    });
+
+    await expect
+      .poll(() => rootClasses(page), { timeout: 30_000 })
+      .toContain("work-project-open");
   });
 });
 

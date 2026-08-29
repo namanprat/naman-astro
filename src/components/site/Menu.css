@@ -609,28 +609,16 @@ html:not(:has(.hero)) .name_hero {
   */
   html:has(.hero) .nav_wrap {
     position: fixed;
-    top: 0;
+    top: var(--lockup-top);
     left: 0;
     right: 0;
     width: 100%;
   }
 
-  /* Clear the pinned nav, then the gap. Every consumer reads this one var, so
-     `.hero`'s pull-up needs no second number. */
+  /* Same inset as the nav wordmark + one site margin — home lockup, work
+     label, slug hero, about page all read `--chrome-clear`. */
   html:has(.hero) {
-    --hero-chrome-pad: calc(
-      var(--site--safe-area-top) + var(--nav-height, 0px) + var(--space-8)
-    );
-  }
-
-  :root {
-    /* `--site-margin`, not `--site-gutter`: the bar's block padding has to read
-       as the same inset as the page's side padding, and the sides come from
-       `.container` → `--site-width` → `--site-margin`. The two tokens are both
-       fluid clamps but over different ranges (gutter 16→32, margin 16→48), so
-       they agree only at 320px and drift apart from there. */
-    --lockup-top: calc(var(--site--safe-area-top) + var(--site-margin));
-    --lockup-gap: var(--site-margin);
+    --hero-chrome-pad: var(--chrome-clear);
   }
 
   .nav_grid.grid {
@@ -639,7 +627,7 @@ html:not(:has(.hero)) .name_hero {
     align-items: start;
     column-gap: var(--site-gutter);
     row-gap: var(--space-2);
-    padding-block: var(--lockup-gap);
+    padding-block: 0 var(--lockup-gap);
     /* Bigger tap targets. Rebinding the token rather than setting `font-size`
        carries `.nav_theme_toggle` with it — the switch sizes off `--text-main`
        and the label trim tokens, so it stays label-height for free. 18px is the
@@ -727,7 +715,7 @@ html:not(:has(.hero)) .name_hero {
      is no mark height to reserve above the links. */
   html:not(:has(.hero)) .nav_wrap {
     position: fixed;
-    top: var(--nav-marquee-height, 0px);
+    top: var(--lockup-top);
     left: 0;
     width: 100%;
     padding-top: 0;

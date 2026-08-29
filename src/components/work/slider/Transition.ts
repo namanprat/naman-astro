@@ -238,11 +238,10 @@ export default class Transition {
        so title and cover read as one gesture rather than two. Measured after
        `.content` is displayed — before that the title has no layout position to
        travel from. */
-    /* Only where the title actually has somewhere to go. Above 64rem it rests
-       dead-centre — exactly where the label was — so the offset is ~0 and there
-       is nothing to animate. Skipping rather than tweening by zero also keeps
-       GSAP off its `translate(-50%, -50%)`: taking ownership of a percentage
-       transform is what strands elements, as `AboutPanel.css` already notes. */
+    /* Only where the title actually has somewhere to go. Above 64rem both
+       sit dead-centre so the offset is ~0. On a phone the label is under
+       the nav and the title is further down the hero — that gap is the
+       travel. Skipping a ~0 tween also keeps GSAP off `translate(-50%, -50%)`. */
     const title = this.activeTitle();
     const offset = title ? this.titleOffset(title) : 0;
     if (title && Math.abs(offset) > 1) {
@@ -519,13 +518,17 @@ export default class Transition {
    */
   /**
    * How far the title has to travel to sit where the work page's label sits.
-   * The label is pinned at viewport centre, the title rests at the top of the
-   * hero, so this is the gap between the two — applied as a `from` on open and
-   * a `to` on close, both in lockstep with the cover morph.
+   * Measure the label — on a phone it lives under the nav, not at mid-viewport.
+   * Using the viewport centre was the snap: the title started in the wrong
+   * place and jumped to the hero.
    */
   private titleOffset(title: HTMLElement) {
     const box = title.getBoundingClientRect();
-    return window.innerHeight / 2 - (box.top + box.height / 2);
+    const label = this.root.querySelector<HTMLElement>(".gallery_label");
+    const from = label
+      ? label.getBoundingClientRect()
+      : { top: window.innerHeight / 2, height: 0 };
+    return from.top + from.height / 2 - (box.top + box.height / 2);
   }
 
   private activeTitle() {

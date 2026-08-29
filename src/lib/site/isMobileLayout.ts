@@ -1,6 +1,6 @@
 /**
  * Compact / phone layout. Mirrors the site's `(width < 48rem)` cut — the
- * inverse of `DESKTOP_NAV_MQ` and the same query `WORK_GRID_MOBILE_MQ` uses.
+ * inverse of `DESKTOP_NAV_MQ`.
  *
  * CSS that branches on this (grain, the heading clip-up) has to spell the
  * same query; there is no shared token for media queries.

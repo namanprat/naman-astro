@@ -44,6 +44,10 @@ html:has(.hero) .fluid_wrap {
   display: block;
   width: 100%;
   height: 100%;
+  /* R3F sets inline `pointer-events: auto` on the canvas, which would
+     recapture taps even though the wrap is none. Work used to put this
+     layer over the gallery (z-index 3) and every project went dead. */
+  pointer-events: none !important;
 }
 
 /* The canvas opacities that used to live here are gone entirely: the trail is
@@ -102,19 +106,8 @@ html.is-preloading .fluid_wrap {
    stretches the splat's aspect correction with it — on the work grid that was a
    2917px-tall canvas against an 800px viewport, and a trail three times the
    size it should be. */
-/*
-  Work: the trail is a colour window, not ink.
-
-  `mix-blend-mode: saturation` keeps the backdrop's hue and luminosity and takes
-  only the source's saturation, so the canvas painting a flat grey everywhere the
-  trail is *not* (`TrailOverlay`'s inverted mode) drains the page except under the
-  liquid. It has to sit over the content to reach it, hence the z-index — on home
-  the same layer stays underneath, where the copy opts into its own blend.
-*/
-html.page-work .fluid_wrap {
-  z-index: 3;
-  mix-blend-mode: saturation;
-}
+/* Work: trail stays under the gallery so tiles keep their clicks. The
+   invert/saturation plate used to sit at z-index 3 and eat every tap. */
 
 html.page-work .fluid_wrap,
 html.page-work-project .fluid_wrap,

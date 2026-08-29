@@ -269,8 +269,8 @@ export async function scrollDown(page: Page, cdp: CDPSession, touch: boolean) {
 async function touchDrag(cdp: CDPSession, page: Page) {
   const { width, height } = page.viewportSize()!;
   const x = Math.round(width / 2);
-  const from = Math.round(height * 0.8);
-  const distance = Math.round(height * 0.5);
+  const from = Math.round(height * 0.85);
+  const distance = Math.round(height * 0.65);
 
   await cdp.send("Input.dispatchTouchEvent", {
     type: "touchStart",

@@ -13,10 +13,11 @@ import {
   writeWorkView,
   type WorkView,
 } from "@/lib/site/workSession";
+import { isMobileLayout, MOBILE_LAYOUT_MQ } from "@/lib/site/isMobileLayout";
 import ProjectDetail from "./ProjectDetail";
 import { bootLazyVideos } from "@/lib/site/lazyVideo";
 import Reveal from "./slider/Reveal";
-import Slider, { isWorkGridMobile, WORK_GRID_MOBILE_MQ } from "./slider/Slider";
+import Slider from "./slider/Slider";
 import WheelView from "./slider/WheelView";
 import Transition, { type CloseReason } from "./slider/Transition";
 import ViewSwitcher, { type ViewSwitcherItem } from "../ViewSwitcher";
@@ -33,6 +34,11 @@ const MORPH_DELAY_MS = 80;
 
 /** Fade each way when swapping slider ↔ grid. Title gooey runs in parallel. */
 const DISSOLVE_S = 0.35;
+
+/** Phone always boots slider. Desktop session `grid` is left alone. */
+function initialWorkView(): WorkView {
+  return isMobileLayout() ? "slider" : readWorkView();
+}
 
 /**
  * What `WorkGallery` needs from whichever view is driving the tiles. `Slider`
@@ -64,7 +70,7 @@ export default function WorkGallery() {
      cleanup would kill the timeline before it blurred back down. */
   const shownRef = useRef<string | null>(null);
 
-  const [view, setView] = useState<WorkView>(readWorkView);
+  const [view, setView] = useState<WorkView>(initialWorkView);
   const [switching, setSwitching] = useState(false);
   const viewRef = useRef<WorkView>(view);
   const switchingRef = useRef(false);
@@ -159,9 +165,9 @@ export default function WorkGallery() {
        Deliberately NOT `decode()`: a decode stays pending indefinitely while
        the tab is hidden. Load events fire either way, and "settled" — not
        "succeeded" — is the signal boot wants, so error resolves too. */
-    const pending = [...root.querySelectorAll(".gallery_slide img")].filter(
-      (img) => !img.complete,
-    );
+    const pending = [
+      ...root.querySelectorAll<HTMLImageElement>(".gallery_slide img"),
+    ].filter((img) => !img.complete);
     const imgsSettled = () =>
       Promise.all(
         pending.map(
@@ -207,7 +213,7 @@ export default function WorkGallery() {
           onCenterChange: (index) => {
             if (viewRef.current !== "grid") return;
             if (switchingRef.current) return;
-            if (!isWorkGridMobile()) return;
+            if (!isMobileLayout()) return;
             setHoverTitle(workItems[index]?.title ?? null);
           },
         });
@@ -228,7 +234,7 @@ export default function WorkGallery() {
 
     /** Dissolve the tiles, swap layout, dissolve in. Title gooey is the hover
      *  morph already wired to `hoverTitle`. */
-    const switchView = (next: WorkView) => {
+    const switchView = (next: WorkView, persist = true) => {
       const engine = engineRef.current;
       if (!engine || switchingRef.current) return;
       if (next === viewRef.current) return;
@@ -258,7 +264,8 @@ export default function WorkGallery() {
 
         viewRef.current = next;
         setView(next);
-        writeWorkView(next);
+        // Phone never writes — a desktop `grid` flag must survive a resize.
+        if (persist && !isMobileLayout()) writeWorkView(next);
         root.dataset.workView = next;
 
         /* Several authors share each slide's transform — CSS translateX
@@ -369,7 +376,7 @@ export default function WorkGallery() {
               else history.pushState(entry, "", "/work");
             }
             engineRef.current?.start();
-            if (viewRef.current === "grid" && isWorkGridMobile()) {
+            if (viewRef.current === "grid" && isMobileLayout()) {
               const centered = engineRef.current?.centeredIndex ?? -1;
               setHoverTitle(workItems[centered]?.title ?? null);
             }
@@ -395,7 +402,7 @@ export default function WorkGallery() {
         });
 
         engineRef.current = makeEngine(viewRef.current);
-        if (viewRef.current === "grid" && isWorkGridMobile()) {
+        if (viewRef.current === "grid" && isMobileLayout()) {
           const centered = engineRef.current.centeredIndex;
           setHoverTitle(workItems[centered]?.title ?? null);
         }
@@ -464,7 +471,7 @@ export default function WorkGallery() {
           const centered = engineRef.current?.centeredIndex ?? -1;
           const fromCenter =
             viewRef.current === "slider" ||
-            (viewRef.current === "grid" && isWorkGridMobile());
+            (viewRef.current === "grid" && isMobileLayout());
           setHoverTitle(
             fromCenter ? (workItems[centered]?.title ?? null) : null,
           );
@@ -547,15 +554,19 @@ export default function WorkGallery() {
     if (!pending.length || returnIndex >= 0) scheduleBoot();
     else void imgsSettled().then(scheduleBoot);
 
-    const mobileMq = window.matchMedia(WORK_GRID_MOBILE_MQ);
+    const mobileMq = window.matchMedia(MOBILE_LAYOUT_MQ);
     const onMobileMq = () => {
-      if (viewRef.current !== "grid") return;
       if (mobileMq.matches) {
-        const centered = engineRef.current?.centeredIndex ?? -1;
-        setHoverTitle(workItems[centered]?.title ?? null);
-      } else {
-        setHoverTitle(null);
+        if (viewRef.current === "grid") switchView("slider", false);
+        else {
+          const centered = engineRef.current?.centeredIndex ?? -1;
+          setHoverTitle(workItems[centered]?.title ?? null);
+        }
+        return;
       }
+      const stored = readWorkView();
+      if (stored !== viewRef.current) switchView(stored, false);
+      else if (viewRef.current === "grid") setHoverTitle(null);
     };
     mobileMq.addEventListener("change", onMobileMq, {
       signal: listeners.signal,
