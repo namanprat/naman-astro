@@ -12,14 +12,8 @@
     margin-inline: auto;
     z-index: calc(var(--z--nav) - 1);
     display: flex;
-    gap: var(--space-1);
-    padding: var(--space-1);
-    border-radius: var(--radius-round);
-    background-color: color-mix(in srgb, var(--view_switcher_ground) 40%, transparent);
-    border-width: var(--border-width);
-    border-style: solid;
-    border-color: color-mix(in srgb, var(--view_switcher_ink) 20%, transparent);
-    backdrop-filter: blur(0.625rem);
+    gap: var(--space-2);
+    justify-content: center;
     pointer-events: auto;
     transition: opacity 0.3s ease;
   }
@@ -34,14 +28,29 @@
   }
 
   .view_switcher_tab {
-    border-width: 0;
-    border-radius: var(--radius-round);
-    padding: 0.6em 1.6em;
-    color: color-mix(in srgb, var(--view_switcher_ink) 70%, transparent);
+    display: flex;
+    align-items: center;
+    flex: none;
+    margin: 0;
+    padding: var(--space-1) var(--space-3);
+    border: var(--border-width) solid var(--view_switcher_ink);
+    border-radius: 0;
     background-color: transparent;
+    border-style: dashed;
+    color: var(--view_switcher_ink);
+    cursor: pointer;
+    white-space: nowrap;
+    line-height: 1;
     transition:
-      background-color 0.3s ease,
-      color 0.3s ease;
+      background-color 200ms ease,
+      color 200ms ease,
+      border-color 200ms ease,
+      border-style 200ms ease;
+  }
+
+  .view_switcher_tab::before,
+  .view_switcher_tab::after {
+    content: none;
   }
 
   .view_switcher_tab:hover:not(:disabled),
@@ -58,6 +67,13 @@
 
   .view_switcher_tab[aria-pressed="true"] {
     background-color: var(--view_switcher_ink);
+    border-color: var(--view_switcher_ink);
+    border-style: solid;
+    color: var(--view_switcher_ground);
+  }
+
+  .view_switcher_tab[aria-pressed="true"]:hover:not(:disabled),
+  .view_switcher_tab[aria-pressed="true"]:focus-visible {
     color: var(--view_switcher_ground);
   }
 

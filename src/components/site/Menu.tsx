@@ -434,7 +434,8 @@ export default function Menu({ initialPathname = "/" }: MenuProps) {
 
        Three things fix it and none of them change behaviour:
        - `--nav-offset` is read only by `AboutPanel.css`, so it is written only
-         while the panel is open, and only when the value actually moved.
+         while the panel is open or the phone nav is fixed on an inner page, and
+         only when the value actually moved.
        - the dock offset moves on resize / root-class change, not on scroll, so
          it is cached and refreshed from those listeners instead.
        - the scroll path is rAF-coalesced and subscribes to Lenis *or* the
@@ -450,12 +451,21 @@ export default function Menu({ initialPathname = "/" }: MenuProps) {
     const setOffset = () => {
       raf = 0;
       const rect = nav.getBoundingClientRect();
-      if (document.documentElement.classList.contains(ABOUT_OPEN_CLASS)) {
+      /* Overlay open, or phone inner page: bar is fixed and content must clear
+         its measured bottom. Home with a hero only needs this while open. */
+      const needsNavOffset =
+        document.documentElement.classList.contains(ABOUT_OPEN_CLASS) ||
+        (!window.matchMedia(DESKTOP_NAV_MQ).matches &&
+          !document.querySelector(".hero"));
+      if (needsNavOffset) {
         const offset = Math.round(rect.bottom);
         if (offset !== lastOffset) {
           lastOffset = offset;
           setRootVar("--nav-offset", `${offset}px`);
         }
+      } else if (lastOffset !== -1) {
+        lastOffset = -1;
+        clearRootVar("--nav-offset");
       }
       /* Sticky bar has reached its dock. On the phone that dock is under the
          availability ticker (`top: var(--nav-marquee-height)`), not 0. */
