@@ -1,5 +1,5 @@
 import "./Menu.css";
-import { useRef, useState, useEffect } from "react";
+import { lazy, Suspense, useRef, useState, useEffect } from "react";
 import { flushSync } from "react-dom";
 import { useLenis } from "lenis/react";
 import type Lenis from "lenis";
@@ -38,6 +38,14 @@ import RollingText from "./RollingText";
 import ThemeToggle from "./ThemeToggle";
 import { SITE_NAME } from "@/consts.ts";
 import "@/lib/site/eases";
+
+/**
+ * Home only, and lazily: `Menu` is `client:load` and on the critical path for
+ * every route, while this pulls in R3F, drei and a 300KB GLB. It has to be
+ * mounted from here rather than from `.hero` — see the stacking note at the top
+ * of the component itself.
+ */
+const HeroGlassCanvas = lazy(() => import("./hero/HeroGlassCanvas"));
 
 /**
  * Write a custom property on `<html>` only when it actually moved.
@@ -189,6 +197,12 @@ export default function Menu({ initialPathname = "/" }: MenuProps) {
   const [workProjectOpen, setWorkProjectOpen] = useState(false);
   const [isDesktopNav, setIsDesktopNav] = useState(false);
   const [contactOpen, setContactOpen] = useState(false);
+  /* `Menu` is `client:load`, so it server-renders — and a lazy WebGL island is
+     one thing Astro will happily try to render there, where there is no
+     `document`. Gating on a post-mount flag keeps it off the server without a
+     hydration mismatch: both the server pass and the first client pass render
+     nothing. */
+  const [hydrated, setHydrated] = useState(false);
   const emailCopy = useCopyEmail(EMAIL_HREF);
   const lenisFromContext = useLenis();
   const [bridgedLenis, setBridgedLenis] = useState<Lenis | null>(() =>
@@ -209,6 +223,7 @@ export default function Menu({ initialPathname = "/" }: MenuProps) {
             : homeSectionId;
 
   useEffect(() => subscribeSiteLenis(setBridgedLenis), []);
+  useEffect(() => setHydrated(true), []);
 
   const menuRef = useRef<HTMLDivElement>(null);
   const navRef = useRef<HTMLDivElement>(null);
@@ -343,7 +358,12 @@ export default function Menu({ initialPathname = "/" }: MenuProps) {
     const setChromeHeight = () => {
       let height = 0;
       for (const child of chrome.children) {
-        height += (child as HTMLElement).offsetHeight;
+        const el = child as HTMLElement;
+        // In-flow children only. `.hero_glass` is a viewport-tall absolutely
+        // positioned canvas that reserves no space, so summing its
+        // `offsetHeight` here would add a screen to the chrome's height.
+        if (getComputedStyle(el).position === "absolute") continue;
+        height += el.offsetHeight;
       }
       setRootVar("--hero-chrome-height", `${height}px`);
 
@@ -1088,16 +1108,11 @@ export default function Menu({ initialPathname = "/" }: MenuProps) {
                     that does: CSS applies `filter` before `mask`, so the chain
                     has to sit above the masked lockup. heroIntro arms it. */}
               <div className="name_hero_gooey">
-                {/* The lockup is Home: on inner pages it is the only mark, and
-                    on home it still has to replay the intro / scroll to top. */}
-                <a
-                  className="name_hero_home"
-                  href="/"
-                  onClick={(e) => {
-                    e.preventDefault();
-                    goTo("/");
-                  }}
-                >
+                {/* Not a link. `.name_hero` is home-only (Menu.css), so the
+                    wordmark in `.nav_logo` below is the home affordance at every
+                    width, and the glass canvas sitting over this mark needs the
+                    whole first viewport for its drag. */}
+                <span className="name_hero_home">
                   <span
                     className="name_hero_lockup"
                     role="img"
@@ -1109,11 +1124,16 @@ export default function Menu({ initialPathname = "/" }: MenuProps) {
                       aria-hidden="true"
                     />
                   </span>
-                </a>
+                </span>
               </div>
             </div>
           </div>
         </div>
+        {hydrated && pathname === "/" && (
+          <Suspense fallback={null}>
+            <HeroGlassCanvas />
+          </Suspense>
+        )}
         <div
           className={`nav_wrap${isOpen ? " is-menu-open" : ""}${aboutOpen ? " is-about-open" : ""}${navStuck ? " is-stuck" : ""}`}
           ref={navContainerRef}
@@ -1132,7 +1152,9 @@ export default function Menu({ initialPathname = "/" }: MenuProps) {
                   >
                     <span className="nav_logo_target">
                       <span className="nav_logo_wordmark">
-                        <h5 className="text-style-main">{SITE_NAME}</h5>
+                        <h5 className="text-style-main">
+                          <RollingText>{SITE_NAME}</RollingText>
+                        </h5>
                       </span>
                     </span>
                   </a>
