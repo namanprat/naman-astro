@@ -42,7 +42,7 @@ const RANGES: Record<GlassGroup, Record<string, [number, number, number]>> = {
   },
   melt: {
     lodScale: [0.1, 3, 0.01],
-    aa: [0, 0.3, 0.005],
+    aa: [0, 3, 0.05],
     threshold: [0.05, 0.95, 0.005],
   },
   /* The glyph reveal. The trail itself takes its edge from the sim, so that it

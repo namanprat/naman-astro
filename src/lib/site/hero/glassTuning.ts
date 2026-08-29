@@ -50,11 +50,11 @@ export type GlassMeltTuning = {
    */
   lodScale: number;
   /**
-   * Half-width of the alpha cut, standing in for the 0.4px softener that runs
-   * after `feColorMatrix` in `GooeyFilter.astro`.
+   * The softener after the cut, in CSS px — the `feGaussianBlur stdDeviation`
+   * that follows `feColorMatrix` in `GooeyFilter.astro`, which is 0.4 there.
    */
   aa: number;
-  /** Where the cut sits. 140/255 ≈ 0.549 is the SVG filter's own edge. */
+  /** Where the cut sits. The SVG's own edge is 140/255. */
   threshold: number;
 };
 
@@ -102,10 +102,12 @@ export const GLASS_DEFAULTS: GlassTuning = {
     autoRotateSpeed: 1,
     scrollSpin: 0.001,
   },
+  /* The DOM filter's own numbers, so the canvas mark and the DOM headings melt
+     identically out of the box. Moving either is a move away from parity. */
   melt: {
     lodScale: 1,
-    aa: 0.06,
-    threshold: 0.55,
+    aa: 0.4,
+    threshold: 140 / 255,
   },
   reveal: {
     maskThreshold: 1,
@@ -125,7 +127,7 @@ export const GLASS_MOBILE_MATERIAL: Partial<GlassMaterialTuning> = {
 export type GlassGroup = keyof GlassTuning;
 
 /* v2: `modelScale` moved 0.45 → 0.8, and a stored v1 blob would out-vote it. */
-const STORAGE_KEY = "glass-tuning-v4";
+const STORAGE_KEY = "glass-tuning-v5";
 
 function clone(source: GlassTuning): GlassTuning {
   return {

@@ -67,10 +67,8 @@ const FRAGMENT = /* glsl */ `
   uniform float uLod;
   /** Alpha cut. 0 disables it (soft mode, and every width below the melt's). */
   uniform float uCut;
-  /** Half-width of the cut at full blur. */
-  uniform float uAA;
-  /** 1 at the start of the melt, 0 once it has resolved. */
-  uniform float uProgress;
+  /** The softener after the cut, in device pixels. */
+  uniform float uSoftPx;
   /** The liquid, in screen space, and the colour it is painted in. */
   uniform sampler2D uFluid;
   uniform vec3 uTrail;
@@ -109,10 +107,25 @@ const FRAGMENT = /* glsl */ `
     float a = meltAlpha();
 
     if (uCut > 0.0) {
-      // The cut's soft edge opens back up as the blur closes, so the mark lands
-      // on the texture's own antialiasing instead of on a hard step.
-      float aa = mix(0.5, uAA, clamp(uProgress, 0.0, 1.0));
-      a = smoothstep(uCut - aa, uCut + aa, a);
+      /*
+       * The DOM chain, term for term. #blur-matrix is a feColorMatrix whose
+       * alpha row is 255a - 140 -- a clamp, so a hard cut at 140/255 with a
+       * ramp one 255th of alpha wide — followed by a 0.4px feGaussianBlur that
+       * exists only to take the aliasing off that cut.
+       *
+       * That second blur is spatial, and this reproduces it as one: the width of
+       * the ramp in *alpha* that corresponds to uSoftPx of *screen* is the alpha
+       * gradient across a fragment times that many fragments, which fwidth is.
+       * Re-blurring the thresholded field with real taps would cost a full melt
+       * kernel per tap.
+       *
+       * It does not vary with the melt's progress. The DOM's does not either —
+       * the filter list is fixed and only --gooey-blur tweens — and the ramp
+       * that used to open to half of alpha at full blur was why the two never
+       * looked like the same effect.
+       */
+      float ramp = max(1.0 / 255.0, uSoftPx * fwidth(a)) * 0.5;
+      a = smoothstep(uCut - ramp, uCut + ramp, a);
     }
 
     /*
@@ -276,8 +289,7 @@ export default function HeroWordmark() {
       uSigma: { value: new THREE.Vector2() },
       uLod: { value: 0 },
       uCut: { value: 0 },
-      uAA: { value: 0.06 },
-      uProgress: { value: 0 },
+      uSoftPx: { value: 0.4 },
       uFluid: { value: null as THREE.Texture | null },
       uTrail: { value: new THREE.Color("#e2e2dd") },
       uResolution: { value: new THREE.Vector2(1, 1) },
@@ -344,14 +356,15 @@ export default function HeroWordmark() {
     u.uFluidSoft.value = fluid.current.edgeSoftness;
     u.uTrail.value.copy(trail);
     state.gl.getDrawingBufferSize(u.uResolution.value);
-    const { blurPx, startPx, cut } = melt.current;
+    const { blurPx, cut } = melt.current;
     const tuning = getGlassTuning().melt;
 
     u.uMap.value = raster?.texture ?? null;
     u.uColor.value.copy(inkColor);
     u.uCut.value = cut;
-    u.uAA.value = tuning.aa;
-    u.uProgress.value = startPx > 0 ? blurPx / startPx : 0;
+    /* `tuning.aa` is CSS px, the same unit `#blur-matrix` gives its softener.
+       `fwidth` counts device pixels, so it converts through the DPR. */
+    u.uSoftPx.value = tuning.aa * gl.getPixelRatio();
 
     if (!raster || blurPx <= 0) {
       u.uSigma.value.set(0, 0);
