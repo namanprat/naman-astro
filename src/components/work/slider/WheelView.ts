@@ -276,7 +276,9 @@ export default class WheelView {
       );
     }
 
-    this.pxPerStep = phone ? Math.max(tileHeight, 1) : PX_PER_STEP;
+    /* Phone was tile-height (one swipe ≈ one tile) and flew. 2.5× lands
+       near the desktop 576px reference without bringing the 0.75s ease back. */
+    this.pxPerStep = phone ? Math.max(tileHeight * 2.5, 1) : PX_PER_STEP;
 
     /* On the page root, not the gallery: the label is a sibling of `.gallery`
        and sizes itself against the ring, so it has to inherit this too. The

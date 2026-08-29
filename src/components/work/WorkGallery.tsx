@@ -40,24 +40,6 @@ function initialWorkView(): WorkView {
   return isMobileLayout() ? "slider" : readWorkView();
 }
 
-/** Play the haptic film only on the anchored copy. `data-film-src` so
-    `bootLazyVideos` (overlay only) does not pull the 3.4MB file on arrival. */
-function syncCenteredFilm(root: ParentNode) {
-  root.querySelectorAll<HTMLVideoElement>(".gallery_img--film").forEach((video) => {
-    const on = video.closest(".gallery_slide")?.classList.contains("is-centered");
-    if (on) {
-      const src = video.dataset.filmSrc;
-      if (src) {
-        video.src = src;
-        delete video.dataset.filmSrc;
-      }
-      void video.play().catch(() => {});
-      return;
-    }
-    video.pause();
-  });
-}
-
 /**
  * What `WorkGallery` needs from whichever view is driving the tiles. `Slider`
  * (vertical grid) and `WheelView` (the circular ring) both satisfy it, so the
@@ -246,7 +228,6 @@ export default function WorkGallery() {
         onCenterChange: (index) => {
           if (viewRef.current !== "slider") return;
           setHoverTitle(workItems[index]?.title ?? null);
-          syncCenteredFilm(root);
         },
       });
     };
@@ -666,24 +647,12 @@ export default function WorkGallery() {
           >
             <div className="gallery_img_wrap">
               <img
-                className="gallery_img gallery_img--still"
+                className="gallery_img"
                 src={item.image}
                 alt={item.alt}
                 loading="eager"
                 draggable={false}
               />
-              {item.coverVideo ? (
-                <video
-                  className="gallery_img gallery_img--film"
-                  poster={item.image}
-                  data-film-src={item.coverVideo}
-                  muted
-                  loop
-                  playsInline
-                  preload="none"
-                  aria-label={item.alt}
-                />
-              ) : null}
             </div>
           </figure>
         ))}

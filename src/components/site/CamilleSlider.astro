@@ -16,6 +16,8 @@ const SLIDES = featuredWorkItems.map((item, i) => ({
   href: `/work/${item.slug}`,
   src: `/slider/slide-${i + 1}.jpg`,
   alt: item.alt,
+  film: item.coverVideo,
+  poster: item.image,
 }));
 
 const first = SLIDES[0];
@@ -40,14 +42,29 @@ const first = SLIDES[0];
                   data-slide-kicker={slide.kicker}
                   data-slide-href={slide.href}
                 >
-                  <img
-                    class="camille_slider_photo"
-                    src={slide.src}
-                    alt={slide.alt}
-                    draggable="false"
-                    loading="eager"
-                    decoding="async"
-                  />
+                  {
+                    slide.film ? (
+                      <video
+                        class="camille_slider_photo"
+                        poster={slide.poster}
+                        data-film-src={slide.film}
+                        muted
+                        loop
+                        playsinline
+                        preload="none"
+                        aria-label={slide.alt}
+                      />
+                    ) : (
+                      <img
+                        class="camille_slider_photo"
+                        src={slide.src}
+                        alt={slide.alt}
+                        draggable="false"
+                        loading="eager"
+                        decoding="async"
+                      />
+                    )
+                  }
                 </div>
               ))
             }

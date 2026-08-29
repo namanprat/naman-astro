@@ -228,11 +228,31 @@ export function initCamilleSlider(root: HTMLElement): CamilleSliderHandle {
     if (photo) gsap.set(photo, { clearProps: "x" });
   };
 
+  const syncFilms = (active: number) => {
+    layers.forEach((layer, i) => {
+      const video = layer.querySelector<HTMLVideoElement>(
+        "video.camille_slider_photo",
+      );
+      if (!video) return;
+      if (i === active) {
+        const src = video.dataset.filmSrc;
+        if (src) {
+          video.src = src;
+          delete video.dataset.filmSrc;
+        }
+        void video.play().catch(() => {});
+        return;
+      }
+      video.pause();
+    });
+  };
+
   const showOnly = (index: number) => {
     layers.forEach((layer, i) => {
       resetLayer(layer);
       layer.classList.toggle("is-active", i === index);
     });
+    syncFilms(index);
   };
 
   const syncChrome = () => {
@@ -299,6 +319,7 @@ export function initCamilleSlider(root: HTMLElement): CamilleSliderHandle {
     }
 
     busy = true;
+    syncFilms(to);
 
     layers.forEach((layer) => {
       if (layer !== outLayer && layer !== inLayer) resetLayer(layer);
@@ -402,6 +423,7 @@ export function initCamilleSlider(root: HTMLElement): CamilleSliderHandle {
   for (const pill of pills) pill.addEventListener("click", onPill);
 
   startAutoplay();
+  syncFilms(current);
 
   return {
     destroy: () => {
@@ -419,6 +441,9 @@ export function initCamilleSlider(root: HTMLElement): CamilleSliderHandle {
       hideViewCursor();
       if (cursorEl) gsap.killTweensOf(cursorEl);
       for (const pill of pills) pill.removeEventListener("click", onPill);
+      layers.forEach((layer) => {
+        layer.querySelector("video")?.pause();
+      });
       for (const dispose of rollDisposes) dispose();
       gsap.killTweensOf(
         images.querySelectorAll(".camille_slider_photo, .camille_slider_img"),

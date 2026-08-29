@@ -305,16 +305,6 @@ html.work-returning .work_wrap[data-work-view="slider"] .gallery::after {
   filter: saturate(1);
 }
 
-.work_wrap[data-work-view="grid"] .gallery_img--film {
-  display: none;
-}
-
-.work_wrap[data-work-view="slider"]
-  .gallery_slide:has(.gallery_img--film)
-  .gallery_img--still {
-  display: none;
-}
-
 /* No tile shrink on narrow screens. Shrinking them was what made the phone ring
    read as a band of stamps: twelve positions still fit, so nothing gave, and
    every thumbnail was 36px wide. At full size the ring can only carry six, which

@@ -247,16 +247,6 @@ test.describe("phone work locks to slider", () => {
     await expect(page.locator(".work_wrap .view_switcher")).toBeHidden();
   });
 
-  test("the haptic tile carries a film cover", async ({ page }) => {
-    await page.goto("/work");
-    await expect(page.locator(".work_wrap")).not.toHaveClass(/is-loading/);
-    await expect(
-      page.locator(
-        '.gallery_slide[data-slug="haptic"]:not([data-wheel-clone]) .gallery_img--film',
-      ),
-    ).toHaveCount(1);
-  });
-
   test("a tap on the centered tile opens the project", async ({
     page,
     context,
