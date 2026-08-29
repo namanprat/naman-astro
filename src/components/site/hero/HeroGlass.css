@@ -1,41 +1,10 @@
 @layer components {
   /*
-    Body-level, between the wordmark (`.name_hero`, --z--raised) and the nav bar
-    (`.nav_wrap`, --z--nav). See the note at the top of `HeroGlassCanvas.tsx`
-    for why it cannot live inside `main`.
-
-    `absolute`, not `fixed`: there is no positioned ancestor (`.hero_chrome` and
-    `<astro-island>` are both `display: contents`), so it anchors to the document
-    top and scrolls away with the first viewport — what `#logo-model` did in
-    duforn-old. Fixed would leave the glass floating over the studio stack.
+    The hero has no element of its own any more: it renders inside the backdrop
+    canvas (`FluidCanvas.tsx`), which is where `scene.background` — the fluid
+    sim — is, and that is the only thing the glass can refract. All that is left
+    here is the DOM lockup it stands in for.
   */
-  .hero_glass {
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100svh;
-    height: 100dvh;
-    z-index: var(--z--pin);
-    /* The canvas re-enables this for itself; the wrapper must not eat clicks
-       that belong to whatever ends up under a letterboxed edge. */
-    pointer-events: none;
-  }
-
-  .hero_glass canvas {
-    display: block;
-    width: 100%;
-    height: 100%;
-    pointer-events: auto;
-    /* Same cut duforn-old made at 475px: no drag on phones, autorotate only. */
-    touch-action: pan-y;
-  }
-
-  @media (width < 48rem) {
-    .hero_glass canvas {
-      pointer-events: none;
-    }
-  }
 
   /*
     A WebGL surface is painting the mark (`heroIntro.ts` sets this once something

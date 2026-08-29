@@ -62,6 +62,13 @@ uniform float uTime;
 uniform float uNoise;
 uniform float uCharNoise;
 uniform float uOpaqueGlyphs;
+uniform sampler2D uFluid;
+uniform float uHasFluid;
+uniform float uFluidThreshold;
+uniform float uFluidSoft;
+/** Flat multiplier on every glyph. 1 leaves the field as it was. */
+uniform float uOpacity;
+uniform vec2 uResolution;
 
 varying vec2 vUv;
 varying vec2 vPixelUV;
@@ -86,6 +93,22 @@ float noise2d(vec2 st) {
 }
 
 void main() {
+  // 1 where no fluid is bound, so every other surface is untouched.
+  float fluidMask = 1.;
+  if (uHasFluid > 0.5) {
+    vec2 fluidUv = gl_FragCoord.xy / uResolution;
+    // Clamped and centred on the threshold, the same cut the fluid display pass
+    // makes, so glyphs land inside the trail rather than trailing off past its
+    // edge. uFluidSoft 0 is that cut exactly; above 0 it tightens the reveal to
+    // the core of the trail instead.
+    float dye = clamp(length(texture2D(uFluid, fluidUv).rgb), 0.0, 1.0);
+    float lo = uFluidThreshold - uFluidSoft * 0.5;
+    if (dye < lo) discard;
+    if (uFluidSoft > 0.0001) {
+      fluidMask = smoothstep(lo, uFluidThreshold + uFluidSoft * 0.5, dye);
+    }
+  }
+
   vec4 src = texture2D(uScene, vPixelUV);
   // The offscreen clear is transparent, so bare background draws no glyph at
   // all. That is what keeps the Process cards and the About plate see-through.
@@ -123,8 +146,13 @@ void main() {
   }
 
   float alpha = chr * flicker;
+  // Cull the glyph's empty parts before uOpaqueGlyphs promotes what is left to
+  // solid ink. Promoting first fills the whole cell -- every character becomes a
+  // block, which is what the footer wordmark turned into.
   if (alpha < 0.01) discard;
   if (uOpaqueGlyphs > 0.5) alpha = 1.;
+  alpha *= fluidMask * uOpacity;
+  if (alpha < 0.01) discard;
   float hi = uHasHighlight > 0.5 ? texture2D(uHighlight, vPixelUV).r : 0.;
   gl_FragColor = vec4(mix(uColor, uHighlightColor, hi), alpha);
 }

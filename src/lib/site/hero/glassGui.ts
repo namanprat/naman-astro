@@ -35,7 +35,7 @@ const RANGES: Record<GlassGroup, Record<string, [number, number, number]>> = {
   },
   scene: {
     modelScale: [0.05, 1.5, 0.01],
-    modelDepth: [0, 3, 0.05],
+    modelDepth: [0, 4.5, 0.05],
     envIntensity: [0, 4, 0.05],
     autoRotateSpeed: [0, 8, 0.1],
     scrollSpin: [0, 0.01, 0.0001],
@@ -44,6 +44,16 @@ const RANGES: Record<GlassGroup, Record<string, [number, number, number]>> = {
     lodScale: [0.1, 3, 0.01],
     aa: [0, 0.3, 0.005],
     threshold: [0.05, 0.95, 0.005],
+  },
+  /* The glyph reveal. The trail itself takes its edge from the sim, so that it
+     cannot drift from the one on the rest of the page; these tighten the glyphs
+     within it. Their own look — density, glyph scale, gamma, jitter, flicker —
+     is the `hero` folder of the ASCII panel, which owns that lattice for every
+     surface on the site. */
+  reveal: {
+    maskThreshold: [0, 3, 0.01],
+    maskSoftness: [0, 3, 0.01],
+    glyphOpacity: [0, 1, 0.01],
   },
 };
 

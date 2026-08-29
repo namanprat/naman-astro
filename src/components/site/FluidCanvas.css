@@ -10,19 +10,20 @@
   z-index: 0;
   overflow: clip;
   flex-shrink: 0;
-  /* Under the sim — matches theme toggle; never paints over the logo. */
-  background-color: var(--background);
+  /*
+   * No blend mode here, and the canvas is transparent. Inverting from this layer
+   * would mean blending the whole canvas against the page, which takes the
+   * images, the cards and the hero glass with it — the glass came out half black
+   * on the light theme, because difference does not care what it is inverting.
+   *
+   * The copy opts in instead: see `.is-trail-invert` at the foot of this file.
+   */
 }
 
-/* Homepage: viewport backdrop so manifesto / team / footer read the sim
-   instead of an empty plate once the first screen has scrolled away.
-   `main` is the stacking context so the wrap stays behind chrome (`--z--nav`)
-   and studio/footer (`z-index: 2`), same idea as `html.page-work main`. */
-/* Homepage: viewport backdrop so manifesto / team / footer / About frost
-   sample the sim instead of an empty plate once the first screen has
-   scrolled away. `main` is the stacking context so the wrap stays behind
-   chrome (`--z--nav`) and studio/footer (`z-index: 2`). Do not use
-   `z-index: -1` — that hides the wrap behind body's `--background`. */
+/* Homepage: viewport overlay, so the trail keeps reaching manifesto / team /
+   footer once the first screen has scrolled away. `main` is the stacking
+   context, which is what keeps the wrap under the nav (`--z--nav`) and under
+   the About panel while sitting over studio/footer (`z-index: 2`). */
 html:has(.hero) main {
   position: relative;
   z-index: 0;
@@ -43,21 +44,10 @@ html:has(.hero) .fluid_wrap {
   display: block;
   width: 100%;
   height: 100%;
-  opacity: 0.4;
-  transition: opacity 0.45s ease;
 }
 
-html.is-hero-fluid-dim .fluid_wrap canvas {
-  /* Dim for manifesto/team readability, but keep enough chroma that light-mode
-     frost on the footer and About panel still has something to sample. */
-  opacity: 0.32;
-}
-
-/* Preloader: keep the sim at full strength behind the overlay. After the dim
-   rule so it wins that collision. */
-html.is-preloading .fluid_wrap canvas {
-  opacity: 1;
-}
+/* The canvas opacities that used to live here are gone entirely: the trail is
+   one weight now, and its strength is the alpha the display cut gives it. */
 
 /* In-flow wrap pulls under the hero chrome via negative margin. While the
    preloader is up, html/body overflow is hidden, which clips that pull-up
@@ -74,6 +64,30 @@ html.is-preloading .fluid_wrap {
   /* Island parent is `visibility: hidden` (it is not `.fluid_wrap`); this
      restores the sim so it reads through the transparent overlay. */
   visibility: visible;
+}
+
+/*
+ * Copy that the trail inverts as it passes under it.
+ *
+ * Opt-in, one element at a time, and that is the whole design: a blend on the
+ * canvas would invert everything behind it — images, project cards, the About
+ * panel, the footer, the hero glass — and there is no way to exempt them, since
+ * they sit inside `.studio`'s own stacking context and cannot be lifted over the
+ * canvas one by one. Put the blend on the text instead and nothing else is ever
+ * touched.
+ *
+ * It works because the backdrop under this copy is empty: `main` paints no fill
+ * of its own (the page's lives on `body`, outside this stacking context) and the
+ * canvas is transparent everywhere the trail is not. Difference against nothing
+ * is the source unchanged, so the copy is its normal colour until the liquid
+ * reaches it. `.hero` and `.studio` drop their `z-index` for the same reason —
+ * see `styles/site.css`.
+ *
+ * Add a selector here to have the trail cut through something else.
+ */
+.manifesto_lead,
+.is-trail-invert {
+  mix-blend-mode: difference;
 }
 
 html.page-work .fluid_wrap {

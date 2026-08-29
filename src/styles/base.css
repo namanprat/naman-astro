@@ -312,10 +312,17 @@
 
   --background: var(--light-100);
   --background-2: var(--grey);
-  /* Fluid sim reads these off <html> (lib/site/fluid). Light mode paints the
-     page white and the liquid trail grey — the inverse of dark mode. */
-  --ink: var(--grey);
+  /* Fluid sim reads --background and --trail off <html> (lib/site/fluid), and
+     the hero's ASCII reveal paints its streak in --trail to match. Light mode
+     puts the page white and the trail on brand black; dark mode inverts both,
+     page near-black and trail white. */
+  --trail: var(--dark-900);
   --dark: var(--light-100);
+  /* `--text` pre-corrected for the nav's difference blend: see `.nav_wrap` in
+     `Menu.css`. `|page - this|` is `--text`, so the nav paints its normal colour
+     until the trail passes under it. Light mode subtracts, because the page is
+     the bright one here and adding would clamp. */
+  --nav-blend-text: #575752;
   --background-skeleton: color-mix(in lab, currentcolor 10%, transparent);
   --text: var(--grey);
   --border: color-mix(in lab, var(--text) 20%, transparent);
@@ -350,8 +357,10 @@
 
   --background: var(--dark-900);
   --background-2: var(--dark-800);
-  --ink: var(--light-100);
+  --trail: var(--light-100);
   --dark: var(--dark-800);
+  /* `--background` + `--text`; see the light-mode note above. */
+  --nav-blend-text: #f2f2ed;
   --background-skeleton: color-mix(in lab, currentcolor 10%, transparent);
   --text: var(--light-100);
   --border: color-mix(in lab, var(--text) 20%, transparent);

@@ -15,6 +15,7 @@ import * as THREE from "three";
 import { shaderColor } from "@/lib/site/cssColor";
 import { prefersReducedMotion } from "@/lib/site/prefersReducedMotion";
 import { getDufornAsciiAtlas } from "@/lib/site/ascii/asciiAtlas";
+import { buildAsciiGrid } from "@/lib/site/ascii/asciiGrid";
 import {
   ASCII_FIELD_FRAG,
   ASCII_FIELD_VERT,
@@ -45,20 +46,6 @@ type AsciiFieldProps = {
   children: ReactNode;
 };
 
-type Grid = {
-  geometry: THREE.InstancedBufferGeometry;
-  cols: number;
-  rows: number;
-};
-
-/**
- * Brush, in cells. A fat disk every pointer sample (radius 22) filled ~1500
- * cells and scanned the whole lattice every frame, so the canvas hitch made
- * the trail look slow and gappy. A smaller falloff disk, stamped along the
- * pointer path each frame, reads as a thicker ribbon than the old 10-cell
- * random walk without stalling the loop. Same density as the Team lattice
- * (~183 rows): radius 7 is ~4% of the short axis.
- */
 const BRUSH_RADIUS = 7;
 /** Fade window. Binary on/off at 1.1s felt sticky; this matches the fluid's
  *  dissipation beat more closely. */
@@ -185,55 +172,6 @@ function writeLiveCells(
   return dirty;
 }
 
-/** One instanced quad per cell, filling [-aspect, aspect] x [-1, 1]. */
-function buildGrid(density: number, aspect: number): Grid {
-  const rows = Math.max(2, Math.round(density));
-  const cols = Math.max(2, Math.round(density * aspect));
-  const cellW = (2 * aspect) / cols;
-  const cellH = 2 / rows;
-  const count = rows * cols;
-
-  const positions = new Float32Array(count * 3);
-  const pixelUv = new Float32Array(count * 2);
-  const random = new Float32Array(count);
-
-  for (let i = 0; i < cols; i++) {
-    for (let j = 0; j < rows; j++) {
-      const index = i * rows + j;
-      positions[index * 3] = -aspect + (i + 0.5) * cellW;
-      positions[index * 3 + 1] = -1 + (j + 0.5) * cellH;
-      positions[index * 3 + 2] = 0;
-      pixelUv[index * 2] = (i + 0.5) / cols;
-      pixelUv[index * 2 + 1] = (j + 0.5) / rows;
-      // Archive's pow(random, 4) — biased low, so only a few cells jump a glyph.
-      random[index] = Math.pow(Math.random(), 4);
-    }
-  }
-
-  // ponytail: base is never rendered on its own and its attributes are handed
-  // straight to the instanced geometry, so it must not be disposed here.
-  const base = new THREE.PlaneGeometry(cellW, cellH, 1, 1);
-  const geometry = new THREE.InstancedBufferGeometry();
-  geometry.index = base.index;
-  geometry.setAttribute("position", base.attributes.position);
-  geometry.setAttribute("uv", base.attributes.uv);
-  geometry.instanceCount = count;
-  geometry.setAttribute(
-    "aPosition",
-    new THREE.InstancedBufferAttribute(positions, 3),
-  );
-  geometry.setAttribute(
-    "aPixelUV",
-    new THREE.InstancedBufferAttribute(pixelUv, 2),
-  );
-  geometry.setAttribute(
-    "aRandom",
-    new THREE.InstancedBufferAttribute(random, 1),
-  );
-
-  return { geometry, cols, rows };
-}
-
 export default function AsciiField({
   surface,
   ink,
@@ -282,7 +220,10 @@ export default function AsciiField({
     () => new THREE.OrthographicCamera(-1, 1, 1, -1, -1, 1),
     [],
   );
-  const grid = useMemo(() => buildGrid(density, aspect), [density, aspect]);
+  const grid = useMemo(
+    () => buildAsciiGrid(density, aspect),
+    [density, aspect],
+  );
   useEffect(() => () => grid.geometry.dispose(), [grid]);
 
   const target = useMemo(() => {
@@ -320,6 +261,12 @@ export default function AsciiField({
       uNoise: { value: reducedMotion ? 0 : tuning.noise },
       uCharNoise: { value: 0 },
       uOpaqueGlyphs: { value: 0 },
+      uFluid: { value: null as THREE.Texture | null },
+      uHasFluid: { value: 0 },
+      uFluidThreshold: { value: 1 },
+      uFluidSoft: { value: 0 },
+      uOpacity: { value: 1 },
+      uResolution: { value: new THREE.Vector2(1, 1) },
     }),
     // Tuning is re-pushed every frame; only the texture binding is fixed here.
     [target],

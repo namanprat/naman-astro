@@ -168,6 +168,16 @@ export class FooterAsciiField {
           // Holey glyphs at atlas alpha wash to grey on the frost card; opaque
           // ink is what makes --light-100 actually read as white.
           uOpaqueGlyphs: { value: 1 },
+          /* The shared shader's fluid mask, which this surface does not use.
+             They still have to be declared: an undeclared uniform reads 0, and
+             the shader multiplies the glyph alpha by `uOpacity` unconditionally
+             — 0 there discards every glyph and the wordmark vanishes. */
+          uFluid: { value: null },
+          uHasFluid: { value: 0 },
+          uFluidThreshold: { value: 1 },
+          uFluidSoft: { value: 0 },
+          uOpacity: { value: 1 },
+          uResolution: { value: new THREE.Vector2(1, 1) },
         },
         transparent: true,
         depthTest: false,

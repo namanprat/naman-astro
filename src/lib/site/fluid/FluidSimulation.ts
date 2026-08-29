@@ -1,39 +1,46 @@
 /**
- * GPU stable-fluids backdrop. Port of codegrid-cappen-fluid-simulation with
- * theme ink/surface from CSS tokens instead of a difference-blend overlay.
+ * GPU stable-fluids backdrop. Port of `codegrid-cappen-fluid-simulation`
+ * (config, splat, advection, display invert) onto R3F's renderer so the hero
+ * glass can refract it. Cappen used mix-blend-mode: difference on its own
+ * canvas; that blend would invert the logo too, so the invert is in the
+ * display pass against `--background` instead.
+ *
+ * `FluidCanvas` calls `update()` from `useFrame`. The display pass lands in
+ * `output`, hung on `scene.background`.
  */
 import * as THREE from "three";
 import { readCssColor, shaderColor } from "../cssColor";
 import { MOBILE_LAYOUT_MQ } from "../isMobileLayout";
 import { prefersReducedMotion } from "../prefersReducedMotion";
 import { reportHomeCanvasReady } from "../preloadAssets";
-import { SWATCH_DARK, SWATCH_LIGHT } from "../siteColors";
+import { SWATCH_DARK, SWATCH_TRAIL } from "../siteColors";
 import shaders from "./shaders";
 
 const COLOR_FOLLOW = 6;
+/** ~0.45s to settle, matching the CSS opacity transition it replaces. */
+const MIX_FOLLOW = 8;
 
 /**
- * Idle cadence. The backdrop paints at `opacity: 0.4` behind everything and
- * nothing is looking at it while the pointer is still, so a still sim does not
- * need 60 full simulate+render passes a second. Halving it while idle is the
- * single cheapest cut available here; a pointer move restores full rate on the
- * very next frame.
+ * Idle cadence. A still sim does not need 60 full simulate+render passes a
+ * second. Halving it while idle is the cheapest cut; a pointer move restores
+ * full rate on the next frame.
  */
 const IDLE_AFTER_MS = 1000;
 const IDLE_FRAME_MS = 1000 / 30;
 
+/* Full strength the whole way down. The manifesto/team dim that used to ride on
+   `is-hero-fluid-dim` is gone by request — the trail holds one weight now. */
+const BASE_MIX = 1;
+const PRELOAD_MIX = 1;
+/** The dye's visible tail lasts a few seconds at the configured dissipation. */
+const DYE_ACTIVE_MS = 5000;
+
+/** Numbers from codegrid-cappen-fluid-simulation/js/script.js. */
 const CONFIG = {
   simResolution: 256,
-  /* Was 1024. The dye target is advected and then blurred into a two-colour
-     display pass — at 0.4 opacity there is no detail at 1024 that survives to
-     the screen, and the advection cost is quadratic in this number. */
-  dyeResolution: 512,
+  dyeResolution: 1024,
   curl: 50,
-  /* Was 40. This is the Jacobi solve, and it is the whole per-frame budget:
-     every iteration is another full-screen pass over the sim target. Twenty is
-     the usual stable-fluids working number and the difference is not visible
-     through the display pass. */
-  pressureIterations: 20,
+  pressureIterations: 40,
   velocityDissipation: 0.95,
   dyeDissipation: 0.95,
   splatRadius: 0.3,
@@ -98,6 +105,14 @@ function makeMaterial(
     uniforms,
     depthTest: false,
     depthWrite: false,
+    /* Clip-space quad. R3F leaves cull/depth on from the hero mesh; FrontSide
+       would drop every fragment and the plate would stay the clear colour. */
+    side: THREE.DoubleSide,
+    /* MTM / Environment leave blend funcs dirty. Default NormalBlending onto
+       an uncleared target turns every sim pass into a smear. */
+    blending: THREE.NoBlending,
+    toneMapped: false,
+    fog: false,
   });
 }
 
@@ -114,7 +129,6 @@ function vec2(): THREE.IUniform<THREE.Vector2> {
 }
 
 export class FluidSimulation {
-  private readonly renderer: THREE.WebGLRenderer;
   private readonly scene = new THREE.Scene();
   private readonly camera = new THREE.OrthographicCamera(-1, 1, 1, -1, 0, 1);
   private readonly quad: THREE.Mesh;
@@ -123,16 +137,23 @@ export class FluidSimulation {
   private readonly motionQuery: MediaQueryList;
   private readonly layoutQuery: MediaQueryList;
 
-  private readonly inkColor = shaderColor(SWATCH_LIGHT);
-  private readonly surfaceColor = shaderColor(SWATCH_DARK);
-  private readonly inkTarget = shaderColor(SWATCH_LIGHT);
-  private readonly surfaceTarget = shaderColor(SWATCH_DARK);
+  private readonly pageColor = shaderColor(SWATCH_DARK);
+  private readonly pageTarget = shaderColor(SWATCH_DARK);
+  /** `--trail`: grey on the dark theme, brand black on the light one. */
+  private readonly trailColor = shaderColor(SWATCH_TRAIL);
+  private readonly trailTarget = shaderColor(SWATCH_TRAIL);
 
   private readonly splatPoint = new THREE.Vector2();
   private readonly velocitySplat = new THREE.Vector3();
   private readonly dyeSplat = new THREE.Vector3(3, 3, 3);
   private readonly simTexel = new THREE.Vector2();
   private readonly dyeTexel = new THREE.Vector2();
+
+  /** The composited backdrop. `FluidCanvas` hangs this on `scene.background`. */
+  output!: THREE.WebGLRenderTarget;
+  /** Written this frame; swapped into `output` after the display pass so the
+   *  scene never samples a texture that is also the current framebuffer. */
+  private outputWrite!: THREE.WebGLRenderTarget;
 
   private velocity!: PingPong;
   private dye!: PingPong;
@@ -142,30 +163,29 @@ export class FluidSimulation {
   private simSize: Size = { w: 1, h: 1 };
   private dyeSize: Size = { w: 1, h: 1 };
 
-  private dpr = 1;
   private width = 1;
   private height = 1;
+  private readonly measured = new THREE.Vector2();
 
   private mouse = { x: 0, y: 0, velocityX: 0, velocityY: 0, moved: false };
+  private pointerPrimed = false;
   private reduced = prefersReducedMotion();
   private painted = false;
-  private running = false;
   private disposed = false;
-  private raf = 0;
-  private lastTime = 0;
-  private lastTheme = { ink: "", surface: "" };
+  /** Elapsed time not yet simulated — see `update`. */
+  private pending = 0;
+  private seedPending = false;
+  /** How much of the sim is let through over the page fill, and where it is
+   *  heading. Was `.fluid_wrap canvas`'s CSS `opacity` and its 0.45s ease. */
+  private pageMix = BASE_MIX;
+  private pageMixTarget = BASE_MIX;
+  private lastTheme = { page: "", trail: "" };
   /** Last user pointer activity — ambient preload splats pause while the
    *  visitor is painting trails themselves. */
   private lastPointerAt = 0;
   private ambientPhase = 0;
 
-  constructor(canvas: HTMLCanvasElement) {
-    this.renderer = new THREE.WebGLRenderer({
-      canvas,
-      antialias: false,
-      alpha: false,
-      powerPreference: "low-power",
-    });
+  constructor(private readonly renderer: THREE.WebGLRenderer) {
     this.quad = new THREE.Mesh(new THREE.PlaneGeometry(2, 2));
     this.quad.frustumCulled = false;
     this.scene.add(this.quad);
@@ -174,14 +194,14 @@ export class FluidSimulation {
     this.syncSize();
     this.setupTargets();
     this.readTheme(true);
+    this.readMix();
+    this.pageMix = this.pageMixTarget;
 
     const { signal } = this.abort;
-    window.addEventListener("resize", this.onResize, { signal });
+    /* No resize listener: `update` watches the renderer's own size, which R3F
+       keeps on the container rather than on the window. */
     window.addEventListener("pointermove", this.onPointerMove, {
       passive: true,
-      signal,
-    });
-    document.addEventListener("visibilitychange", this.onVisibility, {
       signal,
     });
 
@@ -207,33 +227,50 @@ export class FluidSimulation {
     });
     signal.addEventListener("abort", () => observer.disconnect());
 
-    this.startLoop();
-
-    // Opening bloom so the first preloader frame isn't a flat dark plane —
-    // deferred one tick so DPR size is committed.
-    if (
+    // Opening bloom so the first preloader frame isn't a flat dark plane. Held
+    // for the first `update` rather than a rAF of its own: a splat leaves its
+    // ping-pong target bound, and outside the frame R3F would render the page
+    // into it.
+    this.seedPending =
       !this.reduced &&
-      document.documentElement.classList.contains("is-preloading")
-    ) {
-      requestAnimationFrame(() => {
-        if (!this.disposed) this.seedOpeningSplats();
-      });
-    }
+      document.documentElement.classList.contains("is-preloading");
+  }
+
+  /** Raw dye, before the display pass turns it into the page's liquid trail. */
+  get dyeTexture(): THREE.Texture {
+    return this.dye.read.texture;
+  }
+
+  /** Lets consumers skip their mask pass once the visitor's trail has settled. */
+  get dyeActive(): boolean {
+    return (
+      !this.reduced &&
+      (this.mouse.moved ||
+        performance.now() - this.lastPointerAt < DYE_ACTIVE_MS)
+    );
+  }
+
+  get dyeThreshold(): number {
+    return CONFIG.threshold;
+  }
+
+  /** With the threshold, the whole edge the display pass cuts the trail on.
+   *  Anything else drawing the same liquid has to use both or it reads as a
+   *  different shape — the hero streak did, feathered where this is crisp. */
+  get dyeEdgeSoftness(): number {
+    return CONFIG.edgeSoftness;
   }
 
   dispose(): void {
     if (this.disposed) return;
     this.disposed = true;
-    this.stopLoop();
     this.abort.abort();
     this.disposeTargets();
     this.quad.geometry.dispose();
     for (const material of Object.values(this.materials)) {
       material.dispose();
     }
-    const gl = this.renderer.getContext();
-    gl.getExtension("WEBGL_lose_context")?.loseContext();
-    this.renderer.dispose();
+    // The renderer belongs to R3F; it tears down its own context.
   }
 
   private makeMaterials(): Materials {
@@ -285,26 +322,26 @@ export class FluidSimulation {
         uTexture: tex(),
         threshold: num(CONFIG.threshold),
         edgeSoftness: num(CONFIG.edgeSoftness),
-        inkColor: { value: this.inkColor },
-        surfaceColor: { value: this.surfaceColor },
+        pageColor: { value: this.pageColor },
+        trailColor: { value: this.trailColor },
+        pageMix: num(BASE_MIX),
       }),
     };
   }
 
+  /**
+   * CSS pixels, not device pixels. The display pass covers the whole viewport,
+   * so DPR 2 would quadruple its fill rate for a soft two-colour gradient with
+   * nothing in it to resolve — and the canvas itself now runs at the hero
+   * glass's DPR, which the sim has no reason to pay for.
+   */
   private syncSize(): void {
-    const w = window.innerWidth;
-    const h = window.innerHeight;
-    /* Pinned to 1, not the device ratio. The display pass covers the whole
-       viewport, so DPR 2 quadrupled its fill rate — for a soft two-colour
-       gradient at 0.4 opacity with nothing in it to resolve. */
-    this.renderer.setPixelRatio(1);
-    this.renderer.setSize(w, h);
-    this.dpr = this.renderer.getPixelRatio();
-    this.width = Math.max(1, w * this.dpr);
-    this.height = Math.max(1, h * this.dpr);
+    const size = this.renderer.getSize(this.measured);
+    this.width = Math.max(1, Math.round(size.x));
+    this.height = Math.max(1, Math.round(size.y));
   }
 
-  private setupTargets(): void {
+  private setupSimTargets(): void {
     const aspect = this.width / this.height;
     this.simSize = {
       w: CONFIG.simResolution,
@@ -332,7 +369,20 @@ export class FluidSimulation {
     this.pressure = makePingPong(this.simSize.w, this.simSize.h);
   }
 
-  private disposeTargets(): void {
+  private setupTargets(): void {
+    this.setupSimTargets();
+    /* Linear, and half-float so the shadows this plate is almost entirely made
+       of do not band in 8 bits. The display pass converts on the way in (see
+       `shaders.ts`); three's background draw converts back on the way out. */
+    this.output = new THREE.WebGLRenderTarget(this.width, this.height, {
+      ...TARGET_OPTIONS,
+    });
+    this.outputWrite = new THREE.WebGLRenderTarget(this.width, this.height, {
+      ...TARGET_OPTIONS,
+    });
+  }
+
+  private disposeSimTargets(): void {
     disposePingPong(this.velocity);
     disposePingPong(this.dye);
     disposePingPong(this.pressure);
@@ -340,56 +390,77 @@ export class FluidSimulation {
     this.curlTarget.dispose();
   }
 
+  private disposeTargets(): void {
+    this.disposeSimTargets();
+    this.output.dispose();
+    this.outputWrite.dispose();
+  }
+
   private readTheme(snap: boolean): void {
     const next = {
-      ink: readCssColor("--ink", SWATCH_LIGHT),
-      surface: readCssColor("--dark", SWATCH_DARK),
+      page: readCssColor("--background", SWATCH_DARK),
+      trail: readCssColor("--trail", SWATCH_TRAIL),
     };
-    if (
-      next.ink === this.lastTheme.ink &&
-      next.surface === this.lastTheme.surface
-    ) {
+    if (next.page === this.lastTheme.page && next.trail === this.lastTheme.trail) {
       return;
     }
     this.lastTheme = next;
-    this.inkTarget.copy(shaderColor(next.ink));
-    this.surfaceTarget.copy(shaderColor(next.surface));
+    this.pageTarget.copy(shaderColor(next.page));
+    this.trailTarget.copy(shaderColor(next.trail));
     if (snap) {
-      this.inkColor.copy(this.inkTarget);
-      this.surfaceColor.copy(this.surfaceTarget);
+      this.pageColor.copy(this.pageTarget);
+      this.trailColor.copy(this.trailTarget);
     }
+  }
+
+  /** Full strength, and fuller still behind the preloader. Read off the same
+   *  class mutation the theme rides on. */
+  private readMix(): void {
+    this.pageMixTarget = document.documentElement.classList.contains(
+      "is-preloading",
+    )
+      ? PRELOAD_MIX
+      : BASE_MIX;
   }
 
   private onThemeMutation = (): void => {
     this.readTheme(true);
+    this.readMix();
   };
 
-  private onResize = (): void => {
+  private resize(): void {
     const prevW = this.width;
     const prevH = this.height;
     this.syncSize();
     if (this.width === prevW && this.height === prevH) return;
-    this.disposeTargets();
-    this.setupTargets();
-  };
+    this.disposeSimTargets();
+    this.setupSimTargets();
+    /* Keep the same texture objects — `scene.background` is `output`, and
+       disposing it leaves the scene pointing at a dead target. */
+    this.output.setSize(this.width, this.height);
+    this.outputWrite.setSize(this.width, this.height);
+  }
 
   private onPointerMove = (event: PointerEvent): void => {
     if (this.reduced) return;
     if (this.layoutQuery.matches) return;
 
-    const x = event.clientX * this.dpr;
-    const y = event.clientY * this.dpr;
+    const x = event.clientX;
+    const y = event.clientY;
+    /* Same as Cappen's onMove, minus the first event: that one would splat
+       with velocity from (0, 0) and flood the plate. */
+    if (!this.pointerPrimed) {
+      this.pointerPrimed = true;
+      this.mouse.x = x;
+      this.mouse.y = y;
+      return;
+    }
     this.mouse.velocityX = (x - this.mouse.x) * CONFIG.forceStrength;
     this.mouse.velocityY = (y - this.mouse.y) * CONFIG.forceStrength;
     this.mouse.x = x;
     this.mouse.y = y;
     this.mouse.moved = true;
     this.lastPointerAt = performance.now();
-  };
-
-  private onVisibility = (): void => {
-    if (document.hidden) this.stopLoop();
-    else this.startLoop();
   };
 
   private onMotionChange = (): void => {
@@ -401,37 +472,35 @@ export class FluidSimulation {
     if (this.layoutQuery.matches) this.mouse.moved = false;
   };
 
-  private startLoop(): void {
-    if (this.disposed || this.running) return;
-    this.running = true;
-    this.lastTime = performance.now();
-    const tick = (now: number) => {
-      if (!this.running) return;
-      this.raf = requestAnimationFrame(tick);
-      // Idle: half rate. `lastTime` is only advanced on a frame we actually
-      // run, so `dt` stays the true elapsed time and the sim evolves at the
-      // same speed either way.
-      const idle = now - this.lastPointerAt > IDLE_AFTER_MS;
-      if (idle && now - this.lastTime < IDLE_FRAME_MS) return;
-      const dt = Math.min((now - this.lastTime) / 1000, 1 / 30);
-      this.lastTime = now;
-      this.frame(dt);
-    };
-    this.raf = requestAnimationFrame(tick);
-  }
-
-  private stopLoop(): void {
-    this.running = false;
-    if (this.raf) {
-      cancelAnimationFrame(this.raf);
-      this.raf = 0;
-    }
+  /**
+   * One step, driven by R3F's loop. Skipping a step leaves `output` holding the
+   * last frame, which is what the scene keeps sampling — the same thing the
+   * canvas used to do when a rAF tick was skipped.
+   */
+  update(delta: number): void {
+    if (this.disposed) return;
+    this.resize();
+    this.pending += delta;
+    // Idle: half rate. The skipped time carries in `pending`, so `dt` stays the
+    // true elapsed time and the sim evolves at the same speed either way.
+    const idle = performance.now() - this.lastPointerAt > IDLE_AFTER_MS;
+    if (idle && this.pending < IDLE_FRAME_MS / 1000) return;
+    /* Cappen caps at 0.016 — a 1/30 step stretches the dye into spikes. */
+    const dt = Math.min(this.pending, 0.016);
+    this.pending = 0;
+    this.frame(dt);
   }
 
   private frame(dt: number): void {
+    if (this.seedPending) {
+      this.seedPending = false;
+      this.seedOpeningSplats();
+    }
     const follow = lerpFactor(dt, COLOR_FOLLOW);
-    this.inkColor.lerp(this.inkTarget, follow);
-    this.surfaceColor.lerp(this.surfaceTarget, follow);
+    this.pageColor.lerp(this.pageTarget, follow);
+    this.trailColor.lerp(this.trailTarget, follow);
+    this.pageMix +=
+      (this.pageMixTarget - this.pageMix) * lerpFactor(dt, MIX_FOLLOW);
 
     if (!this.reduced) {
       if (this.mouse.moved) {
@@ -510,9 +579,18 @@ export class FluidSimulation {
     material: THREE.ShaderMaterial,
     target: THREE.WebGLRenderTarget | null,
   ): void {
+    const { renderer } = this;
+    const prevAutoClear = renderer.autoClear;
+    const prevScissorTest = renderer.getScissorTest();
+    /* These targets have no depth; a default clear writes DEPTH_BUFFER_BIT and
+       WebGL aborts the whole clear. The quad covers every pixel anyway. */
+    renderer.autoClear = false;
+    renderer.setScissorTest(false);
     this.quad.material = material;
-    this.renderer.setRenderTarget(target);
-    this.renderer.render(this.scene, this.camera);
+    renderer.setRenderTarget(target);
+    renderer.render(this.scene, this.camera);
+    renderer.autoClear = prevAutoClear;
+    renderer.setScissorTest(prevScissorTest);
   }
 
   private splat(
@@ -629,7 +707,14 @@ export class FluidSimulation {
   private render(): void {
     this.setUniforms(this.materials.display, {
       uTexture: this.dye.read.texture,
+      pageMix: this.pageMix,
     });
-    this.pass(this.materials.display, null);
+    this.pass(this.materials.display, this.outputWrite);
+    const displayed = this.output;
+    this.output = this.outputWrite;
+    this.outputWrite = displayed;
+    // R3F renders the scene straight after this; leaving its target bound here
+    // would send the whole page into the backdrop's own buffer.
+    this.renderer.setRenderTarget(null);
   }
 }

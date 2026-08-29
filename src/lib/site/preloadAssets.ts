@@ -129,7 +129,7 @@ function warmBust(): void {
 function warmHeroGlass(): void {
   if (window.location.pathname !== "/") return;
   const run = () => {
-    void import("@/components/site/hero/HeroGlassCanvas");
+    void import("@/components/site/hero/HeroGlass");
   };
   if ("requestIdleCallback" in window) {
     window.requestIdleCallback(run, { timeout: 2000 });

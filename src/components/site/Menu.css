@@ -65,7 +65,7 @@ html.theme-light.menu-open {
   visibility: hidden;
 }
 
-/* The painted shape — `--ink` clipped by the mask. aspect-ratio matches
+/* The painted shape — `--text` clipped by the mask. aspect-ratio matches
    name-hero.svg so the box has height on WebKit before the sizer <img>
    lays out; a 0-height lockup makes mask-size: 100% resolve to nothing. */
 /* Two nested spans — both need to be blocks or the `aspect-ratio` box collapses
@@ -123,6 +123,25 @@ html.theme-light.menu-open {
 }
 
 .nav_wrap {
+  /*
+   * The liquid trail cuts through the nav, the way it cuts through the copy in
+   * `.studio` — but it cannot work the same way. That copy lives inside `main`,
+   * which paints no fill of its own, so difference against a bare backdrop is
+   * the identity and the words only react where the trail actually is. The nav
+   * is a body-level element: its backdrop always includes the page fill, so a
+   * plain difference would tint it everywhere.
+   *
+   * So the colour is pre-corrected. `--nav-blend-text` is chosen per theme so
+   * that `|page - it|` lands on `--text`: off the trail the nav is exactly the
+   * colour it always was, and over the trail it swaps.
+   *
+   * On the wrap, not on `.nav_grid` inside it. `position: sticky` makes this a
+   * stacking context, and a blend mode inside one only sees that context's own
+   * backdrop — from the grid there is nothing behind it and the blend silently
+   * did nothing, which read as the nav simply vanishing under the trail.
+   */
+  mix-blend-mode: difference;
+  color: var(--nav-blend-text);
   position: sticky;
   top: var(--nav-marquee-height, 0px);
   width: 100%;
@@ -133,6 +152,7 @@ html.theme-light.menu-open {
   box-sizing: border-box;
   overflow: visible;
 }
+
 
 /* Theme-aware readability fade. `--background` is the page fill, so light
    gets the warm grey and dark gets near-black. A real node, not ::before:

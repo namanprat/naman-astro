@@ -58,10 +58,25 @@ export type GlassMeltTuning = {
   threshold: number;
 };
 
+/** The fluid-masked ASCII pass over the logo (`HeroAsciiReveal`). */
+export type GlassRevealTuning = {
+  /**
+   * The glyph reveal's own cut, defaulting to the fluid display pass's
+   * (`CONFIG.threshold` / `CONFIG.edgeSoftness`) so the characters land exactly
+   * inside the trail. The streak itself always takes the sim's, not these.
+   */
+  maskThreshold: number;
+  /** Width of that cut, centred on the threshold. 0 is a hard edge. */
+  maskSoftness: number;
+  /** Glyph coverage inside the trail. 1 is every cell the matte reaches. */
+  glyphOpacity: number;
+};
+
 export type GlassTuning = {
   material: GlassMaterialTuning;
   scene: GlassSceneTuning;
   melt: GlassMeltTuning;
+  reveal: GlassRevealTuning;
 };
 
 /** The brief's values, plus what the look needs around them. */
@@ -81,8 +96,8 @@ export const GLASS_DEFAULTS: GlassTuning = {
     resolution: 1024,
   },
   scene: {
-    modelScale: 0.45,
-    modelDepth: 0.9,
+    modelScale: 0.8,
+    modelDepth: 3,
     envIntensity: 1,
     autoRotateSpeed: 1,
     scrollSpin: 0.001,
@@ -91,6 +106,11 @@ export const GLASS_DEFAULTS: GlassTuning = {
     lodScale: 1,
     aa: 0.06,
     threshold: 0.55,
+  },
+  reveal: {
+    maskThreshold: 1,
+    maskSoftness: 0,
+    glyphOpacity: 1,
   },
 };
 
@@ -104,13 +124,15 @@ export const GLASS_MOBILE_MATERIAL: Partial<GlassMaterialTuning> = {
 
 export type GlassGroup = keyof GlassTuning;
 
-const STORAGE_KEY = "glass-tuning-v1";
+/* v2: `modelScale` moved 0.45 → 0.8, and a stored v1 blob would out-vote it. */
+const STORAGE_KEY = "glass-tuning-v4";
 
 function clone(source: GlassTuning): GlassTuning {
   return {
     material: { ...source.material },
     scene: { ...source.scene },
     melt: { ...source.melt },
+    reveal: { ...source.reveal },
   };
 }
 
@@ -175,6 +197,7 @@ export function resetGlassTuning(): void {
   Object.assign(tuning.material, fresh.material);
   Object.assign(tuning.scene, fresh.scene);
   Object.assign(tuning.melt, fresh.melt);
+  Object.assign(tuning.reveal, fresh.reveal);
   if (typeof sessionStorage !== "undefined") {
     try {
       sessionStorage.removeItem(STORAGE_KEY);

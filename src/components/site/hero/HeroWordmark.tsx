@@ -21,7 +21,10 @@ import { useFrame, useThree } from "@react-three/fiber";
 import * as THREE from "three";
 import gsap from "gsap";
 import { subscribeWordmark, type WordmarkCue } from "@/lib/site/heroIntro";
-import { useThemeInk } from "@/lib/site/ascii/useThemeInk";
+import { useThemeInk, useThemeLight } from "@/lib/site/ascii/useThemeInk";
+import { useFluidSimStateRef } from "@/lib/site/fluid/fluidSimContext";
+import { readCssColor, shaderColor } from "@/lib/site/cssColor";
+import { SWATCH_TRAIL } from "@/lib/site/siteColors";
 import { getGlassTuning } from "@/lib/site/hero/glassTuning";
 import {
   createWordmarkTexture,
@@ -68,6 +71,13 @@ const FRAGMENT = /* glsl */ `
   uniform float uAA;
   /** 1 at the start of the melt, 0 once it has resolved. */
   uniform float uProgress;
+  /** The liquid, in screen space, and the colour it is painted in. */
+  uniform sampler2D uFluid;
+  uniform vec3 uTrail;
+  uniform vec2 uResolution;
+  uniform float uHasFluid;
+  uniform float uFluidThreshold;
+  uniform float uFluidSoft;
 
   #define RING_TAPS 8
   #define RINGS 3
@@ -105,12 +115,38 @@ const FRAGMENT = /* glsl */ `
       a = smoothstep(uCut - aa, uCut + aa, a);
     }
 
-    gl_FragColor = vec4(uColor, a);
+    /*
+     * The trail inverts the mark, the same way it inverts the copy further down
+     * the page. That one is a CSS mix-blend-mode: difference against the canvas;
+     * the mark is *on* the canvas, where CSS cannot reach it, so it does the
+     * difference itself -- abs(colour - trail), on the same cut the trail is
+     * drawn with, sampled in screen space because the trail is a screen-space
+     * layer.
+     */
+    vec3 colour = uColor;
+    if (uHasFluid > 0.5) {
+      float d = clamp(
+        length(texture2D(uFluid, gl_FragCoord.xy / uResolution).rgb), 0.0, 1.0);
+      float t = uFluidSoft > 0.0
+        ? smoothstep(uFluidThreshold - uFluidSoft * 0.5,
+                     uFluidThreshold + uFluidSoft * 0.5, d)
+        : step(uFluidThreshold, d);
+      colour = mix(uColor, abs(uColor - uTrail), t);
+    }
+
+    gl_FragColor = vec4(colour, a);
     #include <colorspace_fragment>
   }
 `;
 
-/** CSS-pixel box of the lockup, relative to the canvas. */
+/**
+ * CSS-pixel box of the lockup, relative to the canvas at rest.
+ *
+ * Document space, not viewport space: the backdrop canvas is `position: fixed`
+ * on home, so a viewport-relative measure would move with every scroll and a
+ * re-measure taken mid-page would land the mark wherever the reader happened to
+ * be. `HeroGlass` puts the scroll back through the projection offset instead.
+ */
 type Placement = {
   centerX: number;
   centerY: number;
@@ -125,7 +161,8 @@ function measure(canvas: HTMLCanvasElement): Placement | null {
   const host = canvas.getBoundingClientRect();
   return {
     centerX: rect.left + rect.width / 2 - host.left - host.width / 2,
-    centerY: rect.top + rect.height / 2 - host.top - host.height / 2,
+    centerY:
+      rect.top + window.scrollY + rect.height / 2 - host.height / 2,
     markWidth: rect.width,
   };
 }
@@ -137,6 +174,16 @@ export default function HeroWordmark() {
   const ink = useThemeInk("#e2e2dd");
   /** Parsed once per theme change rather than once per frame. */
   const inkColor = useMemo(() => new THREE.Color(ink), [ink]);
+
+  const fluid = useFluidSimStateRef();
+  /* `useThemeLight` is already subscribed to the theme class, so it doubles as
+     the signal to re-read the token. */
+  const themeLight = useThemeLight();
+  const trail = useMemo(
+    () => shaderColor(readCssColor("--trail", SWATCH_TRAIL)),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [themeLight],
+  );
 
   const [placement, setPlacement] = useState<Placement | null>(null);
   const [raster, setRaster] = useState<WordmarkTexture | null>(null);
@@ -231,6 +278,12 @@ export default function HeroWordmark() {
       uCut: { value: 0 },
       uAA: { value: 0.06 },
       uProgress: { value: 0 },
+      uFluid: { value: null as THREE.Texture | null },
+      uTrail: { value: new THREE.Color("#e2e2dd") },
+      uResolution: { value: new THREE.Vector2(1, 1) },
+      uHasFluid: { value: 0 },
+      uFluidThreshold: { value: 1 },
+      uFluidSoft: { value: 0 },
     }),
     [],
   );
@@ -280,9 +333,17 @@ export default function HeroWordmark() {
    * into a detached copy — which is a sampler that stays null and a mark that
    * renders as three's 1×1 transparent placeholder.
    */
-  useFrame(() => {
+  useFrame((state) => {
     const u = material.current?.uniforms;
     if (!u) return;
+
+    const dye = fluid.current.dye;
+    u.uFluid.value = dye;
+    u.uHasFluid.value = dye ? 1 : 0;
+    u.uFluidThreshold.value = fluid.current.threshold;
+    u.uFluidSoft.value = fluid.current.edgeSoftness;
+    u.uTrail.value.copy(trail);
+    state.gl.getDrawingBufferSize(u.uResolution.value);
     const { blurPx, startPx, cut } = melt.current;
     const tuning = getGlassTuning().melt;
 
@@ -321,6 +382,14 @@ export default function HeroWordmark() {
 
   return (
     <mesh
+      /*
+       * After the trail (10) and its glyphs (11), so the mark paints over the
+       * liquid rather than being buried under it — inverted, by the branch in
+       * the fragment shader. Depth still holds it behind the glass, which is
+       * what keeps the mark reading *through* the logo rather than in front of
+       * it: the trail writes no depth, the glass does.
+       */
+      renderOrder={12}
       position={[placement.centerX / factor, -placement.centerY / factor, 0]}
       scale={[
         (placement.markWidth + pad * 2) / factor,

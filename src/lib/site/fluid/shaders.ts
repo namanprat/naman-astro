@@ -156,14 +156,26 @@ const shaders = {
     /* glsl */ `${highp}
     uniform sampler2D uTexture;
     uniform float threshold, edgeSoftness;
-    uniform vec3 inkColor, surfaceColor;
+    /* Codegrid Cappen writes vec4(ink, a) onto a transparent canvas with
+       mix-blend-mode: difference. The hero glass lives on this canvas, so that
+       CSS blend would invert the logo too. Same idea, baked against the page
+       token, except the trail is a fixed grey rather than the page inverted:
+       inverting sent it near-white on the dark theme and near-black on the
+       light one, and the trail is meant to read the same on both.
+       pageMix is the old canvas opacity. */
+    uniform vec3 pageColor;
+    uniform vec3 trailColor;
+    uniform float pageMix;
     varying vec2 vUv;
     void main() {
       float d = clamp(length(texture2D(uTexture, vUv).rgb), 0.0, 1.0);
       float a = edgeSoftness > 0.0
         ? smoothstep(threshold - edgeSoftness * 0.5, threshold + edgeSoftness * 0.5, d)
         : step(threshold, d);
-      gl_FragColor = vec4(mix(surfaceColor, inkColor, a), 1.0);
+      vec3 ink = mix(pageColor, trailColor, a * pageMix);
+      // sRGB literals to linear. three already injects sRGBTransferEOTF on
+      // ShaderMaterial; do not include colorspace_pars_fragment here.
+      gl_FragColor = sRGBTransferEOTF(vec4(ink, 1.0));
     }`,
   ],
 } as const satisfies Record<string, ShaderPair>;

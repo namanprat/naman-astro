@@ -7,7 +7,7 @@
  * fields read them every frame, and only `density` — the one value that rebuilds
  * geometry — bothers to notify.
  */
-export type AsciiSurface = "about" | "team" | "process";
+export type AsciiSurface = "about" | "team" | "process" | "hero";
 
 export type AsciiTuning = {
   /** Glyph rows across the short axis. Columns follow from the aspect. */
@@ -36,6 +36,10 @@ const TEAM_LOOK: AsciiTuning = {
 
 export const ASCII_DEFAULTS: Record<AsciiSurface, AsciiTuning> = {
   about: { ...TEAM_LOOK, density: 46 },
+  /* Denser and cropped harder than the other surfaces: the hero's glyphs sit
+     inside the liquid trail rather than standing alone, so they read as texture
+     on the logo rather than as characters to be picked out. */
+  hero: { ...TEAM_LOOK, density: 110, glyphScale: 2.5 },
   team: { ...TEAM_LOOK },
   process: {
     density: 40,
@@ -49,10 +53,11 @@ export const ASCII_DEFAULTS: Record<AsciiSurface, AsciiTuning> = {
 
 export const ASCII_SURFACES = Object.keys(ASCII_DEFAULTS) as AsciiSurface[];
 
-const STORAGE_KEY = "ascii-tuning-v8";
+const STORAGE_KEY = "ascii-tuning-v10";
 
 const tuning: Record<AsciiSurface, AsciiTuning> = {
   about: { ...ASCII_DEFAULTS.about },
+  hero: { ...ASCII_DEFAULTS.hero },
   team: { ...ASCII_DEFAULTS.team },
   process: { ...ASCII_DEFAULTS.process },
 };

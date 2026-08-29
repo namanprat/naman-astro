@@ -26,17 +26,17 @@ export function isNarrowNav(): boolean {
  * *between* two touch-move frames and pull the drag back to where it started,
  * so every timing-sensitive assertion here would be measuring the container.
  *
- * Scoped by parent — `.fluid_wrap` for the sim, `.hero_glass` for the frosted
- * hero — rather than refused outright: the homepage's team carousel and the
- * archive are three.js too, and taking every WebGL context away takes those
- * islands down with it, after which the homepage never mounts and has nothing
- * to scroll.
+ * Scoped to `.fluid_wrap` rather than refused outright: the homepage's team
+ * carousel and the archive are three.js too, and taking every WebGL context
+ * away takes those islands down with it, after which the homepage never mounts
+ * and has nothing to scroll.
  *
- * The hero is here for the same 2fps reason, twice over: its transmission
- * material renders the whole scene into an FBO on every frame, on top of the
- * sim. `HeroGlassCanvas` probes for a context before it mounts anything and
- * leaves the DOM lockup painting when there is none, so refusing it here is a
- * supported path rather than a crash — which is also what a visitor with no
+ * One parent covers the frosted hero as well — it renders inside the backdrop's
+ * canvas now — and it is here for the same 2fps reason, twice over: its
+ * transmission material renders the whole scene into an FBO on every frame, on
+ * top of the sim. `FluidCanvas` probes for a context before it mounts anything
+ * and leaves the DOM lockup painting when there is none, so refusing it here is
+ * a supported path rather than a crash — which is also what a visitor with no
  * WebGL2 gets.
  *
  * Set `E2E_WEBGL=1` to run against the real canvases where a GPU is available.
@@ -50,10 +50,7 @@ export async function stubWebGL(page: Page) {
       type: string,
       ...rest: unknown[]
     ) {
-      if (
-        String(type).includes("webgl") &&
-        (this.closest(".fluid_wrap") || this.closest(".hero_glass"))
-      ) {
+      if (String(type).includes("webgl") && this.closest(".fluid_wrap")) {
         return null;
       }
       return (original as never as (...args: unknown[]) => unknown).call(
