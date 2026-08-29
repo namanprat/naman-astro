@@ -109,6 +109,10 @@ const SNAP_EASE = "power2.out";
 /** Below this the ring is close enough that snapping would only read as drift. */
 const SNAP_EPSILON_DEG = 0.2;
 
+/** Finger jitter under this is a tap, not a scroll. 1:1 drag used to eat
+    every click — Observer saw the noise and skipped `onClick`. */
+const TAP_PX = 12;
+
 const rad = (deg: number) => (deg * Math.PI) / 180;
 
 /** Wrap into (−180, 180] so every angular comparison takes the short way. */
@@ -161,6 +165,10 @@ export default class WheelView {
   private pxPerStep = PX_PER_STEP;
   /** Touch is down — `onRelease` snaps; wheel never sets this. */
   private dragging = false;
+  /** Absolute gesture travel this press. Under `TAP_PX` we open, not turn. */
+  private dragPx = 0;
+  /** `100svh` probe — iOS `visualViewport.height` still grows with the toolbar. */
+  private svhBox: HTMLDivElement | null = null;
 
   constructor({
     root = document,
@@ -211,14 +219,28 @@ export default class WheelView {
    * custom property's *specified* text, so a `min(350px, 32vh)` authored in CSS
    * comes out as that literal string and `parseFloat` reads NaN.
    */
-  /** Visible viewport, not `innerHeight`. iOS `innerHeight` is the large
-      viewport and jumps when the toolbar collapses. */
+  /**
+   * Width from the visual viewport; height from a `100svh` probe.
+   * `visualViewport.height` / `innerHeight` / `dvh` all grow when Safari
+   * hides the URL bar, which is what kept shifting the ring.
+   */
   private viewSize() {
-    const vv = window.visualViewport;
-    return {
-      w: vv?.width ?? window.innerWidth,
-      h: vv?.height ?? window.innerHeight,
-    };
+    const w = window.visualViewport?.width ?? window.innerWidth;
+    if (!this.svhBox) {
+      const box = document.createElement("div");
+      box.setAttribute("aria-hidden", "true");
+      box.style.cssText =
+        "position:fixed;inset:0 auto auto 0;width:0;height:100svh;visibility:hidden;pointer-events:none";
+      document.body.appendChild(box);
+      this.svhBox = box;
+    }
+    return { w, h: this.svhBox.offsetHeight || window.innerHeight };
+  }
+
+  private openAt(x?: number, y?: number) {
+    if (x == null || y == null) return;
+    const hit = document.elementFromPoint(x, y);
+    hit?.closest<HTMLElement>(".gallery_slide")?.click();
   }
 
   private measure() {
@@ -411,27 +433,30 @@ export default class WheelView {
       onPress: () => {
         if (!this.enabled()) return;
         this.dragging = true;
+        this.dragPx = 0;
         this.killSnap();
         this.scrub.pause();
       },
       onChange: (self) => {
         this.scroll(self);
       },
-      onRelease: () => {
+      onRelease: (self) => {
         if (!this.dragging) return;
         this.dragging = false;
         if (!this.enabled()) return;
+        // Tap: open here. `onClick` will no-op because dragPx stays under
+        // the threshold — Observer often skips it once 1:1 drag has run.
+        if (this.dragPx < TAP_PX) {
+          this.openAt(self.x, self.y);
+          this.dragPx = TAP_PX;
+          return;
+        }
         this.snap();
       },
-      // Same reason as Slider: touch + preventDefault swallows the browser
-      // click, but Observer still reports a tap that didn't drag.
       onClick: (self) => {
         if (!this.enabled()) return;
-        const x = self.x;
-        const y = self.y;
-        if (x == null || y == null) return;
-        const hit = document.elementFromPoint(x, y);
-        hit?.closest<HTMLElement>(".gallery_slide")?.click();
+        if (this.dragPx >= TAP_PX) return;
+        this.openAt(self.x, self.y);
       },
     });
   }
@@ -450,6 +475,8 @@ export default class WheelView {
     }
 
     // Touch: 1:1. Restarting a 750ms ease on every move was the molasses.
+    this.dragPx += Math.abs(scrollDelta(self));
+    if (this.dragPx < TAP_PX) return;
     this.rot.value += delta;
     this.scrub.vars.value = this.rot.value;
     this.place();
@@ -558,6 +585,8 @@ export default class WheelView {
   destroy() {
     window.removeEventListener("resize", this.onResize);
     clearTimeout(this.resizeId);
+    this.svhBox?.remove();
+    this.svhBox = null;
     this.observer?.kill();
     this.scrub?.kill();
     this.killSnap();

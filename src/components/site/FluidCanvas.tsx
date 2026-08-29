@@ -263,6 +263,7 @@ export default function FluidCanvas() {
               powerPreference: "high-performance",
             }}
             camera={{ fov: 35, position: [0, 0, 5], near: 0.1, far: 50 }}
+            style={{ pointerEvents: "none" }}
             /* The hero handles scroll itself, through the projection offset. */
             resize={{ scroll: false }}
           >
