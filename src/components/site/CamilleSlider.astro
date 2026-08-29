@@ -46,12 +46,12 @@ const first = SLIDES[0];
                     slide.film ? (
                       <video
                         class="camille_slider_photo"
+                        src={slide.film}
                         poster={slide.poster}
-                        data-film-src={slide.film}
                         muted
                         loop
                         playsinline
-                        preload="none"
+                        preload="metadata"
                         aria-label={slide.alt}
                       />
                     ) : (

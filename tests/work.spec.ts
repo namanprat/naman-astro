@@ -223,6 +223,22 @@ test.describe("returning from a hard-loaded project page", () => {
   });
 });
 
+test("haptic uses the still cover on /work, not the film", async ({
+  page,
+}) => {
+  await stubWebGL(page);
+  await skipPreloader(page);
+  await page.goto("/work");
+  await expect(page.locator(".work_wrap")).not.toHaveClass(/is-loading/);
+
+  const haptic = page.locator('.gallery_slide[data-slug="haptic"]').first();
+  await expect(haptic.locator("img.gallery_img")).toHaveAttribute(
+    "src",
+    /haptic-cover\.webp$/,
+  );
+  await expect(page.locator(".gallery video")).toHaveCount(0);
+});
+
 test.describe("phone work locks to slider", () => {
   test.skip(
     () => !isNarrowNav(),

@@ -235,11 +235,6 @@ export function initCamilleSlider(root: HTMLElement): CamilleSliderHandle {
       );
       if (!video) return;
       if (i === active) {
-        const src = video.dataset.filmSrc;
-        if (src) {
-          video.src = src;
-          delete video.dataset.filmSrc;
-        }
         void video.play().catch(() => {});
         return;
       }

@@ -285,6 +285,20 @@ test("featured slider copy uses the shared gooey, not a custom chain", async ({
     .toBe("ok");
 });
 
+test("haptic featured slide is the reveal film", async ({ page }) => {
+  await skipPreloader(page);
+  await page.goto("/");
+  await expectRevealed(page);
+
+  const haptic = page.locator('.camille_slider_img[data-slide-title="Haptic"]');
+  const film = haptic.locator("video.camille_slider_photo");
+  await expect(film).toHaveAttribute("src", /haptic-reveal\.webm$/);
+  await expect(film).toHaveAttribute("poster", /haptic-cover\.webp$/);
+
+  await page.locator(".camille_slider_next").click();
+  await expect(haptic).toHaveClass(/is-active|is-hopping/);
+});
+
 test("featured slider trails a view chip behind the pointer, not a replacement cursor", async ({
   page,
 }) => {
