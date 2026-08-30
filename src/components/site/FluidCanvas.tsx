@@ -88,7 +88,9 @@ function GridSatPlate({ host }: { host: HTMLDivElement | null }) {
     if (!host || !dest) return;
     let raf = 0;
     const tick = () => {
-      const src = host.querySelector<HTMLCanvasElement>("canvas:not(.work_grid_plate)");
+      const src = host.querySelector<HTMLCanvasElement>(
+        "canvas:not(.work_grid_plate)",
+      );
       if (src && dest && workGridDrain()) {
         if (dest.width !== src.width) dest.width = src.width;
         if (dest.height !== src.height) dest.height = src.height;

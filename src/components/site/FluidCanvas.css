@@ -141,7 +141,8 @@ html.work-grid:not(.work-project-open) .fluid_wrap > div {
   opacity: 0;
 }
 
-.work_grid_plate {
+/* Beats `.fluid_wrap canvas { display: block }` from earlier in this file. */
+.fluid_wrap canvas.work_grid_plate {
   display: none;
   position: absolute;
   inset: 0;
@@ -150,7 +151,7 @@ html.work-grid:not(.work-project-open) .fluid_wrap > div {
   pointer-events: none;
 }
 
-html.work-grid:not(.work-project-open) .work_grid_plate {
+html.work-grid:not(.work-project-open) .fluid_wrap canvas.work_grid_plate {
   display: block;
 }
 
