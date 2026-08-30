@@ -20,6 +20,20 @@ html.page-archive .nav_wrap {
   right: 0;
 }
 
+/* Archive ground is always brand black. The site-wide safe-area strips
+   follow `--background`, which would flash warm grey if a stored light
+   theme is still on the root. */
+html.page-archive::before,
+html.page-archive::after {
+  background-color: var(--dark-900);
+}
+
+@media (width < 48rem) {
+  html.page-archive .nav_wrap {
+    top: var(--lockup-top);
+  }
+}
+
 /* Archive ground is always brand black, even in light theme, so the fade
    cannot follow `--background` (warm grey) or it would wash the scene. */
 html.page-archive .nav_fade {

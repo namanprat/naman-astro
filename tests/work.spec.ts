@@ -287,7 +287,7 @@ test.describe("phone work locks to slider", () => {
     await skipPreloader(page);
   });
 
-  test("the nav wordmark shares one top inset on home, work, slug, and about", async ({
+  test("the nav wordmark shares one top inset on home, work, slug, about, and archive", async ({
     page,
   }) => {
     const topOf = async (url: string) => {
@@ -303,10 +303,12 @@ test.describe("phone work locks to slider", () => {
     const work = await topOf("/work");
     const slug = await topOf("/work/t-bonk");
     const about = await topOf("/about");
+    const archive = await topOf("/archive");
 
     expect(work, "work vs home").toBe(home);
     expect(slug, "slug vs home").toBe(home);
     expect(about, "about vs home").toBe(home);
+    expect(archive, "archive vs home").toBe(home);
   });
 
   test("phone slider tiles leave a gap", async ({ page }) => {

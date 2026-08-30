@@ -28,7 +28,7 @@
   --site--safe-area-top: env(safe-area-inset-top, 0px);
   --site--safe-area-bottom: env(safe-area-inset-bottom, 0px);
   /* One top inset for the nav wordmark and the first block under it —
-     home lockup, /work label, /work/[slug] hero, /about. */
+     home lockup, /work label, /work/[slug] hero, /about, /archive. */
   --lockup-top: calc(var(--site--safe-area-top) + var(--site-margin));
   --lockup-gap: var(--site-margin);
   --chrome-clear: calc(
