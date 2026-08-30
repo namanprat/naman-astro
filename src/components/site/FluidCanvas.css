@@ -94,13 +94,17 @@ html.is-preloading .fluid_wrap {
  */
 .manifesto_lead,
 .studio_title,
-.team_title,
-.team_copy_stack,
 .faq_lead,
 .faq_question_text,
 .faq_answer_copy,
 .hero_note,
 .is-trail-invert {
+  mix-blend-mode: difference;
+}
+
+/* `.team_copy` is `z-index: 1` over the cylinder. Blend on the isolated
+   layer, not its children — those only see the copy box, never the trail. */
+.team_copy {
   mix-blend-mode: difference;
 }
 
@@ -131,11 +135,10 @@ html.is-preloading .fluid_wrap {
 html.work-grid:not(.work-project-open) .fluid_wrap {
   z-index: 3;
   overflow: visible;
-  mix-blend-mode: saturation;
 }
 
-/* Keep the sim drawing for the plate copy, but out of the wrap's flatten —
-   an opaque trail in the hole would still be sat-0 and the colour would
+/* Keep the sim drawing for the plate copy, but out of the hole —
+   an opaque trail there would still be sat-0 and the colour would
    not come through. */
 html.work-grid:not(.work-project-open) .fluid_wrap > div {
   opacity: 0;
@@ -151,8 +154,12 @@ html.work-grid:not(.work-project-open) .fluid_wrap > div {
   pointer-events: none;
 }
 
+/* Saturation on the 2D plate only. On the wrap it flattened the WebGL
+   child with the plate; Safari treats that context as opaque, so the
+   hole never opened and the trail disappeared. */
 html.work-grid:not(.work-project-open) .fluid_wrap canvas.work_grid_plate {
   display: block;
+  mix-blend-mode: saturation;
 }
 
 html.page-work .fluid_wrap,

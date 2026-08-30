@@ -8,7 +8,8 @@
   gap: var(--space-8);
   position: relative;
   margin-inline: auto;
-  container-type: inline-size;
+  /* No `container-type`: size containment makes a stacking context, and
+     then `mix-blend-mode: difference` on the copy cannot see the trail. */
   & > [class] {
     margin-top: 0;
     margin-bottom: 0;

@@ -118,7 +118,7 @@ test("studio copy besides the manifesto inverts with the trail", async ({
     ".process_title",
     ".faq_title",
     ".faq_lead",
-    ".team_title",
+    ".team_copy",
   ]) {
     await expect(page.locator(selector).first()).toHaveCSS(
       "mix-blend-mode",
