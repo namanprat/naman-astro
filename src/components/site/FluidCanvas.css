@@ -119,19 +119,42 @@ html.is-preloading .fluid_wrap {
 /*
   Work grid: the trail is a colour window, not ink.
 
-  `mix-blend-mode: saturation` keeps the backdrop's hue and luminosity and takes
-  only the source's saturation, so the canvas painting a flat grey everywhere the
-  trail is *not* drains the covers except under the liquid. It has to sit over
-  the tiles to reach them. Pointer-events stay none, so clicks still land.
+  `.work_grid_plate` is a 2D canvas: grey fill, trail punched out, then
+  `mix-blend-mode: saturation` over the covers. The covers stay in colour —
+  a `saturate(0)` filter would leave nothing to uncover. Saturation on the
+  WebGL canvas itself was the Safari grey soup (the context reads as opaque,
+  so the hole never opened).
 
-  Slider is left out on purpose — iPhone Safari + WebGL + this blend was a grey
-  soup, and the phone never opens the grid. The project overlay sits above this
-  layer (`--z--nav - 2`) so case-study colour is untouched.
+  Slider is left out — the phone never opens the grid. The project overlay
+  sits above this layer (`--z--nav - 2`) so case-study colour is untouched.
 */
 html.page-work:has(.work_wrap[data-work-view="grid"]):not(.work-project-open)
   .fluid_wrap {
   z-index: 3;
+  overflow: visible;
   mix-blend-mode: saturation;
+}
+
+/* Keep the sim drawing for the plate copy, but out of the wrap's flatten —
+   an opaque trail in the hole would still be sat-0 and the colour would
+   not come through. */
+html.page-work:has(.work_wrap[data-work-view="grid"]):not(.work-project-open)
+  .fluid_wrap > div {
+  opacity: 0;
+}
+
+.work_grid_plate {
+  display: none;
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+}
+
+html.page-work:has(.work_wrap[data-work-view="grid"]):not(.work-project-open)
+  .work_grid_plate {
+  display: block;
 }
 
 html.page-work .fluid_wrap,

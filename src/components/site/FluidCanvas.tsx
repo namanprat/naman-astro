@@ -35,11 +35,10 @@ import * as THREE from "three";
  * the colour it is meant to be and only the opted-in text reacts to it. See
  * `.is-trail-invert` in `FluidCanvas.css`.
  *
- * Work's grid inverts this pass and blends the wrap as `saturation`. Grey
- * everywhere the trail is not drains the covers; transparent is that blend's
- * identity, so the liquid is a hole that lets the original colour through.
- * The slider keeps CSS saturate — iPhone Safari + WebGL + this blend was the
- * grey soup, and the phone never sees the grid.
+ * Work's grid punches this pass out of an HTML grey plate (`FluidCanvas.css`).
+ * The wrap composites as `saturation`, so the plate drains the covers and the
+ * liquid is a hole that lets the original colour through. The trail itself is
+ * just an opaque stamp — invert-on-canvas was the Safari grey soup.
  */
 const TRAIL_FRAG = /* glsl */ `
 precision highp float;
@@ -49,7 +48,6 @@ uniform vec3 uColor;
 uniform vec2 uResolution;
 uniform float uThreshold;
 uniform float uSoft;
-uniform float uInvert;
 
 void main() {
   float d = clamp(
@@ -57,7 +55,6 @@ void main() {
   float a = uSoft > 0.0
     ? smoothstep(uThreshold - uSoft * 0.5, uThreshold + uSoft * 0.5, d)
     : step(uThreshold, d);
-  a = mix(a, 1.0 - a, uInvert);
 
   if (a < 0.01) discard;
   gl_FragColor = vec4(uColor, a);
@@ -74,8 +71,7 @@ void main() {
  *  hero's glyph grid, which stands in the trail. */
 const TRAIL_RENDER_ORDER = 10;
 
-/** Grid view on `/work`: invert the trail and blend as saturation. Slider and
- *  the project overlay keep the normal ink pass. */
+/** Grid view on `/work`: the 2D plate drains the covers. */
 function workGridDrain(): boolean {
   const root = document.documentElement;
   if (!root.classList.contains("page-work")) return false;
@@ -84,6 +80,40 @@ function workGridDrain(): boolean {
     document.querySelector(".work_wrap")?.getAttribute("data-work-view") ===
     "grid"
   );
+}
+
+function GridSatPlate({
+  host,
+}: {
+  host: HTMLDivElement | null;
+}) {
+  const plate = useRef<HTMLCanvasElement>(null);
+
+  useEffect(() => {
+    const dest = plate.current;
+    if (!host || !dest) return;
+    let raf = 0;
+    const tick = () => {
+      const src = host.querySelector<HTMLCanvasElement>("canvas:not(.work_grid_plate)");
+      if (src && dest && workGridDrain()) {
+        if (dest.width !== src.width) dest.width = src.width;
+        if (dest.height !== src.height) dest.height = src.height;
+        const ctx = dest.getContext("2d");
+        if (ctx) {
+          ctx.globalCompositeOperation = "source-over";
+          ctx.fillStyle = "#808080";
+          ctx.fillRect(0, 0, dest.width, dest.height);
+          ctx.globalCompositeOperation = "destination-out";
+          ctx.drawImage(src, 0, 0);
+        }
+      }
+      raf = requestAnimationFrame(tick);
+    };
+    raf = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(raf);
+  }, [host]);
+
+  return <canvas className="work_grid_plate" ref={plate} aria-hidden />;
 }
 
 function TrailOverlay() {
@@ -109,7 +139,6 @@ function TrailOverlay() {
       uResolution: { value: new THREE.Vector2(1, 1) },
       uThreshold: { value: 1 },
       uSoft: { value: 0 },
-      uInvert: { value: 0 },
     }),
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [],
@@ -118,16 +147,12 @@ function TrailOverlay() {
   useFrame((state) => {
     const node = material.current;
     if (!node) return;
-    const invert = workGridDrain();
     node.uniforms.uFluid.value = fluid.current.dye;
-    node.uniforms.uInvert.value = invert ? 1 : 0;
-    /* Inverted, only saturation lands — any neutral serves. */
-    if (invert) node.uniforms.uColor.value.setRGB(0.5, 0.5, 0.5);
-    else node.uniforms.uColor.value.copy(color);
+    node.uniforms.uColor.value.copy(color);
     node.uniforms.uThreshold.value = fluid.current.threshold;
     node.uniforms.uSoft.value = fluid.current.edgeSoftness;
     state.gl.getDrawingBufferSize(node.uniforms.uResolution.value);
-    node.visible = Boolean(fluid.current.dye) || invert;
+    node.visible = Boolean(fluid.current.dye);
   });
 
   return createPortal(
@@ -290,6 +315,8 @@ export default function FluidCanvas() {
               alpha: true,
               antialias: true,
               powerPreference: "high-performance",
+              /* GridSatPlate drawImage-s this buffer after present. */
+              preserveDrawingBuffer: true,
             }}
             camera={{ fov: 35, position: [0, 0, 5], near: 0.1, far: 50 }}
             style={{ pointerEvents: "none" }}
@@ -306,6 +333,7 @@ export default function FluidCanvas() {
           </Canvas>
         </FluidSimStateProvider>
       )}
+      <GridSatPlate host={host} />
     </div>
   );
 }

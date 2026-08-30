@@ -241,6 +241,7 @@ test("grid covers stay in colour so the trail can uncover them", async ({
     "mix-blend-mode",
     "saturation",
   );
+  await expect(page.locator(".work_grid_plate")).toHaveCSS("display", "block");
   const filter = await page
     .locator(".gallery_img")
     .first()
@@ -252,6 +253,7 @@ test("grid covers stay in colour so the trail can uncover them", async ({
     "data-work-view",
     "slider",
   );
+  await expect(page.locator(".work_grid_plate")).toHaveCSS("display", "none");
   await expect(page.locator(".fluid_wrap")).toHaveCSS(
     "mix-blend-mode",
     "normal",
