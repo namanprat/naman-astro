@@ -74,19 +74,13 @@ const TRAIL_RENDER_ORDER = 10;
 /** Grid view on `/work`: the 2D plate drains the covers. */
 function workGridDrain(): boolean {
   const root = document.documentElement;
-  if (!root.classList.contains("page-work")) return false;
-  if (root.classList.contains("work-project-open")) return false;
   return (
-    document.querySelector(".work_wrap")?.getAttribute("data-work-view") ===
-    "grid"
+    root.classList.contains("work-grid") &&
+    !root.classList.contains("work-project-open")
   );
 }
 
-function GridSatPlate({
-  host,
-}: {
-  host: HTMLDivElement | null;
-}) {
+function GridSatPlate({ host }: { host: HTMLDivElement | null }) {
   const plate = useRef<HTMLCanvasElement>(null);
 
   useEffect(() => {
