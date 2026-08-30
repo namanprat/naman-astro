@@ -35,9 +35,10 @@ import * as THREE from "three";
  * the colour it is meant to be and only the opted-in text reacts to it. See
  * `.is-trail-invert` in `FluidCanvas.css`.
  *
- * Work used to invert this pass and blend the wrap as `saturation`, which
- * drained the page and punched a hole for `.is-centered`. Safari mishandled
- * that over WebGL; tiles now greyscale themselves in CSS.
+ * Work's grid punches this pass out of an HTML grey plate (`FluidCanvas.css`).
+ * The wrap composites as `saturation`, so the plate drains the covers and the
+ * liquid is a hole that lets the original colour through. The trail itself is
+ * just an opaque stamp — invert-on-canvas was the Safari grey soup.
  */
 const TRAIL_FRAG = /* glsl */ `
 precision highp float;
@@ -69,6 +70,47 @@ void main() {
 /** Above the glass — the trail lies on the logo, not behind it — and below the
  *  hero's glyph grid, which stands in the trail. */
 const TRAIL_RENDER_ORDER = 10;
+
+/** Grid view on `/work`: the 2D plate drains the covers. */
+function workGridDrain(): boolean {
+  const root = document.documentElement;
+  return (
+    root.classList.contains("work-grid") &&
+    !root.classList.contains("work-project-open")
+  );
+}
+
+function GridSatPlate({ host }: { host: HTMLDivElement | null }) {
+  const plate = useRef<HTMLCanvasElement>(null);
+
+  useEffect(() => {
+    const dest = plate.current;
+    if (!host || !dest) return;
+    let raf = 0;
+    const tick = () => {
+      const src = host.querySelector<HTMLCanvasElement>(
+        "canvas:not(.work_grid_plate)",
+      );
+      if (src && dest && workGridDrain()) {
+        if (dest.width !== src.width) dest.width = src.width;
+        if (dest.height !== src.height) dest.height = src.height;
+        const ctx = dest.getContext("2d");
+        if (ctx) {
+          ctx.globalCompositeOperation = "source-over";
+          ctx.fillStyle = "#808080";
+          ctx.fillRect(0, 0, dest.width, dest.height);
+          ctx.globalCompositeOperation = "destination-out";
+          ctx.drawImage(src, 0, 0);
+        }
+      }
+      raf = requestAnimationFrame(tick);
+    };
+    raf = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(raf);
+  }, [host]);
+
+  return <canvas className="work_grid_plate" ref={plate} aria-hidden />;
+}
 
 function TrailOverlay() {
   const overlay = useCameraOverlay();
@@ -194,16 +236,27 @@ function FluidBackdrop() {
       threshold: sim.dyeThreshold,
       edgeSoftness: sim.dyeEdgeSoftness,
     };
-    scene.background = sim.output.texture;
+    scene.background = null;
     /*
      * The plate is for `MeshTransmissionMaterial`'s buffer, not for the page.
-     * The canvas composites with `mix-blend-mode: difference` over the content
-     * now, where anything opaque would repaint the whole page — so the screen
-     * pass gets no background at all and the real one shows through, while the
-     * refraction pass, which renders to a target, still gets the plate to bend.
+     * A screen-pass plate is opaque, which kills both home's difference on
+     * copy and work's saturation hole — discard would reveal the plate, not
+     * a transparent identity. Target renders still get the plate to bend.
      */
     scene.onBeforeRender = (renderer) => {
-      if (renderer.getRenderTarget() === null) scene.background = null;
+      /* ASCII's matte pass also renders to a target. The plate would fill
+         that buffer, every cell would pass `src.a`, and glyphs would paint
+         the page colour behind the characters. `HeroAsciiReveal` sets this
+         flag around that pass. */
+      if (
+        renderer.getRenderTarget() === null ||
+        scene.userData.skipFluidPlate
+      ) {
+        scene.background = null;
+        return;
+      }
+      const current = simulation.current;
+      scene.background = current ? current.output.texture : null;
     };
     return () => {
       scene.onBeforeRender = () => {};
@@ -230,9 +283,6 @@ function FluidBackdrop() {
     fluidState.current.active = sim.dyeActive;
     fluidState.current.threshold = sim.dyeThreshold;
     fluidState.current.edgeSoftness = sim.dyeEdgeSoftness;
-    /* Resize and MeshTransmissionMaterial both touch this slot; pin it every
-       frame so the display pass is what three actually draws. */
-    scene.background = sim.output.texture;
   }, -1);
   return null;
 }
@@ -261,6 +311,8 @@ export default function FluidCanvas() {
               alpha: true,
               antialias: true,
               powerPreference: "high-performance",
+              /* GridSatPlate drawImage-s this buffer after present. */
+              preserveDrawingBuffer: true,
             }}
             camera={{ fov: 35, position: [0, 0, 5], near: 0.1, far: 50 }}
             style={{ pointerEvents: "none" }}
@@ -277,6 +329,7 @@ export default function FluidCanvas() {
           </Canvas>
         </FluidSimStateProvider>
       )}
+      <GridSatPlate host={host} />
     </div>
   );
 }

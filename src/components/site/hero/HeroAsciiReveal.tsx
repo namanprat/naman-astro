@@ -207,7 +207,10 @@ export default function HeroAsciiReveal({
     state.gl.getClearColor(scratch.color);
 
     /* The backdrop is the fluid plate and would fill the target, after which
-       every cell clears the shader's `src.a` test and glyphs cover the screen. */
+       every cell clears the shader's `src.a` test and glyphs cover the screen.
+       `FluidBackdrop` re-hangs that plate on any target render for the glass,
+       so this flag keeps the matte pass empty. */
+    state.scene.userData.skipFluidPlate = true;
     state.scene.background = null;
     state.camera.layers.set(ASCII_LAYER);
     state.gl.setRenderTarget(target);
@@ -216,6 +219,7 @@ export default function HeroAsciiReveal({
     state.gl.render(state.scene, state.camera);
 
     state.camera.layers.set(0);
+    state.scene.userData.skipFluidPlate = false;
     state.scene.background = background;
     state.gl.setClearColor(scratch.color, previousAlpha);
     state.gl.setRenderTarget(previousTarget);

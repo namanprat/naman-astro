@@ -96,6 +96,12 @@ export default function WorkGallery() {
   }, [hoverTitle]);
 
   useEffect(() => {
+    const root = document.documentElement;
+    root.classList.toggle("work-grid", view === "grid");
+    return () => root.classList.remove("work-grid");
+  }, [view]);
+
+  useEffect(() => {
     const root = rootRef.current;
     if (!root) return;
 
@@ -576,6 +582,7 @@ export default function WorkGallery() {
       cancelled = true;
       stopLazyVideos();
       document.documentElement.classList.remove("page-work");
+      document.documentElement.classList.remove("work-grid");
       document.documentElement.classList.remove("work-project-open");
       document.documentElement.classList.remove("work-morphing");
       endReturn();
