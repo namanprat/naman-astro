@@ -133,7 +133,9 @@ html.is-preloading .fluid_wrap {
   sits above this layer (`--z--nav - 2`) so case-study colour is untouched.
 */
 html.work-grid:not(.work-project-open) .fluid_wrap {
-  z-index: 3;
+  /* `auto`, not 3: a z-index here would isolate the plate from the
+     covers, and saturation would paint a grey sheet instead of a hole. */
+  z-index: auto;
   overflow: visible;
 }
 
@@ -154,11 +156,12 @@ html.work-grid:not(.work-project-open) .fluid_wrap > div {
   pointer-events: none;
 }
 
-/* Saturation on the 2D plate only. On the wrap it flattened the WebGL
-   child with the plate; Safari treats that context as opaque, so the
-   hole never opened and the trail disappeared. */
+/* Saturation on the 2D plate only, and the plate is the one that
+   stacks over the covers (`z-index: 3`). On the wrap it flattened the
+   WebGL child with the plate; Safari treats that context as opaque. */
 html.work-grid:not(.work-project-open) .fluid_wrap canvas.work_grid_plate {
   display: block;
+  z-index: 3;
   mix-blend-mode: saturation;
 }
 
