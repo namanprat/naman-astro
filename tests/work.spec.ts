@@ -237,11 +237,21 @@ test("grid covers stay in colour so the trail can uncover them", async ({
     "grid",
   );
 
+  /* The drain is the plate's job, not the wrap's. The wrap used to carry the
+     blend, which flattened the sim with it and left grid view with no visible
+     trail at all; it now stays a plain backdrop under the gallery and the
+     plate sits over it on `body`. Asserting the blend is *off* the wrap is the
+     half of this that keeps the trail on screen. */
   await expect(page.locator(".fluid_wrap")).toHaveCSS(
     "mix-blend-mode",
-    "saturation",
+    "normal",
   );
-  await expect(page.locator(".work_grid_plate")).toHaveCSS("display", "block");
+  const plate = page.locator(".work_grid_plate");
+  await expect(plate).toHaveCSS("display", "block");
+  await expect(plate).toHaveCSS("mix-blend-mode", "saturation");
+  /* On `body`, so its `z-index` sorts against the gallery rather than being
+     trapped in the wrap's fixed-position stacking context. */
+  expect(await plate.evaluate((el) => el.parentElement?.tagName)).toBe("BODY");
   const filter = await page
     .locator(".gallery_img")
     .first()
@@ -253,7 +263,7 @@ test("grid covers stay in colour so the trail can uncover them", async ({
     "data-work-view",
     "slider",
   );
-  await expect(page.locator(".work_grid_plate")).toHaveCSS("display", "none");
+  await expect(plate).toHaveCSS("display", "none");
   await expect(page.locator(".fluid_wrap")).toHaveCSS(
     "mix-blend-mode",
     "normal",
