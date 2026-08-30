@@ -114,10 +114,9 @@ test("studio copy besides the manifesto inverts with the trail", async ({
   await expectRevealed(page);
 
   for (const selector of [
-    ".manifesto_lead",
-    ".process_title",
-    ".faq_title",
-    ".faq_lead",
+    ".manifesto_wrap",
+    ".process_statement",
+    ".faq_wrap",
     ".team_copy",
   ]) {
     await expect(page.locator(selector).first()).toHaveCSS(

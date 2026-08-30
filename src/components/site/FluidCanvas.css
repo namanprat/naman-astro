@@ -92,19 +92,18 @@ html.is-preloading .fluid_wrap {
  * Process cards, the Camille stage and the footer card keep their own fill, so
  * a blend on that copy would invert the card — not the trail.
  */
-.manifesto_lead,
-.studio_title,
-.faq_lead,
-.faq_question_text,
-.faq_answer_copy,
+/*
+ * Blend the wrapper, not the glyphs. Gooey `filter` on the split inners
+ * isolates a heading from its own mix-blend, and `.team_copy`'s z-index
+ * isolates its children from the canvas. The wrapper flattens that and
+ * still sees the trail.
+ */
+.manifesto_wrap,
+.process_statement,
+.faq_wrap,
+.team_copy,
 .hero_note,
 .is-trail-invert {
-  mix-blend-mode: difference;
-}
-
-/* `.team_copy` is `z-index: 1` over the cylinder. Blend on the isolated
-   layer, not its children — those only see the copy box, never the trail. */
-.team_copy {
   mix-blend-mode: difference;
 }
 
