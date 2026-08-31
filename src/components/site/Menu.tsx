@@ -186,7 +186,6 @@ export default function Menu({ initialPathname = "/" }: MenuProps) {
   /** Sticky bar has reached the top of the viewport — drives .nav_fade. */
   const [navStuck, setNavStuck] = useState(false);
   const [pathname, setPathname] = useState(initialPathname);
-  const [workProjectOpen, setWorkProjectOpen] = useState(false);
   const [isDesktopNav, setIsDesktopNav] = useState(false);
   const [contactOpen, setContactOpen] = useState(false);
   const emailCopy = useCopyEmail(EMAIL_HREF);
@@ -254,26 +253,24 @@ export default function Menu({ initialPathname = "/" }: MenuProps) {
     syncDesktop();
     mq.addEventListener("change", syncDesktop);
 
-    const syncWorkProject = () => {
-      const onSlug = /^\/work\/[^/]+\/?$/.test(window.location.pathname);
-      const flipOpen =
-        document.documentElement.classList.contains("work-project-open");
-      setWorkProjectOpen(onSlug || flipOpen);
-      setPathname(window.location.pathname);
-    };
-    syncWorkProject();
+    /* The Flip overlay pushes the slug URL without a navigation, so `popstate`
+       alone never sees it — `work-project-open` lands on `documentElement` in
+       the same beat, and the class observer is what keeps `pathname` (and with
+       it the nav's active dot) honest while a project is open. */
+    const syncWorkPath = () => setPathname(window.location.pathname);
+    syncWorkPath();
 
-    const mo = new MutationObserver(syncWorkProject);
+    const mo = new MutationObserver(syncWorkPath);
     mo.observe(document.documentElement, {
       attributes: true,
       attributeFilter: ["class"],
     });
-    window.addEventListener("popstate", syncWorkProject);
+    window.addEventListener("popstate", syncWorkPath);
 
     return () => {
       mq.removeEventListener("change", syncDesktop);
       mo.disconnect();
-      window.removeEventListener("popstate", syncWorkProject);
+      window.removeEventListener("popstate", syncWorkPath);
     };
   }, []);
 
@@ -1217,12 +1214,15 @@ export default function Menu({ initialPathname = "/" }: MenuProps) {
                         </div>
                       );
                     }
+                    /* WORK keeps its own name with a project open — it used
+                       to swap to "Back". The link already closes the project
+                       (`isInPageMenuNav`), so the label was naming the gesture
+                       rather than the destination, and the bar read as one
+                       item short of a map of the site. */
                     const text =
                       id === "about" && aboutOpen && pathname !== ABOUT_PATH
                         ? "Close"
-                        : id === "work" && workProjectOpen
-                          ? "Back"
-                          : label;
+                        : label;
                     return (
                       <a
                         key={path}
