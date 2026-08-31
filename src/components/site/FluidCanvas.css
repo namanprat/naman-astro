@@ -102,6 +102,7 @@ html.is-preloading .fluid_wrap {
 .hero_note,
 .gallery_label,
 .project_title,
+.camille_slider_pill,
 .is-trail-invert {
   mix-blend-mode: difference;
 }
