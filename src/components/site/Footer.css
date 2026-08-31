@@ -32,6 +32,21 @@
   margin-inline: auto;
   background-color: var(--surface-accent);
   backdrop-filter: blur(var(--surface-frost-blur));
+  /*
+    Same recipe as `.about_panel_surface` down to the token — verified against
+    the built CSS, and over an identical test pattern both blur it identically.
+    What the two do not share is compositing: the About sheet is `position:
+    fixed`, so every engine hands it its own layer, while this card is in flow
+    and scrolls. That is the case WebKit drops or samples stale, which is the
+    one way the two frosts can read differently on a browser that is not
+    Chromium. `will-change` buys the same promotion without a transform, which
+    would make an ancestor a backdrop root and have the frost sample the
+    card's own empty padding (see `.footer_wrap`'s `overflow` note above).
+
+    It does not make this box a backdrop root for its own filter: an element
+    that forms one defines the backdrop for its descendants, not for itself.
+  */
+  will-change: backdrop-filter;
 }
 
 .footer_scale {

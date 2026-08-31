@@ -100,9 +100,23 @@ html.is-preloading .fluid_wrap {
 .faq_question_text,
 .faq_answer_copy,
 .hero_note,
+.gallery_label,
+.project_title,
 .is-trail-invert {
   mix-blend-mode: difference;
 }
+
+/*
+ * The display type on `/work` is on this list too, which is why `.work_wrap`,
+ * `.work_project` and `.project_layout` all dropped their `z-index` (see
+ * `Work.css`): each was a stacking context between the copy and the canvas,
+ * and an isolated group has no page backdrop to difference against.
+ *
+ * One place the trail still cannot reach is the Flip project overlay:
+ * `.work_wrap .content` is `position: fixed`, which is an isolated group no
+ * matter what its `z-index` says, so the title inside it keeps its flat
+ * colour. The hard-loaded `/work/[slug]` page has no such box and does invert.
+ */
 
 /* Scrolling routes — keep the sim as a viewport backdrop, not extra height.
    Without this the wrap stays in flow at `100dvh` (plus its hero pull-up) and

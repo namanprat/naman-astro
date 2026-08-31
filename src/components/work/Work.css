@@ -38,7 +38,17 @@ html.page-work-project main {
 
 .work_wrap {
   position: relative;
-  z-index: 1;
+  /* No `z-index`, same reason as `.hero` and `.studio` in `styles/site.css`: a
+     stacking context here is an isolated group, and `.gallery_label` blends
+     `difference` against the fluid trail (`FluidCanvas.css`), which lives
+     outside this box. Paint order is unchanged — `.fluid_wrap` is the earlier
+     sibling, so the gallery still lands on top of it.
+
+     The three z-indexes below used to be capped by this one and now sort
+     against the root, so they are a small band (4-6) rather than the
+     `--z--nav` neighbourhood: high enough to clear the grid drain plate (3)
+     and the gallery's own 1/2, low enough to stay under the About panel and
+     the nav. */
   height: 100svh;
   min-height: 100svh;
   background-color: transparent;
@@ -49,7 +59,8 @@ html.page-work-project main {
 .work_wrap.is-loading::after {
   content: "";
   position: fixed;
-  z-index: var(--z--overlay);
+  /* Top of the gallery's band — over the project overlay, under the nav. */
+  z-index: 6;
 }
 
 .work_wrap.is-loading::before {
@@ -97,7 +108,7 @@ html.page-work-project main {
   position: fixed;
   top: 50svh;
   left: 50%;
-  z-index: calc(var(--z--nav) - 3);
+  z-index: 4;
   margin: 0;
   padding-inline: 0;
   width: var(--site--grid-width);
@@ -417,7 +428,8 @@ html.work-returning .view_switcher {
   display: none;
   position: fixed;
   inset: 0;
-  z-index: calc(var(--z--nav) - 2);
+  /* Over the gallery and its label, under the About panel and the nav. */
+  z-index: 5;
   overflow: clip;
 }
 
@@ -455,7 +467,11 @@ html.work-returning .view_switcher {
 /* ── Vertical case-study (overlay + hard page share one namespace) ────── */
 .project_layout {
   position: relative;
-  z-index: 2;
+  /* No `z-index`: it would isolate `.project_title` from the page backdrop and
+     kill its `difference` blend on the hard `/work/[slug]` page. Inside the
+     Flip overlay this box sits in `.content`, which is `position: fixed` and
+     therefore its own isolated group — the overlay's title cannot reach the
+     trail either way. */
   width: 100%;
   color: var(--text);
 }
@@ -658,7 +674,8 @@ html.work-returning .view_switcher {
 
 .work_project {
   position: relative;
-  z-index: 2;
+  /* No `z-index`, same reason as `.project_layout` above. The footer keeps its
+     own `z-index: 2` and is the later sibling, so it still paints over this. */
   width: 100%;
   background-color: transparent;
   color: var(--text);
