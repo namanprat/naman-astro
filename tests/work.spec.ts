@@ -223,6 +223,54 @@ test.describe("returning from a hard-loaded project page", () => {
   });
 });
 
+/**
+ * An open About must swallow the click that closes it.
+ *
+ * `.view_switcher` is `position: fixed` inside `.work_wrap`, which is not a
+ * stacking context — it dropped its `z-index` so `.gallery_label` could blend
+ * `difference` against the trail. That un-capped the switcher's own `z-index`,
+ * which used to sit at `--z--nav - 1` and now sorts against the root, where it
+ * beat `.about_panel_backdrop` and stayed pressable underneath an open panel.
+ * The fix is the small band documented on `.work_wrap`; this is the guard.
+ */
+test("the view switcher is not pressable under an open About", async ({
+  page,
+}) => {
+  test.skip(isNarrowNav(), "About is a route at this width, not an overlay");
+  await stubWebGL(page);
+  await skipPreloader(page);
+  await page.goto("/work");
+  await expect(page.locator(".work_wrap")).not.toHaveClass(/is-loading/);
+  await expect(page.locator(".view_switcher")).toBeVisible();
+
+  await page.evaluate(() => {
+    window.location.hash = "#about";
+  });
+  await expect
+    .poll(() => rootClasses(page), { timeout: 30_000 })
+    .toContain("about-open");
+
+  /* The backdrop, not a tab: `elementFromPoint` is the hit test the browser
+     itself runs, so this fails exactly when the switcher sorts back over it. */
+  await expect
+    .poll(
+      () =>
+        page.evaluate(() => {
+          const box = document
+            .querySelector(".view_switcher")
+            ?.getBoundingClientRect();
+          if (!box) return "no switcher";
+          const hit = document.elementFromPoint(
+            box.x + box.width / 2,
+            box.y + box.height / 2,
+          );
+          return hit?.className ?? "nothing";
+        }),
+      { timeout: 30_000 },
+    )
+    .toContain("about_panel_backdrop");
+});
+
 test("grid covers stay in colour so the trail can uncover them", async ({
   page,
 }) => {

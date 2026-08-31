@@ -44,11 +44,13 @@ html.page-work-project main {
      outside this box. Paint order is unchanged — `.fluid_wrap` is the earlier
      sibling, so the gallery still lands on top of it.
 
-     The three z-indexes below used to be capped by this one and now sort
-     against the root, so they are a small band (4-6) rather than the
-     `--z--nav` neighbourhood: high enough to clear the grid drain plate (3)
-     and the gallery's own 1/2, low enough to stay under the About panel and
-     the nav. */
+     The four z-indexes this used to cap now sort against the root, so they
+     are a small band rather than the `--z--nav` neighbourhood: label 4,
+     project overlay 5, view switcher 6 (`ViewSwitcher.css`), loader 7. High
+     enough to clear the grid drain plate (3) and the gallery's own 1/2, low
+     enough that the About panel's backdrop still takes the click that closes
+     it — the switcher at `--z--nav - 1` sat over that backdrop and stayed
+     pressable underneath an open About. */
   height: 100svh;
   min-height: 100svh;
   background-color: transparent;
@@ -59,8 +61,8 @@ html.page-work-project main {
 .work_wrap.is-loading::after {
   content: "";
   position: fixed;
-  /* Top of the gallery's band — over the project overlay, under the nav. */
-  z-index: 6;
+  /* Top of the gallery's band — over the switcher, under the nav. */
+  z-index: 7;
 }
 
 .work_wrap.is-loading::before {
