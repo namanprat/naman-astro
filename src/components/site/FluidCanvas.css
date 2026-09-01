@@ -100,9 +100,24 @@ html.is-preloading .fluid_wrap {
 .faq_question_text,
 .faq_answer_copy,
 .hero_note,
+.gallery_label,
+.project_title,
+.camille_slider_pill,
 .is-trail-invert {
   mix-blend-mode: difference;
 }
+
+/*
+ * The display type on `/work` is on this list too, which is why `.work_wrap`,
+ * `.work_project` and `.project_layout` all dropped their `z-index` (see
+ * `Work.css`): each was a stacking context between the copy and the canvas,
+ * and an isolated group has no page backdrop to difference against.
+ *
+ * One place the trail still cannot reach is the Flip project overlay:
+ * `.work_wrap .content` is `position: fixed`, which is an isolated group no
+ * matter what its `z-index` says, so the title inside it keeps its flat
+ * colour. The hard-loaded `/work/[slug]` page has no such box and does invert.
+ */
 
 /* Scrolling routes — keep the sim as a viewport backdrop, not extra height.
    Without this the wrap stays in flow at `100dvh` (plus its hero pull-up) and
@@ -117,41 +132,47 @@ html.is-preloading .fluid_wrap {
    2917px-tall canvas against an 800px viewport, and a trail three times the
    size it should be. */
 /*
-  Work grid: the trail is a colour window, not ink.
+  Work grid: the trail is ink *and* a colour window.
 
-  `.work_grid_plate` is a 2D canvas: grey fill, trail punched out, then
-  `mix-blend-mode: saturation` over the covers. The covers stay in colour —
-  a `saturate(0)` filter would leave nothing to uncover. Saturation on the
-  WebGL canvas itself was the Safari grey soup (the context reads as opaque,
-  so the hole never opened).
+  Two layers straddling the gallery (`.work_wrap`, `z-index: 1`):
+
+  - the sim itself, under the tiles exactly as it is in slider view, so the
+    liquid reads as a trail again wherever the page shows through. It used to
+    be `opacity: 0` here, inside a wrap that composited `saturation`, and the
+    only thing left on screen was the drain — on the dark theme, where the
+    covers are near-monochrome already, that is nothing at all;
+  - `.work_grid_plate` over them: a 2D canvas of grey with the trail punched
+    out, `mix-blend-mode: saturation`. The covers stay in colour — a
+    `saturate(0)` filter would leave nothing to uncover — and the liquid is
+    the hole that gives it back. Saturation on the WebGL canvas itself was
+    the Safari grey soup (the context reads as opaque, so the hole never
+    opened).
+
+  The trail is opaque, so the two never fight over a pixel: the covers hide
+  the ink, the plate hands them their colour back instead.
+
+  Which is why the wrap has no grid override left: it stays exactly where
+  slider view puts it, and the plate is a `body`-level layer of its own.
 
   Slider is left out — the phone never opens the grid. The project overlay
   sits above this layer (`--z--nav - 2`) so case-study colour is untouched.
 */
-html.work-grid:not(.work-project-open) .fluid_wrap {
-  z-index: 3;
-  overflow: visible;
-  mix-blend-mode: saturation;
-}
 
-/* Keep the sim drawing for the plate copy, but out of the wrap's flatten —
-   an opaque trail in the hole would still be sat-0 and the colour would
-   not come through. */
-html.work-grid:not(.work-project-open) .fluid_wrap > div {
-  opacity: 0;
-}
-
-/* Beats `.fluid_wrap canvas { display: block }` from earlier in this file. */
-.fluid_wrap canvas.work_grid_plate {
+/* Lives on `body`, not in the wrap — `FluidCanvas.tsx` says why. */
+.work_grid_plate {
   display: none;
-  position: absolute;
+  position: fixed;
   inset: 0;
+  /* Over the gallery (`.work_wrap`, z-index 1) and under the nav
+     (`--z--nav`), so the covers drain and the chrome does not. */
+  z-index: 3;
   width: 100%;
   height: 100%;
+  mix-blend-mode: saturation;
   pointer-events: none;
 }
 
-html.work-grid:not(.work-project-open) .fluid_wrap canvas.work_grid_plate {
+html.work-grid:not(.work-project-open) .work_grid_plate {
   display: block;
 }
 

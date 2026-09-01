@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { ARCHIVE_MEDIA_URLS } from "@/content/archive";
+import { isMobileLayout } from "@/lib/site/isMobileLayout";
 import {
   disposeArchiveMediaSource,
   loadArchiveMediaSource,
@@ -27,9 +28,19 @@ export function useArchiveMedia(): ArchiveMediaSource[] {
     let cancelled = false;
     let loaded: ArchiveMediaSource[] = [];
 
-    void Promise.allSettled(
-      ARCHIVE_MEDIA_URLS.map(loadArchiveMediaSource),
-    ).then((results) => {
+    /*
+     * No clip on the phone. It is 1.65MB — twice the whole resized poster set
+     * (`scripts/archive-variants.mjs`) — and it feeds nine of a hundred tiles
+     * picked at random. Every source has to settle before the field builds, so
+     * that one file decided when the archive appeared. iOS has always gone
+     * without it (`canPlayWebm` refuses the format), so this is the iPhone
+     * archive on every phone rather than a new one.
+     */
+    const urls = isMobileLayout()
+      ? ARCHIVE_MEDIA_URLS.filter((url) => !/\.webm$/i.test(url))
+      : ARCHIVE_MEDIA_URLS;
+
+    void Promise.allSettled(urls.map(loadArchiveMediaSource)).then((results) => {
       const next: ArchiveMediaSource[] = [];
       const skipped: string[] = [];
       for (const result of results) {

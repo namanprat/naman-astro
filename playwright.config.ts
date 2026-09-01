@@ -4,8 +4,8 @@ import { defineConfig, type Project } from "@playwright/test";
 /**
  * One project per device class the CSS and the scripts actually branch on:
  *
- * - `(width >= 48rem)` / 768px — the desktop nav and the BACK affordance on
- *   `/work` (`tablet` sits above this cut, `phone` below it).
+ * - `(width >= 48rem)` / 768px — the one-row desktop nav, and About as an
+ *   overlay rather than a route (`tablet` sits above this cut, `phone` below).
  * - `(width >= 64rem)` / 1024px — the 12-column grid, and the only width where
  *   the hero gooey melt runs (`heroIntro.ts`).
  * - `(width < 48rem)` / 768px — the work grid's phone layout and its

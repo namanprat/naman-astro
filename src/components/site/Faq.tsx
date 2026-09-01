@@ -79,6 +79,13 @@ export default function Faq() {
         duration: 0.6,
         ease: "power2.out",
         stagger: 0.1,
+        /* Not tidying: `y` leaves an identity `transform` on every item, and a
+           transform is a stacking context, which isolates the group from the
+           page backdrop. `.faq_question_text` and `.faq_answer_copy` blend
+           `difference` against the fluid trail (`FluidCanvas.css`), so the
+           leftover matrix left both reading their flat colour while the liquid
+           passed straight under them. */
+        clearProps: "transform,opacity",
         scrollTrigger: { trigger: root, start: "top 75%", once: true },
       });
     },

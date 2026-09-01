@@ -641,8 +641,9 @@ html:not(:has(.hero)) .name_hero {
     `max-content` tracks under `justify-content: space-between` a narrower track
     grows the free space and shifts every item in row 2.
 
-    Of the three labels that swap, this is the only one that changes width:
-    Work↔"Back" is 4↔4 characters and About↔"Close" is 5↔5.
+    Of the two labels that swap, this is the only one that changes width:
+    About↔"Close" is 5↔5. Work no longer swaps at all — it keeps its own name
+    with a project open.
 
     On the label, not the cell: `ch` resolves against the element's own
     font-size, and only the `h5` carries the `--text-main` rebind (18px). The

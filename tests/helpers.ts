@@ -12,7 +12,7 @@ export function isTouch(): boolean {
 }
 
 /** True below the `(width >= 48rem)` nav breakpoint (Menu.tsx's DESKTOP_NAV_MQ),
- *  where WORK has no BACK state. */
+ *  where the bar is two rows and About is a route rather than an overlay. */
 export function isNarrowNav(): boolean {
   return (test.info().project.use.viewport?.width ?? 0) < 768;
 }

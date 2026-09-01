@@ -9,11 +9,13 @@
   "scripts": {
     "dev": "astro dev",
     "check": "astro check && node scripts/css-guard.mjs",
+    "archive:variants": "node scripts/archive-variants.mjs",
+    "prebuild": "node scripts/archive-variants.mjs",
     "build": "astro build",
     "preview": "astro preview",
     "astro": "astro",
     "format": "prettier --write .",
-    "test:unit": "node --experimental-strip-types tests/preloadProgress.check.ts && node --experimental-strip-types tests/footerAscii.check.ts && node --experimental-strip-types tests/camilleGooey.check.ts && node --experimental-strip-types tests/processModelTuning.check.ts",
+    "test:unit": "node --experimental-strip-types tests/preloadProgress.check.ts && node --experimental-strip-types tests/footerAscii.check.ts && node --experimental-strip-types tests/camilleGooey.check.ts && node --experimental-strip-types tests/archiveVariants.check.ts && node --experimental-strip-types tests/processModelTuning.check.ts",
     "test:e2e": "playwright test"
   },
   "dependencies": {

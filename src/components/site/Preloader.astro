@@ -117,7 +117,14 @@ import { SITE_NAME } from "@/consts.ts";
   /* Masked rather than <img> so the wordmark takes the card's ink colour, the
      same trick .name_hero_lockup uses in Menu.css. */
   .preloader_mark {
-    width: min(16rem, 55%);
+    /* Full bleed on the phone card, capped and left-aligned above it. The
+       responsive-var form rather than a `@media`: `--_responsive---small` is
+       1 below 48rem and 0 above, so this is the same either/or the Lumos
+       widths elsewhere are written with. */
+    width: calc(
+      100% * var(--_responsive---small) +
+        min(16rem, 55%) * (1 - var(--_responsive---small))
+    );
     aspect-ratio: 363 / 44;
     background-color: var(--card-ink);
     -webkit-mask: url(/main-assets/name-hero.svg) left center / contain no-repeat;
@@ -127,6 +134,15 @@ import { SITE_NAME } from "@/consts.ts";
   .preloader_foot {
     display: flex;
     flex-flow: row wrap;
+  }
+
+  /* `.text-style-mono` is `text-wrap: pretty`, which pulls words back off a
+     line to even out the rag. In the phone card's measure that left ~100px of
+     every line unused and the copy read as a narrow column inside a wide box.
+     Greedy fill instead — the same override `.manifesto_lead` and
+     `.studio_title` make against `balance`. */
+  .preloader_foot > p {
+    text-wrap: wrap;
   }
 
   .preloader_cta {
