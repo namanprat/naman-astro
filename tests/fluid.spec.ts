@@ -15,6 +15,16 @@ import { expectRevealed, skipPreloader } from "./helpers";
  * second is the reason: the sim parks itself, so this no longer costs a
  * sustained 47 full-screen passes a frame to observe.
  */
+/* One project is enough: both tests are about the canvas, and neither answer
+   is viewport-dependent. Running unstubbed software WebGL on all five at once
+   is the CPU starvation `playwright.config.ts` already halves the worker count
+   for — it surfaces as unrelated entrance animations timing out in other
+   files, not as a failure here. */
+test.skip(
+  () => test.info().project.name !== "desktop",
+  "covered once, on desktop",
+);
+
 test.beforeEach(async ({ page }) => {
   await skipPreloader(page);
 });
