@@ -14,33 +14,21 @@ import { MOBILE_LAYOUT_MQ } from "../isMobileLayout";
 import { prefersReducedMotion } from "../prefersReducedMotion";
 import { reportHomeCanvasReady } from "../preloadAssets";
 import { SWATCH_DARK, SWATCH_TRAIL } from "../siteColors";
+import { pace, SETTLE_AFTER_MS } from "./fluidPacing";
 import shaders from "./shaders";
 
 const COLOR_FOLLOW = 6;
 /** ~0.45s to settle, matching the CSS opacity transition it replaces. */
 const MIX_FOLLOW = 8;
 
-/**
- * Idle cadence. A still sim does not need 60 full simulate+render passes a
- * second. Halving it while idle is the cheapest cut; a pointer move restores
- * full rate on the next frame.
- */
-const IDLE_AFTER_MS = 1000;
-const IDLE_FRAME_MS = 1000 / 30;
-
 /* Full strength the whole way down. The manifesto/team dim that used to ride on
    `is-hero-fluid-dim` is gone by request — the trail holds one weight now. */
 const BASE_MIX = 1;
 const PRELOAD_MIX = 1;
-/** The dye's visible tail lasts a few seconds at the configured dissipation. */
-const DYE_ACTIVE_MS = 5000;
 
 /** Numbers from codegrid-cappen-fluid-simulation/js/script.js. */
 const CONFIG = {
-  simResolution: 256,
-  dyeResolution: 1024,
   curl: 50,
-  pressureIterations: 40,
   velocityDissipation: 0.95,
   dyeDissipation: 0.95,
   splatRadius: 0.3,
@@ -49,6 +37,25 @@ const CONFIG = {
   threshold: 1.0,
   edgeSoftness: 0.0,
 } as const;
+
+/**
+ * Grid sizes and solver depth, per layout.
+ *
+ * The desktop numbers are Cappen's. The phone tier is not a downgrade of an
+ * interactive effect, because below the layout breakpoint the effect is not
+ * interactive: `onPointerMove` returns before it records anything, so the only
+ * dye a phone ever sees is the preloader's own opening bloom. It was paying
+ * desktop rates to advect that one bloom and then to keep stirring an empty
+ * field — a 1024-wide dye buffer is ~18MB of half-float per ping-pong side at
+ * phone aspect, and the pressure solve alone is 40 of the 47 full-screen passes
+ * a simulated frame costs.
+ */
+const QUALITY = {
+  desktop: { simResolution: 256, dyeResolution: 1024, pressureIterations: 40 },
+  phone: { simResolution: 128, dyeResolution: 512, pressureIterations: 12 },
+} as const;
+
+type Quality = (typeof QUALITY)[keyof typeof QUALITY];
 
 const TARGET_OPTIONS: THREE.RenderTargetOptions = {
   type: THREE.HalfFloatType,
@@ -162,6 +169,7 @@ export class FluidSimulation {
   private pressure!: PingPong;
   private simSize: Size = { w: 1, h: 1 };
   private dyeSize: Size = { w: 1, h: 1 };
+  private quality: Quality = QUALITY.desktop;
 
   private width = 1;
   private height = 1;
@@ -184,6 +192,8 @@ export class FluidSimulation {
    *  visitor is painting trails themselves. */
   private lastPointerAt = 0;
   private ambientPhase = 0;
+  /** While `now` is under this, the picture is still changing. See `wake`. */
+  private activeUntil = 0;
 
   constructor(private readonly renderer: THREE.WebGLRenderer) {
     this.quad = new THREE.Mesh(new THREE.PlaneGeometry(2, 2));
@@ -192,6 +202,8 @@ export class FluidSimulation {
 
     this.materials = this.makeMaterials();
     this.syncSize();
+    this.layoutQuery = window.matchMedia(MOBILE_LAYOUT_MQ);
+    this.quality = this.layoutQuery.matches ? QUALITY.phone : QUALITY.desktop;
     this.setupTargets();
     this.readTheme(true);
     this.readMix();
@@ -210,7 +222,6 @@ export class FluidSimulation {
       signal,
     });
 
-    this.layoutQuery = window.matchMedia(MOBILE_LAYOUT_MQ);
     this.layoutQuery.addEventListener("change", this.onLayoutChange, {
       signal,
     });
@@ -234,6 +245,22 @@ export class FluidSimulation {
     this.seedPending =
       !this.reduced &&
       document.documentElement.classList.contains("is-preloading");
+
+    // The first frames always run: `render` is what reports the canvas ready
+    // and releases the preloader's `canvas` segment.
+    this.wake();
+  }
+
+  /**
+   * Something changed the picture — keep stepping for the dye's visible tail.
+   *
+   * Every entry point that can alter what `output` should hold goes through
+   * here: a splat, a resize, a theme or mix change, a quality change. `update`
+   * does nothing at all once this expires, so anything that forgets to call it
+   * shows up as a backdrop frozen on the previous frame.
+   */
+  private wake(): void {
+    this.activeUntil = performance.now() + SETTLE_AFTER_MS;
   }
 
   /** Raw dye, before the display pass turns it into the page's liquid trail. */
@@ -246,7 +273,7 @@ export class FluidSimulation {
     return (
       !this.reduced &&
       (this.mouse.moved ||
-        performance.now() - this.lastPointerAt < DYE_ACTIVE_MS)
+        performance.now() - this.lastPointerAt < SETTLE_AFTER_MS)
     );
   }
 
@@ -343,13 +370,14 @@ export class FluidSimulation {
 
   private setupSimTargets(): void {
     const aspect = this.width / this.height;
+    const { simResolution, dyeResolution } = this.quality;
     this.simSize = {
-      w: CONFIG.simResolution,
-      h: Math.max(1, Math.round(CONFIG.simResolution / aspect)),
+      w: simResolution,
+      h: Math.max(1, Math.round(simResolution / aspect)),
     };
     this.dyeSize = {
-      w: CONFIG.dyeResolution,
-      h: Math.max(1, Math.round(CONFIG.dyeResolution / aspect)),
+      w: dyeResolution,
+      h: Math.max(1, Math.round(dyeResolution / aspect)),
     };
     this.simTexel.set(1 / this.simSize.w, 1 / this.simSize.h);
     this.dyeTexel.set(1 / this.dyeSize.w, 1 / this.dyeSize.h);
@@ -426,6 +454,7 @@ export class FluidSimulation {
   private onThemeMutation = (): void => {
     this.readTheme(true);
     this.readMix();
+    this.wake();
   };
 
   private resize(): void {
@@ -439,6 +468,7 @@ export class FluidSimulation {
        disposing it leaves the scene pointing at a dead target. */
     this.output.setSize(this.width, this.height);
     this.outputWrite.setSize(this.width, this.height);
+    this.wake();
   }
 
   private onPointerMove = (event: PointerEvent): void => {
@@ -466,10 +496,20 @@ export class FluidSimulation {
   private onMotionChange = (): void => {
     this.reduced = this.motionQuery.matches;
     if (this.reduced) this.mouse.moved = false;
+    this.wake();
   };
 
   private onLayoutChange = (): void => {
+    const next = this.layoutQuery.matches ? QUALITY.phone : QUALITY.desktop;
     if (this.layoutQuery.matches) this.mouse.moved = false;
+    if (next === this.quality) return;
+    this.quality = next;
+    /* Grid sizes are baked into the targets, so a tier change is a rebuild.
+       The dye in flight goes with them — crossing the breakpoint is a resize,
+       which already drops it. */
+    this.disposeSimTargets();
+    this.setupSimTargets();
+    this.wake();
   };
 
   /**
@@ -481,14 +521,29 @@ export class FluidSimulation {
     if (this.disposed) return;
     this.resize();
     this.pending += delta;
-    // Idle: half rate. The skipped time carries in `pending`, so `dt` stays the
-    // true elapsed time and the sim evolves at the same speed either way.
-    const idle = performance.now() - this.lastPointerAt > IDLE_AFTER_MS;
-    if (idle && this.pending < IDLE_FRAME_MS / 1000) return;
-    /* Cappen caps at 0.016 — a 1/30 step stretches the dye into spikes. */
-    const dt = Math.min(this.pending, 0.016);
-    this.pending = 0;
-    this.frame(dt);
+
+    const step = pace({
+      now: performance.now(),
+      activeUntil: this.activeUntil,
+      lastPointerAt: this.lastPointerAt,
+      pending: this.pending,
+    });
+
+    switch (step.kind) {
+      case "park":
+        this.pending = 0;
+        return;
+      case "hold":
+        return;
+      case "step":
+        this.pending = 0;
+        this.frame(step.dt);
+        return;
+      default: {
+        const unhandled: never = step;
+        throw new Error(`unhandled fluid pacing: ${String(unhandled)}`);
+      }
+    }
   }
 
   private frame(dt: number): void {
@@ -606,6 +661,8 @@ export class FluidSimulation {
       radius: CONFIG.splatRadius / 100,
     });
 
+    this.wake();
+
     this.velocitySplat.set(velocityX, -velocityY, 0);
     this.setUniforms(splat, {
       uTarget: this.velocity.read.texture,
@@ -668,7 +725,7 @@ export class FluidSimulation {
       uDivergence: this.divergence.texture,
       texelSize: simTexel,
     });
-    for (let i = 0; i < CONFIG.pressureIterations; i++) {
+    for (let i = 0; i < this.quality.pressureIterations; i++) {
       m.pressure.uniforms.uPressure.value = pres.read.texture;
       this.pass(m.pressure, pres.write);
       pres.swap();
