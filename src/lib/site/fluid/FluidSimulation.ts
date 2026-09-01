@@ -491,6 +491,13 @@ export class FluidSimulation {
     this.mouse.y = y;
     this.mouse.moved = true;
     this.lastPointerAt = performance.now();
+    /* The move is what makes the next frame differ, so it has to re-arm the
+       window itself. `splat` wakes too, but only from inside `frame`, which a
+       parked loop never reaches — leaving the pointer unable to restart the
+       sim it just gave work to. Tabbing away is the reliable way to see it:
+       the park lands while the loop is stopped, and the trail stays frozen on
+       return no matter how far the pointer moves. */
+    this.wake();
   };
 
   private onMotionChange = (): void => {
