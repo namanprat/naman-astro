@@ -209,8 +209,8 @@ test("opening About on desktop locks scroll behind the overlay", async ({
  * Row 2 is `repeat(4, max-content)` under `justify-content: space-between`, so
  * a track that narrows hands its width back to the gaps and shifts every item.
  * The toggle swaps "Contact" (7 chars) for "Close" (5), which is the only
- * label in the bar that changes width — Work/"Back" and About/"Close" are both
- * same-length. `.nav_contact_toggle h5` is pinned to `7ch` to hold it.
+ * label in the bar that changes width — About/"Close" is same-length, and Work
+ * no longer swaps. `.nav_contact_toggle h5` is pinned to `7ch` to hold it.
  */
 test("opening Contact does not reflow the mobile nav row", async ({ page }) => {
   test.skip(!isNarrowNav(), "the two-row nav only exists below 48rem");

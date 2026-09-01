@@ -33,7 +33,12 @@
 
   .team_copy {
     position: relative;
-    z-index: 1;
+    /* No `z-index`, same reason as `.hero` and `.studio` in `styles/site.css`:
+       a stacking context here isolates the group from the page backdrop, and
+       `.team_title` / `.team_copy_stack` blend `difference` against the fluid
+       trail (`FluidCanvas.css`) — "We close that gap." sat flat while the
+       liquid ran under it. Paint order is unchanged: `.team_cylinder` is the
+       earlier sibling, so this still lands on top of it. */
     width: 100%;
     min-width: 0;
     color: var(--text);
