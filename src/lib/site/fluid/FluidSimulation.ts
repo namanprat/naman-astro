@@ -41,14 +41,13 @@ const CONFIG = {
 /**
  * Grid sizes and solver depth, per layout.
  *
- * The desktop numbers are Cappen's. The phone tier is not a downgrade of an
- * interactive effect, because below the layout breakpoint the effect is not
- * interactive: `onPointerMove` returns before it records anything, so the only
- * dye a phone ever sees is the preloader's own opening bloom. It was paying
- * desktop rates to advect that one bloom and then to keep stirring an empty
- * field — a 1024-wide dye buffer is ~18MB of half-float per ping-pong side at
- * phone aspect, and the pressure solve alone is 40 of the 47 full-screen passes
- * a simulated frame costs.
+ * The desktop numbers are Cappen's. The phone tier is the same effect at a
+ * budget a phone can hold every frame it is being touched — a touch drag emits
+ * `pointermove`, so below the breakpoint the trail is dragged by the scroll
+ * gesture itself and this tier is the steady state, not a one-off. A 1024-wide
+ * dye buffer is ~18MB of half-float per ping-pong side at phone aspect, and the
+ * pressure solve alone is 40 of the 47 full-screen passes a simulated frame
+ * costs, which is what a phone cannot hold.
  */
 const QUALITY = {
   desktop: { simResolution: 256, dyeResolution: 1024, pressureIterations: 40 },
@@ -473,8 +472,11 @@ export class FluidSimulation {
 
   private onPointerMove = (event: PointerEvent): void => {
     if (this.reduced) return;
-    if (this.layoutQuery.matches) return;
-
+    /* No layout gate: a touch drag emits `pointermove` too, and on a phone that
+       gesture is the scroll, which is the only thing that ever reaches the sim
+       there. Skipping it left the backdrop transparent from the moment the
+       preloader's bloom dissipated. The copy does not flicker under it because
+       `--trail-blend` is already `normal` below 64rem (`styles/base.css`). */
     const x = event.clientX;
     const y = event.clientY;
     /* Same as Cappen's onMove, minus the first event: that one would splat
@@ -508,7 +510,6 @@ export class FluidSimulation {
 
   private onLayoutChange = (): void => {
     const next = this.layoutQuery.matches ? QUALITY.phone : QUALITY.desktop;
-    if (this.layoutQuery.matches) this.mouse.moved = false;
     if (next === this.quality) return;
     this.quality = next;
     /* Grid sizes are baked into the targets, so a tier change is a rebuild.
