@@ -10,7 +10,25 @@
     right: 0;
     width: max-content;
     margin-inline: auto;
-    z-index: calc(var(--z--nav) - 1);
+    /* Part of the gallery's band — see `.work_wrap` in `Work.css` for why
+       these are small numbers. Over the project overlay (5), under the loader
+       (7) and under the About panel's backdrop, which has to keep taking the
+       click that closes it. */
+    z-index: 6;
+    /*
+      The trail cuts through the tabs the way it cuts through the chips under
+      the featured slider: the pressed tab is a filled box (`--view_switcher_ink`
+      ground, `--view_switcher_ground` ink), so on the dark theme a light tab on
+      the light trail lost its edges entirely.
+
+      On the wrap, not on `.view_switcher_tab` — `position: fixed` makes this an
+      isolated group, and a blend inside one only sees that group's own backdrop,
+      which is empty. Same reason the nav puts its blend on `.nav_wrap`
+      (`Menu.css`). Unlike the nav this sits inside `main`, which paints no fill,
+      so difference against a bare backdrop is the identity and the tabs are
+      their normal colour until the liquid reaches them.
+    */
+    mix-blend-mode: difference;
     display: flex;
     gap: var(--space-2);
     justify-content: center;

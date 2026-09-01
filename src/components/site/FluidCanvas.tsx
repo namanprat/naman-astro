@@ -9,6 +9,9 @@
  * per-frame GPU readback.
  */
 import { lazy, Suspense, useEffect, useMemo, useRef, useState } from "react";
+/* Aliased: `@react-three/fiber` exports a `createPortal` of its own, and this
+   file uses both — one for the scene graph, one for the DOM. */
+import { createPortal as createDomPortal } from "react-dom";
 import { Canvas, createPortal, useFrame, useThree } from "@react-three/fiber";
 import "./FluidCanvas.css";
 import { FluidSimulation } from "@/lib/site/fluid/FluidSimulation";
@@ -35,10 +38,11 @@ import * as THREE from "three";
  * the colour it is meant to be and only the opted-in text reacts to it. See
  * `.is-trail-invert` in `FluidCanvas.css`.
  *
- * Work's grid punches this pass out of an HTML grey plate (`FluidCanvas.css`).
- * The wrap composites as `saturation`, so the plate drains the covers and the
- * liquid is a hole that lets the original colour through. The trail itself is
- * just an opaque stamp — invert-on-canvas was the Safari grey soup.
+ * Work's grid keeps this pass on screen under the tiles and punches it out of
+ * an HTML grey plate over them (`FluidCanvas.css`): the plate composites as
+ * `saturation`, so it drains the covers and the liquid is the hole that lets
+ * the original colour through. The trail itself is just an opaque stamp —
+ * invert-on-canvas was the Safari grey soup.
  */
 const TRAIL_FRAG = /* glsl */ `
 precision highp float;
@@ -81,14 +85,22 @@ function workGridDrain(): boolean {
 }
 
 /**
- * Runs only while the plate is on screen.
+ * The grey plate the grid's colour window is punched out of.
  *
- * The loop reads the WebGL canvas back into a 2D context every frame, which is
- * the most expensive thing on this island after the sim itself — and it used to
- * run on every route, because the component is mounted on every route and only
- * the *draw* was behind `workGridDrain()`. The gate is now the loop, keyed off
- * the same `<html>` classes `FluidCanvas.css` shows the plate on, so the two
- * cannot disagree.
+ * Portalled to `body` rather than left in the wrap, which is the whole reason
+ * this is a portal at all: `position: fixed` makes `.fluid_wrap` a stacking
+ * context on `/work`, and a stacking context is an isolated group — the plate's
+ * `saturation` would have had only the wrap's own transparent backdrop to blend
+ * against and would have painted flat grey over the page. From `body` it blends
+ * against the gallery, and it sorts above `.work_wrap` while the sim below it
+ * keeps painting the trail under the covers.
+ *
+ * The loop runs only while the plate is on screen. It reads the WebGL canvas
+ * back into a 2D context every frame, which is the most expensive thing on this
+ * island after the sim itself — and it used to run on every route, because the
+ * component is mounted on every route and only the *draw* was behind
+ * `workGridDrain()`. The gate is now the loop, keyed off the same `<html>`
+ * classes `FluidCanvas.css` shows the plate on, so the two cannot disagree.
  */
 function GridSatPlate({ host }: { host: HTMLDivElement | null }) {
   const plate = useRef<HTMLCanvasElement>(null);
@@ -137,7 +149,10 @@ function GridSatPlate({ host }: { host: HTMLDivElement | null }) {
     };
   }, [host]);
 
-  return <canvas className="work_grid_plate" ref={plate} aria-hidden />;
+  return createDomPortal(
+    <canvas className="work_grid_plate" ref={plate} aria-hidden />,
+    document.body,
+  );
 }
 
 function TrailOverlay() {

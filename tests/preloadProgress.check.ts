@@ -73,4 +73,17 @@ register("fonts", 1);
 report("bust", 1);
 assert.equal(latest(), 0, "reporting an unregistered segment is a no-op");
 
+// Process models are a real home-boot segment; they share the bar with the rest.
+reset();
+register("fonts", 10);
+register("grain", 20);
+register("canvas", 20);
+register("process", 20);
+report("process", 1);
+assert.equal(latest(), 29, "process alone is 20/70 of the bar");
+report("fonts", 1);
+report("grain", 1);
+report("canvas", 1);
+assert.equal(latest(), 100, "process plus the rest reaches 100");
+
 console.log("preloadProgress: all assertions passed");

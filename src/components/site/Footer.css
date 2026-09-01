@@ -31,6 +31,17 @@
   width: calc(100% * (1 - var(--_responsive---large)) + (var(--site--grid-width) + var(--site-gutter) * 2) * var(--_responsive---large));
   margin-inline: auto;
   background-color: var(--surface-accent);
+  /*
+    Same recipe as `.about_panel_surface` down to the token, and deliberately
+    nothing more. This carried `will-change: backdrop-filter` to promote the
+    in-flow card to its own layer, on the theory that WebKit was the engine
+    that dropped or sampled it stale. Backwards: Safari renders it correctly
+    and Chromium is the one that broke, because there `will-change` on a
+    filter property takes the same isolation path as the filter itself and
+    promotes an empty layer for the frost to sample — a flat tint instead of
+    the liquid. Same trap `.about_panel_scroll` already documents for
+    `will-change: transform`, same fix: do not promote the frost node.
+  */
   backdrop-filter: blur(var(--surface-frost-blur));
 }
 
