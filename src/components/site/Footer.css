@@ -31,22 +31,18 @@
   width: calc(100% * (1 - var(--_responsive---large)) + (var(--site--grid-width) + var(--site-gutter) * 2) * var(--_responsive---large));
   margin-inline: auto;
   background-color: var(--surface-accent);
-  backdrop-filter: blur(var(--surface-frost-blur));
   /*
-    Same recipe as `.about_panel_surface` down to the token — verified against
-    the built CSS, and over an identical test pattern both blur it identically.
-    What the two do not share is compositing: the About sheet is `position:
-    fixed`, so every engine hands it its own layer, while this card is in flow
-    and scrolls. That is the case WebKit drops or samples stale, which is the
-    one way the two frosts can read differently on a browser that is not
-    Chromium. `will-change` buys the same promotion without a transform, which
-    would make an ancestor a backdrop root and have the frost sample the
-    card's own empty padding (see `.footer_wrap`'s `overflow` note above).
-
-    It does not make this box a backdrop root for its own filter: an element
-    that forms one defines the backdrop for its descendants, not for itself.
+    Same recipe as `.about_panel_surface` down to the token, and deliberately
+    nothing more. This carried `will-change: backdrop-filter` to promote the
+    in-flow card to its own layer, on the theory that WebKit was the engine
+    that dropped or sampled it stale. Backwards: Safari renders it correctly
+    and Chromium is the one that broke, because there `will-change` on a
+    filter property takes the same isolation path as the filter itself and
+    promotes an empty layer for the frost to sample — a flat tint instead of
+    the liquid. Same trap `.about_panel_scroll` already documents for
+    `will-change: transform`, same fix: do not promote the frost node.
   */
-  will-change: backdrop-filter;
+  backdrop-filter: blur(var(--surface-frost-blur));
 }
 
 .footer_scale {

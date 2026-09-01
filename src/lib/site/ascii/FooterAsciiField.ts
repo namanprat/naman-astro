@@ -99,7 +99,15 @@ export class FooterAsciiField {
       canvas,
       antialias: false,
       alpha: true,
-      premultipliedAlpha: false,
+      /* No `premultipliedAlpha: false` here. The material blends with
+         `SRC_ALPHA, ONE_MINUS_SRC_ALPHA` over a transparent clear, so the
+         buffer holds `colour * a` — premultiplied. Declaring it straight made
+         the compositor multiply a second time (`colour * a^2`), and every
+         partial-alpha pixel the scroll scale / DPR resample produces got
+         pulled toward black: a dark outline on each glyph, visible on light
+         where the ink is `--light-100` and hidden on dark where it is
+         already `#101010`. Three's default `true` is the correct pairing,
+         and it is what every other canvas in the app uses. */
       powerPreference: "low-power",
     });
     this.renderer.setClearColor(0x000000, 0);

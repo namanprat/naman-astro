@@ -48,14 +48,15 @@ export type ProcessModelTuning = {
   scrollSpin: number;
 };
 
-const SHARED: ProcessModelTuning = {
-  scale: 1.55,
-  posX: 0,
-  posY: 0,
-  posZ: 0,
-  rotX: 0.35,
-  rotY: 0,
-  rotZ: 0.1,
+/** The pose keys. Excluded from `SHARED` so every card has to state its own. */
+type ProcessModelPose = Pick<
+  ProcessModelTuning,
+  "scale" | "posX" | "posY" | "posZ" | "rotX" | "rotY" | "rotZ"
+>;
+
+/** Camera, lights and material only. The three cards are framed identically;
+ *  it is the models that have to be posed apart. */
+const SHARED: Omit<ProcessModelTuning, keyof ProcessModelPose> = {
   fov: 35,
   camZ: 2.8,
   ambient: 0.08,
@@ -70,11 +71,67 @@ const SHARED: ProcessModelTuning = {
   scrollSpin: 0.000006,
 };
 
+/**
+ * Pose is per model, spelled out rather than inherited.
+ *
+ * `prepareLitClone` normalizes each GLB to a unit longest axis, so one shared
+ * pose frames three very different silhouettes very differently: the rock is
+ * chunky in every direction, the flower is nearly all stem, the bolt is a flat
+ * plate. Each also idles around Y, so a pose has to hold the whole sweep of
+ * that spin inside the card — at `fov: 35` and `camZ: 2.8` the stage is roughly
+ * 1.77 world units square, which is the budget these values spend.
+ */
 export const PROCESS_MODEL_DEFAULTS: Record<ProcessCardId, ProcessModelTuning> =
   {
-    "1": { ...SHARED, scale: 1.5, flatShading: true, idleSpin: 0.18 },
-    "2": { ...SHARED, scale: 1.7, rotX: 0.12, rotZ: 0.04, idleSpin: 0.12 },
-    "3": { ...SHARED, scale: 1.85, rotX: 0.2, rotZ: 0.16, idleSpin: 0.32 },
+    /* Rock: sized by `posZ` rather than `scale` — pulling it toward the camera
+       fills the card and lets the perspective spread the near facets. Ambient
+       is way up on this one alone: with the key light doing all the work the
+       flat-shaded facets blew out to a hard light/dark split instead of the
+       even glyph gradient the other two get. */
+    "1": {
+      ...SHARED,
+      scale: 1,
+      posX: 0,
+      posY: 0.02,
+      posZ: 0.66,
+      rotX: 0.29,
+      rotY: 0,
+      rotZ: 0.1,
+      ambient: 0.77,
+      flatShading: true,
+      idleSpin: 0.18,
+    },
+    /* Flower: nearly all stem, so framing the whole model leaves a bloom too
+       small to read beside the rock. Scaled up and pushed down instead, which
+       fills the card with the head and runs the stem off the bottom edge. The
+       steep `rotX` opens the bloom toward camera — shallower, it flattens into
+       a fan. */
+    "2": {
+      ...SHARED,
+      scale: 1.56,
+      posX: -0.03,
+      posY: -0.3,
+      posZ: 0.02,
+      rotX: 0.71,
+      rotY: 0,
+      rotZ: 0,
+      idleSpin: 0.12,
+    },
+    /* Bolt: kept face-on, because any forward tilt foreshortens the one axis
+       that carries the silhouette. `rotZ` sets it on a diagonal so it reads as
+       more than a vertical sliver, and the fastest idle spin of the three
+       carries it through the edge-on phases quickly. */
+    "3": {
+      ...SHARED,
+      scale: 1.57,
+      posX: -0.02,
+      posY: 0,
+      posZ: -0.02,
+      rotX: 0,
+      rotY: 0,
+      rotZ: 0.5,
+      idleSpin: 0.32,
+    },
   };
 
 const STORAGE_KEY = "process-model-tuning-v1";
