@@ -1,4 +1,5 @@
 import { lazy, Suspense, useEffect, useRef, useState } from "react";
+import type { ProcessCardId } from "@/lib/site/process/processModelTuning";
 import "./Process.css";
 
 /**
@@ -21,21 +22,25 @@ const ProcessCardCanvas = lazy(() => import("./ProcessCardCanvas"));
 const CARDS: ReadonlyArray<{
   title: string;
   description: string;
+  model: ProcessCardId;
 }> = [
   {
     title: "Uncover story",
     description:
       "We dig until we find what makes you irreplaceable. That becomes the strategy.",
+    model: "1",
   },
   {
     title: "Shape presence",
     description:
       "We design the identity and everywhere it shows up. One thing, not three that nearly match.",
+    model: "2",
   },
   {
     title: "Send it",
     description:
       "Everything ships together and keeps working as you grow. Nothing to redo in a year.",
+    model: "3",
   },
 ];
 
@@ -75,8 +80,8 @@ export default function Process() {
         <div className="process_layout studio_layout grid is-12">
           <div className="process_statement studio_statement">
             <h2 className="process_title studio_title text-style-h2">
-              <span className="studio_title_indent" aria-hidden="true" />We
-              build brands and everything they live on, so you look like
+              <span className="studio_title_indent" aria-hidden="true" />
+              We build brands and everything they live on, so you look like
               yourself from day one.
             </h2>
           </div>
@@ -96,10 +101,17 @@ export default function Process() {
                   </span>
                 </div>
                 <div className="process_card_media">
-                  <div className="process_card_stage">
+                  <div
+                    className="process_card_stage"
+                    data-process-model={card.model}
+                  >
                     {mounted ? (
                       <Suspense fallback={null}>
-                        <ProcessCardCanvas ink={CARD_INK} active={inView} />
+                        <ProcessCardCanvas
+                          ink={CARD_INK}
+                          active={inView}
+                          model={card.model}
+                        />
                       </Suspense>
                     ) : null}
                   </div>

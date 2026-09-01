@@ -6,7 +6,7 @@
  * its share instead of capping the bar below 100.
  */
 
-export type SegmentId = "fonts" | "grain" | "bust" | "canvas";
+export type SegmentId = "fonts" | "grain" | "bust" | "canvas" | "process";
 
 type Segment = { weight: number; value: number };
 
