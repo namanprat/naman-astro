@@ -13,6 +13,26 @@ export type GoOptions = {
   alreadyCovered?: boolean;
 };
 
+/**
+ * Route every `a[data-transition-link]` on the page through `go()`.
+ *
+ * One delegated listener rather than a handler per link, so a server-rendered
+ * link needs no island to leave through the cover — which is what the markup
+ * carrying this attribute used to hydrate React for.
+ */
+export function bootTransitionLinks(): void {
+  document.addEventListener("click", (event) => {
+    if (event.defaultPrevented || event.button !== 0) return;
+    if (event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
+    const link = (event.target as Element | null)?.closest<HTMLAnchorElement>(
+      "a[data-transition-link]",
+    );
+    if (!link) return;
+    event.preventDefault();
+    void go(link.href);
+  });
+}
+
 /** Full-document navigation with block-reveal cover. */
 export async function go(href: string, options?: GoOptions): Promise<void> {
   let url: URL;

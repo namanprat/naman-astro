@@ -1,11 +1,10 @@
 ---
 /**
- * Portfolio home shell. Lenis boots in a root island; studio sections are
- * siblings so native Astro (CamilleSlider overlay chrome) can sit between React islands.
- * Footer/Menu read Lenis from `lenisBridge` when outside the ReactLenis tree.
+ * Portfolio home shell. Studio sections are siblings so native Astro
+ * (CamilleSlider overlay chrome) can sit between React islands. Footer/Menu
+ * read the document scroller from `lenisBridge`.
  */
-import HomeLenis from "./PortfolioHome.tsx";
-import Manifesto from "./Manifesto.tsx";
+import Manifesto from "./Manifesto.astro";
 import CamilleSlider from "./CamilleSlider.astro";
 import Process from "./Process.tsx";
 import Faq from "./Faq.tsx";
@@ -13,7 +12,6 @@ import Team from "./Team.astro";
 import Footer from "./Footer.tsx";
 ---
 
-<HomeLenis client:only="react" />
 <section class="hero" id="hero" aria-label="Home">
   {/* Hero footnotes, phone only. The section is otherwise an empty spacer that
       reserves the first viewport, which makes it the one box already sized to
@@ -34,9 +32,6 @@ import Footer from "./Footer.tsx";
   </a>
 </section>
 <div class="studio" id="studio">
-  {/* No client directive: markup only, no hooks — Astro renders it to HTML.
-      It was `client:only`, which kept the page's `h1` out of the document
-      entirely until React had booted. */}
   <Manifesto />
   <CamilleSlider />
   {/* Must stay `client:only`. `revealLines` and `bootGooeyHeadings` run from
@@ -52,3 +47,7 @@ import Footer from "./Footer.tsx";
   <Team />
 </div>
 <Footer client:only="react" />
+<script>
+  import { bootSiteScroll } from "@/lib/site/lenisScroll";
+  bootSiteScroll();
+</script>

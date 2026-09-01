@@ -1,5 +1,9 @@
 import { gsap } from "gsap";
-import type Lenis from "lenis";
+import Lenis from "lenis";
+import { ScrollTrigger } from "gsap/ScrollTrigger";
+import { setSiteLenis } from "./lenisBridge";
+
+gsap.registerPlugin(ScrollTrigger);
 
 /**
  * The site's scroll feel, in one place. Was duplicated verbatim in
@@ -32,5 +36,31 @@ export function driveLenisWithGsap(lenis: Lenis): () => void {
 
   return () => {
     gsap.ticker.remove(raf);
+  };
+}
+
+/**
+ * The document scroller every long page boots, and publishes for the chrome
+ * that reads it off `lenisBridge`.
+ *
+ * Lenis takes the document itself, so this owns no markup and never did — it
+ * was a React island (`<ReactLenis root>`) on home, `/work/[slug]` and
+ * `/about` purely to have a component to hang the instance off, which is why
+ * three routes hydrated React to run one constructor. `WorkGallery` already
+ * built its overlay instance this way.
+ */
+export function bootSiteScroll(): () => void {
+  const lenis = new Lenis(SCROLL_SETTINGS);
+  /* What `useLenis(ScrollTrigger.update)` did: scroll and tweens share a clock
+     through the ticker above, but ScrollTrigger still has to be told the
+     scroller moved. */
+  lenis.on("scroll", ScrollTrigger.update);
+  setSiteLenis(lenis);
+  const stopDriving = driveLenisWithGsap(lenis);
+
+  return () => {
+    stopDriving();
+    setSiteLenis(null);
+    lenis.destroy();
   };
 }

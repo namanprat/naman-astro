@@ -1,5 +1,4 @@
 import { useEffect, useRef, useState } from "react";
-import { useLenis } from "lenis/react";
 import gsap from "gsap";
 import ScrollTrigger from "gsap/ScrollTrigger";
 import { useGSAP } from "@gsap/react";
@@ -64,12 +63,10 @@ export default function Footer() {
      Latched — once built, the field stays, so scrolling past does not churn
      contexts. */
   const [nearView, setNearView] = useState(false);
-  const lenisFromContext = useLenis();
-  const [bridgedLenis, setBridgedLenis] = useState(() => getSiteLenis());
-  const lenis = lenisFromContext ?? bridgedLenis;
+  const [lenis, setLenis] = useState(() => getSiteLenis());
   const emailCopy = useCopyEmail(EMAIL_HREF);
 
-  useEffect(() => subscribeSiteLenis(setBridgedLenis), []);
+  useEffect(() => subscribeSiteLenis(setLenis), []);
 
   useEffect(() => {
     const mq = window.matchMedia(MOBILE_LAYOUT_MQ);

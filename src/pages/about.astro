@@ -8,7 +8,6 @@
  * ink, and the footer underneath.
  */
 import Layout from "@/layouts/BaseLayout.astro";
-import SiteLenis from "@/components/site/PortfolioHome.tsx";
 import AboutPage from "@/components/site/about/AboutPage";
 import Footer from "@/components/site/Footer";
 ---
@@ -47,7 +46,6 @@ import Footer from "@/components/site/Footer";
       }
     } catch (e) {}
   </script>
-  <SiteLenis client:only="react" />
   {
     /* Real block wrapper, not the bare island. The footer's scale scrub
        picks the previous flow sibling as its ScrollTrigger, and an
@@ -59,4 +57,8 @@ import Footer from "@/components/site/Footer";
     <AboutPage client:only="react" />
   </div>
   <Footer client:only="react" />
+  <script>
+    import { bootSiteScroll } from "@/lib/site/lenisScroll";
+    bootSiteScroll();
+  </script>
 </Layout>

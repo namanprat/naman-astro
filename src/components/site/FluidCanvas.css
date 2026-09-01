@@ -92,18 +92,28 @@ html.is-preloading .fluid_wrap {
  * Process cards, the Camille stage and the footer card keep their own fill, so
  * a blend on that copy would invert the card — not the trail.
  */
-.manifesto_lead,
-.studio_title,
-.team_title,
-.team_copy_stack,
-.faq_lead,
-.faq_question_text,
-.faq_answer_copy,
-.hero_note,
-.gallery_label,
-.project_title,
-.camille_slider_pill,
-.is-trail-invert {
+/*
+ * Dark only. Difference is what keeps white copy legible once the light trail
+ * runs under it — on the light theme the copy is already dark on a light page,
+ * so the blend has nothing to rescue and instead flips settled copy to a colour
+ * nobody asked for. The nav is the deliberate exception and blends in both
+ * themes: it sits over every route at every scroll position, so it is the one
+ * piece of type that always has trail beneath it (`Menu.css`).
+ */
+html:not(.theme-light) :is(
+    .manifesto_lead,
+    .studio_title,
+    .team_title,
+    .team_copy_stack,
+    .faq_lead,
+    .faq_question_text,
+    .faq_answer_copy,
+    .hero_note,
+    .gallery_label,
+    .project_title,
+    .camille_slider_pill,
+    .is-trail-invert
+  ) {
   mix-blend-mode: difference;
 }
 

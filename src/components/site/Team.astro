@@ -4,7 +4,7 @@
  * same split as archive.astro / CamilleSlider.
  */
 import TeamCylinderCarousel from "./TeamCylinderCarousel";
-import AnimeLink from "./AnimeLink";
+import AnimeLink from "./AnimeLink.astro";
 import "./Team.css";
 ---
 
@@ -26,10 +26,14 @@ import "./Team.css";
           you different, build the whole presence around it, and make sure they
           feel that first.
         </p>
-        <AnimeLink client:only="react" href="/work" className="team_cta">
-          View Work
-        </AnimeLink>
+        <AnimeLink href="/work" class="team_cta">View Work</AnimeLink>
       </div>
     </div>
   </div>
 </section>
+<script>
+  import { bootRollingText } from "@/lib/site/rollingText";
+  import { bootTransitionLinks } from "@/lib/site/navigate";
+  bootRollingText();
+  bootTransitionLinks();
+</script>

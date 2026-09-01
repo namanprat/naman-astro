@@ -94,6 +94,13 @@ function workGridDrain(): boolean {
  * against and would have painted flat grey over the page. From `body` it blends
  * against the gallery, and it sorts above `.work_wrap` while the sim below it
  * keeps painting the trail under the covers.
+ *
+ * The loop runs only while the plate is on screen. It reads the WebGL canvas
+ * back into a 2D context every frame, which is the most expensive thing on this
+ * island after the sim itself — and it used to run on every route, because the
+ * component is mounted on every route and only the *draw* was behind
+ * `workGridDrain()`. The gate is now the loop, keyed off the same `<html>`
+ * classes `FluidCanvas.css` shows the plate on, so the two cannot disagree.
  */
 function GridSatPlate({ host }: { host: HTMLDivElement | null }) {
   const plate = useRef<HTMLCanvasElement>(null);
@@ -101,27 +108,45 @@ function GridSatPlate({ host }: { host: HTMLDivElement | null }) {
   useEffect(() => {
     const dest = plate.current;
     if (!host || !dest) return;
+
     let raf = 0;
     const tick = () => {
       const src = host.querySelector<HTMLCanvasElement>(
         "canvas:not(.work_grid_plate)",
       );
-      if (src && dest && workGridDrain()) {
+      const ctx = src && dest.getContext("2d");
+      if (src && ctx) {
         if (dest.width !== src.width) dest.width = src.width;
         if (dest.height !== src.height) dest.height = src.height;
-        const ctx = dest.getContext("2d");
-        if (ctx) {
-          ctx.globalCompositeOperation = "source-over";
-          ctx.fillStyle = "#808080";
-          ctx.fillRect(0, 0, dest.width, dest.height);
-          ctx.globalCompositeOperation = "destination-out";
-          ctx.drawImage(src, 0, 0);
-        }
+        ctx.globalCompositeOperation = "source-over";
+        ctx.fillStyle = "#808080";
+        ctx.fillRect(0, 0, dest.width, dest.height);
+        ctx.globalCompositeOperation = "destination-out";
+        ctx.drawImage(src, 0, 0);
       }
       raf = requestAnimationFrame(tick);
     };
-    raf = requestAnimationFrame(tick);
-    return () => cancelAnimationFrame(raf);
+
+    const sync = () => {
+      const wanted = workGridDrain();
+      if (wanted && !raf) raf = requestAnimationFrame(tick);
+      else if (!wanted && raf) {
+        cancelAnimationFrame(raf);
+        raf = 0;
+      }
+    };
+
+    const observer = new MutationObserver(sync);
+    observer.observe(document.documentElement, {
+      attributes: true,
+      attributeFilter: ["class"],
+    });
+    sync();
+
+    return () => {
+      observer.disconnect();
+      if (raf) cancelAnimationFrame(raf);
+    };
   }, [host]);
 
   return createDomPortal(
@@ -312,6 +337,10 @@ export default function FluidCanvas() {
   /* Hard navigation, no client router (`lib/site/pageTransition.ts`), so the
      island remounts per page and the path at mount is the path. */
   const [home] = useState(() => window.location.pathname === "/");
+  /* `html.work-grid` is only ever set by `WorkGallery`, which only mounts here.
+     Everywhere else the plate never draws, so the context does not have to
+     carry a readable buffer for it. */
+  const [work] = useState(() => window.location.pathname === "/work");
 
   return (
     <div className="fluid_wrap" data-fluid aria-hidden="true" ref={setHost}>
@@ -329,8 +358,10 @@ export default function FluidCanvas() {
               alpha: true,
               antialias: true,
               powerPreference: "high-performance",
-              /* GridSatPlate drawImage-s this buffer after present. */
-              preserveDrawingBuffer: true,
+              /* GridSatPlate drawImage-s this buffer after present, and it is
+                 the only thing that does — asking for it elsewhere just stops
+                 the driver discarding the buffer it is finished with. */
+              preserveDrawingBuffer: work,
             }}
             camera={{ fov: 35, position: [0, 0, 5], near: 0.1, far: 50 }}
             style={{ pointerEvents: "none" }}
@@ -347,7 +378,7 @@ export default function FluidCanvas() {
           </Canvas>
         </FluidSimStateProvider>
       )}
-      <GridSatPlate host={host} />
+      {work && <GridSatPlate host={host} />}
     </div>
   );
 }

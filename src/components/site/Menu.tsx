@@ -1,7 +1,6 @@
 import "./Menu.css";
 import { useRef, useState, useEffect } from "react";
 import { flushSync } from "react-dom";
-import { useLenis } from "lenis/react";
 import type Lenis from "lenis";
 import gsap from "gsap";
 import { SplitText } from "gsap/SplitText";
@@ -189,11 +188,7 @@ export default function Menu({ initialPathname = "/" }: MenuProps) {
   const [isDesktopNav, setIsDesktopNav] = useState(false);
   const [contactOpen, setContactOpen] = useState(false);
   const emailCopy = useCopyEmail(EMAIL_HREF);
-  const lenisFromContext = useLenis();
-  const [bridgedLenis, setBridgedLenis] = useState<Lenis | null>(() =>
-    getSiteLenis(),
-  );
-  const lenis = lenisFromContext ?? bridgedLenis;
+  const [lenis, setLenis] = useState<Lenis | null>(() => getSiteLenis());
 
   /** Single source of truth for the nav active dot. */
   const activeId =
@@ -207,7 +202,7 @@ export default function Menu({ initialPathname = "/" }: MenuProps) {
             ? "hero"
             : homeSectionId;
 
-  useEffect(() => subscribeSiteLenis(setBridgedLenis), []);
+  useEffect(() => subscribeSiteLenis(setLenis), []);
 
   const menuRef = useRef<HTMLDivElement>(null);
   const navRef = useRef<HTMLDivElement>(null);

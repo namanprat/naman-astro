@@ -28,12 +28,20 @@
       so difference against a bare backdrop is the identity and the tabs are
       their normal colour until the liquid reaches them.
     */
-    mix-blend-mode: difference;
     display: flex;
     gap: var(--space-2);
     justify-content: center;
     pointer-events: auto;
     transition: opacity 0.3s ease;
+  }
+
+  /* Dark only, for the reason above: it is the dark theme that puts a light
+     tab on a light trail. On the light theme the tab is dark ink on a light
+     ground, so the blend has nothing to rescue and would only tint a settled
+     control. Same gate as the trail copy in `FluidCanvas.css` — the nav is the
+     one blend that stays on in both themes. */
+  html:not(.theme-light) .view_switcher {
+    mix-blend-mode: difference;
   }
 
   .view_switcher.is-locked {
