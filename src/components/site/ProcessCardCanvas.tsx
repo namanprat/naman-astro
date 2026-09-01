@@ -4,8 +4,9 @@
  * The mesh is an ordinary lit surface — the ASCII lives entirely in
  * `AsciiField`, shared with About and Team. Materials are replaced with a
  * white standard so glyph density comes from lighting, not from Sketchfab
- * albedo (the flower's leaves would otherwise stamp no glyphs). Frameloop is
- * paused while `#process` is off-screen.
+ * albedo (the flower's leaves would otherwise stamp no glyphs). The GLBs are
+ * Draco-compressed and fetched in the home preloader; this module only decodes.
+ * Frameloop is paused while `#process` is off-screen.
  */
 import {
   Component,
@@ -35,8 +36,10 @@ import AsciiField from "./ascii/AsciiField";
 
 gsap.registerPlugin(ScrollTrigger);
 
+const DRACO_PATH = "/draco/gltf/";
+useGLTF.setDecoderPath(DRACO_PATH);
 for (const id of PROCESS_CARD_IDS) {
-  useGLTF.preload(PROCESS_MODEL_URLS[id]);
+  useGLTF.preload(PROCESS_MODEL_URLS[id], DRACO_PATH);
 }
 
 type ProcessCardCanvasProps = {
@@ -92,7 +95,7 @@ function CardModel({ card }: { card: ProcessCardId }) {
   const spinY = useRef(0);
   const scrollDelta = useRef(0);
   const reducedMotion = useMemo(() => prefersReducedMotion(), []);
-  const { scene } = useGLTF(PROCESS_MODEL_URLS[card]);
+  const { scene } = useGLTF(PROCESS_MODEL_URLS[card], DRACO_PATH);
   const tuning = getProcessModelTuning(card);
 
   const material = useMemo(

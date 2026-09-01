@@ -1,7 +1,7 @@
 /**
  * What the home preloader actually waits on: webfonts, the grain texture (desktop
- * only — the overlay is `display: none` below 48rem), and the backdrop canvas'
- * first rendered frame.
+ * only — the overlay is `display: none` below 48rem), the backdrop canvas' first
+ * rendered frame, and the three Process-card GLBs (Draco, ~95KB together).
  *
  * The About-panel bust GLB used to be a fourth segment carrying half the weight.
  * It is no longer waited on — see `warmBust` — because nothing on the home page
@@ -13,6 +13,10 @@
 import { shouldMountAboutBust } from "./aboutBust";
 import { isMobileLayout } from "./isMobileLayout";
 import { completeAll, register, report } from "./preloadProgress";
+import {
+  PROCESS_CARD_IDS,
+  PROCESS_MODEL_URLS,
+} from "./process/processModelTuning";
 
 const GRAIN_URL = "/main-assets/grain.webp";
 
@@ -25,6 +29,8 @@ const PRELOAD_FAILSAFE_MS = 12_000;
 
 /** Fallback size when the response has no content-length (dev server, gzip). */
 const GRAIN_ASSUMED_BYTES = 200_000;
+/** Sum of the three Draco process GLBs; used when content-length is missing. */
+const PROCESS_MODELS_ASSUMED_BYTES = 100_000;
 
 let canvasReady: (() => void) | null = null;
 
@@ -118,6 +124,33 @@ function warmBust(): void {
 }
 
 /**
+ * Fetch the three Process-card GLBs so scrolling to `#process` hits cache.
+ *
+ * Bytes only — this must not import `ProcessCardCanvas`, which would put the
+ * 3D stack on the ENTER path. `useGLTF` later re-requests the same URLs and
+ * the browser serves them from HTTP cache; Draco decode happens on mount.
+ */
+async function loadProcessModels(): Promise<void> {
+  const urls = PROCESS_CARD_IDS.map((id) => PROCESS_MODEL_URLS[id]);
+  const parts = urls.map(() => 0);
+  const assumedEach = PROCESS_MODELS_ASSUMED_BYTES / urls.length;
+  const publish = () => {
+    report(
+      "process",
+      parts.reduce((sum, value) => sum + value, 0) / urls.length,
+    );
+  };
+  await Promise.all(
+    urls.map((url, i) =>
+      fetchWithProgress(url, assumedEach, (t) => {
+        parts[i] = t;
+        publish();
+      }),
+    ),
+  );
+}
+
+/**
  * Same treatment for the hero glass, and for the same reason: importing the
  * module runs its top-level `useGLTF.preload`, so the 300KB logo lands in drei's
  * cache on idle time rather than in front of the ENTER button.
@@ -147,6 +180,7 @@ export function startPreload(): Promise<void> {
   register("fonts", 10);
   if (wantsGrain) register("grain", 20);
   register("canvas", 20);
+  register("process", 20);
 
   const settle = (id: Parameters<typeof report>[0], task: Promise<unknown>) =>
     task.then(
@@ -159,6 +193,7 @@ export function startPreload(): Promise<void> {
     new Promise<void>((resolve) => {
       canvasReady = resolve;
     }),
+    settle("process", loadProcessModels()),
   ];
   if (wantsGrain) jobs.push(settle("grain", loadGrain()));
 
