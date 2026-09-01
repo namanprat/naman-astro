@@ -1,6 +1,9 @@
 # build output
 dist/
 
+# archive poster variants (scripts/archive-variants.mjs, via `prebuild`)
+public/archive/generated/
+
 # generated types
 .astro/
 
