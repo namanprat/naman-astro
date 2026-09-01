@@ -36,7 +36,7 @@ import * as THREE from "three";
  * `.is-trail-invert` in `FluidCanvas.css`.
  *
  * Work's grid punches this pass out of an HTML grey plate (`FluidCanvas.css`).
- * The wrap composites as `saturation`, so the plate drains the covers and the
+ * The plate composites as `saturation`, so it drains the covers and the
  * liquid is a hole that lets the original colour through. The trail itself is
  * just an opaque stamp — invert-on-canvas was the Safari grey soup.
  */

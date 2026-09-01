@@ -80,6 +80,9 @@ export default function Faq() {
         ease: "power2.out",
         stagger: 0.1,
         scrollTrigger: { trigger: root, start: "top 75%", once: true },
+        /* A leftover identity transform isolates the item and the
+           question's difference blend never sees the trail. */
+        clearProps: "transform",
       });
     },
     { scope: rootRef },

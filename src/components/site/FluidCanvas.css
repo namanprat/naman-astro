@@ -92,13 +92,16 @@ html.is-preloading .fluid_wrap {
  * Process cards, the Camille stage and the footer card keep their own fill, so
  * a blend on that copy would invert the card — not the trail.
  */
-.manifesto_lead,
-.studio_title,
-.team_title,
-.team_copy_stack,
-.faq_lead,
-.faq_question_text,
-.faq_answer_copy,
+/*
+ * Blend the wrapper, not the glyphs. Gooey `filter` on the split inners
+ * isolates a heading from its own mix-blend, and `.team_copy`'s z-index
+ * isolates its children from the canvas. The wrapper flattens that and
+ * still sees the trail.
+ */
+.manifesto_wrap,
+.process_statement,
+.faq_wrap,
+.team_copy,
 .hero_note,
 .is-trail-invert {
   mix-blend-mode: difference;
@@ -129,13 +132,14 @@ html.is-preloading .fluid_wrap {
   sits above this layer (`--z--nav - 2`) so case-study colour is untouched.
 */
 html.work-grid:not(.work-project-open) .fluid_wrap {
-  z-index: 3;
+  /* `auto`, not 3: a z-index here would isolate the plate from the
+     covers, and saturation would paint a grey sheet instead of a hole. */
+  z-index: auto;
   overflow: visible;
-  mix-blend-mode: saturation;
 }
 
-/* Keep the sim drawing for the plate copy, but out of the wrap's flatten —
-   an opaque trail in the hole would still be sat-0 and the colour would
+/* Keep the sim drawing for the plate copy, but out of the hole —
+   an opaque trail there would still be sat-0 and the colour would
    not come through. */
 html.work-grid:not(.work-project-open) .fluid_wrap > div {
   opacity: 0;
@@ -151,8 +155,13 @@ html.work-grid:not(.work-project-open) .fluid_wrap > div {
   pointer-events: none;
 }
 
+/* Saturation on the 2D plate only, and the plate is the one that
+   stacks over the covers (`z-index: 3`). On the wrap it flattened the
+   WebGL child with the plate; Safari treats that context as opaque. */
 html.work-grid:not(.work-project-open) .fluid_wrap canvas.work_grid_plate {
   display: block;
+  z-index: 3;
+  mix-blend-mode: saturation;
 }
 
 html.page-work .fluid_wrap,
