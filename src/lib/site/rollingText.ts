@@ -20,6 +20,22 @@ function resolveHost(el: HTMLElement): HTMLElement {
   );
 }
 
+/**
+ * Init every server-rendered rolling label on the page.
+ *
+ * Scoped to `[data-roll-text]`, which only `RollingText.astro` emits — the
+ * React component splits its own element from an effect, so matching on the
+ * shared `.roll_text` class would split those twice.
+ */
+export function bootRollingText(root: ParentNode = document): void {
+  for (const el of root.querySelectorAll<HTMLElement>(
+    "[data-roll-text]:not([data-roll-ready])",
+  )) {
+    el.dataset.rollReady = "";
+    initRollingText(el);
+  }
+}
+
 export function initRollingText(el: HTMLElement): RollingTextDispose {
   if (prefersReducedMotion()) {
     return () => {};

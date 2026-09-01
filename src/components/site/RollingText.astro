@@ -1,0 +1,20 @@
+---
+/**
+ * Hover-roll label. The per-char stacks are built at runtime by
+ * `initRollingText`, so this is only the element it splits.
+ *
+ * `data-roll-text` is what `bootRollingText` picks up. The React
+ * `RollingText.tsx` — still nested inside `Menu` and `Footer` — deliberately
+ * does not carry it: it inits its own element from an effect, and a shared boot
+ * that matched `.roll_text` would split those a second time.
+ */
+import "./RollingText.css";
+
+interface Props {
+  class?: string;
+}
+
+const { class: className } = Astro.props;
+---
+
+<span class:list={["roll_text", className]} data-roll-text><slot /></span>

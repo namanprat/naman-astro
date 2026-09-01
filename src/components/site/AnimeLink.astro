@@ -1,0 +1,53 @@
+---
+/**
+ * Label-and-arrow link that leaves through the page-transition cover.
+ *
+ * `data-transition-link` is the whole of the behaviour: `bootTransitionLinks`
+ * hands the click to `go()`, which raises the cover before the document
+ * changes. Without it the browser would navigate straight away and the cover
+ * would never play.
+ */
+import RollingText from "./RollingText.astro";
+import "./AnimeLink.css";
+
+interface Props {
+  href: string;
+  class?: string;
+}
+
+const { href, class: className } = Astro.props;
+---
+
+<a href={href} class={className} data-transition-link>
+  <div class="anime_link">
+    {
+      /* `data-no-reveal` opts the label out of the line reveal. It has to sit
+         on an ancestor, not the `h5` itself — both the JS query in
+         `lib/site/lineReveal.ts` and the pre-paint hold in `styles/site.css`
+         match `.text-style-main` and exclude only descendants of the skip
+         list. Without it that module would SplitText this label, fighting the
+         per-char stacks RollingText has already built, exactly as noted on the
+         footer links. */
+    }
+    <div class="anime_link_label" data-no-reveal>
+      <h5 class="text-style-main"><RollingText><slot /></RollingText></h5>
+    </div>
+    <div class="anime_link_icon">
+      {
+        /* Ionicons md-arrow-forward, inlined. One glyph is not worth the
+           react-icons dependency. */
+      }
+      <svg
+        viewBox="0 0 512 512"
+        width="1em"
+        height="1em"
+        fill="currentColor"
+        aria-hidden="true"
+      >
+        <path
+          d="M85 277.375h259.704L225.002 397.077 256 427l171-171L256 85l-29.922 29.924 118.626 119.701H85v42.75z"
+        ></path>
+      </svg>
+    </div>
+  </div>
+</a>

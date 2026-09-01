@@ -111,7 +111,6 @@ export default defineConfig({
         "gsap/SplitText",
         "@gsap/react",
         "lenis",
-        "lenis/react",
         // Only reached from the ASCII GUI's dynamic import, but that import
         // fires from inside a client:only island — same 504 as the rest.
         "lil-gui",
