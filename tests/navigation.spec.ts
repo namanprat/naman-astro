@@ -121,24 +121,27 @@ test("desktop About docks the nav under the card", async ({ page }) => {
   await expect.poll(() => rootClasses(page)).toContain("about-open");
 
   await expect
-    .poll(async () => {
-      return page.evaluate(() => {
-        const nav = document.querySelector<HTMLElement>(".nav_wrap");
-        const surface = document.querySelector<HTMLElement>(
-          ".about_panel_surface",
-        );
-        if (!nav || !surface) return "missing";
-        const navTop = nav.getBoundingClientRect().top;
-        const cardBottom = surface.getBoundingClientRect().bottom;
-        /* Docked: the bar's top sits on the orange edge, not above the card
+    .poll(
+      async () => {
+        return page.evaluate(() => {
+          const nav = document.querySelector<HTMLElement>(".nav_wrap");
+          const surface = document.querySelector<HTMLElement>(
+            ".about_panel_surface",
+          );
+          if (!nav || !surface) return "missing";
+          const navTop = nav.getBoundingClientRect().top;
+          const cardBottom = surface.getBoundingClientRect().bottom;
+          /* Docked: the bar's top sits on the orange edge, not above the card
            in the hero. A few pixels of subpixel / padding slack. */
-        if (navTop < 80) return `still at top ${Math.round(navTop)}`;
-        if (Math.abs(navTop - cardBottom) > 8) {
-          return `gap ${Math.round(navTop - cardBottom)}`;
-        }
-        return "ok";
-      });
-    }, { timeout: 15_000 })
+          if (navTop < 80) return `still at top ${Math.round(navTop)}`;
+          if (Math.abs(navTop - cardBottom) > 8) {
+            return `gap ${Math.round(navTop - cardBottom)}`;
+          }
+          return "ok";
+        });
+      },
+      { timeout: 15_000 },
+    )
     .toBe("ok");
 
   const restTop = await page.evaluate(() => {
@@ -198,9 +201,7 @@ test("opening About on desktop locks scroll behind the overlay", async ({
 
   const y0 = await page.evaluate(() => window.scrollY);
   await page.mouse.wheel(0, 1200);
-  await expect
-    .poll(async () => page.evaluate(() => window.scrollY))
-    .toBe(y0);
+  await expect.poll(async () => page.evaluate(() => window.scrollY)).toBe(y0);
 });
 
 /**
@@ -483,6 +484,112 @@ test("archive theme-color stays dark regardless of the stored theme", async ({
   await expectThemeColors(page, "#101010");
 });
 
+/**
+ * Tab icons follow OS chrome (`prefers-color-scheme`), not the site theme
+ * toggle: cream mark on dark chrome, near-black on light. No catch-all icon
+ * without `media` — Chromium then ignores the pairs.
+ */
+test("favicons and the web app manifest follow the OS colour scheme", async ({
+  page,
+}) => {
+  await page.goto("/");
+
+  await expect
+    .poll(() =>
+      page.locator('link[rel="icon"]').evaluateAll((els) =>
+        els.map((el) => ({
+          href: el.getAttribute("href"),
+          type: el.getAttribute("type"),
+          media: el.getAttribute("media"),
+          sizes: el.getAttribute("sizes"),
+        })),
+      ),
+    )
+    .toEqual([
+      {
+        href: "/favicon/favicon-dark.svg",
+        type: "image/svg+xml",
+        media: "(prefers-color-scheme: light)",
+        sizes: null,
+      },
+      {
+        href: "/favicon/favicon-light.svg",
+        type: "image/svg+xml",
+        media: "(prefers-color-scheme: dark)",
+        sizes: null,
+      },
+      {
+        href: "/favicon/favicon-dark.png",
+        type: "image/png",
+        media: "(prefers-color-scheme: light)",
+        sizes: "1000x1000",
+      },
+      {
+        href: "/favicon/favicon-light.png",
+        type: "image/png",
+        media: "(prefers-color-scheme: dark)",
+        sizes: "1000x1000",
+      },
+    ]);
+
+  await expect
+    .poll(() =>
+      page.locator('link[rel="apple-touch-icon"]').evaluateAll((els) =>
+        els.map((el) => ({
+          href: el.getAttribute("href"),
+          media: el.getAttribute("media"),
+        })),
+      ),
+    )
+    .toEqual([
+      {
+        href: "/favicon/favicon-dark.png",
+        media: "(prefers-color-scheme: light)",
+      },
+      {
+        href: "/favicon/favicon-light.png",
+        media: "(prefers-color-scheme: dark)",
+      },
+    ]);
+
+  await expect(page.locator('link[rel="mask-icon"]')).toHaveAttribute(
+    "href",
+    "/favicon/favicon-dark.svg",
+  );
+  await expect(page.locator('link[rel="mask-icon"]')).toHaveAttribute(
+    "color",
+    "#101010",
+  );
+  await expect(
+    page.locator('meta[name="apple-mobile-web-app-title"]'),
+  ).toHaveAttribute("content", "duforn");
+  await expect(page.locator('link[rel="manifest"]')).toHaveAttribute(
+    "href",
+    "/site.webmanifest",
+  );
+
+  const faviconPaths = [
+    "/favicon/favicon-dark.svg",
+    "/favicon/favicon-light.svg",
+    "/favicon/favicon-dark.png",
+    "/favicon/favicon-light.png",
+  ];
+  for (const path of faviconPaths) {
+    const res = await page.request.get(path);
+    expect(res.ok(), path).toBe(true);
+  }
+
+  const manifestRes = await page.request.get("/site.webmanifest");
+  expect(manifestRes.ok()).toBe(true);
+  const manifest = (await manifestRes.json()) as {
+    icons: { src: string }[];
+  };
+  expect(manifest.icons.map((icon) => icon.src)).toEqual([
+    "/favicon/favicon-light.png",
+    "/favicon/favicon-light.svg",
+  ]);
+});
+
 test("the page-transition cover sits above the nav and ticker", async ({
   page,
 }) => {
@@ -495,7 +602,8 @@ test("the page-transition cover sits above the nav and ticker", async ({
     const marquee = document.querySelector<HTMLElement>(".nav_marquee");
     const panel = document.querySelector<HTMLElement>(".transition_panel");
     if (!nav || !panel) return null;
-    const z = (el: HTMLElement) => Number.parseFloat(getComputedStyle(el).zIndex);
+    const z = (el: HTMLElement) =>
+      Number.parseFloat(getComputedStyle(el).zIndex);
     document.documentElement.classList.add("is-page-transitioning");
     const locked = {
       navZ: z(nav),
@@ -535,7 +643,8 @@ test("arming the cover lock does not snap the panel over the nav", async ({
     return {
       navTopShift: Math.abs(navAfter.top - navBefore.top),
       navHidden:
-        navStyle.visibility === "hidden" || Number.parseFloat(navStyle.opacity) === 0,
+        navStyle.visibility === "hidden" ||
+        Number.parseFloat(navStyle.opacity) === 0,
       panelTop: panelBox.top,
       view: window.innerHeight,
     };
@@ -578,7 +687,9 @@ test("the featured slider opens a project again after returning home", async ({
   await expect.poll(() => rootClasses(page)).not.toContain("is-page-covered");
 
   await page.locator(".camille_slider_frame").scrollIntoViewIfNeeded();
-  await page.locator(".camille_slider_frame").click({ position: { x: 220, y: 280 } });
+  await page
+    .locator(".camille_slider_frame")
+    .click({ position: { x: 220, y: 280 } });
   await expect
     .poll(() => new URL(page.url()).pathname, { timeout: 30_000 })
     .toMatch(/^\/work\/[^/]+$/);
@@ -616,7 +727,8 @@ test("bfcache restore parks the cover so the home slider is clickable", async ({
         const top = panel.getBoundingClientRect().top;
         const pe = getComputedStyle(panel).pointerEvents;
         if (pe !== "none") return `pointer-events ${pe}`;
-        if (top < window.innerHeight * 0.5) return `panel top ${Math.round(top)}`;
+        if (top < window.innerHeight * 0.5)
+          return `panel top ${Math.round(top)}`;
         return "ok";
       }),
     )

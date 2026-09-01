@@ -40,7 +40,9 @@ import { SITE_NAME } from "@/consts.ts";
           class="preloader_row preloader_foot justify-content-between align-items-end gap-2"
         >
           <p class="text-style-mono">
-            Based in Mumbai and Bangalore, working worldwide<br />
+            Based in Mumbai and Bangalore, working worldwide<br
+              class="preloader_break"
+            />
             Brand, web, and motion for early-stage companies
           </p>
           <button
@@ -60,7 +62,13 @@ import { SITE_NAME } from "@/consts.ts";
 <style>
   .preloader_wrap {
     position: fixed;
-    inset: 0;
+    top: 0;
+    left: 0;
+    right: 0;
+    /* svh on the phone, not `inset: 0` — the layout viewport includes Safari's
+       bars, and a full-bleed transparent layer lets the chrome sample the
+       orange card. Page ground in that gap is html::before/after. */
+    height: var(--site--screen-height);
     /* Just under .site-grain (1000000) so the grain overlays the card like it
        does every other surface. Transparent so the hero canvas behind it is
        the backdrop. Let the fluid keep receiving pointermove through the
@@ -70,6 +78,8 @@ import { SITE_NAME } from "@/consts.ts";
     align-items: center;
     justify-content: center;
     padding: var(--site-margin);
+    padding-top: max(var(--site-margin), var(--site--safe-area-top));
+    padding-bottom: max(var(--site-margin), var(--site--safe-area-bottom));
     pointer-events: none;
     background: none;
     will-change: transform;
@@ -134,6 +144,8 @@ import { SITE_NAME } from "@/consts.ts";
   .preloader_foot {
     display: flex;
     flex-flow: row wrap;
+    flex-direction: var(--column-small, row);
+    align-items: var(--stretch-small, flex-end);
   }
 
   /* `.text-style-mono` is `text-wrap: pretty`, which pulls words back off a
@@ -143,6 +155,13 @@ import { SITE_NAME } from "@/consts.ts";
      `.studio_title` make against `balance`. */
   .preloader_foot > p {
     text-wrap: wrap;
+    min-width: 0;
+    flex: 1 1 auto;
+  }
+
+  /* Forced line on desktop; the phone card is too narrow for the same cut. */
+  .preloader_break {
+    display: var(--none-small);
   }
 
   .preloader_cta {
@@ -152,6 +171,7 @@ import { SITE_NAME } from "@/consts.ts";
     background-color: var(--light-100);
     color: var(--dark-900);
     cursor: pointer;
+    text-align: var(--center-small);
     /* Opacity only, never `visibility: hidden` — a hidden element can't take
        focus, so the keyboard path would break the moment it unlocked. */
     opacity: 0;
@@ -192,24 +212,6 @@ import { SITE_NAME } from "@/consts.ts";
       transparent calc(var(--dot) + 1%)
     );
     background-size: var(--pitch) var(--pitch);
-  }
-
-  @media (width < 48rem) {
-    .preloader_foot {
-      flex-direction: column;
-      align-items: stretch;
-    }
-
-    .preloader_foot > p {
-      width: 100%;
-      min-width: 0;
-      flex: 1 1 auto;
-    }
-
-    .preloader_cta {
-      width: 100%;
-      text-align: center;
-    }
   }
 
   @media (prefers-reduced-motion: reduce) {

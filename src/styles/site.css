@@ -68,6 +68,9 @@
   --z--modal: 9999;
   /* Page-transition cover — above nav, ticker, overlays, and the scrollbar. */
   --z--transition: 2000000;
+  /* Phone Safari URL bar / toolbar. Above every orange overlay (preloader,
+     transition cover, menu) so the chrome can only sample page ground. */
+  --z--chrome: 3000000;
 }
 
 /* Guarded, not declared straight into `:root`: a custom property swallows any
@@ -93,7 +96,7 @@
     position: fixed;
     left: 0;
     right: 0;
-    z-index: var(--z--overlay);
+    z-index: var(--z--chrome);
     background-color: var(--background);
     pointer-events: none;
   }
@@ -106,6 +109,26 @@
   html::after {
     bottom: 0;
     height: var(--site--safe-area-bottom);
+  }
+
+  /* `env(safe-area-inset-*)` is only the notch / home indicator. Safari's
+     URL bar and toolbar are the lvh−svh remainder; split it across both
+     edges so neither strip can sample the brand. Collapsed chrome makes
+     the difference 0 and we fall back to the insets alone. */
+  @supports (height: 100lvh) {
+    html::before {
+      height: max(
+        var(--site--safe-area-top),
+        calc((100lvh - 100svh) / 2)
+      );
+    }
+
+    html::after {
+      height: max(
+        var(--site--safe-area-bottom),
+        calc((100lvh - 100svh) / 2)
+      );
+    }
   }
 }
 

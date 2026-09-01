@@ -777,11 +777,10 @@ img.logo-img {
   top: 0;
   left: 0;
   width: 100%;
-  /* Whole screen, so the accent runs under mobile Safari's chrome rather than
-     handing the toolbar strip a band of the page below. Everything inside is
-     top-anchored (`flex-start`, no auto margins), so the extra height moves no
-     content — the About sheet stays on `dvh` for exactly that reason: its
-     scroller would end up parked under the toolbar. */
+  /* svh on the phone so the accent cannot run under Safari's bars (those
+     strips are page ground via html::before/after). Everything inside is
+     top-anchored (`flex-start`, no auto margins). The About sheet stays on
+     `dvh` so its scroller does not park under the toolbar. */
   height: var(--site--screen-height);
   overflow: clip;
   background-color: var(--brand-500);

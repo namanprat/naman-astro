@@ -38,6 +38,7 @@ const TYPES = {
   ".xml": "application/xml",
   ".wasm": "application/wasm",
   ".glb": "model/gltf-binary",
+  ".webmanifest": "application/manifest+json; charset=utf-8",
 };
 
 /** Resolve a URL path to a file inside dist, or null. */

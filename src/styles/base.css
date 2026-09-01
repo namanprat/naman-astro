@@ -272,6 +272,10 @@
   --end-medium: ;
   --flex-small: ;
   --unset-small: ;
+  --none-small: ;
+  --column-small: ;
+  --stretch-small: ;
+  --center-small: ;
   --none-large: none;
 
   /*
@@ -310,6 +314,10 @@
     --_responsive---small: 1;
     --flex-small: flex;
     --unset-small: unset;
+    --none-small: none;
+    --column-small: column;
+    --stretch-small: stretch;
+    --center-small: center;
     --trail-blend: normal;
   }
 }

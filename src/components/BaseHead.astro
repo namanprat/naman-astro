@@ -56,7 +56,11 @@ const socialImage = image ? new URL(image, Astro.site) : null;
 <meta name="color-scheme" content="dark light" />
 <meta name="mobile-web-app-capable" content="yes" />
 <meta name="apple-mobile-web-app-capable" content="yes" />
-<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+<meta
+  name="apple-mobile-web-app-status-bar-style"
+  content="default"
+/>
+<meta name="apple-mobile-web-app-title" content={SITE_NAME} />
 <title>{pageTitle}</title>
 <meta name="description" content={description} />
 <link rel="canonical" href={canonical} />
@@ -77,6 +81,46 @@ const socialImage = image ? new URL(image, Astro.site) : null;
 <meta name="twitter:description" content={description} />
 {socialImage && <meta name="twitter:image" content={socialImage} />}
 
-<link rel="icon" type="image/svg+xml" href="/main-assets/favicon.svg" />
-<link rel="icon" href="/main-assets/favicon.ico" />
+{
+  /* Named by mark colour, not scheme: cream on dark chrome, near-black on
+    light. No catch-all without `media` — Chromium then ignores the pairs. */
+}
+<link
+  rel="icon"
+  type="image/svg+xml"
+  href="/favicon/favicon-dark.svg"
+  media="(prefers-color-scheme: light)"
+/>
+<link
+  rel="icon"
+  type="image/svg+xml"
+  href="/favicon/favicon-light.svg"
+  media="(prefers-color-scheme: dark)"
+/>
+<link
+  rel="icon"
+  type="image/png"
+  href="/favicon/favicon-dark.png"
+  sizes="1000x1000"
+  media="(prefers-color-scheme: light)"
+/>
+<link
+  rel="icon"
+  type="image/png"
+  href="/favicon/favicon-light.png"
+  sizes="1000x1000"
+  media="(prefers-color-scheme: dark)"
+/>
+<link
+  rel="apple-touch-icon"
+  href="/favicon/favicon-dark.png"
+  media="(prefers-color-scheme: light)"
+/>
+<link
+  rel="apple-touch-icon"
+  href="/favicon/favicon-light.png"
+  media="(prefers-color-scheme: dark)"
+/>
+<link rel="mask-icon" href="/favicon/favicon-dark.svg" color="#101010" />
+<link rel="manifest" href="/site.webmanifest" />
 <meta name="generator" content={Astro.generator} />
