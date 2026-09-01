@@ -2,6 +2,7 @@ import { gsap } from "gsap";
 import { Observer } from "gsap/Observer";
 import { scrollDelta } from "./scrollDelta";
 import { MOBILE_LAYOUT_MQ } from "@/lib/site/isMobileLayout";
+import { ringCopies, ringRadius } from "./wheelGeometry";
 
 gsap.registerPlugin(Observer);
 
@@ -67,8 +68,9 @@ const ANCHOR_DEG = -90;
  * The phone puts it at 9 o'clock instead, and pushes the circle's centre off the
  * *right* edge so only its left flank is on screen. With a radius far larger
  * than the viewport, that flank is close to a straight line: the tiles read as a
- * column down the middle rather than a ring, and the anchored one lands dead
- * centre with room for a marker beside it.
+ * column down the middle rather than a ring, and the anchored one lands on the
+ * centre line with room for a marker beside it — `PHONE_CENTER_DROP_VH` then
+ * takes it a little below the midpoint.
  *
  * Left flank rather than right, so the column bows away from the marker: the
  * neighbours lean right of centre and the anchored tile is the leftmost point of
@@ -76,22 +78,43 @@ const ANCHOR_DEG = -90;
  */
 const PHONE_ANCHOR_DEG = 180;
 /**
- * Multiples of the viewport height.
+ * Vertical pitch between the anchored card and the one above it, as a multiple
+ * of the card's own height. 1.0 would have them touching; the remainder is the
+ * gap. The radius follows from it instead of from the viewport.
  *
- * Sized against the gap, not the curve. Copies are capped at `MAX_COPIES`, so
- * the ring carries twelve positions however big it gets and the gap between
- * neighbours is `2πr / 12`, or about `0.52r`. At 1.35vh that came out at 574px
- * on a 812pt screen — one tile visible and the rest off the bottom.
+ * Adjacent tiles are one angular step apart, and across the anchor (9 o'clock)
+ * a step moves a tile `r · sin(step)` down the screen — so
+ * `r = pitch / sin(step)`. Tiles further round the arc compress, which is the
+ * curve doing its job.
  *
- * Tightening it is what makes the arc read as an arc: the ring's proportions do
- * not change with radius (a fixed angular step makes every size a similar
- * figure), but a smaller circle fits more of its own curve on screen, so the
- * column bows visibly instead of running nearly straight.
- *
- * 0.63 put 62vw cards on top of each other. 0.75 is the last radius
- * that still leaves a visible gap on a 390pt phone.
+ * Deriving it from the tile also pins `syncCopies` at two copies on every
+ * phone: `circumference / (projects × tile × ratio)` cancels the tile out and
+ * lands at ~1.7 whatever the screen. Off a `vh` radius it sat on a knife edge,
+ * and a short-and-wide phone — or Safari's toolbar shrinking `svh` — tipped it
+ * to a single copy: six positions instead of twelve, double the gap, and the
+ * anchor falling exactly between two cards.
  */
-const PHONE_RADIUS_VH = 0.75;
+const PHONE_PITCH_RATIO = 1.2;
+
+/** Only until the cards have laid out and can be measured. */
+const PHONE_FALLBACK_RADIUS_VH = 0.75;
+
+/**
+ * Multiples of the viewport height. The arc's centre sits below the middle of
+ * the screen, so the anchored card does too: the nav and the project label take
+ * the top of the phone screen and only the view switcher takes the bottom, so a
+ * card on the true centre reads high. The marker follows via
+ * `--wheel-center-drop` (`Work.css`).
+ */
+const PHONE_CENTER_DROP_VH = 0.04;
+
+/**
+ * Pixels of finger per tile step on a phone, as a multiple of the card's own
+ * height. At 1.4 the ring turned about as fast as the finger moved, so a swipe
+ * that felt like one card threw three; 2.2 is roughly a card per comfortable
+ * swipe.
+ */
+const PHONE_PX_PER_STEP_RATIO = 2.2;
 
 /** Pixels of wheel per tile step, taken from the reference: it advanced one
     thumbnail per `innerWidth * 0.45` (≈576px at 1280 wide). Held as distance
@@ -206,11 +229,18 @@ export default class WheelView {
        derives how many the ring can actually carry and rebuilds if needed. */
     this.tiles = [...originals];
 
-    /* Start anchored on the first project. At rotation 0 tile 0 sits at 3
-       o'clock and the anchor falls between two tiles, so nothing is focused. */
-    this.rot = { value: this.anchorDeg };
+    /* Placeholder: `measure` does not read it, but it decides the anchor and
+       how many positions the ring carries, and both go into the seed below. */
+    this.rot = { value: 0 };
 
     this.measure();
+
+    /* Start anchored on the first project. `baseAngle(0)` is 0, so the rotation
+       that puts tile 0 on the anchor is the anchor itself. Seeded here rather
+       than at the declaration, which ran before `measure` had swapped in the
+       phone's anchor and left the ring parked half a step off it — with no
+       card under the marker on boot. */
+    this.rot.value = this.anchorDeg;
     this.createScrub();
     this.createObserver();
     this.place();
@@ -274,8 +304,15 @@ export default class WheelView {
          centre goes with it so the anchor at 3 o'clock lands on the middle of
          the viewport. Height is the small/visual viewport, locked by ignoring
          toolbar-only resizes, so the centred tile stays in the visible screen. */
-      this.radius = h * PHONE_RADIUS_VH;
+      this.radius = tileHeight
+        ? ringRadius(
+            tileHeight,
+            PHONE_PITCH_RATIO,
+            this.projectCount * MAX_COPIES,
+          )
+        : h * PHONE_FALLBACK_RADIUS_VH;
       this.cx = w / 2 + this.radius;
+      this.cy = h / 2 + h * PHONE_CENTER_DROP_VH;
     } else {
       this.radius = Math.max(
         0,
@@ -283,8 +320,11 @@ export default class WheelView {
       );
     }
 
-    /* Near 1:1 with the card. A flick's coast covers the rest of the slot. */
-    this.pxPerStep = phone ? Math.max(tileHeight * 1.4, 1) : PX_PER_STEP;
+    /* Off the card, not the desktop wheel constant — 576px is most of a phone
+       screen and a swipe barely turned the ring. */
+    this.pxPerStep = phone
+      ? Math.max(tileHeight * PHONE_PX_PER_STEP_RATIO, 1)
+      : PX_PER_STEP;
 
     /* On the page root, not the gallery: the label is a sibling of `.gallery`
        and sizes itself against the ring, so it has to inherit this too. The
@@ -294,6 +334,9 @@ export default class WheelView {
         ? this.root
         : this.root.querySelector<HTMLElement>(".work_wrap");
     host?.style.setProperty("--wheel-radius", `${this.radius}px`);
+    /* Published rather than duplicated as a second CSS constant: the marker has
+       to sit on the anchored tile, and the anchor is wherever `cy` put it. */
+    host?.style.setProperty("--wheel-center-drop", `${this.cy - h / 2}px`);
 
     // Radius first — how many tiles fit is a question about the circumference.
     this.syncCopies(tileHeight);
@@ -340,16 +383,15 @@ export default class WheelView {
   private syncCopies(tileHeight: number) {
     if (!tileHeight || !this.projectCount) return;
 
-    const circumference = 2 * Math.PI * this.radius;
     const ratio = window.matchMedia(MOBILE_LAYOUT_MQ).matches
       ? PHONE_SPACING_RATIO
       : SPACING_RATIO;
-    const wanted = Math.min(
+    const wanted = ringCopies(
+      this.radius,
+      this.projectCount,
+      tileHeight,
+      ratio,
       MAX_COPIES,
-      Math.max(
-        1,
-        Math.round(circumference / (this.projectCount * tileHeight * ratio)),
-      ),
     );
     if (wanted === this.copies) return;
 

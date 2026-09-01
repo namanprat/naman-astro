@@ -273,6 +273,18 @@
   --flex-small: ;
   --unset-small: ;
   --none-large: none;
+
+  /*
+   * Whether the fluid trail inverts what it passes under. Desktop keeps it —
+   * the pointer is somewhere deliberate and the copy cutting out under it is
+   * the effect. Phones turn it off below: there is no pointer, the trail
+   * follows every scroll and tap, and the type flickered through the page.
+   *
+   * A token rather than a media query at each site because `css-guard` holds
+   * `FluidCanvas.css` and `ViewSwitcher.css` breakpointless. The nav opts out
+   * of the switch entirely and blends at every width (`Menu.css`).
+   */
+  --trail-blend: difference;
 }
 
 @media (width < 64rem) {
@@ -298,6 +310,7 @@
     --_responsive---small: 1;
     --flex-small: flex;
     --unset-small: unset;
+    --trail-blend: normal;
   }
 }
 

@@ -38,10 +38,11 @@
   /* Dark only, for the reason above: it is the dark theme that puts a light
      tab on a light trail. On the light theme the tab is dark ink on a light
      ground, so the blend has nothing to rescue and would only tint a settled
-     control. Same gate as the trail copy in `FluidCanvas.css` — the nav is the
-     one blend that stays on in both themes. */
+     control. Same gate as the trail copy in `FluidCanvas.css`, `--trail-blend`
+     included, so phones drop it too — the nav is the one blend that stays on in
+     both themes and at every width. */
   html:not(.theme-light) .view_switcher {
-    mix-blend-mode: difference;
+    mix-blend-mode: var(--trail-blend);
   }
 
   .view_switcher.is-locked {
