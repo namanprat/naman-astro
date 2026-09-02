@@ -7,7 +7,11 @@ export type WorkSpan = 2 | 3 | 5;
 
 /** About-panel vocabulary, reused per project on the case-study hero. */
 export type WorkService =
-  "Brand identity" | "Motion design" | "Website design" | "Low-code web dev";
+  | "Brand identity"
+  | "Website design"
+  | "Website development"
+  | "Motion design"
+  | "3D";
 
 export type WorkItem = {
   slug: string;
@@ -46,7 +50,7 @@ export const workItems: WorkItem[] = [
     featured: true,
     span: 3,
     col: 1,
-    services: ["Website design", "Low-code web dev"],
+    services: ["Website design", "Website development"],
     panels: [
       {
         kind: "image",
@@ -127,7 +131,7 @@ export const workItems: WorkItem[] = [
     featured: true,
     span: 3,
     col: 7,
-    services: ["Brand identity", "Motion design"],
+    services: ["Brand identity", "Website design", "Motion design", "3D"],
     panels: [
       {
         kind: "image",
@@ -192,7 +196,7 @@ export const workItems: WorkItem[] = [
     featured: true,
     span: 3,
     col: 8,
-    services: ["Brand identity", "Website design"],
+    services: ["Website design"],
     panels: [
       {
         kind: "text",
@@ -211,7 +215,7 @@ export const workItems: WorkItem[] = [
     featured: true,
     span: 3,
     col: 1,
-    services: ["Brand identity", "Website design"],
+    services: ["Website design"],
     panels: [
       {
         kind: "text",
@@ -231,7 +235,7 @@ export const workItems: WorkItem[] = [
     featured: true,
     span: 3,
     col: 9,
-    services: ["Brand identity", "Motion design"],
+    services: ["Brand identity", "Website design"],
     panels: [
       {
         kind: "text",
@@ -249,7 +253,7 @@ export const workItems: WorkItem[] = [
     alt: "Perception Pod",
     span: 5,
     col: 5,
-    services: ["Brand identity", "Website design", "Motion design"],
+    services: ["Website design"],
     panels: [
       {
         kind: "text",

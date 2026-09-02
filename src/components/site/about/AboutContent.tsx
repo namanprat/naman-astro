@@ -10,11 +10,11 @@ import { lazy, Suspense, type RefObject } from "react";
 const AboutAsciiCanvas = lazy(() => import("./AboutAsciiCanvas"));
 
 const SERVICES = [
-  "Brand strategy",
-  "Visual identity",
+  "Brand identity",
   "Website design",
   "Website development",
   "Motion design",
+  "3D",
 ] as const;
 
 const CLIENTS = [

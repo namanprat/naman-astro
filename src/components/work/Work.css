@@ -584,7 +584,6 @@ html.work-returning .view_switcher {
   text-align: left;
   text-wrap: wrap;
   margin: 0;
-  padding-inline-start: var(--space-3);
   /* One grey on this page. `--muted` is the same hue at 70% alpha, which reads
      as a second, lighter grey against the ground. */
   color: var(--text);
@@ -607,7 +606,7 @@ html.work-returning .view_switcher {
 }
 
 .project_panel_media {
-  grid-column: 4 / span 6;
+  grid-column: 5 / span 4;
   margin: 0;
   overflow: clip;
   background-color: var(--background);
@@ -621,7 +620,7 @@ html.work-returning .view_switcher {
    sizes to match, so row 1 keeps its height while the cover is away. */
 .project_cover_media {
   grid-row: 1;
-  grid-column: 4 / span 6;
+  grid-column: 5 / span 4;
   margin: 0;
   overflow: clip;
   background-color: var(--background);
@@ -640,7 +639,7 @@ html.work-returning .view_switcher {
   /* Both sit under the cover and only one is ever present per project, so they
      share row 2 rather than each claiming one and leaving an empty track. */
   grid-row: 2;
-  grid-column: 4 / span 6;
+  grid-column: 5 / span 4;
   margin: 0;
   overflow: clip;
   background-color: var(--background);
@@ -660,7 +659,7 @@ html.work-returning .view_switcher {
 }
 
 .project_copy {
-  grid-column: 4 / span 6;
+  grid-column: 5 / span 4;
   min-width: 0;
   display: flex;
   flex-direction: column;
@@ -764,10 +763,6 @@ html.work-returning .view_switcher {
   .project_cover_video,
   .project_cover_below {
     grid-column: 1 / -1;
-  }
-
-  .project_body {
-    padding-inline-start: 0;
   }
 }
 }
