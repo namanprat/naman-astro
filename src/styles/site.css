@@ -42,6 +42,14 @@
      insets — a control parked at the bottom of this box would sit under the
      toolbar. */
   --site--screen-height: 100dvh;
+  /* The sim's own paint height, split off from `--site--screen-height` because
+     the two disagree on the phone: the boxes that hold content (menu overlay,
+     transition cover) drop to `svh` there so nothing lands under Safari's
+     toolbar, while the fluid backdrop has to keep the whole screen or it ends
+     in a flat band at every chrome edge. `FluidCanvas.css` is held
+     breakpointless by `scripts/css-guard.mjs`, so the split lives here as a
+     token rather than as a media query at the use site. */
+  --site--fluid-height: 100dvh;
   --site--grid-width: min(var(--max-width-main), calc(100vw - var(--site-margin) * 2));
   --site--column-width: calc((var(--site--grid-width) - (var(--site-gutter) * (var(--site-column-count) - 1))) / var(--site-column-count));
   --site--column-width-plus-gutter: calc(var(--site--column-width) + var(--site-gutter));
@@ -68,9 +76,6 @@
   --z--modal: 9999;
   /* Page-transition cover — above nav, ticker, overlays, and the scrollbar. */
   --z--transition: 2000000;
-  /* Phone Safari URL bar / toolbar. Above every orange overlay (preloader,
-     transition cover, menu) so the chrome can only sample page ground. */
-  --z--chrome: 3000000;
 }
 
 /* Guarded, not declared straight into `:root`: a custom property swallows any
@@ -79,56 +84,24 @@
 @supports (height: 100lvh) {
   :root {
     --site--screen-height: 100lvh;
+    --site--fluid-height: 100lvh;
   }
 }
 
-/* Phone: do not paint WebGL / overlays under Safari's bars — that is how
-   the chrome sampled a cover or the brand and went orange. svh stops at
-   the toolbar; html/body `--background` plus theme-color own the strips. */
+/* Phone: content boxes stop at the toolbar so nothing pressable lands under
+   it. The fluid backdrop deliberately does not — `--site--fluid-height` stays
+   on the large viewport, which is what stops it ending in a flat band at each
+   chrome edge.
+
+   The opaque `html::before` / `html::after` strips that used to cover those
+   edges are gone with it. They were there so Safari could not sample a cover
+   or the brand and tint its URL bar orange; the `theme-color` meta
+   (`BaseLayout.astro`, asserted in `tests/navigation.spec.ts`) is what owns
+   that now, and the strips only bought the tint back at the cost of two flat
+   bars over the sim. */
 @media (width < 64rem) {
   :root {
     --site--screen-height: 100svh;
-  }
-
-  html::before,
-  html::after {
-    content: "";
-    position: fixed;
-    left: 0;
-    right: 0;
-    z-index: var(--z--chrome);
-    background-color: var(--background);
-    pointer-events: none;
-  }
-
-  html::before {
-    top: 0;
-    height: var(--site--safe-area-top);
-  }
-
-  html::after {
-    bottom: 0;
-    height: var(--site--safe-area-bottom);
-  }
-
-  /* `env(safe-area-inset-*)` is only the notch / home indicator. Safari's
-     URL bar and toolbar are the lvh−svh remainder; split it across both
-     edges so neither strip can sample the brand. Collapsed chrome makes
-     the difference 0 and we fall back to the insets alone. */
-  @supports (height: 100lvh) {
-    html::before {
-      height: max(
-        var(--site--safe-area-top),
-        calc((100lvh - 100svh) / 2)
-      );
-    }
-
-    html::after {
-      height: max(
-        var(--site--safe-area-bottom),
-        calc((100lvh - 100svh) / 2)
-      );
-    }
   }
 }
 

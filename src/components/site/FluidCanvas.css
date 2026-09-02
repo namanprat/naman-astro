@@ -36,7 +36,7 @@ html:has(.hero) .fluid_wrap {
   /* Whole screen rather than the dynamic viewport, so the sim keeps painting
      under mobile Safari's chrome instead of ending in a flat band at the
      toolbar. Nothing inside is bottom-anchored, so nothing moves out of reach. */
-  height: var(--site--screen-height);
+  height: var(--site--fluid-height);
   margin-top: 0;
 }
 
@@ -62,7 +62,7 @@ html.is-preloading .fluid_wrap {
   position: fixed;
   inset: 0;
   width: 100%;
-  height: var(--site--screen-height);
+  height: var(--site--fluid-height);
   margin-top: 0;
   z-index: 0;
   /* Island parent is `visibility: hidden` (it is not `.fluid_wrap`); this
@@ -98,12 +98,15 @@ html.is-preloading .fluid_wrap {
  * so the blend has nothing to rescue and instead flips settled copy to a colour
  * nobody asked for.
  *
- * Desktop only too, via `--trail-blend` (`styles/base.css`): a phone has no
- * pointer, so the trail is dragged along by every scroll and the copy flickered
- * through the whole page rather than reacting to something the reader was
- * doing. The nav is the deliberate exception on both counts and blends in both
- * themes at every width: it sits over every route at every scroll position, so
- * it is the one piece of type that always has trail beneath it (`Menu.css`).
+ * Desktop only too, via `--trail-blend` (`styles/base.css`): on a phone the
+ * pointer is the finger, so the trail is dragged along by every scroll and the
+ * copy flickered through the whole page rather than reacting to something the
+ * reader was doing. The trail itself still runs there — it is the sim's only
+ * input on a phone (`FluidSimulation.onPointerMove`) — it just passes behind
+ * the type instead of cutting through it. The nav is the deliberate exception on
+ * both counts and blends in both themes at every width: it sits over every route
+ * at every scroll position, so it is the one piece of type that always has trail
+ * beneath it (`Menu.css`).
  */
 html:not(.theme-light) :is(
     .manifesto_lead,
@@ -196,7 +199,7 @@ html.page-work-project .fluid_wrap,
 html.page-about .fluid_wrap {
   position: fixed;
   inset: 0;
-  height: var(--site--screen-height);
+  height: var(--site--fluid-height);
   margin-top: 0;
 }
 }
