@@ -77,10 +77,9 @@ assert.deepEqual(
   "a settled idle frame parks rather than holding a backlog forever",
 );
 
-// The phone case the whole change is for: `onPointerMove` returns before it
-// records anything below the layout breakpoint, so `lastPointerAt` and
-// `activeUntil` both stay at their initial 0 and every frame past the opening
-// wake must be free.
+// The touch-primary case: `onPointerMove` returns before it records anything
+// when the trail is gated off, so `lastPointerAt` and `activeUntil` both stay
+// at their initial 0 and every frame past the opening wake must be free.
 assert.deepEqual(
   pace({ now: 60_000, activeUntil: SETTLE_AFTER_MS, lastPointerAt: 0, pending: 0.4 }),
   { kind: "park" },

@@ -79,6 +79,86 @@ for (const view of ["slider", "grid"] as const) {
       expect(Math.sign(byDrag)).toBe(Math.sign(byWheel));
     });
 
+    /**
+     * Absolute direction: a scroll-down gesture must advance the centred
+     * project (higher `data-index`, wrapping at the end).
+     *
+     * Sign agreement between wheel and drag can both be wrong the same way.
+     * Reading the centred tile is what catches "slider scrolls the other way"
+     * on tablet, where desktop ring geometry meets touch.
+     */
+    test("scrolling down advances the centred project", async ({
+      page,
+      context,
+    }) => {
+      const cdp = await context.newCDPSession(page);
+
+      /* Grid never stamps `.is-centered` while scrolling — only the ring does.
+         Nearest-to-viewport-centre matches both engines' own center index. */
+      const readCenter = () =>
+        page.evaluate(() => {
+          const mid = window.innerHeight / 2;
+          let best = Infinity;
+          let index = -1;
+          for (const el of document.querySelectorAll<HTMLElement>(
+            ".gallery_slide",
+          )) {
+            const box = el.getBoundingClientRect();
+            const d = Math.abs(box.top + box.height / 2 - mid);
+            if (d < best) {
+              best = d;
+              index = Number(el.dataset.index ?? -1);
+            }
+          }
+          return index;
+        });
+
+      const projects = await page.evaluate(() => {
+        const idxs = [
+          ...document.querySelectorAll<HTMLElement>(".gallery_slide"),
+        ].map((el) => Number(el.dataset.index));
+        return new Set(idxs.filter((n) => Number.isFinite(n))).size;
+      });
+      expect(projects).toBeGreaterThan(1);
+
+      const before = await readCenter();
+      expect(before).toBeGreaterThanOrEqual(0);
+
+      /* Short nudge — a full `scrollDown` swipe can wrap past a whole cycle on
+         the tablet ring and land on the same project, which makes a direction
+         assert vacuous. */
+      const { width, height } = page.viewportSize()!;
+      if (isTouch()) {
+        const x = Math.round(width / 2);
+        const from = Math.round(height * 0.6);
+        const to = Math.round(height * 0.35);
+        await cdp.send("Input.dispatchTouchEvent", {
+          type: "touchStart",
+          touchPoints: [{ x, y: from }],
+        });
+        for (let step = 1; step <= 8; step++) {
+          await cdp.send("Input.dispatchTouchEvent", {
+            type: "touchMove",
+            touchPoints: [{ x, y: from + ((to - from) * step) / 8 }],
+          });
+          await page.waitForTimeout(16);
+        }
+        await cdp.send("Input.dispatchTouchEvent", {
+          type: "touchEnd",
+          touchPoints: [],
+        });
+      } else {
+        await page.mouse.move(width / 2, height / 2);
+        await page.mouse.wheel(0, 320);
+      }
+      await page.waitForTimeout(900);
+
+      const after = await readCenter();
+      const forward = (after - before + projects) % projects;
+      expect(forward).toBeGreaterThan(0);
+      expect(forward).toBeLessThanOrEqual(Math.floor(projects / 2));
+    });
+
     test("closing a project restores the URL and the scroll", async ({
       page,
       context,
