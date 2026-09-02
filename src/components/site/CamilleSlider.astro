@@ -12,7 +12,7 @@ import "./RollingText.css";
 // covers. Swap `src`/`alt` back to `item.image`/`item.alt` to restore them.
 const SLIDES = featuredWorkItems.map((item, i) => ({
   title: item.title,
-  kicker: item.services[0] ?? "",
+  kicker: item.services.join(", "),
   href: `/work/${item.slug}`,
   src: `/slider/slide-${i + 1}.jpg`,
   alt: item.alt,
