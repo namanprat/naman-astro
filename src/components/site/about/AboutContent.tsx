@@ -23,7 +23,6 @@ const CLIENTS = [
   "Project Qaafi",
   "Perception Pod",
   "November",
-  "Egodeath",
   "Haptic AI",
   "t.Bonk",
 ] as const;
