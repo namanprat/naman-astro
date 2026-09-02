@@ -11,6 +11,7 @@
 import * as THREE from "three";
 import { readCssColor, shaderColor } from "../cssColor";
 import { MOBILE_LAYOUT_MQ } from "../isMobileLayout";
+import { TOUCH_PRIMARY_MQ } from "../isTouchPrimary";
 import { prefersReducedMotion } from "../prefersReducedMotion";
 import { reportHomeCanvasReady } from "../preloadAssets";
 import { SWATCH_DARK, SWATCH_TRAIL } from "../siteColors";
@@ -39,15 +40,16 @@ const CONFIG = {
 } as const;
 
 /**
- * Grid sizes and solver depth, per layout.
+ * Grid sizes and solver depth, per layout / input.
  *
  * The desktop numbers are Cappen's. The phone tier is the same effect at a
- * budget a phone can hold every frame it is being touched — a touch drag emits
- * `pointermove`, so below the breakpoint the trail is dragged by the scroll
- * gesture itself and this tier is the steady state, not a one-off. A 1024-wide
- * dye buffer is ~18MB of half-float per ping-pong side at phone aspect, and the
- * pressure solve alone is 40 of the 47 full-screen passes a simulated frame
- * costs, which is what a phone cannot hold.
+ * budget a phone or tablet can hold. A 1024-wide dye buffer is ~18MB of
+ * half-float per ping-pong side at phone aspect, and the pressure solve alone
+ * is 40 of the 47 full-screen passes a simulated frame costs.
+ *
+ * ponytail: phone quality also applies on touch-primary tablets above the
+ * layout breakpoint — an iPad is desktop width with a finger, and the
+ * interactive trail is off there anyway (seed bloom only).
  */
 const QUALITY = {
   desktop: { simResolution: 256, dyeResolution: 1024, pressureIterations: 40 },
@@ -142,6 +144,7 @@ export class FluidSimulation {
   private readonly abort = new AbortController();
   private readonly motionQuery: MediaQueryList;
   private readonly layoutQuery: MediaQueryList;
+  private readonly touchQuery: MediaQueryList;
 
   private readonly pageColor = shaderColor(SWATCH_DARK);
   private readonly pageTarget = shaderColor(SWATCH_DARK);
@@ -202,7 +205,8 @@ export class FluidSimulation {
     this.materials = this.makeMaterials();
     this.syncSize();
     this.layoutQuery = window.matchMedia(MOBILE_LAYOUT_MQ);
-    this.quality = this.layoutQuery.matches ? QUALITY.phone : QUALITY.desktop;
+    this.touchQuery = window.matchMedia(TOUCH_PRIMARY_MQ);
+    this.quality = this.resolveQuality();
     this.setupTargets();
     this.readTheme(true);
     this.readMix();
@@ -221,7 +225,10 @@ export class FluidSimulation {
       signal,
     });
 
-    this.layoutQuery.addEventListener("change", this.onLayoutChange, {
+    this.layoutQuery.addEventListener("change", this.onQualityChange, {
+      signal,
+    });
+    this.touchQuery.addEventListener("change", this.onQualityChange, {
       signal,
     });
 
@@ -470,13 +477,20 @@ export class FluidSimulation {
     this.wake();
   }
 
+  private resolveQuality(): Quality {
+    return this.layoutQuery.matches || this.touchQuery.matches
+      ? QUALITY.phone
+      : QUALITY.desktop;
+  }
+
   private onPointerMove = (event: PointerEvent): void => {
     if (this.reduced) return;
-    /* No layout gate: a touch drag emits `pointermove` too, and on a phone that
-       gesture is the scroll, which is the only thing that ever reaches the sim
-       there. Skipping it left the backdrop transparent from the moment the
-       preloader's bloom dissipated. The copy does not flicker under it because
-       `--trail-blend` is already `normal` below 64rem (`styles/base.css`). */
+    /* ponytail: trail is mouse-only. Touch keeps the opening seed bloom and
+       then parks — driving the sim from every scroll `pointermove` was what
+       made phones and iPads lag, and skipping input used to blank the plate
+       only because there was no seed. Seed still runs; interactive dye does
+       not. */
+    if (this.touchQuery.matches || event.pointerType === "touch") return;
     const x = event.clientX;
     const y = event.clientY;
     /* Same as Cappen's onMove, minus the first event: that one would splat
@@ -508,8 +522,8 @@ export class FluidSimulation {
     this.wake();
   };
 
-  private onLayoutChange = (): void => {
-    const next = this.layoutQuery.matches ? QUALITY.phone : QUALITY.desktop;
+  private onQualityChange = (): void => {
+    const next = this.resolveQuality();
     if (next === this.quality) return;
     this.quality = next;
     /* Grid sizes are baked into the targets, so a tier change is a rebuild.

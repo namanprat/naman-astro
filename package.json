@@ -15,7 +15,7 @@
     "preview": "astro preview",
     "astro": "astro",
     "format": "prettier --write .",
-    "test:unit": "node --experimental-strip-types tests/preloadProgress.check.ts && node --experimental-strip-types tests/footerAscii.check.ts && node --experimental-strip-types tests/camilleGooey.check.ts && node --experimental-strip-types tests/archiveVariants.check.ts && node --experimental-strip-types tests/processModelTuning.check.ts && node --experimental-strip-types tests/fluidPacing.check.ts && node --experimental-strip-types tests/wheelGeometry.check.ts",
+    "test:unit": "node --experimental-strip-types tests/preloadProgress.check.ts && node --experimental-strip-types tests/footerAscii.check.ts && node --experimental-strip-types tests/camilleGooey.check.ts && node --experimental-strip-types tests/archiveVariants.check.ts && node --experimental-strip-types tests/processModelTuning.check.ts && node --experimental-strip-types tests/fluidPacing.check.ts && node --experimental-strip-types tests/wheelGeometry.check.ts && node --experimental-strip-types tests/scrollDelta.check.ts",
     "test:e2e": "playwright test"
   },
   "dependencies": {

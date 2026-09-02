@@ -69,6 +69,8 @@ export default class Slider {
   private onResize: () => void;
   private mobileMq: MediaQueryList;
   private onMobileMq: () => void;
+  /** Net wheel-space travel for the current touch; 0 when not touching. */
+  private touchDelta = 0;
 
   constructor({
     root = document,
@@ -221,8 +223,26 @@ export default class Slider {
       target: window,
       type: "wheel,touch",
       preventDefault: true,
+      onPress: () => {
+        if (!this.enabled()) return;
+        /* Touch: pause the wheel scrub so 1:1 drag owns the playhead. */
+        this.scrub.pause();
+        this.touchDelta = 0;
+      },
       onChange: (self) => {
         this.scroll(self);
+      },
+      onRelease: () => {
+        if (!this.enabled()) return;
+        if (!this.touchDelta) return;
+        /* Coast in the direction the finger actually travelled — Observer's
+           release velocity on tablet was opposite the drag deltas often enough
+           to yank a short swipe back past the start (absolute direction
+           flipped). Travel sign is the reliable cue. */
+        this.scrub.vars.time =
+          this.playhead.time + Math.sign(this.touchDelta) * 0.35;
+        this.touchDelta = 0;
+        this.scrub.invalidate().restart();
       },
       // Touch + preventDefault swallows the browser click; Observer still
       // fires onClick for a tap that didn't drag, so the project can open.
@@ -242,11 +262,28 @@ export default class Slider {
     this.mobileMq.addEventListener("change", this.onMobileMq);
   }
 
+  /** Net wheel-space travel for the current touch; 0 when not touching. */
+  private touchDelta = 0;
+
   scroll(self: Observer) {
     if (!this.enabled()) return;
 
-    this.scrub.vars.time += scrollDelta(self) / 100;
-    this.scrub.invalidate().restart();
+    const delta = scrollDelta(self) / 100;
+    if (self.event?.type === "wheel") {
+      this.scrub.vars.time += delta;
+      this.scrub.invalidate().restart();
+      return;
+    }
+
+    /* ponytail: touch is 1:1. Restarting the 0.75s scrub on every move was
+       the same molasses WheelView already fixed — iPad grid felt a second
+       behind the finger. Parallax still runs; it is cheaper than fighting
+       an ease that never settles while the finger is down. */
+    this.touchDelta += delta;
+    this.playhead.time += delta;
+    this.scrub.vars.time = this.playhead.time;
+    this.loop.time(this.wrap(this.playhead.time));
+    this.applyParallax();
   }
 
   /**

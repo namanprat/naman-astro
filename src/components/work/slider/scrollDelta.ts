@@ -19,6 +19,11 @@ import type { Observer } from "gsap/Observer";
  * Shared rather than inlined twice: `Slider` and `WheelView` are independent
  * engines that happen to take the same input, and a sign convention kept in
  * two files is how this comes back on one of them.
+ *
+ * ponytail: gate on anything that is not a wheel event (`touchmove`,
+ * `pointermove`, …). iPad Safari may surface the drag as `pointermove` rather
+ * than `touchmove`; treating only an exact `"touch*"` type would leave the
+ * invert unfixed on tablet.
  */
 export function scrollDelta(self: Observer): number {
   const { deltaX, deltaY } = self;

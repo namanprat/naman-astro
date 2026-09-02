@@ -11,30 +11,10 @@ import { expectRevealed, skipPreloader } from "./helpers";
  * drain plate was a `<canvas>` mounted on every route and `.fluid_wrap canvas`
  * matched that instead of the backdrop.
  *
- * The machine's software renderer is enough for both tests below, and the
- * second is the reason: the sim parks itself, so this no longer costs a
- * sustained 47 full-screen passes a frame to observe.
+ * The machine's software renderer is enough for the tests below, and parking is
+ * the reason: the sim parks itself, so this no longer costs a sustained 47
+ * full-screen passes a frame to observe.
  */
-/* One project is enough: both tests are about the canvas, and neither answer
-   is viewport-dependent. Running unstubbed software WebGL on all five at once
-   is the CPU starvation `playwright.config.ts` already halves the worker count
-   for — it surfaces as unrelated entrance animations timing out in other
-   files, not as a failure here. */
-test.skip(
-  () => test.info().project.name !== "desktop",
-  "covered once, on desktop",
-);
-
-test.beforeEach(async ({ page }) => {
-  await skipPreloader(page);
-});
-
-test("the fluid backdrop mounts on home", async ({ page }) => {
-  await page.goto("/");
-  await expectRevealed(page);
-
-  await expect(page.locator(".fluid_wrap canvas")).toBeAttached();
-});
 
 /** Draw calls and animation frames since the probe was installed. */
 const PROBE = () => {
@@ -74,38 +54,117 @@ const read = (page: Page) =>
     frames: window.__frames,
   }));
 
+test.describe("desktop fluid backdrop", () => {
+  /* One project is enough for mount + settle. Running unstubbed software WebGL
+     on all five at once is the CPU starvation `playwright.config.ts` already
+     halves the worker count for. */
+  test.skip(
+    () => test.info().project.name !== "desktop",
+    "covered once, on desktop",
+  );
+
+  test.beforeEach(async ({ page }) => {
+    await skipPreloader(page);
+  });
+
+  test("the fluid backdrop mounts on home", async ({ page }) => {
+    await page.goto("/");
+    await expectRevealed(page);
+
+    await expect(page.locator(".fluid_wrap canvas")).toBeAttached();
+  });
+
+  /**
+   * `/work` rather than home: it has no hero, so the backdrop is the only thing
+   * drawing and the count is the sim's alone. Home's glass renders the scene into
+   * a transmission buffer every frame whatever the sim is doing.
+   *
+   * Every full-screen pass is one `drawElements` on the sim's shared quad, so
+   * draws-per-frame is a direct read of the pass budget. A simulated frame is 47
+   * of them; the settled steady state is one scene draw. Counting per frame
+   * rather than per second is what makes the threshold hold on a machine with no
+   * GPU, where the frame rate is whatever the software renderer manages.
+   */
+  test("the backdrop stops drawing once the trail has settled", async ({
+    page,
+  }) => {
+    await page.addInitScript(PROBE);
+    await page.goto("/work");
+    await expectRevealed(page);
+
+    // Past the sim's settle window, with margin. No pointer input in between, so
+    // nothing has woken it.
+    await page.waitForTimeout(8000);
+
+    const start = await read(page);
+    await page.waitForTimeout(3000);
+    const end = await read(page);
+
+    const frames = end.frames - start.frames;
+    const draws = end.draws - start.draws;
+    expect(frames, "no frames sampled, so the budget below means nothing")
+      .toBeGreaterThan(10);
+    expect(
+      draws / frames,
+      `${draws} draws over ${frames} frames — the sim is still simulating`,
+    ).toBeLessThan(5);
+  });
+});
+
 /**
- * `/work` rather than home: it has no hero, so the backdrop is the only thing
- * drawing and the count is the sim's alone. Home's glass renders the scene into
- * a transmission buffer every frame whatever the sim is doing.
- *
- * Every full-screen pass is one `drawElements` on the sim's shared quad, so
- * draws-per-frame is a direct read of the pass budget. A simulated frame is 47
- * of them; the settled steady state is one scene draw. Counting per frame
- * rather than per second is what makes the threshold hold on a machine with no
- * GPU, where the frame rate is whatever the software renderer manages.
+ * Touch-primary: pointer moves must not re-wake the sim after settle.
+ * Covered on tablet (above the phone layout cut, with coarse pointer).
  */
-test("the backdrop stops drawing once the trail has settled", async ({
-  page,
-}) => {
-  await page.addInitScript(PROBE);
-  await page.goto("/work");
-  await expectRevealed(page);
+test.describe("touch-primary trail gate", () => {
+  test.skip(
+    () => test.info().project.name !== "tablet",
+    "iPad-class: desktop width + touch",
+  );
 
-  // Past the sim's settle window, with margin. No pointer input in between, so
-  // nothing has woken it.
-  await page.waitForTimeout(8000);
+  test.beforeEach(async ({ page }) => {
+    await skipPreloader(page);
+  });
 
-  const start = await read(page);
-  await page.waitForTimeout(3000);
-  const end = await read(page);
+  test("pointer moves do not keep the backdrop simulating", async ({
+    page,
+    context,
+  }) => {
+    await page.addInitScript(PROBE);
+    await page.goto("/work");
+    await expectRevealed(page);
+    await page.waitForTimeout(8000);
 
-  const frames = end.frames - start.frames;
-  const draws = end.draws - start.draws;
-  expect(frames, "no frames sampled, so the budget below means nothing")
-    .toBeGreaterThan(10);
-  expect(
-    draws / frames,
-    `${draws} draws over ${frames} frames — the sim is still simulating`,
-  ).toBeLessThan(5);
+    /* Real touch points — `page.mouse` is pointerType mouse and would only
+       prove the media-query half of the gate. */
+    const cdp = await context.newCDPSession(page);
+    const { width, height } = page.viewportSize()!;
+    const x = Math.round(width / 2);
+    await cdp.send("Input.dispatchTouchEvent", {
+      type: "touchStart",
+      touchPoints: [{ x, y: Math.round(height * 0.2) }],
+    });
+    for (let i = 1; i <= 20; i++) {
+      await cdp.send("Input.dispatchTouchEvent", {
+        type: "touchMove",
+        touchPoints: [{ x, y: Math.round(height * (0.2 + (0.6 * i) / 20)) }],
+      });
+      await page.waitForTimeout(16);
+    }
+    await cdp.send("Input.dispatchTouchEvent", {
+      type: "touchEnd",
+      touchPoints: [],
+    });
+
+    const start = await read(page);
+    await page.waitForTimeout(2000);
+    const end = await read(page);
+
+    const frames = end.frames - start.frames;
+    const draws = end.draws - start.draws;
+    expect(frames).toBeGreaterThan(10);
+    expect(
+      draws / frames,
+      `${draws} draws over ${frames} frames after touch moves — trail still live`,
+    ).toBeLessThan(5);
+  });
 });

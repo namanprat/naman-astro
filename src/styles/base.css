@@ -281,8 +281,9 @@
   /*
    * Whether the fluid trail inverts what it passes under. Desktop keeps it —
    * the pointer is somewhere deliberate and the copy cutting out under it is
-   * the effect. Phones turn it off below: there is no pointer, the trail
-   * follows every scroll and tap, and the type flickered through the page.
+   * the effect. Phones and touch-primary tablets turn it off: there is no
+   * deliberate pointer trail (interactive dye is gated off), and difference
+   * invert used to flicker type under every scroll.
    *
    * A token rather than a media query at each site because `css-guard` holds
    * `FluidCanvas.css` and `ViewSwitcher.css` breakpointless. The nav opts out
@@ -318,6 +319,14 @@
     --column-small: column;
     --stretch-small: stretch;
     --center-small: center;
+    --trail-blend: normal;
+  }
+}
+
+/* Touch-primary above the phone layout cut (iPad, etc.): same as phone —
+   no difference invert when the interactive trail is off. */
+@media (hover: none) and (pointer: coarse) {
+  :root {
     --trail-blend: normal;
   }
 }

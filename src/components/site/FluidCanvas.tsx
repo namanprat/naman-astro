@@ -20,6 +20,7 @@ import {
   useFluidSimStateRef,
 } from "@/lib/site/fluid/fluidSimContext";
 import { MOBILE_LAYOUT_MQ } from "@/lib/site/isMobileLayout";
+import { TOUCH_PRIMARY_MQ } from "@/lib/site/isTouchPrimary";
 import { useCameraOverlay } from "@/lib/site/cameraOverlay";
 import { readCssColor, shaderColor } from "@/lib/site/cssColor";
 import { useThemeLight } from "@/lib/site/ascii/useThemeInk";
@@ -334,6 +335,9 @@ export default function FluidCanvas() {
   const [host, setHost] = useState<HTMLDivElement | null>(null);
   const webgl = useWebglSupport(host);
   const mobile = useMediaFlag(MOBILE_LAYOUT_MQ);
+  const touchPrimary = useMediaFlag(TOUCH_PRIMARY_MQ);
+  /* Phone layout or touch-primary tablet: lower DPR, skip hero glass. */
+  const lean = mobile || touchPrimary;
   /* Hard navigation, no client router (`lib/site/pageTransition.ts`), so the
      island remounts per page and the path at mount is the path. */
   const [home] = useState(() => window.location.pathname === "/");
@@ -351,13 +355,15 @@ export default function FluidCanvas() {
              in the DOM to the byte, and the backdrop has to match the CSS
              tokens it is built from; ACES on the way out breaks both. */
             flat
-            dpr={mobile ? [1, 1.25] : [1, 1.75]}
+            dpr={lean ? [1, 1.25] : [1, 1.75]}
             gl={{
               /* Transparent: the trail is the only thing that reaches the page,
                  and difference blending needs 0 for "leave this alone". */
               alpha: true,
               antialias: true,
-              powerPreference: "high-performance",
+              /* ponytail: touch-primary parks the interactive trail; low-power
+                 keeps the seed bloom from fighting the gallery for GPU time. */
+              powerPreference: lean ? "low-power" : "high-performance",
               /* GridSatPlate drawImage-s this buffer after present, and it is
                  the only thing that does — asking for it elsewhere just stops
                  the driver discarding the buffer it is finished with. */
@@ -372,7 +378,7 @@ export default function FluidCanvas() {
             <TrailOverlay />
             {home && (
               <Suspense fallback={null}>
-                <HeroGlass mobile={mobile} />
+                <HeroGlass mobile={lean} />
               </Suspense>
             )}
           </Canvas>
