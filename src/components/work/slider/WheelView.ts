@@ -2,6 +2,7 @@ import { gsap } from "gsap";
 import { Observer } from "gsap/Observer";
 import { scrollDelta } from "./scrollDelta";
 import { MOBILE_LAYOUT_MQ } from "@/lib/site/isMobileLayout";
+import { isTouchPrimary } from "@/lib/site/isTouchPrimary";
 import { ringCopies, ringRadius } from "./wheelGeometry";
 
 gsap.registerPlugin(Observer);
@@ -116,6 +117,17 @@ const PHONE_CENTER_DROP_VH = 0.04;
  */
 const PHONE_PX_PER_STEP_RATIO = 2.2;
 
+/**
+ * Touch on the desktop ring (iPad / tablet above 48rem). 576px is a wheel
+ * constant sized for a mouse notch; a finger swipe of ~300px barely advanced
+ * half a project. Tile-relative pitch matches the phone feel without flipping
+ * the ring into the phone's side-arc layout.
+ *
+ * ponytail: geometry stays desktop (`scrollSign` / anchor); only the touch
+ * travel budget changes. Wheel still uses `PX_PER_STEP`.
+ */
+const TABLET_TOUCH_PX_PER_STEP_RATIO = 1.6;
+
 /** Pixels of wheel per tile step, taken from the reference: it advanced one
     thumbnail per `innerWidth * 0.45` (≈576px at 1280 wide). Held as distance
     rather than degrees so the ring keeps this feel whatever it ends up
@@ -193,6 +205,11 @@ export default class WheelView {
   private lastViewWidth = 0;
   /** Pixels of gesture per tile. Phone re-reads this from the tile height. */
   private pxPerStep = PX_PER_STEP;
+  /**
+   * Touch on the desktop ring uses a tighter travel budget than wheel.
+   * Recomputed in `measure`; wheel always multiplies by `pxPerStep`.
+   */
+  private touchPxPerStep = PX_PER_STEP;
   /** Touch is down — `onRelease` snaps; wheel never sets this. */
   private dragging = false;
   /** Absolute gesture travel this press. Under `TAP_PX` we open, not turn. */
@@ -325,6 +342,16 @@ export default class WheelView {
     this.pxPerStep = phone
       ? Math.max(tileHeight * PHONE_PX_PER_STEP_RATIO, 1)
       : PX_PER_STEP;
+    /* Tablet/iPad: desktop geometry, phone-like finger travel. Phone layout
+       already uses the phone ratio for both wheel and touch. */
+    this.touchPxPerStep =
+      phone || isTouchPrimary()
+        ? Math.max(
+            tileHeight *
+              (phone ? PHONE_PX_PER_STEP_RATIO : TABLET_TOUCH_PX_PER_STEP_RATIO),
+            1,
+          )
+        : this.pxPerStep;
 
     /* On the page root, not the gallery: the label is a sibling of `.gallery`
        and sizes itself against the ring, so it has to inherit this too. The
@@ -471,8 +498,9 @@ export default class WheelView {
     });
   }
 
-  private degPerPx() {
-    return (this.scrollSign * (360 / this.tiles.length)) / this.pxPerStep;
+  private degPerPx(touch = false) {
+    const step = touch ? this.touchPxPerStep : this.pxPerStep;
+    return (this.scrollSign * (360 / this.tiles.length)) / step;
   }
 
   createObserver() {
@@ -517,8 +545,9 @@ export default class WheelView {
     // A new scroll overrides a settle in progress, or the two fight over `rot`.
     this.killSnap();
 
-    const delta = scrollDelta(self) * this.degPerPx();
-    if (self.event?.type === "wheel") {
+    const isWheel = self.event?.type === "wheel";
+    const delta = scrollDelta(self) * this.degPerPx(!isWheel);
+    if (isWheel) {
       this.scrub.vars.value += delta;
       this.scrub.invalidate().restart();
       return;
@@ -558,7 +587,7 @@ export default class WheelView {
     const vx = self.velocityX;
     const vy = self.velocityY;
     const v = Math.abs(vx) > Math.abs(vy) ? vx : vy;
-    const throwDeg = -v * this.degPerPx() * COAST_S;
+    const throwDeg = -v * this.degPerPx(true) * COAST_S;
     this.snap(this.rot.value + throwDeg);
   }
 

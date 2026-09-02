@@ -221,8 +221,25 @@ export default class Slider {
       target: window,
       type: "wheel,touch",
       preventDefault: true,
+      onPress: () => {
+        if (!this.enabled()) return;
+        /* Touch: pause the wheel scrub so 1:1 drag owns the playhead. */
+        this.scrub.pause();
+      },
       onChange: (self) => {
         this.scroll(self);
+      },
+      onRelease: (self) => {
+        if (!this.enabled()) return;
+        if (self.event?.type === "wheel") return;
+        /* Short coast from release velocity, then the scrub ease settles.
+           Without this the 1:1 path stops dead under the finger. */
+        const vx = self.velocityX;
+        const vy = self.velocityY;
+        const v = Math.abs(vx) > Math.abs(vy) ? vx : vy;
+        /* Velocity is in drag space (finger-down positive); flip to wheel space. */
+        this.scrub.vars.time = this.playhead.time - v * 0.12;
+        this.scrub.invalidate().restart();
       },
       // Touch + preventDefault swallows the browser click; Observer still
       // fires onClick for a tap that didn't drag, so the project can open.
@@ -245,8 +262,21 @@ export default class Slider {
   scroll(self: Observer) {
     if (!this.enabled()) return;
 
-    this.scrub.vars.time += scrollDelta(self) / 100;
-    this.scrub.invalidate().restart();
+    const delta = scrollDelta(self) / 100;
+    if (self.event?.type === "wheel") {
+      this.scrub.vars.time += delta;
+      this.scrub.invalidate().restart();
+      return;
+    }
+
+    /* ponytail: touch is 1:1. Restarting the 0.75s scrub on every move was
+       the same molasses WheelView already fixed — iPad grid felt a second
+       behind the finger. Parallax still runs; it is cheaper than fighting
+       an ease that never settles while the finger is down. */
+    this.playhead.time += delta;
+    this.scrub.vars.time = this.playhead.time;
+    this.loop.time(this.wrap(this.playhead.time));
+    this.applyParallax();
   }
 
   /**
