@@ -178,25 +178,6 @@ export async function expectNavVisible(page: Page) {
     .toBe("ok");
 }
 
-/**
- * Tile centres, for the signed drift metric below.
- *
- * Deliberately *not* shared with `tilePositions`, which reads the top-left
- * corner. Folding the two into one geometry read looks like tidying and is
- * not: the corner and the centre disagree whenever a tile's box scales rather
- * than translates, and the reverse Flip on the return-from-project path does
- * exactly that. Rewriting `tilePositions` in terms of centres made
- * `galleryMoves` report "nothing moved" there, and that test went from passing
- * six times out of six to failing six out of six.
- */
-const tileCentres = (page: Page) =>
-  page.evaluate(() =>
-    [...document.querySelectorAll<HTMLElement>(".gallery_slide")].map((el) => {
-      const box = el.getBoundingClientRect();
-      return { x: box.x + box.width / 2, y: box.y + box.height / 2 };
-    }),
-  );
-
 /** Position of every gallery tile — the whole set, so a wrapped loop still reads as movement. */
 export const tilePositions = (page: Page) =>
   page.evaluate(() =>
@@ -206,21 +187,13 @@ export const tilePositions = (page: Page) =>
     }),
   );
 
-const median = (values: number[]) => {
-  const sorted = [...values].sort((a, b) => a - b);
-  const mid = sorted.length >> 1;
-  return sorted.length % 2 ? sorted[mid] : (sorted[mid - 1] + sorted[mid]) / 2;
-};
-
 /**
  * Which way the gallery moved under one gesture, as a signed scalar.
  *
- * The two views need different scalars because they move on different axes:
- * the grid translates vertically, the ring rotates about the viewport centre.
- * Both are *medians*, not means. The grid's loop can wrap a tile by the full
- * loop height mid-gesture and the ring's angles wrap at ±180°, and in either
- * case one outlier would drag a mean past zero and flip the sign this exists
- * to report.
+ * Both views report the change in the centred project's `data-index`, as the
+ * shortest signed step on the ring of projects. Gestures here are deliberately
+ * short — a full-height swipe can advance past half the list, and the shortest
+ * wrap then reads as the opposite direction.
  *
  * The number has no unit and is only ever compared against another reading
  * from the same view — its sign is the whole point.
@@ -229,29 +202,66 @@ export async function galleryDrift(
   page: Page,
   cdp: CDPSession,
   touch: boolean,
-  view: "grid" | "slider",
+  _view: "grid" | "slider",
 ): Promise<number> {
-  const before = await tileCentres(page);
-  await scrollDown(page, cdp, touch);
-  const after = await tileCentres(page);
-  if (before.length !== after.length || !before.length) return 0;
+  const readCenter = () =>
+    page.evaluate(() => {
+      const mid = window.innerHeight / 2;
+      let best = Infinity;
+      let index = -1;
+      for (const el of document.querySelectorAll<HTMLElement>(
+        ".gallery_slide",
+      )) {
+        const box = el.getBoundingClientRect();
+        const d = Math.abs(box.top + box.height / 2 - mid);
+        if (d < best) {
+          best = d;
+          index = Number(el.dataset.index ?? -1);
+        }
+      }
+      return index;
+    });
 
+  const projects = await page.evaluate(() => {
+    const idxs = [
+      ...document.querySelectorAll<HTMLElement>(".gallery_slide"),
+    ].map((el) => Number(el.dataset.index));
+    return new Set(idxs.filter((n) => Number.isFinite(n))).size;
+  });
+  if (projects < 2) return 0;
+
+  const before = await readCenter();
   const { width, height } = page.viewportSize()!;
-
-  if (view === "grid") {
-    return median(after.map((box, i) => box.y - before[i].y));
+  if (touch) {
+    const x = Math.round(width / 2);
+    const from = Math.round(height * 0.6);
+    const to = Math.round(height * 0.35);
+    await cdp.send("Input.dispatchTouchEvent", {
+      type: "touchStart",
+      touchPoints: [{ x, y: from }],
+    });
+    for (let step = 1; step <= 8; step++) {
+      await cdp.send("Input.dispatchTouchEvent", {
+        type: "touchMove",
+        touchPoints: [{ x, y: from + ((to - from) * step) / 8 }],
+      });
+      await page.waitForTimeout(16);
+    }
+    await cdp.send("Input.dispatchTouchEvent", {
+      type: "touchEnd",
+      touchPoints: [],
+    });
+  } else {
+    await page.mouse.move(width / 2, height / 2);
+    await page.mouse.wheel(0, 700);
   }
+  await page.waitForTimeout(900);
 
-  const angle = (p: { x: number; y: number }) =>
-    Math.atan2(p.y - height / 2, p.x - width / 2);
-  return median(
-    after.map((box, i) => {
-      const delta = angle(box) - angle(before[i]);
-      // Shortest way round, so a tile crossing the seam is not read as a
-      // near-full turn in the opposite direction.
-      return Math.atan2(Math.sin(delta), Math.cos(delta));
-    }),
-  );
+  const after = await readCenter();
+  if (before < 0 || after < 0) return 0;
+
+  const raw = (after - before + projects) % projects;
+  return raw <= projects / 2 ? raw : raw - projects;
 }
 
 /** A downward scroll gesture in whatever form this device actually sends. */

@@ -124,9 +124,11 @@ const PHONE_PX_PER_STEP_RATIO = 2.2;
  * the ring into the phone's side-arc layout.
  *
  * ponytail: geometry stays desktop (`scrollSign` / anchor); only the touch
- * travel budget changes. Wheel still uses `PX_PER_STEP`.
+ * travel budget changes. Wheel still uses `PX_PER_STEP`. Held near the phone
+ * ratio so a full-height test swipe cannot wrap past half a turn — that made
+ * the angle-median drift metric flip sign on tablet.
  */
-const TABLET_TOUCH_PX_PER_STEP_RATIO = 1.6;
+const TABLET_TOUCH_PX_PER_STEP_RATIO = 2.2;
 
 /** Pixels of wheel per tile step, taken from the reference: it advanced one
     thumbnail per `innerWidth * 0.45` (≈576px at 1280 wide). Held as distance
@@ -191,10 +193,15 @@ export default class WheelView {
   /** Where on the ring the focused tile sits. Re-read on every measure. */
   private anchorDeg = ANCHOR_DEG;
   /**
-   * Which way a scroll turns the ring. The phone's arc is the mirror of the
-   * desktop's — centre off the right edge instead of overhead — so the same
-   * rotation carries a tile up the screen there and down here. Flipping the
-   * sign is what keeps "scroll down, next project" true on both.
+   * Which way a scroll turns the ring.
+   *
+   * Negative keeps "scroll down → next project" on both the desktop overhead
+   * ring and the phone's side-arc: increasing `rot` moves the visible column
+   * downward (previous projects), so advance has to subtract.
+   *
+   * ponytail: an earlier phone flip (`+1`) matched a right-flank layout that
+   * no longer ships — the arc is on the left now, and the flip made every
+   * touch/wheel gesture run the gallery backwards on phones.
    */
   private scrollSign = -1;
   private snapTween: gsap.core.Tween | null = null;
@@ -302,7 +309,7 @@ export default class WheelView {
     const { w, h } = this.viewSize();
     this.lastViewWidth = w;
     this.anchorDeg = phone ? PHONE_ANCHOR_DEG : ANCHOR_DEG;
-    this.scrollSign = phone ? 1 : -1;
+    this.scrollSign = -1;
     this.cx = w / 2;
     this.cy = h / 2;
 
