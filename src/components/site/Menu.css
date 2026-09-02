@@ -211,6 +211,21 @@ html:has(.about_panel.is-open:not(.is-in-menu)) .nav_wrap .nav_fade {
   transition: none;
 }
 
+/* Phone: no fade at all. It is a translucent `--background` fill inside a
+   `difference` group, which is not a fade — it inverts whatever is behind it
+   and stops dead on its own bottom edge, so on a narrow screen it read as a
+   grey bar across the page rather than a dissolve, and it was doing that on
+   top of the fluid backdrop. The bar does not need it: it blends `difference`
+   with `--nav-blend-text` pre-corrected per theme (`base.css`), which is the
+   mechanism that keeps it legible over an arbitrary backdrop in the first
+   place. Archive keeps its own variant (`Archive.css`) — that page is an
+   opaque WebGL stage with no trail under the bar. */
+@media (width < 48rem) {
+  html:not(.page-archive) .nav_fade {
+    display: none;
+  }
+}
+
 /* Availability ticker. Independent of the nav — fixed to the viewport top
    on every breakpoint, painted above the bar. Dissolves while About is open. */
 .nav_marquee {

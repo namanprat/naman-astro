@@ -15,6 +15,11 @@ html.page-work body {
   touch-action: none;
   scrollbar-width: none;
   --site--screen-height: 100svh;
+  /* The sim follows, unlike on the scrolling routes: this page never scrolls,
+     so Safari's chrome never collapses and there is no band to cover — and the
+     splat maps client coordinates onto the canvas, so a canvas taller than the
+     screen puts the trail somewhere it is not (see `FluidCanvas.css`). */
+  --site--fluid-height: 100svh;
 }
 
 html.page-work body,
