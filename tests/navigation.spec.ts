@@ -625,7 +625,7 @@ test("favicons and the web app manifest follow the OS colour scheme", async ({
   );
   await expect(
     page.locator('meta[name="apple-mobile-web-app-title"]'),
-  ).toHaveAttribute("content", "duforn");
+  ).toHaveAttribute("content", "Duforn");
   await expect(page.locator('link[rel="manifest"]')).toHaveAttribute(
     "href",
     "/site.webmanifest",

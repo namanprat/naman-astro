@@ -1,5 +1,5 @@
 import type { APIRoute } from "astro";
-import { SITE_DESCRIPTION, SITE_NAME } from "@/consts.ts";
+import { SITE_DESCRIPTION, SITE_TITLE } from "@/consts.ts";
 import { THEME_COLOR_DARK } from "@/lib/site/themeColor.ts";
 
 /**
@@ -9,8 +9,8 @@ import { THEME_COLOR_DARK } from "@/lib/site/themeColor.ts";
  */
 export const GET: APIRoute = () => {
   const body = {
-    name: SITE_NAME,
-    short_name: SITE_NAME,
+    name: SITE_TITLE,
+    short_name: SITE_TITLE,
     description: SITE_DESCRIPTION,
     start_url: "/",
     id: "/",
