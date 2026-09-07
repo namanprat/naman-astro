@@ -2,8 +2,11 @@
 .fluid_wrap {
   position: relative;
   width: 100%;
-  height: 100svh;
-  height: 100dvh;
+  /* In flow this is only `/archive` and `/404`; every footered route pins the
+     wrap `fixed` below and sizes it from `--site--fluid-height`, which stays on
+     the large viewport so the sim paints under the phone's chrome. The two
+     tokens disagree on purpose — see `styles/site.css`. */
+  height: var(--site--screen-height);
   /* Sit under the in-flow chrome, same pull-up .hero used when the sim was fixed. */
   margin-top: calc(-1 * (var(--hero-chrome-pad, 0px) + var(--hero-chrome-content, 0px)));
   pointer-events: none;

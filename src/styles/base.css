@@ -438,9 +438,12 @@
 body {
   display: flex;
   flex-direction: column;
-  min-height: 100svh;
-  min-height: 100dvh;
-  min-height: -webkit-fill-available;
+  /* One unit, not a fallback stack: `cssTarget` floors at safari16.4/ios16.4
+     (astro.config.mjs) and `svh`/`lvh`/`dvh` shipped in Safari 15.4, so the
+     pair was already dead weight. `-webkit-fill-available` was the live
+     problem — declared last, it wins on WebKit and resolves to a large-viewport
+     height, which is the growth every other box here just stopped doing. */
+  min-height: var(--site--screen-height);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   overflow-x: clip;

@@ -761,6 +761,56 @@ test("the featured slider opens a project again after returning home", async ({
 });
 
 /**
+ * The full-screen spacers are sized from `--site--screen-height`, and the
+ * footer mark is reachable at the end of the scroll.
+ *
+ * They used to be `100dvh`. The dynamic viewport *grows* when a phone's toolbar
+ * retracts, so home — which stacks two of these — got taller under the reader
+ * mid-scroll and the footer wordmark receded by a toolbar height every time you
+ * swiped for it. Headless Chromium has no toolbar, so `svh`, `lvh` and `dvh`
+ * are all the same number here and the symptom itself cannot be reproduced;
+ * what this catches is the other failure, which is silent and permanent: a
+ * token that does not resolve leaves `height: auto` and collapses the spacer.
+ * Hence the exact-viewport assertion rather than a relative one.
+ */
+test("the full-screen spacers are one viewport, and the footer mark is reachable", async ({
+  page,
+}) => {
+  await page.goto("/");
+  await expectRevealed(page);
+
+  const viewport = page.viewportSize()!.height;
+  const spacers = await page.evaluate(() => ({
+    hero: document.querySelector(".hero")?.getBoundingClientRect().height ?? 0,
+    team:
+      document.querySelector(".team_wrap")?.getBoundingClientRect().height ?? 0,
+  }));
+
+  expect(Math.round(spacers.hero)).toBe(viewport);
+  // `.team_wrap` is a floor, not a fixed height — its copy may push it taller.
+  expect(spacers.team).toBeGreaterThanOrEqual(viewport - 1);
+
+  await page.evaluate(() =>
+    window.scrollTo(0, document.documentElement.scrollHeight),
+  );
+  await expect
+    .poll(
+      () =>
+        page.evaluate(() => {
+          const mark = document.querySelector(".footer_logo");
+          if (!mark) return "no mark";
+          const box = mark.getBoundingClientRect();
+          if (box.height < 1) return "collapsed";
+          if (box.bottom > window.innerHeight + 1) return "below the fold";
+          if (box.top < 0) return "scrolled past";
+          return "in view";
+        }),
+      { timeout: 30_000 },
+    )
+    .toBe("in view");
+});
+
+/**
  * Back out of a project should look like arriving anywhere else: the cover is
  * already over the page and wipes up off it.
  *

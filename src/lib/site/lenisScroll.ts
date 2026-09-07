@@ -6,6 +6,20 @@ import { setSiteLenis } from "./lenisBridge";
 gsap.registerPlugin(ScrollTrigger);
 
 /**
+ * A phone's toolbar showing or hiding fires a height-only `resize`, and a
+ * refresh on that is a refresh in the middle of the gesture that caused it.
+ * The footer's scale scrub is the one that shows it: `invalidateOnRefresh` with
+ * `end: () => "+=" + footer.offsetHeight` (`Footer.tsx`), so a refresh re-seeks
+ * the scrub under the reader's finger. GSAP applies this only when
+ * `ScrollTrigger.isTouch === 1`, so a desktop window resize still refreshes.
+ *
+ * The boxes that made those resizes a *layout* change are on the small viewport
+ * now (`styles/site.css`, `Team.css`, `Work.css`); this is the other half —
+ * the refresh itself.
+ */
+ScrollTrigger.config({ ignoreMobileResize: true });
+
+/**
  * The site's scroll feel, in one place. Was duplicated verbatim in
  * `PortfolioHome` and `WorkProject`; the work overlay is the third consumer and
  * has to match, so it lives here instead of being copied again.

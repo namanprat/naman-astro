@@ -2,8 +2,12 @@
   .team_wrap {
     position: relative;
     width: 100%;
-    min-height: 100svh;
-    min-height: 100dvh;
+    /* Small viewport, same reason as `.hero` in `styles/site.css`: a `dvh`
+       spacer grows when the phone toolbar hides, and home carries two of them,
+       so the footer used to net away from the reader as they scrolled. The
+       token is also the only legal spelling here — `css-guard` holds this file
+       breakpointless, so the 64rem cut cannot be written as a media query. */
+    min-height: var(--site--screen-height);
     margin: 0;
     padding-top: 0;
     padding-bottom: 0;
