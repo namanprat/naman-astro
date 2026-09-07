@@ -41,13 +41,14 @@ const CONFIG = {
 /**
  * Grid sizes and solver depth, per layout.
  *
- * The desktop numbers are Cappen's. The phone tier is the same effect at a
- * budget a phone can hold every frame it is being touched — a touch drag emits
- * `pointermove`, so below the breakpoint the trail is dragged by the scroll
- * gesture itself and this tier is the steady state, not a one-off. A 1024-wide
- * dye buffer is ~18MB of half-float per ping-pong side at phone aspect, and the
- * pressure solve alone is 40 of the 47 full-screen passes a simulated frame
- * costs, which is what a phone cannot hold.
+ * The desktop numbers are Cappen's. The phone tier is a guard rather than a
+ * steady state now: `FluidCanvas` does not mount the sim below 48rem at all, so
+ * the only way to reach these numbers is a resize that lands between the media
+ * query firing and React committing the unmount. Kept for exactly that frame,
+ * and because it is the shape a re-enable would need. A 1024-wide dye buffer is
+ * ~18MB of half-float per ping-pong side at phone aspect, and the pressure
+ * solve alone is 40 of the 47 full-screen passes a simulated frame costs, which
+ * is what a phone cannot hold.
  */
 const QUALITY = {
   desktop: { simResolution: 256, dyeResolution: 1024, pressureIterations: 40 },
@@ -472,11 +473,10 @@ export class FluidSimulation {
 
   private onPointerMove = (event: PointerEvent): void => {
     if (this.reduced) return;
-    /* No layout gate: a touch drag emits `pointermove` too, and on a phone that
-       gesture is the scroll, which is the only thing that ever reaches the sim
-       there. Skipping it left the backdrop transparent from the moment the
-       preloader's bloom dissipated. The copy does not flicker under it because
-       `--trail-blend` is already `normal` below 64rem (`styles/base.css`). */
+    /* No layout gate, and none is needed: a touch drag emits `pointermove`
+       too, but below 48rem `FluidCanvas` never constructs a sim for it to
+       reach. Gating here as well would only describe the same cut twice, in
+       the file that is least likely to be read when it changes. */
     const x = event.clientX;
     const y = event.clientY;
     /* Same as Cappen's onMove, minus the first event: that one would splat

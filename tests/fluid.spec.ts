@@ -15,21 +15,23 @@ import { expectRevealed, skipPreloader } from "./helpers";
  * second is the reason: the sim parks itself, so this no longer costs a
  * sustained 47 full-screen passes a frame to observe.
  */
-/* One project is enough: both tests are about the canvas, and neither answer
-   is viewport-dependent. Running unstubbed software WebGL on all five at once
-   is the CPU starvation `playwright.config.ts` already halves the worker count
-   for — it surfaces as unrelated entrance animations timing out in other
-   files, not as a failure here. */
-test.skip(
-  () => test.info().project.name !== "desktop",
-  "covered once, on desktop",
-);
+/* One project per question, not five: running unstubbed software WebGL
+   everywhere at once is the CPU starvation `playwright.config.ts` already
+   halves the worker count for — it surfaces as unrelated entrance animations
+   timing out in other files, not as a failure here. Desktop answers "does the
+   sim run and settle"; phone answers "is it gone", which is a different answer
+   rather than the same one at another width. */
+const DESKTOP_ONLY = () => test.info().project.name !== "desktop";
+const PHONE_ONLY = () => test.info().project.name !== "phone";
 
 test.beforeEach(async ({ page }) => {
   await skipPreloader(page);
 });
 
+
 test("the fluid backdrop mounts on home", async ({ page }) => {
+  test.skip(DESKTOP_ONLY(), "covered once, on desktop");
+
   await page.goto("/");
   await expectRevealed(page);
 
@@ -88,6 +90,8 @@ const read = (page: Page) =>
 test("the backdrop stops drawing once the trail has settled", async ({
   page,
 }) => {
+  test.skip(DESKTOP_ONLY(), "covered once, on desktop");
+
   await page.addInitScript(PROBE);
   await page.goto("/work");
   await expectRevealed(page);
@@ -108,4 +112,36 @@ test("the backdrop stops drawing once the trail has settled", async ({
     draws / frames,
     `${draws} draws over ${frames} frames — the sim is still simulating`,
   ).toBeLessThan(5);
+});
+
+/**
+ * Below 48rem there is no cursor to trail — a touch drag emits `pointermove`,
+ * so the liquid only ever followed the scroll — and a fluid sim is 47
+ * full-screen GPU passes per simulated frame to pay for it. `FluidCanvas`
+ * builds neither the sim nor the plane that paints it there, and on the routes
+ * that have nothing else to draw it mounts no WebGL context at all.
+ *
+ * Home is the exception and has to stay one: the phone hero draws its mark in
+ * this same canvas, so an over-eager gate would take the wordmark with it.
+ */
+test.describe("the phone drops the trail", () => {
+  test.skip(PHONE_ONLY, "this is the phone layout's answer");
+
+
+  for (const path of ["/work", "/work/haptic", "/about"]) {
+    test(`no fluid context on ${path}`, async ({ page }) => {
+      await page.goto(path);
+      await expectRevealed(page);
+
+      await expect(page.locator(".fluid_wrap")).toBeAttached();
+      await expect(page.locator(".fluid_wrap canvas")).toHaveCount(0);
+    });
+  }
+
+  test("home keeps its canvas — the mark is drawn in it", async ({ page }) => {
+    await page.goto("/");
+    await expectRevealed(page);
+
+    await expect(page.locator(".fluid_wrap canvas")).toBeAttached();
+  });
 });

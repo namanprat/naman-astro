@@ -282,7 +282,10 @@
    * Whether the fluid trail inverts what it passes under. Desktop keeps it —
    * the pointer is somewhere deliberate and the copy cutting out under it is
    * the effect. Phones turn it off below: there is no pointer, the trail
-   * follows every scroll and tap, and the type flickered through the page.
+   * followed every scroll and tap, and the type flickered through the page.
+   * Below 48rem there is no trail left to invert either — `FluidCanvas` stopped
+   * building the sim there — so this is belt to that braces, and the value it
+   * holds still decides the widths in between.
    *
    * A token rather than a media query at each site because `css-guard` holds
    * `FluidCanvas.css` and `ViewSwitcher.css` breakpointless. The nav opts out
