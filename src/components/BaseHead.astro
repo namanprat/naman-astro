@@ -1,5 +1,5 @@
 ---
-import { SITE_NAME, SITE_DESCRIPTION } from "@/consts.ts";
+import { SITE_TITLE, SITE_DESCRIPTION } from "@/consts.ts";
 import { isNoindexRoute } from "@/utils/seo.ts";
 import type { SeoProps } from "@/types.ts";
 
@@ -9,7 +9,7 @@ const { title, description = SITE_DESCRIPTION, image } = Astro.props;
 
 const isNoindex = isNoindexRoute(Astro.url.pathname);
 
-const pageTitle = title ? `${title} | ${SITE_NAME}` : SITE_NAME;
+const pageTitle = title ? `${title} | ${SITE_TITLE}` : SITE_TITLE;
 const canonical = new URL(Astro.url.pathname, Astro.site);
 
 /* The old default pointed at `/main-assets/og-image.jpg`, which has never
@@ -60,14 +60,14 @@ const socialImage = image ? new URL(image, Astro.site) : null;
   name="apple-mobile-web-app-status-bar-style"
   content="default"
 />
-<meta name="apple-mobile-web-app-title" content={SITE_NAME} />
+<meta name="apple-mobile-web-app-title" content={SITE_TITLE} />
 <title>{pageTitle}</title>
 <meta name="description" content={description} />
 <link rel="canonical" href={canonical} />
 {isNoindex && <meta name="robots" content="noindex, nofollow" />}
 
 <meta property="og:type" content="website" />
-<meta property="og:site_name" content={SITE_NAME} />
+<meta property="og:site_name" content={SITE_TITLE} />
 <meta property="og:title" content={pageTitle} />
 <meta property="og:description" content={description} />
 <meta property="og:url" content={canonical} />

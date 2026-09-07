@@ -209,8 +209,13 @@
        invert. Paint order is unchanged — positioned siblings with `z-index:
        auto` paint in DOM order, and the canvas comes first inside `main`. */
     width: 100%;
-    height: 100svh;
-    height: 100dvh;
+    /* The small viewport, via the token. On `dvh` this box *grew* as the
+       phone toolbar retracted, so the document got taller under the reader
+       mid-scroll and the footer — with the wordmark at its bottom — receded by
+       a toolbar height every time. `svh` never grows. The pull-up on the next
+       line already reads `--hero-chrome-pad`, which `Menu.css` computes from
+       `100svh`, so this also makes the box and its offset agree. */
+    height: var(--site--screen-height);
     margin: 0;
     margin-top: calc(-1 * (var(--hero-chrome-pad, 0px) + var(--hero-chrome-content, 0px)));
     padding-block: 0;

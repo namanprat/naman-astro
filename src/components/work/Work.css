@@ -495,7 +495,10 @@ html.work-returning .view_switcher {
   position: relative;
   display: flex;
   flex-direction: column;
-  min-height: 100dvh;
+  /* Small viewport below 64rem — see `.hero` in `styles/site.css`. This route
+     scrolls and is footered on a hard load, so a growing spacer pushed the
+     wordmark out of reach the same way home's did. */
+  min-height: var(--site--screen-height);
   box-sizing: border-box;
   overflow: visible;
   padding-block: calc(var(--hero-chrome-height, 4rem) + var(--site-gutter)) var(--site-margin);

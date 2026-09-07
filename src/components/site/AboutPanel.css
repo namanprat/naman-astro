@@ -335,14 +335,23 @@ html.theme-light .about_panel.is-in-menu {
   width: 100%;
   height: 100%;
   display: block;
-  cursor: grab;
   pointer-events: auto;
   mix-blend-mode: screen;
 }
 
-.about_panel_media canvas:active,
-.about_panel_canvas:active {
-  cursor: grabbing;
+/* Same query `AboutAsciiCanvas` mounts `<OrbitControls>` behind. Without the
+   controls there is nothing to grab, and a grab cursor over a bust that only
+   spins by itself promises an interaction that is not there. */
+@media (hover: hover) and (pointer: fine) {
+  .about_panel_media canvas,
+  .about_panel_canvas {
+    cursor: grab;
+  }
+
+  .about_panel_media canvas:active,
+  .about_panel_canvas:active {
+    cursor: grabbing;
+  }
 }
 
 .about_panel_intro {

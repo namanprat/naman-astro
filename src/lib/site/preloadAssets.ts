@@ -1,7 +1,10 @@
 /**
- * What the home preloader actually waits on: webfonts, the grain texture (desktop
- * only — the overlay is `display: none` below 48rem), the backdrop canvas' first
- * rendered frame, and the three Process-card GLBs (Draco, ~95KB together).
+ * What the home preloader actually waits on: webfonts, the grain texture, the
+ * backdrop canvas' first rendered frame, and the three Process-card GLBs
+ * (Draco, ~95KB together). The first two of those are desktop-only — the grain
+ * overlay is `display: none` below 48rem, and there is no fluid sim to paint a
+ * first frame there at all (`FluidCanvas`) — so both are left unregistered
+ * rather than waited on.
  *
  * The About-panel bust GLB used to be a fourth segment carrying half the weight.
  * It is no longer waited on — see `warmBust` — because nothing on the home page
@@ -176,10 +179,16 @@ export function startPreload(): Promise<void> {
   // Grain is `display: none` below 48rem — do not register it, so its weight
   // redistributes the same way an unregistered segment always does.
   const wantsGrain = !isMobileLayout();
+  /* Same treatment, same width, and this one is load-bearing rather than
+     tidy: the `canvas` segment is resolved by `FluidSimulation`'s first painted
+     frame and by nothing else, and below 48rem `FluidCanvas` no longer builds a
+     sim at all. Registered, it would never complete — every first-visit phone
+     would sit on ENTER until `PRELOAD_FAILSAFE_MS`. */
+  const wantsCanvas = !isMobileLayout();
 
   register("fonts", 10);
   if (wantsGrain) register("grain", 20);
-  register("canvas", 20);
+  if (wantsCanvas) register("canvas", 20);
   register("process", 20);
 
   const settle = (id: Parameters<typeof report>[0], task: Promise<unknown>) =>
@@ -190,11 +199,15 @@ export function startPreload(): Promise<void> {
 
   const jobs = [
     settle("fonts", loadFonts()),
-    new Promise<void>((resolve) => {
-      canvasReady = resolve;
-    }),
     settle("process", loadProcessModels()),
   ];
+  if (wantsCanvas) {
+    jobs.push(
+      new Promise<void>((resolve) => {
+        canvasReady = resolve;
+      }),
+    );
+  }
   if (wantsGrain) jobs.push(settle("grain", loadGrain()));
 
   const settled = Promise.race([

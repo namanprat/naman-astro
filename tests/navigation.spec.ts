@@ -1,5 +1,6 @@
 import { expect, test, type Page } from "@playwright/test";
 import {
+  blindRendererProbe,
   expectNavVisible,
   expectRevealed,
   isNarrowNav,
@@ -9,6 +10,7 @@ import {
   seedTheme,
   skipPreloader,
   stubWebGL,
+  touchDrag,
 } from "./helpers";
 
 async function expectThemeColors(page: Page, color: string) {
@@ -261,6 +263,67 @@ test("About is a real page below the nav breakpoint", async ({ page }) => {
   await expect(page.locator(".footer_wrap")).toHaveCount(1);
   // The lockup is a home-page element now.
   await expect(page.locator(".name_hero")).toBeHidden();
+});
+
+/**
+ * A swipe that starts on the bust still scrolls the page.
+ *
+ * `OrbitControls.connect()` writes `touch-action: none` inline onto the bust
+ * canvas before it reads `enabled` or `enableRotate`, and that canvas fills
+ * `.about_panel_media`, which is full-bleed and square on this route — so a
+ * screen-tall band of the page refused to pan and the only way down was to find
+ * the copy below it. `AboutAsciiCanvas` gates the controls on `(pointer: fine)`
+ * for that reason: no prop and no stylesheet can undo an inline declaration.
+ *
+ * Both halves are asserted because they fail separately — the computed style is
+ * the mechanism, the scroll is the symptom. Dispatched through CDP because
+ * `touch-action` is precisely what is on trial: a wheel event ignores it and
+ * would pass either way.
+ */
+test("a swipe over the About bust scrolls the page", async ({
+  page,
+  context,
+}) => {
+  test.skip(!isNarrowNav(), "the bust route is phones only");
+  test.skip(!isTouch(), "this is a touch gesture, not a wheel");
+
+  const cdp = await context.newCDPSession(page);
+  await blindRendererProbe(page);
+  await page.goto("/about");
+  await expectRevealed(page);
+
+  const media = page.locator(".about_panel_media");
+  await expect(media).toBeVisible();
+
+  /* The bust is device-tiered (`aboutBust.ts` refuses a software renderer), and
+     with no canvas there are no controls to have hijacked anything — the
+     assertions below would pass without testing them. Say so rather than bank
+     a green. */
+  const mounted = await media
+    .locator("canvas")
+    .first()
+    .waitFor({ state: "attached", timeout: 20_000 })
+    .then(
+      () => true,
+      () => false,
+    );
+  test.skip(!mounted, "no WebGL bust on this machine, nothing to hijack");
+
+  await expect(media.locator("canvas").first()).toHaveCSS(
+    "touch-action",
+    "auto",
+  );
+
+  const box = await media.boundingBox();
+  if (!box) throw new Error("no bust box");
+  const before = await page.evaluate(() => window.scrollY);
+  await touchDrag(cdp, page, {
+    x: box.x + box.width / 2,
+    y: box.y + box.height * 0.75,
+  });
+  await page.waitForTimeout(1200);
+
+  expect(await page.evaluate(() => window.scrollY)).toBeGreaterThan(before);
 });
 
 /**
@@ -562,7 +625,7 @@ test("favicons and the web app manifest follow the OS colour scheme", async ({
   );
   await expect(
     page.locator('meta[name="apple-mobile-web-app-title"]'),
-  ).toHaveAttribute("content", "duforn");
+  ).toHaveAttribute("content", "Duforn");
   await expect(page.locator('link[rel="manifest"]')).toHaveAttribute(
     "href",
     "/site.webmanifest",
@@ -694,6 +757,116 @@ test("the featured slider opens a project again after returning home", async ({
     .poll(() => new URL(page.url()).pathname, { timeout: 30_000 })
     .toMatch(/^\/work\/[^/]+$/);
   await expectRevealed(page);
+  await expect.poll(() => rootClasses(page)).not.toContain("is-page-covered");
+});
+
+/**
+ * The full-screen spacers are sized from `--site--screen-height`, and the
+ * footer mark is reachable at the end of the scroll.
+ *
+ * They used to be `100dvh`. The dynamic viewport *grows* when a phone's toolbar
+ * retracts, so home — which stacks two of these — got taller under the reader
+ * mid-scroll and the footer wordmark receded by a toolbar height every time you
+ * swiped for it. Headless Chromium has no toolbar, so `svh`, `lvh` and `dvh`
+ * are all the same number here and the symptom itself cannot be reproduced;
+ * what this catches is the other failure, which is silent and permanent: a
+ * token that does not resolve leaves `height: auto` and collapses the spacer.
+ * Hence the exact-viewport assertion rather than a relative one.
+ */
+test("the full-screen spacers are one viewport, and the footer mark is reachable", async ({
+  page,
+}) => {
+  await page.goto("/");
+  await expectRevealed(page);
+
+  const viewport = page.viewportSize()!.height;
+  const spacers = await page.evaluate(() => ({
+    hero: document.querySelector(".hero")?.getBoundingClientRect().height ?? 0,
+    team:
+      document.querySelector(".team_wrap")?.getBoundingClientRect().height ?? 0,
+  }));
+
+  expect(Math.round(spacers.hero)).toBe(viewport);
+  // `.team_wrap` is a floor, not a fixed height — its copy may push it taller.
+  expect(spacers.team).toBeGreaterThanOrEqual(viewport - 1);
+
+  await page.evaluate(() =>
+    window.scrollTo(0, document.documentElement.scrollHeight),
+  );
+  await expect
+    .poll(
+      () =>
+        page.evaluate(() => {
+          const mark = document.querySelector(".footer_logo");
+          if (!mark) return "no mark";
+          const box = mark.getBoundingClientRect();
+          if (box.height < 1) return "collapsed";
+          if (box.bottom > window.innerHeight + 1) return "below the fold";
+          if (box.top < 0) return "scrolled past";
+          return "in view";
+        }),
+      { timeout: 30_000 },
+    )
+    .toBe("in view");
+});
+
+/**
+ * Back out of a project should look like arriving anywhere else: the cover is
+ * already over the page and wipes up off it.
+ *
+ * A browser Back never runs `go()`, so nothing raises the panel on the way out
+ * and nothing wrote the arrival flag. What it does instead is restore the
+ * document with the cover `animateIn` left on it — which `pagehide` used to
+ * park before the freeze, so the page snapped back with no transition at all.
+ *
+ * The two states are told apart without waiting for a single frame. Parking is
+ * a synchronous `gsap.set` that puts the panel a whole viewport below; the wipe
+ * is a `fromTo`, which renders its "from" immediately and leaves the panel over
+ * the page. So read the position in the same task as the dispatch — no rAF, no
+ * tween progress, nothing for a loaded CI worker to get wrong.
+ */
+test("bfcache restore wipes the cover off rather than snapping it away", async ({
+  page,
+}) => {
+  test.skip(
+    test.info().project.name === "reduced-motion",
+    "reduced motion clears the cover outright, by design",
+  );
+
+  await page.goto("/");
+  await expectRevealed(page);
+
+  const { top, viewport } = await page.evaluate(() => {
+    const panel = document.querySelector<HTMLElement>(".transition_panel");
+    if (!panel) throw new Error("no transition panel");
+    document.documentElement.classList.add(
+      "is-page-covered",
+      "is-page-transitioning",
+    );
+    panel.style.pointerEvents = "all";
+    panel.style.transform = "translateY(0px)";
+
+    const event = new Event("pageshow");
+    Object.defineProperty(event, "persisted", { value: true });
+    window.dispatchEvent(event);
+
+    return {
+      top: panel.getBoundingClientRect().top,
+      viewport: window.innerHeight,
+    };
+  });
+
+  expect(top).toBeLessThan(viewport * 0.5);
+
+  // And it still finishes parked — the wipe is a transition, not a new state.
+  await expect
+    .poll(() =>
+      page.evaluate(() => {
+        const panel = document.querySelector<HTMLElement>(".transition_panel");
+        return panel ? panel.getBoundingClientRect().top : 0;
+      }),
+    )
+    .toBeGreaterThan(viewport * 0.5);
   await expect.poll(() => rootClasses(page)).not.toContain("is-page-covered");
 });
 

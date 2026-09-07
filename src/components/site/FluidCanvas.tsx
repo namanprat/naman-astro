@@ -1,5 +1,7 @@
 /**
- * The site backdrop, and — on home — the hero glass with it.
+ * The site backdrop, and — on home — the hero glass with it. Desktop only: the
+ * sim and its trail are not built below 48rem, where the pointer is a finger
+ * and the liquid only ever followed the scroll (see `liquid` below).
  *
  * One WebGL context for both. `FluidSimulation` renders its display pass into a
  * render target instead of the screen, that target is the scene's `background`,
@@ -31,6 +33,10 @@ import * as THREE from "three";
  * alpha and transparent everywhere else — 0 being difference's identity. This is
  * Cappen's original arrangement, which the site had traded away when the hero
  * glass moved onto this canvas.
+ *
+ * This plane is the sim's only route to the screen: `scene.background` is
+ * unbound for the screen pass and set only for render targets, so removing this
+ * removes the liquid outright — which is what the phone gate below relies on.
  *
  * It paints `--trail` flat — brand white on the dark theme, brand black on the
  * light one. The inversion is not done here: the copy that the trail should cut
@@ -218,8 +224,17 @@ function TrailOverlay() {
  */
 const HeroGlass = lazy(() => import("./hero/HeroGlass"));
 
+/**
+ * Read synchronously, not in an effect. This flag now decides whether a
+ * `FluidSimulation` is constructed at all, and a first commit of `false` on a
+ * phone meant building one — half-float ping-pongs, seeded splats, a live
+ * `pointermove` listener — and disposing it on the next. The island is
+ * `client:only` (`FluidCanvas.astro`), so there is no SSR pass to mismatch.
+ */
 function useMediaFlag(query: string): boolean {
-  const [matches, setMatches] = useState(false);
+  const [matches, setMatches] = useState(
+    () => window.matchMedia(query).matches,
+  );
   useEffect(() => {
     const mq = window.matchMedia(query);
     const apply = () => setMatches(mq.matches);
@@ -341,10 +356,28 @@ export default function FluidCanvas() {
      Everywhere else the plate never draws, so the context does not have to
      carry a readable buffer for it. */
   const [work] = useState(() => window.location.pathname === "/work");
+  /*
+   * Desktop only, and one flag for all three gates below so they cannot drift.
+   *
+   * A phone has no cursor to trail: a touch drag emits `pointermove`, so the
+   * liquid was dragged around by the scroll itself rather than by anything the
+   * reader meant. `--trail-blend` (`styles/base.css`) had already stopped the
+   * copy reacting to it below this width; this is the rest of the retreat — the
+   * sim and the plane that paints it are simply not built.
+   *
+   * Nothing on a phone reads the dye. The hero renders no glass model there
+   * (`HeroGlass`), `HeroAsciiReveal` is mounted unmasked, and `HeroWordmark`
+   * already handles a null texture with `uHasFluid`.
+   */
+  const liquid = !mobile;
 
   return (
     <div className="fluid_wrap" data-fluid aria-hidden="true" ref={setHost}>
-      {webgl === true && (
+      {/* The canvas itself is worth mounting only if something will draw in it:
+          the sim, or home's mark. Elsewhere on a phone this leaves no WebGL
+          context and no render loop at all — which matters most on `/about`,
+          where the bust already owns a second context. */}
+      {webgl === true && (home || liquid) && (
         <FluidSimStateProvider>
           <Canvas
             /* No tone curve. The wordmark in the scene has to match `var(--text)`
@@ -368,8 +401,8 @@ export default function FluidCanvas() {
             /* The hero handles scroll itself, through the projection offset. */
             resize={{ scroll: false }}
           >
-            <FluidBackdrop />
-            <TrailOverlay />
+            {liquid && <FluidBackdrop />}
+            {liquid && <TrailOverlay />}
             {home && (
               <Suspense fallback={null}>
                 <HeroGlass mobile={mobile} />
@@ -378,7 +411,14 @@ export default function FluidCanvas() {
           </Canvas>
         </FluidSimStateProvider>
       )}
-      {work && <GridSatPlate host={host} />}
+      {/* `liquid` and not just `work`: the plate is one half of a two-layer
+          contract (`FluidCanvas.css`) and is flat grey over the covers without
+          the sim underneath to punch the colour window out of it. `WorkGallery`
+          switches grid → slider on a resize into phone width, but that swap is
+          animated, so `html.work-grid` outlives the media query by a few frames
+          — long enough to see. The gate cannot live in the stylesheet:
+          `css-guard` holds that file breakpointless. */}
+      {work && liquid && <GridSatPlate host={host} />}
     </div>
   );
 }

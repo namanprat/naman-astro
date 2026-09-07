@@ -56,10 +56,43 @@ function parkPanel() {
  * never fires.
  */
 export function resetPageTransition(): void {
-  leavePending = false;
-  covering = null;
+  clearLeaveState();
   unlockScroll();
   parkPanel();
+}
+
+/**
+ * The half of the reset that is bookkeeping rather than geometry. bfcache
+ * restores module state along with the document, so a `leavePending` left true
+ * by the `go()` that navigated away would send the next click down the
+ * "already leaving" branch and skip its cover entirely.
+ */
+function clearLeaveState(): void {
+  leavePending = false;
+  covering = null;
+}
+
+/** Is this document still wearing the cover `go()` raised over it? */
+function isCovered(): boolean {
+  const root = document.documentElement;
+  return root.classList.contains(COVERED) || root.classList.contains(LOCKED);
+}
+
+/**
+ * Did the visitor arrive here by going Back (or Forward)?
+ *
+ * The `pageshow` path above covers the bfcache restore, which is what a Back
+ * out of a project normally is. When the browser declines to cache the page and
+ * re-fetches instead, this document boots cold with no cover flag — `go()`
+ * never ran, because a Back is the browser's navigation, not ours — and the
+ * page used to snap in with no transition. Read off Navigation Timing rather
+ * than a flag we write on the way out: nothing to set, so nothing to go stale.
+ */
+function isBackForward(): boolean {
+  const [entry] = performance.getEntriesByType(
+    "navigation",
+  ) as PerformanceNavigationTiming[];
+  return entry?.type === "back_forward";
 }
 
 let historyResetInstalled = false;
@@ -67,11 +100,23 @@ let historyResetInstalled = false;
 function installHistoryReset() {
   if (historyResetInstalled) return;
   historyResetInstalled = true;
-  window.addEventListener("pagehide", () => {
-    resetPageTransition();
+  window.addEventListener("pagehide", (event) => {
+    /* Into bfcache: leave the cover exactly where `animateIn` put it. The
+       snapshot is what the visitor sees on the way back, and a parked panel
+       there is why Back used to snap the page in with no transition at all —
+       the `pageshow` handler below is what plays it out instead. On a real
+       unload the document is discarded either way, so reset and be tidy. */
+    if (!event.persisted) resetPageTransition();
   });
   window.addEventListener("pageshow", (event) => {
-    if (event.persisted) resetPageTransition();
+    if (!event.persisted) return;
+    clearLeaveState();
+    /* Restored under the cover — same arrival the forward leg gets, so play
+       the same uncover. `animateOut` carries its own failsafe and parks the
+       panel either way, which is what keeps a starved tween from stranding
+       the page underneath it. */
+    if (isCovered()) void animateOut();
+    else resetPageTransition();
   });
 }
 
@@ -230,6 +275,12 @@ function preloaderHandover(): Promise<void> {
 /**
  * Call on every page load: uncover if we arrived mid-transition.
  *
+ * Three ways that can be true — the flag `go()` wrote on the way out, a cover
+ * this document is already wearing, and a Back that re-fetched rather than
+ * restoring from bfcache (the cached case is handled on `pageshow`). The last
+ * is why a Back out of a project now wipes in the same way the forward leg
+ * does, instead of snapping the page into place.
+ *
  * When the home preloader is up it owns the screen instead, so resolve only
  * once the visitor hits ENTER — that keeps the caller's line-reveal entrance
  * from playing behind the overlay.
@@ -244,9 +295,6 @@ export async function bootIfCovered(): Promise<void> {
   }
 
   const flagged = takeFlag(PT_COVER_KEY) === "1";
-  const stuck =
-    document.documentElement.classList.contains(COVERED) ||
-    document.documentElement.classList.contains(LOCKED);
-  if (flagged || stuck) await animateOut();
+  if (flagged || isCovered() || isBackForward()) await animateOut();
   markPageRevealed();
 }
