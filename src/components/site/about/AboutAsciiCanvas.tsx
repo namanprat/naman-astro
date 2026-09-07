@@ -375,7 +375,36 @@ function SpinY({ speed, children }: { speed: number; children: ReactNode }) {
   return <group ref={ref}>{children}</group>;
 }
 
+/**
+ * Drag-to-orbit is a mouse affordance, and whether the controls are mounted at
+ * all is the only lever on it: three's `OrbitControls.connect()` writes
+ * `touch-action: none` straight onto `domElement.style` before it looks at
+ * `enabled` or `enableRotate`, so neither of those props can hand the gesture
+ * back — and neither can a stylesheet, which cannot outrank an inline
+ * declaration without `!important`.
+ *
+ * `domElement` is the canvas, which is `width: 100%; height: 100%` of
+ * `.about_panel_media` (`AboutPanel.css`) — and on the phone route that block
+ * is full-bleed and square, so the opt-out covered a screen-tall band of the
+ * page and a swipe anywhere on the bust simply did not scroll. Measured, not
+ * assumed: before this gate the canvas computed `touch-action: none` and the
+ * media block computed `auto`.
+ *
+ * A capability query rather than a width one: this is about the pointer, not
+ * the layout, so it also covers a touchscreen laptop opening the desktop
+ * overlay, which mounts this same component. The bust is not still without the
+ * controls — `SpinY` below keeps the slow turn and the scroll-velocity kick,
+ * and `AsciiField` keeps the glyph trail.
+ */
+const ORBIT_POINTER_MQ = "(hover: hover) and (pointer: fine)";
+
 function AboutAsciiScene({ onReady }: { onReady?: () => void }) {
+  /* Read once: pointer capability does not change under a mounted component,
+     and this island is lazy + effect-gated, so there is no SSR pass. */
+  const [canOrbit] = useState(
+    () => window.matchMedia(ORBIT_POINTER_MQ).matches,
+  );
+
   return (
     /* ponytail: ink is the fixed light swatch, never `--text`. The plate under
        this canvas is `--dark-900` in both themes and the canvas composites with
@@ -400,14 +429,16 @@ function AboutAsciiScene({ onReady }: { onReady?: () => void }) {
       </group>
       {/* Both of these read `scene` and `camera` out of context, which the
           field's portal has already pointed at the offscreen pair. */}
-      <OrbitControls
-        enableDamping
-        enableZoom={false}
-        enablePan={false}
-        // Left/right only — lock vertical tilt
-        minPolarAngle={Math.PI / 2}
-        maxPolarAngle={Math.PI / 2}
-      />
+      {canOrbit && (
+        <OrbitControls
+          enableDamping
+          enableZoom={false}
+          enablePan={false}
+          // Left/right only — lock vertical tilt
+          minPolarAngle={Math.PI / 2}
+          maxPolarAngle={Math.PI / 2}
+        />
+      )}
       <Environment
         resolution={256}
         background={false}

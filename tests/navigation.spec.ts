@@ -1,5 +1,6 @@
 import { expect, test, type Page } from "@playwright/test";
 import {
+  blindRendererProbe,
   expectNavVisible,
   expectRevealed,
   isNarrowNav,
@@ -9,6 +10,7 @@ import {
   seedTheme,
   skipPreloader,
   stubWebGL,
+  touchDrag,
 } from "./helpers";
 
 async function expectThemeColors(page: Page, color: string) {
@@ -261,6 +263,67 @@ test("About is a real page below the nav breakpoint", async ({ page }) => {
   await expect(page.locator(".footer_wrap")).toHaveCount(1);
   // The lockup is a home-page element now.
   await expect(page.locator(".name_hero")).toBeHidden();
+});
+
+/**
+ * A swipe that starts on the bust still scrolls the page.
+ *
+ * `OrbitControls.connect()` writes `touch-action: none` inline onto the bust
+ * canvas before it reads `enabled` or `enableRotate`, and that canvas fills
+ * `.about_panel_media`, which is full-bleed and square on this route — so a
+ * screen-tall band of the page refused to pan and the only way down was to find
+ * the copy below it. `AboutAsciiCanvas` gates the controls on `(pointer: fine)`
+ * for that reason: no prop and no stylesheet can undo an inline declaration.
+ *
+ * Both halves are asserted because they fail separately — the computed style is
+ * the mechanism, the scroll is the symptom. Dispatched through CDP because
+ * `touch-action` is precisely what is on trial: a wheel event ignores it and
+ * would pass either way.
+ */
+test("a swipe over the About bust scrolls the page", async ({
+  page,
+  context,
+}) => {
+  test.skip(!isNarrowNav(), "the bust route is phones only");
+  test.skip(!isTouch(), "this is a touch gesture, not a wheel");
+
+  const cdp = await context.newCDPSession(page);
+  await blindRendererProbe(page);
+  await page.goto("/about");
+  await expectRevealed(page);
+
+  const media = page.locator(".about_panel_media");
+  await expect(media).toBeVisible();
+
+  /* The bust is device-tiered (`aboutBust.ts` refuses a software renderer), and
+     with no canvas there are no controls to have hijacked anything — the
+     assertions below would pass without testing them. Say so rather than bank
+     a green. */
+  const mounted = await media
+    .locator("canvas")
+    .first()
+    .waitFor({ state: "attached", timeout: 20_000 })
+    .then(
+      () => true,
+      () => false,
+    );
+  test.skip(!mounted, "no WebGL bust on this machine, nothing to hijack");
+
+  await expect(media.locator("canvas").first()).toHaveCSS(
+    "touch-action",
+    "auto",
+  );
+
+  const box = await media.boundingBox();
+  if (!box) throw new Error("no bust box");
+  const before = await page.evaluate(() => window.scrollY);
+  await touchDrag(cdp, page, {
+    x: box.x + box.width / 2,
+    y: box.y + box.height * 0.75,
+  });
+  await page.waitForTimeout(1200);
+
+  expect(await page.evaluate(() => window.scrollY)).toBeGreaterThan(before);
 });
 
 /**

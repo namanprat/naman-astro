@@ -63,6 +63,41 @@ export async function stubWebGL(page: Page) {
 }
 
 /**
+ * Hide `WEBGL_debug_renderer_info` from the page.
+ *
+ * `aboutBust.ts` reads the unmasked renderer string and refuses to mount the
+ * bust on a name it recognises as software — which is every renderer on a CI
+ * box, so the bust never mounts there and anything about it silently skips.
+ * With the extension gone the probe is inconclusive rather than damning, and
+ * the tier falls back to "a real device with WebGL", which is the case under
+ * test. It is a narrower lie than naming a GPU that is not there.
+ *
+ * Costs a software-rendered bust for the length of that test, so use it only
+ * where the bust is the subject.
+ */
+export async function blindRendererProbe(page: Page) {
+  await page.addInitScript(() => {
+    const protos = [
+      window.WebGLRenderingContext?.prototype,
+      window.WebGL2RenderingContext?.prototype,
+    ].filter(Boolean) as WebGLRenderingContext[];
+    for (const proto of protos) {
+      const original = proto.getExtension;
+      proto.getExtension = function (
+        this: WebGLRenderingContext,
+        name: string,
+      ) {
+        if (name === "WEBGL_debug_renderer_info") return null;
+        return (original as never as (...args: unknown[]) => unknown).call(
+          this,
+          name,
+        );
+      } as typeof proto.getExtension;
+    }
+  });
+}
+
+/**
  * Pin the colour theme before `BaseLayout`'s pre-paint script reads it.
  *
  * Pages set their own default — the homepage is `theme="dark"` — and the two
@@ -266,11 +301,24 @@ export async function scrollDown(page: Page, cdp: CDPSession, touch: boolean) {
   await page.waitForTimeout(1200);
 }
 
-async function touchDrag(cdp: CDPSession, page: Page) {
+/**
+ * A one-finger upward swipe, dispatched through CDP so `touch-action` actually
+ * applies — which is the point: a `page.mouse.wheel` would scroll straight past
+ * an element that has opted out of panning, and prove nothing.
+ *
+ * `origin` moves where the finger lands. The default is low on the screen, for
+ * "scroll the page"; pass a point to ask whether a *particular* element lets the
+ * page scroll from under it.
+ */
+export async function touchDrag(
+  cdp: CDPSession,
+  page: Page,
+  origin?: { x: number; y: number },
+) {
   const { width, height } = page.viewportSize()!;
-  const x = Math.round(width / 2);
-  const from = Math.round(height * 0.85);
-  const distance = Math.round(height * 0.65);
+  const x = Math.round(origin?.x ?? width / 2);
+  const from = Math.round(origin?.y ?? height * 0.85);
+  const distance = Math.round(Math.min(height * 0.65, from - 8));
 
   await cdp.send("Input.dispatchTouchEvent", {
     type: "touchStart",
