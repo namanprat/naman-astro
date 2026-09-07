@@ -760,6 +760,67 @@ test("the featured slider opens a project again after returning home", async ({
   await expect.poll(() => rootClasses(page)).not.toContain("is-page-covered");
 });
 
+/**
+ * Back out of a project should look like arriving anywhere else: the cover is
+ * already over the page and wipes up off it.
+ *
+ * A browser Back never runs `go()`, so nothing raises the panel on the way out
+ * and nothing wrote the arrival flag. What it does instead is restore the
+ * document with the cover `animateIn` left on it — which `pagehide` used to
+ * park before the freeze, so the page snapped back with no transition at all.
+ *
+ * The two states are told apart by where the panel is a couple of frames in:
+ * parked puts it a whole viewport below, the wipe still has it over the page on
+ * its way up. Sampled inside the page so the reading is frames, not round trips.
+ */
+test("bfcache restore wipes the cover off rather than snapping it away", async ({
+  page,
+}) => {
+  test.skip(
+    test.info().project.name === "reduced-motion",
+    "reduced motion clears the cover outright, by design",
+  );
+
+  await page.goto("/");
+  await expectRevealed(page);
+
+  const { top, viewport } = await page.evaluate(async () => {
+    const panel = document.querySelector<HTMLElement>(".transition_panel");
+    if (!panel) throw new Error("no transition panel");
+    document.documentElement.classList.add(
+      "is-page-covered",
+      "is-page-transitioning",
+    );
+    panel.style.pointerEvents = "all";
+    panel.style.transform = "translateY(0px)";
+
+    const event = new Event("pageshow");
+    Object.defineProperty(event, "persisted", { value: true });
+    window.dispatchEvent(event);
+
+    await new Promise((resolve) =>
+      requestAnimationFrame(() => requestAnimationFrame(resolve)),
+    );
+    return {
+      top: panel.getBoundingClientRect().top,
+      viewport: window.innerHeight,
+    };
+  });
+
+  expect(top).toBeLessThan(viewport * 0.5);
+
+  // And it still finishes parked — the wipe is a transition, not a new state.
+  await expect
+    .poll(() =>
+      page.evaluate(() => {
+        const panel = document.querySelector<HTMLElement>(".transition_panel");
+        return panel ? panel.getBoundingClientRect().top : 0;
+      }),
+    )
+    .toBeGreaterThan(viewport * 0.5);
+  await expect.poll(() => rootClasses(page)).not.toContain("is-page-covered");
+});
+
 test("bfcache restore parks the cover so the home slider is clickable", async ({
   page,
 }) => {
