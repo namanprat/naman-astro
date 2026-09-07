@@ -819,9 +819,11 @@ test("the full-screen spacers are one viewport, and the footer mark is reachable
  * document with the cover `animateIn` left on it — which `pagehide` used to
  * park before the freeze, so the page snapped back with no transition at all.
  *
- * The two states are told apart by where the panel is a couple of frames in:
- * parked puts it a whole viewport below, the wipe still has it over the page on
- * its way up. Sampled inside the page so the reading is frames, not round trips.
+ * The two states are told apart without waiting for a single frame. Parking is
+ * a synchronous `gsap.set` that puts the panel a whole viewport below; the wipe
+ * is a `fromTo`, which renders its "from" immediately and leaves the panel over
+ * the page. So read the position in the same task as the dispatch — no rAF, no
+ * tween progress, nothing for a loaded CI worker to get wrong.
  */
 test("bfcache restore wipes the cover off rather than snapping it away", async ({
   page,
@@ -834,7 +836,7 @@ test("bfcache restore wipes the cover off rather than snapping it away", async (
   await page.goto("/");
   await expectRevealed(page);
 
-  const { top, viewport } = await page.evaluate(async () => {
+  const { top, viewport } = await page.evaluate(() => {
     const panel = document.querySelector<HTMLElement>(".transition_panel");
     if (!panel) throw new Error("no transition panel");
     document.documentElement.classList.add(
@@ -848,9 +850,6 @@ test("bfcache restore wipes the cover off rather than snapping it away", async (
     Object.defineProperty(event, "persisted", { value: true });
     window.dispatchEvent(event);
 
-    await new Promise((resolve) =>
-      requestAnimationFrame(() => requestAnimationFrame(resolve)),
-    );
     return {
       top: panel.getBoundingClientRect().top,
       viewport: window.innerHeight,
