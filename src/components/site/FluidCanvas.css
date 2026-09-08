@@ -1,3 +1,18 @@
+/* Form: sibling sheet, not an Astro `<style>` — and this one is the clearest
+ * case on the site.
+ *
+ * ponytail: `FluidCanvas.astro` exists, so there *is* an `.astro` boundary in
+ * the render path, which is normally the test. It fails the other two anyway.
+ * The wrap and the canvas are written by the React island (`client:only`), so a
+ * scoped block would rewrite its selectors to require a cid no element here
+ * ever carries. And the trail-invert list at the foot of this file names copy
+ * belonging to eight other components — the manifesto lead, the studio and team
+ * titles, the FAQ, the work label, the project title, the Camille pill — which
+ * is a deliberate cross-component override and would need `is:global` in any
+ * template that held it. Scoping the sheet would break the blend outright;
+ * wrapping it in `is:global` inside a nine-line `.astro` file would move 200
+ * lines of prose about the sim into a wrapper that renders one island.
+ */
 @layer components.section {
 .fluid_wrap {
   position: relative;

@@ -1,3 +1,12 @@
+/* Form: sibling sheet, not an Astro `<style>`.
+ *
+ * ponytail: two reasons, either of which is enough. `HeroGlass` is React with
+ * no `.astro` boundary in its render path, and the one rule here targets a node
+ * this component does not render at all — `.name_hero_lockup` belongs to the
+ * nav's hero lockup. Inside a template that would have to be `is:global`, which
+ * is to say the scoping would buy nothing and the file would only be further
+ * from the rule it overrides.
+ */
 @layer components.section {
   /*
     The hero has no element of its own any more: it renders inside the backdrop

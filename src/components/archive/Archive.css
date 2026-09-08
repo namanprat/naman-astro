@@ -1,7 +1,23 @@
+/* Form: sibling sheet, not an Astro `<style>`, and it would need `is:global`
+ * even inside one.
+ *
+ * ponytail: six of the rules below restyle Menu-owned nodes — `.nav_wrap`,
+ * `.nav_fade` and four `.nav_grid` descendants — because this route is an
+ * opaque WebGL stage and the site's theme-driven chrome would wash out over it.
+ * That is a deliberate cross-component override, so scoping it would break it;
+ * `components.page` beating `components.chrome` is what makes it win rather
+ * than emit order. The stage itself is written by `ArchiveCanvas`, a
+ * `client:only` React island, so there is no cid on it either.
+ *
+ * ponytail: `/archive` is one of the three places that deliberately does not
+ * follow the theme toggle (the others are the Process card plate and the About
+ * bust plate, each with its note at the literal). The ground is `--dark-900`
+ * whatever the visitor has stored, `--light-100` is spelled out for the nav
+ * over it, and `themeColor.ts` answers `page-archive` before it reads the
+ * theme class. Anything here that switched to `--background` / `--text` would
+ * come out warm grey on grey in light mode.
+ */
 @layer components.page {
-/* Archive — full-viewport WebGL stage. Ground is always brand black; theme
-   tokens would wash it to grey in light mode. Nav is brand white so it
-   stays readable over the scene. */
 
 html.page-archive,
 html.page-archive body {
