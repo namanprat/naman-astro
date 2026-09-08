@@ -6,6 +6,7 @@ import {
   isTouch,
   rootClasses,
   seedSession,
+  seedTheme,
   skipPreloader,
   stubWebGL,
 } from "./helpers";
@@ -109,6 +110,17 @@ test("a project page reveals and keeps its nav", async ({ page }) => {
 test("studio copy besides the manifesto inverts with the trail", async ({
   page,
 }) => {
+  /* ponytail: desktop-only, and the theme has to be seeded. The blend is dark-only by design
+     (`FluidCanvas.css` gates the list on `html:not(.theme-light)`), and with
+     nothing stored `index.astro` follows `prefers-color-scheme`, which
+     Playwright reports as light unless a test says otherwise. Without this the
+     assertion reads a correct light-theme page and calls it a regression.
+
+     The width skip is the same story one cut over: `--trail-blend` is `normal`
+     below 48rem (`base.css`), because there is no trail down there for the copy
+     to invert against — `FluidCanvas` builds neither the sim nor the plane. */
+  test.skip(isNarrowNav(), "--trail-blend is normal below 48rem");
+  await seedTheme(page, "dark");
   await skipPreloader(page);
   await page.goto("/");
   await expectRevealed(page);

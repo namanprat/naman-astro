@@ -21,11 +21,11 @@ import {
   FluidSimStateProvider,
   useFluidSimStateRef,
 } from "@/lib/site/fluid/fluidSimContext";
-import { MOBILE_LAYOUT_MQ } from "@/lib/site/isMobileLayout";
-import { useCameraOverlay } from "@/lib/site/cameraOverlay";
-import { readCssColor, shaderColor } from "@/lib/site/cssColor";
+import { MOBILE_LAYOUT_MQ } from "@/lib/site/util/isMobileLayout";
+import { useCameraOverlay } from "@/lib/site/webgl/cameraOverlay";
+import { readCssColor, shaderColor } from "@/lib/site/webgl/cssColor";
 import { useThemeLight } from "@/lib/site/ascii/useThemeInk";
-import { SWATCH_TRAIL } from "@/lib/site/siteColors";
+import { SWATCH_TRAIL } from "@/lib/site/webgl/siteColors";
 import * as THREE from "three";
 
 /**
@@ -349,7 +349,7 @@ export default function FluidCanvas() {
   const [host, setHost] = useState<HTMLDivElement | null>(null);
   const webgl = useWebglSupport(host);
   const mobile = useMediaFlag(MOBILE_LAYOUT_MQ);
-  /* Hard navigation, no client router (`lib/site/pageTransition.ts`), so the
+  /* Hard navigation, no client router (`lib/site/nav/pageTransition.ts`), so the
      island remounts per page and the path at mount is the path. */
   const [home] = useState(() => window.location.pathname === "/");
   /* `html.work-grid` is only ever set by `WorkGallery`, which only mounts here.

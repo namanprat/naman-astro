@@ -10,12 +10,22 @@ const astro = readFileSync(
   new URL("../src/components/site/CamilleSlider.astro", import.meta.url),
   "utf8",
 );
-const css = readFileSync(
-  new URL("../src/components/site/CamilleSlider.css", import.meta.url),
-  "utf8",
-);
+/**
+ * The slider's stylesheet, which now lives in the component's own <style>
+ * block rather than a sibling .css.
+ *
+ * ponytail: the style body is extracted rather than asserting against the
+ * whole file. Every CSS assertion below is a `doesNotMatch` — no text-shadow,
+ * no filter chain, no `cursor: none` — and run against the whole component
+ * those would also read the markup and the script, where `filter:` could
+ * appear legitimately and fail the check for the wrong reason.
+ */
+const css = [...astro.matchAll(/<style[^>]*>([\s\S]*?)<\/style>/g)]
+  .map((m) => m[1])
+  .join("\n");
+assert.ok(css.length > 0, "slider must carry its styles in a <style> block");
 const ts = readFileSync(
-  new URL("../src/lib/site/camilleSlider.ts", import.meta.url),
+  new URL("../src/components/site/CamilleSlider.ts", import.meta.url),
   "utf8",
 );
 

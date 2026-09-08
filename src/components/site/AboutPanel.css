@@ -1,4 +1,4 @@
-@layer components {
+@layer components.page {
 /* Desktop overlay only — the mobile `/about` route never sets `about-open`.
    Lenis is stopped in AboutPanel; this is the native-scroll backup so a
    wheel that leaks past still has nowhere to go. */

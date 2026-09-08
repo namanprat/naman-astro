@@ -1,5 +1,5 @@
-import { useEffect, useRef, type RefObject } from "react";
-import { REDUCED_MOTION_QUERY } from "@/lib/site/prefersReducedMotion";
+import { useEffect, useRef } from "react";
+import { REDUCED_MOTION_QUERY } from "@/lib/site/util/prefersReducedMotion";
 import { FooterAsciiField } from "@/lib/site/ascii/FooterAsciiField";
 import "./FooterAsciiLogo.css";
 
@@ -8,9 +8,9 @@ import "./FooterAsciiLogo.css";
  * `.footer_logo` source SVG. Desktop-only (the parent gates the mount).
  */
 export default function FooterAsciiLogo({
-  sourceRef,
+  sourceSelector,
 }: {
-  sourceRef: RefObject<HTMLImageElement | null>;
+  sourceSelector: string;
 }) {
   const wrapRef = useRef<HTMLDivElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -18,11 +18,18 @@ export default function FooterAsciiLogo({
   useEffect(() => {
     const wrap = wrapRef.current;
     const canvas = canvasRef.current;
-    const logoImg = sourceRef.current;
+    /* ponytail: the source image is found, not handed in. It used to arrive as
+       a React ref from `Footer.tsx`; the footer is Astro now, so the `<img>` is
+       server-rendered and there is no ref to pass. */
+    const logoImg = document.querySelector<HTMLImageElement>(sourceSelector);
     if (!wrap || !canvas || !logoImg) return;
 
-    const box = wrap.parentElement;
-    if (!box) return;
+    /* ponytail: `closest`, not `parentElement`. This component mounts inside an
+       `<astro-island>` host, which is a real DOM parent even though it renders
+       `display: contents` — so `parentElement` is that host rather than the
+       card the field measures against. */
+    const box = wrap.closest(".footer_box");
+    if (!(box instanceof HTMLElement)) return;
 
     const reduceMq = window.matchMedia(REDUCED_MOTION_QUERY);
     let field: FooterAsciiField | null = null;
@@ -59,7 +66,7 @@ export default function FooterAsciiLogo({
       reduceMq.removeEventListener("change", onReduce);
       ro.disconnect();
     };
-  }, [sourceRef]);
+  }, [sourceSelector]);
 
   return (
     <div className="footer_ascii" ref={wrapRef} aria-hidden="true">

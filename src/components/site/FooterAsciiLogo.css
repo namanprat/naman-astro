@@ -1,4 +1,4 @@
-@layer components {
+@layer components.chrome {
 .footer_ascii {
   position: absolute;
   inset: 0;

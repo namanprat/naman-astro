@@ -2,7 +2,14 @@
  * One-shot: strip textures/UVs (ASCII only reads lit positions) and Draco-compress
  * the three Process-card GLBs in place.
  *
- * Requires packages that are not in package.json:
+ * ponytail: the four packages below are deliberately absent from package.json
+ * and this file is wired to no npm script. They are build tooling for a job
+ * that has already been done — the compressed GLBs are committed — so carrying
+ * them as a dependency would tax every `npm install` on the repo forever to
+ * serve a run that happens when the source models change, which is close to
+ * never. The cost is that this script throws on a missing import if run cold;
+ * the line below is the fix, and it is the whole setup.
+ *
  *   npm install --no-save @gltf-transform/core @gltf-transform/extensions @gltf-transform/functions draco3dgltf
  *   node scripts/compress-process-models.mjs
  */

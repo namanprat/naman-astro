@@ -1,5 +1,5 @@
 import * as THREE from "three";
-import { isMobileLayout } from "@/lib/site/isMobileLayout";
+import { isMobileLayout } from "@/lib/site/util/isMobileLayout";
 
 /**
  * Longest edge we are willing to hand the GPU, per device class. Must match

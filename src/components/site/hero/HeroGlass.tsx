@@ -21,8 +21,8 @@
 import { Suspense, useEffect, useMemo, useState } from "react";
 import { Environment, Lightformer } from "@react-three/drei";
 import { useFrame, useThree } from "@react-three/fiber";
-import { prefersReducedMotion } from "@/lib/site/prefersReducedMotion";
-import { PAGE_REVEALED_EVENT, isPageRevealed } from "@/lib/site/pageReveal";
+import { prefersReducedMotion } from "@/lib/site/util/prefersReducedMotion";
+import { PAGE_REVEALED_EVENT, isPageRevealed } from "@/lib/site/reveal/pageReveal";
 import { ensureGlassGui } from "@/lib/site/hero/glassGui";
 import {
   GLASS_MOBILE_MATERIAL,

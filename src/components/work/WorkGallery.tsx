@@ -2,20 +2,20 @@ import { useEffect, useRef, useState, type CSSProperties } from "react";
 import { gsap } from "gsap";
 import Lenis from "lenis";
 import { workItems } from "@/content/work";
-import { ABOUT_OPEN_CLASS } from "@/lib/site/aboutPanel";
-import { gooeyMorph } from "@/lib/site/gooeyReveal";
-import { setSiteLenis } from "@/lib/site/lenisBridge";
-import { SCROLL_SETTINGS, driveLenisWithGsap } from "@/lib/site/lenisScroll";
-import { prefersReducedMotion } from "@/lib/site/prefersReducedMotion";
+import { ABOUT_OPEN_CLASS } from "@/lib/site/about/aboutPanel";
+import { gooeyMorph } from "@/lib/site/reveal/gooeyReveal";
+import { setSiteLenis } from "@/lib/site/scroll/lenisBridge";
+import { SCROLL_SETTINGS, driveLenisWithGsap } from "@/lib/site/scroll/lenisScroll";
+import { prefersReducedMotion } from "@/lib/site/util/prefersReducedMotion";
 import {
   readWorkView,
   takeWorkReturn,
   writeWorkView,
   type WorkView,
-} from "@/lib/site/workSession";
-import { isMobileLayout, MOBILE_LAYOUT_MQ } from "@/lib/site/isMobileLayout";
+} from "@/lib/site/nav/workSession";
+import { isMobileLayout, MOBILE_LAYOUT_MQ } from "@/lib/site/util/isMobileLayout";
 import ProjectDetail from "./ProjectDetail";
-import { bootLazyVideos } from "@/lib/site/lazyVideo";
+import { bootLazyVideos } from "@/lib/site/util/lazyVideo";
 import Reveal from "./slider/Reveal";
 import Slider from "./slider/Slider";
 import WheelView from "./slider/WheelView";

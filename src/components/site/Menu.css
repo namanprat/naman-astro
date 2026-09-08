@@ -1,4 +1,4 @@
-@layer components {
+@layer components.chrome {
 html.menu-open {
   overflow: hidden;
   /* Dark: black on accent. Light: white on frost. Same pairing as footer / About. */

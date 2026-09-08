@@ -23,7 +23,7 @@ import { Canvas, useFrame } from "@react-three/fiber";
 import * as THREE from "three";
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
-import { prefersReducedMotion } from "@/lib/site/prefersReducedMotion";
+import { prefersReducedMotion } from "@/lib/site/util/prefersReducedMotion";
 import { ensureProcessModelGui } from "@/lib/site/process/processModelGui";
 import {
   PROCESS_CARD_IDS,

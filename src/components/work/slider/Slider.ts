@@ -3,7 +3,7 @@ import { Observer } from "gsap/Observer";
 import verticalLoop from "./verticalLoop";
 import { scrollDelta } from "./scrollDelta";
 import type { RevealChange } from "./Reveal";
-import { isMobileLayout, MOBILE_LAYOUT_MQ } from "@/lib/site/isMobileLayout";
+import { isMobileLayout, MOBILE_LAYOUT_MQ } from "@/lib/site/util/isMobileLayout";
 
 gsap.registerPlugin(Observer);
 

@@ -8,7 +8,6 @@
  * would never play.
  */
 import RollingText from "./RollingText.astro";
-import "./AnimeLink.css";
 
 interface Props {
   href: string;
@@ -23,7 +22,7 @@ const { href, class: className } = Astro.props;
     {
       /* `data-no-reveal` opts the label out of the line reveal. It has to sit
          on an ancestor, not the `h5` itself — both the JS query in
-         `lib/site/lineReveal.ts` and the pre-paint hold in `styles/site.css`
+         `lib/site/reveal/lineReveal.ts` and the pre-paint hold in `styles/site.css`
          match `.text-style-main` and exclude only descendants of the skip
          list. Without it that module would SplitText this label, fighting the
          per-char stacks RollingText has already built, exactly as noted on the
@@ -51,3 +50,51 @@ const { href, class: className } = Astro.props;
     </div>
   </div>
 </a>
+
+<style>
+  /* ponytail: scoped, and layered on purpose. Astro adds its cid to this
+     component's own selectors and leaves `html.*` alone, so nothing here can
+     reach another component. The `@layer` wrapper is what keeps that from
+     changing the cascade: a scoped block is unlayered by default and unlayered
+     beats every layer, so without it these rules would outrank the whole
+     `components` layer they came from. */
+@layer components.section {
+  .anime_link {
+    display: flex;
+    gap: var(--space-2);
+    align-items: center;
+    position: relative;
+    cursor: pointer;
+  }
+
+  .anime_link_label {
+    position: relative;
+    z-index: 2;
+    pointer-events: none;
+  }
+
+  /* `line-height: 1` does two jobs. It matches what RollingText already forces on
+     its glyph stacks, so the text itself doesn't move; and it makes the leading
+     trim a no-op, since the trim's margins are `-0.5lh + trim` and the pair below
+     is exactly 0.5em. */
+  .anime_link_label h5 {
+    margin: 0;
+    line-height: var(--line-height-small);
+    --_trim-top: 0.5em;
+    --_trim-bottom: 0.5em;
+  }
+
+  .anime_link_icon {
+    flex: none;
+    font-size: 0.8em;
+    padding: 0.4em 0.6em;
+    line-height: 0;
+    background-color: var(--brand-500);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 1;
+    color: var(--light-100);
+  }
+}
+</style>

@@ -5,11 +5,11 @@ import type Lenis from "lenis";
 import gsap from "gsap";
 import { SplitText } from "gsap/SplitText";
 import { useGSAP } from "@gsap/react";
-import { type GoOptions } from "@/lib/site/navigate";
-import { goToRoute } from "@/lib/site/navRoutes";
-import { hashId } from "@/lib/site/scrollToSection";
-import { LINE_PARK_PERCENT, parkLines } from "@/lib/site/lineMask";
-import { prefersReducedMotion } from "@/lib/site/prefersReducedMotion";
+import { type GoOptions } from "@/lib/site/nav/navigate";
+import { goToRoute } from "@/lib/site/nav/navRoutes";
+import { hashId } from "@/lib/site/scroll/scrollToSection";
+import { LINE_PARK_PERCENT, parkLines } from "@/lib/site/reveal/lineMask";
+import { prefersReducedMotion } from "@/lib/site/util/prefersReducedMotion";
 import {
   ABOUT_OPEN_CLASS,
   ABOUT_PATH,
@@ -17,11 +17,11 @@ import {
   openAboutPanel,
   closeAboutPanel,
   installAboutInterceptors,
-} from "@/lib/site/aboutPanel";
-import { followAboutNav, releaseAboutNav } from "@/lib/site/aboutNavDock";
-import { getSiteLenis, subscribeSiteLenis } from "@/lib/site/lenisBridge";
-import { bootHomeIntro } from "@/lib/site/heroIntro";
-import { useCopyEmail } from "@/lib/site/copyEmail";
+} from "@/lib/site/about/aboutPanel";
+import { followAboutNav, releaseAboutNav } from "@/lib/site/about/aboutNavDock";
+import { getSiteLenis, subscribeSiteLenis } from "@/lib/site/scroll/lenisBridge";
+import { bootHomeIntro } from "@/lib/site/reveal/heroIntro";
+import { useCopyEmail } from "@/lib/site/util/copyEmail";
 import {
   addGooeyReveal,
   addGooeyUnreveal,
@@ -31,12 +31,12 @@ import {
   prepareGooeyAll,
   settleGooey,
   type GooeyTarget,
-} from "@/lib/site/gooeyReveal";
+} from "@/lib/site/reveal/gooeyReveal";
 import AboutPanel, { type AboutPanelMode } from "./AboutPanel";
 import RollingText from "./RollingText";
 import ThemeToggle from "./ThemeToggle";
 import { SITE_NAME } from "@/consts.ts";
-import "@/lib/site/eases";
+import "@/lib/site/util/eases";
 
 /**
  * Write a custom property on `<html>` only when it actually moved.
@@ -856,7 +856,7 @@ export default function Menu({ initialPathname = "/" }: MenuProps) {
     setAboutOpen(false);
   };
 
-  /* Shared with the footer — see `lib/site/navRoutes.ts`. */
+  /* Shared with the footer — see `lib/site/nav/navRoutes.ts`. */
   const goTo = (path: string, options?: GoOptions) =>
     goToRoute(path, { lenis, options });
 

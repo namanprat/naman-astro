@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { ARCHIVE_MEDIA_URLS } from "@/content/archive";
-import { isMobileLayout } from "@/lib/site/isMobileLayout";
+import { isMobileLayout } from "@/lib/site/util/isMobileLayout";
 import {
   disposeArchiveMediaSource,
   loadArchiveMediaSource,

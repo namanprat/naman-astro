@@ -12,8 +12,8 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { createPortal, useFrame, useThree } from "@react-three/fiber";
 import type { ReactNode } from "react";
 import * as THREE from "three";
-import { shaderColor } from "@/lib/site/cssColor";
-import { prefersReducedMotion } from "@/lib/site/prefersReducedMotion";
+import { shaderColor } from "@/lib/site/webgl/cssColor";
+import { prefersReducedMotion } from "@/lib/site/util/prefersReducedMotion";
 import { getDufornAsciiAtlas } from "@/lib/site/ascii/asciiAtlas";
 import { buildAsciiGrid } from "@/lib/site/ascii/asciiGrid";
 import {

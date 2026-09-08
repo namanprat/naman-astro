@@ -1,7 +1,7 @@
 import { gsap } from "gsap";
 import { Flip } from "gsap/Flip";
 import { SplitText } from "gsap/SplitText";
-import { LINE_PARK_PERCENT } from "@/lib/site/lineMask";
+import { LINE_PARK_PERCENT } from "@/lib/site/reveal/lineMask";
 
 gsap.registerPlugin(Flip, SplitText);
 

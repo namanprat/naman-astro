@@ -1,6 +1,6 @@
 import type { APIRoute } from "astro";
 import { SITE_DESCRIPTION, SITE_TITLE } from "@/consts.ts";
-import { THEME_COLOR_DARK } from "@/lib/site/themeColor.ts";
+import { THEME_COLOR_DARK } from "@/lib/site/util/themeColor";
 
 /**
  * Install / splash icons are the cream mark only: `background_color` is the

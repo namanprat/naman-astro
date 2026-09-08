@@ -144,7 +144,7 @@
   --surface-frost-blur: 0rem;
 }
 
-@layer components {
+@layer components.site {
   .grid {
     --_cols: var(--_cols-xs);
     --_cols-xs: 1;

@@ -1,0 +1,226 @@
+/**
+ * What the home preloader actually waits on: webfonts, the grain texture, the
+ * backdrop canvas' first rendered frame, and the three Process-card GLBs
+ * (Draco, ~95KB together). The first two of those are desktop-only — the grain
+ * overlay is `display: none` below 48rem, and there is no fluid sim to paint a
+ * first frame there at all (`FluidCanvas`) — so both are left unregistered
+ * rather than waited on.
+ *
+ * The About-panel bust GLB used to be a fourth segment carrying half the weight.
+ * It is no longer waited on — see `warmBust` — because nothing on the home page
+ * needs it and the visitor was queueing behind 3.5MB to reach the ENTER button.
+ *
+ * Every segment fails open — a dead asset reports complete rather than trapping
+ * the visitor behind the ENTER gate.
+ */
+import { shouldMountAboutBust } from "../about/aboutBust";
+import { isMobileLayout } from "../util/isMobileLayout";
+import { completeAll, register, report } from "./preloadProgress";
+import {
+  PROCESS_CARD_IDS,
+  PROCESS_MODEL_URLS,
+} from "../process/processModelTuning";
+
+const GRAIN_URL = "/main-assets/grain.webp";
+
+/**
+ * Flat deadline for the whole boot, same philosophy as REVEAL_FAILSAFE_MS in
+ * `pollUntil`: one number to raise, not per-stage timeouts. Much longer than
+ * the reveal budget — this one waits on multi-megabyte assets.
+ */
+const PRELOAD_FAILSAFE_MS = 12_000;
+
+/** Fallback size when the response has no content-length (dev server, gzip). */
+const GRAIN_ASSUMED_BYTES = 200_000;
+/** Sum of the three Draco process GLBs; used when content-length is missing. */
+const PROCESS_MODELS_ASSUMED_BYTES = 100_000;
+
+let canvasReady: (() => void) | null = null;
+
+/** Called from FluidSimulation once the backdrop has actually painted a frame. */
+export function reportHomeCanvasReady(): void {
+  report("canvas", 1);
+  canvasReady?.();
+  canvasReady = null;
+}
+
+/**
+ * Fetch with byte-level progress. Returns the blob so the caller can warm the
+ * decode too. Falls back to a plain response read if the body isn't streamable.
+ */
+async function fetchWithProgress(
+  url: string,
+  assumedBytes: number,
+  onProgress: (t: number) => void,
+): Promise<Blob> {
+  const response = await fetch(url);
+  if (!response.ok) throw new Error(`${url}: ${response.status}`);
+
+  const declared = Number(response.headers.get("content-length"));
+  const total = declared > 0 ? declared : assumedBytes;
+  const reader = response.body?.getReader();
+  if (!reader) return response.blob();
+
+  const chunks: Uint8Array[] = [];
+  let received = 0;
+  for (;;) {
+    const { done, value } = await reader.read();
+    if (done) break;
+    chunks.push(value);
+    received += value.length;
+    // Cap below 1 so an under-guessed `assumedBytes` can't call it done early.
+    onProgress(Math.min(received / total, 0.99));
+  }
+  onProgress(1);
+  return new Blob(chunks as BlobPart[], {
+    type: response.headers.get("content-type") ?? "",
+  });
+}
+
+async function loadFonts(): Promise<void> {
+  if (!document.fonts) return;
+  await Promise.all([
+    document.fonts.load('16px "Duforn Mono"'),
+    document.fonts.load('700 16px "Hitmarker Condensed"'),
+  ]);
+  await document.fonts.ready;
+}
+
+async function loadGrain(): Promise<void> {
+  const blob = await fetchWithProgress(GRAIN_URL, GRAIN_ASSUMED_BYTES, (t) =>
+    report("grain", t),
+  );
+  // Decode now so `.site-grain`'s background-image doesn't hitch on reveal.
+  const url = URL.createObjectURL(blob);
+  await new Promise<void>((resolve) => {
+    const img = new Image();
+    img.onload = img.onerror = () => resolve();
+    img.src = url;
+  });
+  URL.revokeObjectURL(url);
+}
+
+/**
+ * Warm the About bust *after* the gate, not inside it.
+ *
+ * It was a registered segment carrying half the bar's weight — 3.5MB of GLB
+ * plus a 144KB canvas chunk that the visitor waited behind before they could
+ * press ENTER, for a panel they may never open. Importing the canvas module
+ * runs its top-level `useGLTF.preload`, which populates drei's cache, so the
+ * panel still opens with no parse stall; it just happens on idle time instead
+ * of on the critical path.
+ *
+ * ponytail: fire-and-forget, no progress reporting. Ceiling: if the visitor
+ * opens About within the first idle window they get today's cold-open latency
+ * back, which is what the panel already falls back to.
+ */
+function warmBust(): void {
+  if (!shouldMountAboutBust()) return;
+  const run = () => {
+    void import("@/components/site/about/AboutAsciiCanvas");
+  };
+  if ("requestIdleCallback" in window) {
+    window.requestIdleCallback(run, { timeout: 4000 });
+  } else {
+    setTimeout(run, 1200);
+  }
+}
+
+/**
+ * Fetch the three Process-card GLBs so scrolling to `#process` hits cache.
+ *
+ * Bytes only — this must not import `ProcessCardCanvas`, which would put the
+ * 3D stack on the ENTER path. `useGLTF` later re-requests the same URLs and
+ * the browser serves them from HTTP cache; Draco decode happens on mount.
+ */
+async function loadProcessModels(): Promise<void> {
+  const urls = PROCESS_CARD_IDS.map((id) => PROCESS_MODEL_URLS[id]);
+  const parts = urls.map(() => 0);
+  const assumedEach = PROCESS_MODELS_ASSUMED_BYTES / urls.length;
+  const publish = () => {
+    report(
+      "process",
+      parts.reduce((sum, value) => sum + value, 0) / urls.length,
+    );
+  };
+  await Promise.all(
+    urls.map((url, i) =>
+      fetchWithProgress(url, assumedEach, (t) => {
+        parts[i] = t;
+        publish();
+      }),
+    ),
+  );
+}
+
+/**
+ * Same treatment for the hero glass, and for the same reason: importing the
+ * module runs its top-level `useGLTF.preload`, so the 300KB logo lands in drei's
+ * cache on idle time rather than in front of the ENTER button.
+ *
+ * ponytail: unlike the bust this one *is* on the page the visitor is looking at,
+ * so it is a warm rather than a gate only because the mark underneath it paints
+ * without it — the glass arriving a beat late costs nothing.
+ */
+function warmHeroGlass(): void {
+  if (window.location.pathname !== "/") return;
+  const run = () => {
+    void import("@/components/site/hero/HeroGlass");
+  };
+  if ("requestIdleCallback" in window) {
+    window.requestIdleCallback(run, { timeout: 2000 });
+  } else {
+    setTimeout(run, 600);
+  }
+}
+
+/** Kick off every segment. Resolves when all of them settle or the failsafe fires. */
+export function startPreload(): Promise<void> {
+  // Grain is `display: none` below 48rem — do not register it, so its weight
+  // redistributes the same way an unregistered segment always does.
+  const wantsGrain = !isMobileLayout();
+  /* Same treatment, same width, and this one is load-bearing rather than
+     tidy: the `canvas` segment is resolved by `FluidSimulation`'s first painted
+     frame and by nothing else, and below 48rem `FluidCanvas` no longer builds a
+     sim at all. Registered, it would never complete — every first-visit phone
+     would sit on ENTER until `PRELOAD_FAILSAFE_MS`. */
+  const wantsCanvas = !isMobileLayout();
+
+  register("fonts", 10);
+  if (wantsGrain) register("grain", 20);
+  if (wantsCanvas) register("canvas", 20);
+  register("process", 20);
+
+  const settle = (id: Parameters<typeof report>[0], task: Promise<unknown>) =>
+    task.then(
+      () => report(id, 1),
+      () => report(id, 1),
+    );
+
+  const jobs = [
+    settle("fonts", loadFonts()),
+    settle("process", loadProcessModels()),
+  ];
+  if (wantsCanvas) {
+    jobs.push(
+      new Promise<void>((resolve) => {
+        canvasReady = resolve;
+      }),
+    );
+  }
+  if (wantsGrain) jobs.push(settle("grain", loadGrain()));
+
+  const settled = Promise.race([
+    Promise.all(jobs).then(() => undefined),
+    new Promise<void>((resolve) =>
+      setTimeout(resolve, PRELOAD_FAILSAFE_MS),
+    ).then(completeAll),
+  ]);
+  // Deliberately not chained into the returned promise: the caller gates ENTER
+  // on this, and neither warm may be part of that wait.
+  void settled.then(() => {
+    warmBust();
+    warmHeroGlass();
+  });
+  return settled;
+}

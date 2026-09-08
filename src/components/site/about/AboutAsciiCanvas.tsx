@@ -31,9 +31,9 @@ import {
   SWATCH_BRAND,
   SWATCH_LIGHT,
   SWATCH_LIGHT_NUM,
-} from "@/lib/site/siteColors";
-import { getAboutCanvasMaxDpr, BUST_URL } from "@/lib/site/aboutBust";
-import { prefersReducedMotion } from "@/lib/site/prefersReducedMotion";
+} from "@/lib/site/webgl/siteColors";
+import { getAboutCanvasMaxDpr, BUST_URL } from "@/lib/site/about/aboutBust";
+import { prefersReducedMotion } from "@/lib/site/util/prefersReducedMotion";
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 

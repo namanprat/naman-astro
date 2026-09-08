@@ -20,8 +20,8 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { createPortal, useFrame, useThree } from "@react-three/fiber";
 import * as THREE from "three";
-import { readCssColor, shaderColor } from "@/lib/site/cssColor";
-import { SWATCH_DARK } from "@/lib/site/siteColors";
+import { readCssColor, shaderColor } from "@/lib/site/webgl/cssColor";
+import { SWATCH_DARK } from "@/lib/site/webgl/siteColors";
 import { useThemeInk, useThemeLight } from "@/lib/site/ascii/useThemeInk";
 import { getDufornAsciiAtlas } from "@/lib/site/ascii/asciiAtlas";
 import { buildAsciiGrid } from "@/lib/site/ascii/asciiGrid";
@@ -35,7 +35,7 @@ import {
   subscribeAsciiTuning,
 } from "@/lib/site/ascii/asciiTuning";
 import { getGlassTuning } from "@/lib/site/hero/glassTuning";
-import { useCameraOverlay } from "@/lib/site/cameraOverlay";
+import { useCameraOverlay } from "@/lib/site/webgl/cameraOverlay";
 import { useFluidSimStateRef } from "@/lib/site/fluid/fluidSimContext";
 import { useHeroLogo } from "./HeroLogoShell";
 
