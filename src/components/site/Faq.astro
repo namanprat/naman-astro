@@ -1,0 +1,170 @@
+---
+/**
+ * The FAQ statement is an ordinary `h2`, so the site-wide gooey entrance in
+ * `lib/site/reveal/gooeyReveal.ts` owns it — `.faq` is absent from that
+ * module's SKIP list on purpose. The hanging first line is the empty
+ * `.studio_title_indent` box rather than a `text-indent`: it is exactly three
+ * columns wide and, being ordinary inline content, it wraps and splits with
+ * the rest of the heading.
+ *
+ * ponytail: server-rendered Astro, where this used to be a `client:only`
+ * React island. The directive was not a preference — `revealLines()` and
+ * `bootGooeyHeadings()` run from BaseLayout's boot script and rewrite this
+ * copy with SplitText before React could hydrate, so a server-rendered React
+ * subtree mismatched and React threw the whole thing away, taking the split
+ * with it. Markup that never hydrates cannot mismatch, so the hazard is gone
+ * and the seven answers now ship as HTML instead of inside a JS chunk.
+ */
+import { getEntry } from "astro:content";
+
+const faq = await getEntry("faq", "faq");
+if (!faq) throw new Error("content: the `faq` entry is missing");
+const { statement, lead, items } = faq.data;
+---
+
+<section class="faq_wrap studio_section" id="faq" aria-label="FAQ">
+  <div class="faq_contain container gap-0">
+    <div class="faq_layout studio_layout grid is-12">
+      <div class="faq_statement studio_statement">
+        <h2 class="faq_title studio_title text-style-h2">
+          <span class="studio_title_indent" aria-hidden="true"></span>{statement}
+        </h2>
+      </div>
+
+      <p class="faq_lead text-style-h4">{lead}</p>
+
+      <ul class="faq_items">
+        {
+          items.map((item, index) => (
+            <li class="faq_item">
+              <button
+                class="faq_question"
+                id={`faq-question-${index}`}
+                type="button"
+                aria-expanded="false"
+                aria-controls={`faq-panel-${index}`}
+              >
+                <span class="faq_question_text text-style-main">
+                  {item.question}
+                </span>
+                <svg
+                  class="faq_icon"
+                  viewBox="0 0 20 20"
+                  width="20"
+                  height="20"
+                  aria-hidden="true"
+                  focusable="false"
+                >
+                  <path
+                    d="M3.5 10h12M11 5.5 15.5 10 11 14.5"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="1.5"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                  />
+                </svg>
+              </button>
+
+              <div
+                class="faq_answer"
+                id={`faq-panel-${index}`}
+                role="region"
+                aria-labelledby={`faq-question-${index}`}
+              >
+                {/* Padding lives on the inner box so `height: "auto"` measures
+                    it, instead of being tweened alongside. */}
+                <div class="faq_answer_inner">
+                  <p class="faq_answer_copy text-style-main">{item.answer}</p>
+                </div>
+              </div>
+            </li>
+          ))
+        }
+      </ul>
+    </div>
+  </div>
+</section>
+
+<script>
+  import { bootFaq } from "./Faq";
+  bootFaq();
+</script>
+
+<style>
+  /* ponytail: scoped, not `is:global`. Astro adds its cid to this component's
+     own selectors and leaves `html.*` alone, so everything below still matches
+     and nothing else can be hit by it. The `@layer` wrapper is what keeps that
+     from being a cascade change: a scoped block is unlayered by default, and
+     unlayered beats every layer, so these rules would have quietly jumped above
+     the whole `components` layer. `.faq_lead`, `.faq_question_text` and
+     `.faq_answer_copy` are on FluidCanvas's trail-blend list, which is exactly
+     the kind of rule that would have been overridden. */
+  @layer components.section {
+    .faq_layout {
+      grid-column: 1 / -1;
+    }
+
+    .faq_statement {
+      grid-column: 1 / span calc(10 * var(--_responsive---large) + 12 * (1 - var(--_responsive---large)));
+    }
+
+    .faq_lead {
+      grid-column: calc(7 * var(--_responsive---large) + 1) / span calc(5 * var(--_responsive---large) + 12 * (1 - var(--_responsive---large)));
+      margin: 0;
+      color: var(--text);
+    }
+
+    .faq_items {
+      grid-column: calc(7 * var(--_responsive---large) + 1) / span calc(5 * var(--_responsive---large) + 12 * (1 - var(--_responsive---large)));
+      margin: 0;
+      padding: 0;
+      list-style: none;
+    }
+
+    .faq_item + .faq_item {
+      border-top: var(--border-width) solid var(--border);
+    }
+
+    .faq_question {
+      width: 100%;
+      padding-block: var(--space-3);
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      align-items: center;
+      gap: var(--site-gutter);
+      border-width: 0;
+      color: inherit;
+    }
+
+    .faq_question_text {
+      text-align: left;
+    }
+
+    .faq_icon {
+      flex-shrink: 0;
+      color: inherit;
+      transition: transform 0.3s ease;
+    }
+
+    .faq_question[aria-expanded="true"] .faq_icon {
+      transform: rotate(90deg);
+    }
+
+    /* Parked closed. GSAP tweens this to `auto` and back, so nothing here may
+       set a fixed open height. */
+    .faq_answer {
+      height: 0;
+      overflow: clip;
+    }
+
+    .faq_answer_inner {
+      padding-bottom: var(--space-3);
+    }
+
+    .faq_answer_copy {
+      margin: 0;
+      color: var(--text);
+    }
+  }
+</style>

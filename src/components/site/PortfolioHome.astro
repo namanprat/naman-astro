@@ -7,7 +7,7 @@
 import Manifesto from "./Manifesto.astro";
 import CamilleSlider from "./CamilleSlider.astro";
 import Process from "./Process.tsx";
-import Faq from "./Faq.tsx";
+import Faq from "./Faq.astro";
 import Team from "./Team.astro";
 import Footer from "./Footer.tsx";
 ---
@@ -42,8 +42,9 @@ import Footer from "./Footer.tsx";
       free to server-render because nothing hydrates over them. The WebGL win
       here is independent: `ProcessCardCanvas` is lazy and mount-gated. */}
   <Process client:only="react" />
-  {/* `client:only` for the same reason as `Process` above. */}
-  <Faq client:only="react" />
+  {/* ponytail: no directive. Faq is Astro now, so the hazard the note above
+      describes cannot reach it — there is no hydration to mismatch. */}
+  <Faq />
   <Team />
 </div>
 <Footer client:only="react" />

@@ -7,7 +7,7 @@
 import { readFileSync } from "node:fs";
 
 const files = [
-  "src/components/site/Faq.css",
+  "src/components/site/Faq.astro",
   "src/components/site/Process.css",
   "src/components/site/Manifesto.css",
   "src/components/site/CamilleSlider.css",
@@ -71,13 +71,27 @@ const BACKBONE = new Set([
   "src/styles/patterns.css",
   "src/styles/utilities.css",
 ]);
+
+/**
+ * Deliberately unlayered scoped styles.
+ *
+ * ponytail: an Astro `<style>` is unlayered unless it says otherwise, and
+ * unlayered beats every layer. These two want that — they are whole-page
+ * surfaces that sit above the site's own chrome — but a converted component
+ * never does, because its rules would silently outrank the `components` layer
+ * they used to live in. So the layer requirement covers `.astro` too, and this
+ * is the short list of files allowed to opt out.
+ */
+const UNLAYERED = new Set([
+  "src/components/site/Preloader.astro",
+  "src/pages/404.astro",
+]);
 const layerOpener = new RegExp(`@layer components\\.(${LAYERS.join("|")})\\s*\\{`);
 
 let failed = 0;
 for (const file of files) {
   const src = styleSource(file, readFileSync(file, "utf8"));
-  // .astro sheets are scoped and unlayered by design, so only .css is checked.
-  if (file.endsWith(".css") && !BACKBONE.has(file) && !layerOpener.test(src)) {
+  if (!BACKBONE.has(file) && !UNLAYERED.has(file) && !layerOpener.test(src)) {
     const found = src.match(/@layer[^{]*\{/);
     console.error(
       `${file}: must open with @layer components.<${LAYERS.join("|")}> ` +
