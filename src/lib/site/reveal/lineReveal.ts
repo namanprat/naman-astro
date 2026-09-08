@@ -15,9 +15,16 @@ gsap.registerPlugin(SplitText);
 /** Body copy only — headings are the gooey's, see `gooeyReveal.ts`. */
 const TARGETS = ".text-style-main";
 
-/** Text that already belongs to another animation, plus a per-page opt-out. */
-const SKIP =
-  ".transition_panel, .menu_wrap, .nav_wrap, .footer_wrap, .about_panel, .manifesto_wrap, .content_group, [data-no-reveal]";
+/**
+ * Text that already belongs to another animation, plus a per-page opt-out.
+ *
+ * Attributes, not a class list: each component declares its own opt-out on its
+ * own root, so this module and the `html.is-line-revealing` hold in
+ * `styles/site.css` cannot drift apart. `data-no-line-reveal` is the half that
+ * only applies here — `.manifesto_wrap` sets it because its lead is a gooey
+ * heading, and it must stay in the gooey's reach.
+ */
+const SKIP = "[data-no-reveal], [data-no-line-reveal]";
 
 /** Everything in the document that this module is allowed to animate. */
 function queryTargets(): HTMLElement[] {

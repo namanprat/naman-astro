@@ -1125,9 +1125,12 @@ export default function Menu({ initialPathname = "/" }: MenuProps) {
             </div>
           </div>
         </div>
+        {/* `data-no-reveal`: `heroIntro` masks the bar's own copy up, so
+            neither site-wide entrance module may touch it. */}
         <div
           className={`nav_wrap${isOpen ? " is-menu-open" : ""}${aboutOpen ? " is-about-open" : ""}${navStuck ? " is-stuck" : ""}`}
           ref={navContainerRef}
+          data-no-reveal
         >
           <div className="nav_fade" aria-hidden="true" />
           <div className="nav_contain container gap-0">
@@ -1297,7 +1300,15 @@ export default function Menu({ initialPathname = "/" }: MenuProps) {
           </div>
         </div>
       </div>
-      <div className="menu_wrap" ref={menuRef} aria-hidden="true" inert>
+      {/* `data-no-reveal`: the overlay's headings melt on open (`menuHeads`),
+          so the site-wide entrances have to leave them alone. */}
+      <div
+        className="menu_wrap"
+        ref={menuRef}
+        aria-hidden="true"
+        inert
+        data-no-reveal
+      >
         <div
           className={`menu_overlay${aboutInMenu ? " is-about-open" : ""}`}
           id="site-menu-overlay"

@@ -37,7 +37,10 @@ export default function AboutPage() {
   }, []);
 
   return (
-    <div className="about_panel is-page is-open">
+    /* `data-no-reveal` for the same reason `AboutPanel` sets it: this route
+       renders the same content, and its lead is prepared by the panel's gooey
+       helpers rather than by the site-wide entrance. */
+    <div className="about_panel is-page is-open" data-no-reveal>
       <div className="about_panel_surface">
         {/* No `data-lenis-prevent` here — the document scrolls, not this box. */}
         <div className="about_panel_scroll">

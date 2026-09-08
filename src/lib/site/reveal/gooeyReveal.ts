@@ -57,23 +57,20 @@ const TARGETS = "h1, h2, h3";
  * component that renders it, and a second entrance on the same node either
  * double-animates it or corrupts an existing SplitText.
  *
- * Kept in sync with the `html.is-gooey-arming` rule in `styles/site.css` — the
- * CSS holds these hidden pre-paint, so a target listed in one place and not the
- * other either stays invisible or flashes sharp before it melts.
+ * Attributes, not a class list. It used to be spelled out here and again in the
+ * `html.is-gooey-arming` rule in `styles/site.css` — and a target named in one
+ * place but not the other either stays invisible forever or flashes sharp
+ * before it melts. Now the component that owns the heading sets the attribute
+ * on its own root and both readers see the same set.
  *
- * `.manifesto` is deliberately absent: dropping it from the skip list is what
- * moved its lead off the old scrubbed word reveal and onto this one.
+ * `data-no-gooey` is the half that only applies here: `.camille_slider_wrap`
+ * sets it because the stage animates its own headings, while its body copy
+ * still belongs to `lineReveal`. `.manifesto_wrap` carries the mirror-image
+ * flag (`data-no-line-reveal`) and so is deliberately in this module's reach —
+ * dropping it from the old skip list is what moved its lead off the scrubbed
+ * word reveal and onto this one.
  */
-const SKIP = [
-  ".nav_wrap",
-  ".menu_wrap",
-  ".footer_wrap",
-  ".about_panel",
-  ".camille_slider_wrap",
-  ".content_group",
-  ".transition_panel",
-  "[data-no-reveal]",
-].join(", ");
+const SKIP = "[data-no-reveal], [data-no-gooey]";
 
 /** The property `site.css` interpolates into the filter chain. */
 export const GOOEY_BLUR_VAR = "--gooey-blur";

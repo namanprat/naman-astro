@@ -279,6 +279,9 @@ export default function AboutPanel({ open, mode, onClose }: AboutPanelProps) {
         tabIndex={open && mode !== "inMenu" ? 0 : -1}
         onClick={onClose}
       />
+      {/* `data-no-reveal`: the lead melts and the lists split on open (here and
+          in `Menu`), so the site-wide entrance modules must skip this subtree
+          — a second SplitText over the same nodes corrupts the first. */}
       <aside
         ref={panelRef}
         id="site-about-panel"
@@ -286,6 +289,7 @@ export default function AboutPanel({ open, mode, onClose }: AboutPanelProps) {
         className={aboutPanelClass(mode)}
         aria-hidden={!open}
         aria-label="About"
+        data-no-reveal
       >
         {/* Fill + frost live on `__surface` so the panel can stay transparent
             and hold the floating gutter as padding. Scroll is the inner
