@@ -6,7 +6,7 @@ const SINGLETON_TITLES: Record<(typeof SINGLETON_TYPES)[number], string> = {
   aboutSettings: "About",
   faqSettings: "FAQ",
   processSettings: "Process",
-  navSettings: "Nav",
+  navSettings: "Marquee",
 };
 
 export const structure: StructureResolver = (S) =>

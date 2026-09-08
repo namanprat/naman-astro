@@ -252,29 +252,9 @@ export const processSettings = defineType({
   },
 });
 
-const overlayItem = defineArrayMember({
-  type: "object",
-  fields: [
-    defineField({
-      name: "label",
-      type: "string",
-      validation: (rule) => rule.required(),
-    }),
-    defineField({ name: "path", type: "string" }),
-    defineField({
-      name: "action",
-      type: "string",
-      options: { list: [{ title: "Theme", value: "theme" }] },
-    }),
-  ],
-  preview: {
-    select: { title: "label", subtitle: "path" },
-  },
-});
-
 export const navSettings = defineType({
   name: "navSettings",
-  title: "Nav",
+  title: "Marquee",
   type: "document",
   fields: [
     defineField({
@@ -287,119 +267,8 @@ export const navSettings = defineType({
       type: "number",
       validation: (rule) => rule.required().integer().positive(),
     }),
-    defineField({
-      name: "email",
-      type: "string",
-      validation: (rule) => rule.required(),
-    }),
-    defineField({
-      name: "stacks",
-      type: "array",
-      of: [
-        defineArrayMember({
-          type: "object",
-          fields: [
-            defineField({
-              name: "col",
-              type: "string",
-              validation: (rule) => rule.required(),
-            }),
-            defineField({
-              name: "links",
-              type: "array",
-              of: [
-                defineArrayMember({
-                  type: "object",
-                  fields: [
-                    defineField({
-                      name: "label",
-                      type: "string",
-                      validation: (rule) => rule.required(),
-                    }),
-                    defineField({
-                      name: "path",
-                      type: "string",
-                      validation: (rule) => rule.required(),
-                    }),
-                    defineField({
-                      name: "id",
-                      type: "string",
-                      validation: (rule) => rule.required(),
-                    }),
-                  ],
-                  preview: { select: { title: "label", subtitle: "path" } },
-                }),
-              ],
-              validation: (rule) => rule.required().min(1),
-            }),
-          ],
-          preview: { select: { title: "col" } },
-        }),
-      ],
-      validation: (rule) => rule.required().min(1),
-    }),
-    defineField({
-      name: "socials",
-      type: "array",
-      of: [
-        defineArrayMember({
-          type: "object",
-          fields: [
-            defineField({
-              name: "label",
-              type: "string",
-              validation: (rule) => rule.required(),
-            }),
-            defineField({
-              name: "href",
-              type: "string",
-              validation: (rule) => rule.required(),
-            }),
-            defineField({
-              name: "newTab",
-              type: "boolean",
-              initialValue: false,
-            }),
-          ],
-          preview: { select: { title: "label", subtitle: "href" } },
-        }),
-      ],
-      validation: (rule) => rule.required().min(1),
-    }),
-    defineField({
-      name: "overlayColumns",
-      type: "array",
-      of: [
-        defineArrayMember({
-          type: "object",
-          fields: [
-            defineField({
-              name: "items",
-              type: "array",
-              of: [overlayItem],
-              validation: (rule) => rule.required().min(1),
-            }),
-          ],
-          preview: {
-            select: { items: "items" },
-            prepare: ({ items }) => ({
-              title: Array.isArray(items)
-                ? items.map((item: { label?: string }) => item.label).join(" / ")
-                : "Column",
-            }),
-          },
-        }),
-      ],
-      validation: (rule) => rule.required().min(1),
-    }),
-    defineField({
-      name: "sectionIds",
-      type: "array",
-      of: [{ type: "string" }],
-      validation: (rule) => rule.required().min(1),
-    }),
   ],
   preview: {
-    prepare: () => ({ title: "Nav" }),
+    prepare: () => ({ title: "Marquee" }),
   },
 });

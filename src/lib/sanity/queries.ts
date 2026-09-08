@@ -60,15 +60,5 @@ export const PROCESS_QUERY = /* groq */ `*[_id == "process"][0]{
 
 export const NAV_QUERY = /* groq */ `*[_id == "nav"][0]{
   availabilityLine,
-  availabilityCopies,
-  email,
-  stacks[]{
-    col,
-    links[]{ label, path, id }
-  },
-  socials[]{ label, href, newTab },
-  overlayColumns[]{
-    items[]{ label, path, action }
-  },
-  sectionIds
+  availabilityCopies
 }`;

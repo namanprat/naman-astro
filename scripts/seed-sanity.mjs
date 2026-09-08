@@ -159,11 +159,8 @@ async function seedSingletons() {
   await client.createOrReplace({
     _id: "nav",
     _type: "navSettings",
-    ...nav,
-    overlayColumns: nav.overlayColumns.map((items) => ({
-      _type: "object",
-      items,
-    })),
+    availabilityLine: nav.availabilityLine,
+    availabilityCopies: nav.availabilityCopies,
   });
   console.log("seed-sanity: singletons");
 }

@@ -70,23 +70,9 @@ export type RawProcess = {
   cards?: { title?: string; description?: string; model?: string }[];
 };
 
-export type RawOverlayItem = {
-  label?: string;
-  path?: string;
-  action?: string;
-};
-
 export type RawNav = {
   availabilityLine?: string;
   availabilityCopies?: number;
-  email?: string;
-  stacks?: {
-    col?: string;
-    links?: { label?: string; path?: string; id?: string }[];
-  }[];
-  socials?: { label?: string; href?: string; newTab?: boolean }[];
-  overlayColumns?: { items?: RawOverlayItem[] }[];
-  sectionIds?: string[];
 };
 
 function asWorkService(value: string): WorkService | null {
@@ -301,60 +287,15 @@ export function mapProcess(
   return { id: "process", data: { statement, cards } };
 }
 
-function mapOverlayItem(
-  item: RawOverlayItem,
-): Record<string, unknown> | null {
-  const label = requiredString(item.label);
-  if (!label) return null;
-  if (item.action === "theme") return { label, action: "theme" };
-  const path = requiredString(item.path);
-  return path ? { label, path } : null;
-}
-
 export function mapNav(
   doc: RawNav | null | undefined,
 ): { id: string; data: Record<string, unknown> } | null {
   if (!doc) return null;
   const availabilityLine = requiredString(doc.availabilityLine);
-  const email = requiredString(doc.email);
-  const stacks = (doc.stacks ?? [])
-    .map((stack) => {
-      const col = requiredString(stack.col);
-      const links = (stack.links ?? []).filter(
-        (link): link is { label: string; path: string; id: string } =>
-          Boolean(link.label && link.path && link.id),
-      );
-      return col && links.length ? { col, links } : null;
-    })
-    .filter((stack): stack is { col: string; links: { label: string; path: string; id: string }[] } =>
-      stack !== null,
-    );
-  const socials = (doc.socials ?? []).filter(
-    (social): social is { label: string; href: string; newTab: boolean } =>
-      Boolean(social.label && social.href),
-  ).map((social) => ({
-    label: social.label,
-    href: social.href,
-    newTab: Boolean(social.newTab),
-  }));
-  const overlayColumns = (doc.overlayColumns ?? [])
-    .map((column) => {
-      const items = (column.items ?? [])
-        .map(mapOverlayItem)
-        .filter((item): item is Record<string, unknown> => item !== null);
-      return items.length ? items : null;
-    })
-    .filter((column): column is Record<string, unknown>[] => column !== null);
-  const sectionIds = requiredList(doc.sectionIds);
   if (
     !availabilityLine ||
     typeof doc.availabilityCopies !== "number" ||
-    doc.availabilityCopies < 1 ||
-    !email ||
-    !stacks.length ||
-    !socials.length ||
-    !overlayColumns.length ||
-    !sectionIds
+    doc.availabilityCopies < 1
   ) {
     return null;
   }
@@ -363,11 +304,6 @@ export function mapNav(
     data: {
       availabilityLine,
       availabilityCopies: doc.availabilityCopies,
-      email,
-      stacks,
-      socials,
-      overlayColumns,
-      sectionIds,
     },
   };
 }

@@ -168,12 +168,9 @@ const about = defineCollection({
   }),
 });
 
-const overlayItem = z.union([
-  z.object({ label: z.string(), path: z.string() }),
-  z.object({ label: z.string(), action: z.literal("theme") }),
-]);
-
 const nav = defineCollection({
+  // ponytail: only the availability marquee. Stacks, socials, overlay, email,
+  // and scroll-spy ids are site wiring in `src/lib/content/nav.ts`.
   loader: sanityOrYaml({
     query: NAV_QUERY,
     fallback: file("src/content/nav.yaml"),
@@ -183,35 +180,6 @@ const nav = defineCollection({
   schema: z.object({
     availabilityLine: z.string(),
     availabilityCopies: z.number().int().positive(),
-    email: z.string(),
-    stacks: z
-      .array(
-        z.object({
-          col: z.string(),
-          links: z
-            .array(
-              z.object({
-                label: z.string(),
-                path: z.string(),
-                id: z.string(),
-              }),
-            )
-            .nonempty(),
-        }),
-      )
-      .nonempty(),
-    socials: z
-      .array(
-        z.object({
-          label: z.string(),
-          href: z.string(),
-          /** Opens in a new tab (Instagram, booking links). */
-          newTab: z.boolean().default(false),
-        }),
-      )
-      .nonempty(),
-    overlayColumns: z.array(z.array(overlayItem).nonempty()).nonempty(),
-    sectionIds: z.array(z.string()).nonempty(),
   }),
 });
 

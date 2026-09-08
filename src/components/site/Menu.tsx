@@ -32,7 +32,16 @@ import {
   settleGooey,
   type GooeyTarget,
 } from "@/lib/site/reveal/gooeyReveal";
-import type { AboutData, NavData, OverlayItem } from "@/lib/content/models";
+import type { AboutData } from "@/lib/content/models";
+import {
+  EMAIL_HREF,
+  NAV_STACKS,
+  OVERLAY_COLUMNS,
+  SECTION_IDS,
+  SOCIAL_LINKS,
+  type NavMarquee,
+  type OverlayItem,
+} from "@/lib/content/nav";
 import AboutPanel, { type AboutPanelMode } from "./AboutPanel";
 import RollingText from "./RollingText";
 import ThemeToggle from "./ThemeToggle";
@@ -115,13 +124,13 @@ function isInPageMenuNav(path: string): boolean {
 type MenuProps = {
   /** Current path from Astro — must match SSR HTML to avoid hydration mismatch. */
   initialPathname?: string;
-  nav: NavData;
+  marquee: NavMarquee;
   about: AboutData;
 };
 
 export default function Menu({
   initialPathname = "/",
-  nav,
+  marquee,
   about,
 }: MenuProps) {
   const [isOpen, setIsOpen] = useState(false);
@@ -134,7 +143,7 @@ export default function Menu({
   const [pathname, setPathname] = useState(initialPathname);
   const [isDesktopNav, setIsDesktopNav] = useState(false);
   const [contactOpen, setContactOpen] = useState(false);
-  const emailCopy = useCopyEmail(nav.email);
+  const emailCopy = useCopyEmail(EMAIL_HREF);
   const [lenis, setLenis] = useState<Lenis | null>(() => getSiteLenis());
 
   /** Single source of truth for the nav active dot. */
@@ -501,7 +510,7 @@ export default function Menu({
       raf = 0;
       const marker = window.innerHeight * 0.28;
       let current = "hero";
-      for (const id of nav.sectionIds) {
+      for (const id of SECTION_IDS) {
         const el = resolve(id);
         if (!el) continue;
         /* Use viewport top — offsetTop breaks when a section sits inside
@@ -525,7 +534,7 @@ export default function Menu({
       window.removeEventListener("scroll", schedule);
       unsub?.();
     };
-  }, [lenis, aboutOpen, pathname, nav.sectionIds]);
+  }, [lenis, aboutOpen, pathname]);
 
   const menuHeads = (): GooeyTarget[] => {
     if (menuHeadsRef.current.length) return menuHeadsRef.current;
@@ -1030,13 +1039,13 @@ export default function Menu({
   return (
     <>
       <div className="nav_marquee" ref={marqueeRef}>
-        <p className="sr-only">{nav.availabilityLine}</p>
+        <p className="sr-only">{marquee.availabilityLine}</p>
         <div className="nav_marquee_track" aria-hidden="true">
           {[0, 1].map((group) => (
             <div className="nav_marquee_group" key={group}>
-              {Array.from({ length: nav.availabilityCopies }, (_, i) => (
+              {Array.from({ length: marquee.availabilityCopies }, (_, i) => (
                 <span key={i} className="nav_marquee_copy text-style-small">
-                  {nav.availabilityLine}
+                  {marquee.availabilityLine}
                 </span>
               ))}
             </div>
@@ -1099,7 +1108,7 @@ export default function Menu({
                 </div>
               </div>
 
-              {nav.stacks.map(({ col, links }) => (
+              {NAV_STACKS.map(({ col, links }) => (
                 <div key={col} className={`nav_stack ${col}`}>
                   {links.map(({ label, path, id }) => {
                     const isActive = activeId === id;
@@ -1126,7 +1135,7 @@ export default function Menu({
                             id="nav_contact_dropdown"
                             className="nav_contact_dropdown"
                           >
-                            {nav.socials.map(
+                            {SOCIAL_LINKS.map(
                               ({ label: socialLabel, href, newTab }) => {
                                 const isMail = href.startsWith("mailto:");
                                 const line = isMail
@@ -1271,7 +1280,7 @@ export default function Menu({
               </a>
             </div>
             <div className="menu_overlay_grid">
-              {nav.overlayColumns.map((column, columnIndex) => (
+              {OVERLAY_COLUMNS.map((column, columnIndex) => (
                 <div className="menu_overlay_col" key={columnIndex}>
                   {column.map((item) =>
                     isOverlayLink(item) ? (

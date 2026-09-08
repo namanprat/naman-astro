@@ -110,7 +110,7 @@ if (!nav || !about) throw new Error("content: `nav` or `about` entry is missing"
     <Menu
       client:load
       initialPathname={Astro.url.pathname}
-      nav={nav.data}
+      marquee={nav.data}
       about={about.data}
     />
     <div class="site-backdrop">

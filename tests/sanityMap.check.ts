@@ -73,24 +73,14 @@ assert.equal((faq.data.items as { question: string }[])[0]?.question, "Who?");
 const nav = mapNav({
   availabilityLine: "available",
   availabilityCopies: 6,
-  email: "mailto:a.namanprat@gmail.com",
-  stacks: [
-    {
-      col: "is-home",
-      links: [{ label: "Home", path: "/", id: "hero" }],
-    },
-  ],
-  socials: [{ label: "Email", href: "mailto:a.namanprat@gmail.com" }],
-  overlayColumns: [
-    { items: [{ label: "Work", path: "/work" }, { label: "Theme", action: "theme" }] },
-  ],
-  sectionIds: ["hero", "team"],
 });
 assert.ok(nav);
-assert.equal((nav.data.overlayColumns as unknown[][])[0]?.length, 2);
-assert.deepEqual((nav.data.overlayColumns as { action?: string }[][])[0]?.[1], {
-  label: "Theme",
-  action: "theme",
-});
+assert.equal(nav.data.availabilityLine, "available");
+assert.equal(nav.data.availabilityCopies, 6);
+assert.equal(
+  mapNav({ availabilityLine: "available" }),
+  null,
+  "incomplete marquee is dropped so YAML can take over",
+);
 
 console.log("sanityMap: all assertions passed");
