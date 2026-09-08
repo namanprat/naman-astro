@@ -18,10 +18,10 @@ import {
   REVEAL_START,
   settleGooey,
   type GooeyTarget,
-} from "./gooeyReveal";
-import { go } from "./navigate";
-import { prefersReducedMotion } from "./prefersReducedMotion";
-import { initRollingText } from "./rollingText";
+} from "../../lib/site/reveal/gooeyReveal";
+import { go } from "../../lib/site/nav/navigate";
+import { prefersReducedMotion } from "../../lib/site/util/prefersReducedMotion";
+import { initRollingText } from "../../lib/site/reveal/rollingText";
 
 gsap.registerPlugin(CustomEase, ScrollTrigger);
 if (!CustomEase.get("camilleHop")) {

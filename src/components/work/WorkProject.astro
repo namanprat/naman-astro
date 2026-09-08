@@ -20,8 +20,8 @@ const { item } = Astro.props;
 </article>
 <Footer client:only="react" />
 <script>
-  import { bootLazyVideos } from "@/lib/site/lazyVideo";
-  import { bootSiteScroll } from "@/lib/site/lenisScroll";
+  import { bootLazyVideos } from "@/lib/site/util/lazyVideo";
+  import { bootSiteScroll } from "@/lib/site/scroll/lenisScroll";
   bootSiteScroll();
   // The case study is server-rendered, so its video is in the document before
   // any island boots — no need to wait for one.

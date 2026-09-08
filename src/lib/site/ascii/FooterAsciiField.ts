@@ -4,8 +4,8 @@
  * separate PNG. Not an R3F canvas: one extra WebGL context is enough.
  */
 import * as THREE from "three";
-import { shaderColor } from "../cssColor";
-import { footerAsciiInk } from "../siteColors";
+import { shaderColor } from "../webgl/cssColor";
+import { footerAsciiInk } from "../webgl/siteColors";
 import { getDufornAsciiAtlas } from "./asciiAtlas";
 import { ASCII_FIELD_FRAG, ASCII_FIELD_VERT } from "./asciiFieldShader";
 

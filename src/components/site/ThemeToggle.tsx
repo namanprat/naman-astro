@@ -1,8 +1,8 @@
 import { useEffect, useRef, useState } from "react";
 import gsap from "gsap";
-import { prefersReducedMotion } from "@/lib/site/prefersReducedMotion";
-import { syncThemeColor } from "@/lib/site/themeColor";
-import "@/lib/site/eases";
+import { prefersReducedMotion } from "@/lib/site/util/prefersReducedMotion";
+import { syncThemeColor } from "@/lib/site/util/themeColor";
+import "@/lib/site/util/eases";
 
 /** Circle centres of the inlined switch artwork — filled-left is the dark state. */
 const THEME_CX = { left: 36.3018, right: 87.4512 } as const;

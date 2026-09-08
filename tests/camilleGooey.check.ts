@@ -15,7 +15,7 @@ const css = readFileSync(
   "utf8",
 );
 const ts = readFileSync(
-  new URL("../src/lib/site/camilleSlider.ts", import.meta.url),
+  new URL("../src/components/site/CamilleSlider.ts", import.meta.url),
   "utf8",
 );
 

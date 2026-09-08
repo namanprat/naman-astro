@@ -6,7 +6,7 @@
  * same try/catch around both. They are the same concern — `/work`'s session
  * state — so they share a file and both defer to `sessionFlag`.
  */
-import { readFlag, takeFlag, writeFlag } from "./sessionFlag";
+import { readFlag, takeFlag, writeFlag } from "../util/sessionFlag";
 
 export type WorkView = "slider" | "grid";
 

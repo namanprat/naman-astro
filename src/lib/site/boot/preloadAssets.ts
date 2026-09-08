@@ -13,13 +13,13 @@
  * Every segment fails open — a dead asset reports complete rather than trapping
  * the visitor behind the ENTER gate.
  */
-import { shouldMountAboutBust } from "./aboutBust";
-import { isMobileLayout } from "./isMobileLayout";
+import { shouldMountAboutBust } from "../about/aboutBust";
+import { isMobileLayout } from "../util/isMobileLayout";
 import { completeAll, register, report } from "./preloadProgress";
 import {
   PROCESS_CARD_IDS,
   PROCESS_MODEL_URLS,
-} from "./process/processModelTuning";
+} from "../process/processModelTuning";
 
 const GRAIN_URL = "/main-assets/grain.webp";
 

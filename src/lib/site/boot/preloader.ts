@@ -3,18 +3,18 @@
  * no React, so the overlay paints before any island hydrates.
  */
 import gsap from "gsap";
-import { getSiteLenis, subscribeSiteLenis } from "./lenisBridge";
+import { getSiteLenis, subscribeSiteLenis } from "../scroll/lenisBridge";
 import {
   isPreloading,
   PRELOAD_ENTERED_EVENT,
   PRELOADING_CLASS,
-} from "./pageReveal";
-import { prefersReducedMotion } from "./prefersReducedMotion";
+} from "../reveal/pageReveal";
+import { prefersReducedMotion } from "../util/prefersReducedMotion";
 import { startPreload } from "./preloadAssets";
 import { segmentCount, subscribe } from "./preloadProgress";
-import { initRollingText } from "./rollingText";
+import { initRollingText } from "../reveal/rollingText";
 import "@/components/site/RollingText.css";
-import "./eases";
+import "../util/eases";
 
 /**
  * Seconds the counter spends per percentage point. Linear, so at 60fps every

@@ -5,15 +5,15 @@
  * ponytail: hard nav + sessionStorage FOUC flag, no ClientRouter.
  */
 import gsap from "gsap";
-import { getSiteLenis } from "./lenisBridge";
+import { getSiteLenis } from "../scroll/lenisBridge";
 import {
   isPreloading,
   markPageRevealed,
   PRELOAD_ENTERED_EVENT,
-} from "./pageReveal";
-import { prefersReducedMotion } from "./prefersReducedMotion";
-import { takeFlag } from "./sessionFlag";
-import "./eases";
+} from "../reveal/pageReveal";
+import { prefersReducedMotion } from "../util/prefersReducedMotion";
+import { takeFlag } from "../util/sessionFlag";
+import "../util/eases";
 
 export const PT_COVER_KEY = "pt:cover";
 

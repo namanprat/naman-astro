@@ -14,9 +14,9 @@
  */
 import gsap from "gsap";
 import { parkLines } from "./lineMask";
-import { prefersReducedMotion } from "./prefersReducedMotion";
+import { prefersReducedMotion } from "../util/prefersReducedMotion";
 import { PAGE_REVEALED_EVENT, isPageRevealed } from "./pageReveal";
-import { readFlag, writeFlag } from "./sessionFlag";
+import { readFlag, writeFlag } from "../util/sessionFlag";
 import {
   GOOEY_BLUR_VAR,
   blurPx,
@@ -24,7 +24,7 @@ import {
   setGooeyBlur,
   usesSoftGooey,
 } from "./gooeyReveal";
-import "./eases";
+import "../util/eases";
 
 const GOOEY = ".name_hero_gooey";
 const GOOEY_PARKED = "is-gooey-parked";

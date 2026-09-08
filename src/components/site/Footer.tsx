@@ -2,20 +2,20 @@ import { useEffect, useRef, useState } from "react";
 import gsap from "gsap";
 import ScrollTrigger from "gsap/ScrollTrigger";
 import { useGSAP } from "@gsap/react";
-import { go } from "@/lib/site/navigate";
-import { replayHomeIntro } from "@/lib/site/heroIntro";
-import { hashId, scrollToSection } from "@/lib/site/scrollToSection";
-import { openAbout, toggleAboutPanel } from "@/lib/site/aboutPanel";
+import { go } from "@/lib/site/nav/navigate";
+import { replayHomeIntro } from "@/lib/site/reveal/heroIntro";
+import { hashId, scrollToSection } from "@/lib/site/scroll/scrollToSection";
+import { openAbout, toggleAboutPanel } from "@/lib/site/about/aboutPanel";
 import {
   addGooeyReveal,
   parkGooey,
   prepareGooey,
   type GooeyTarget,
-} from "@/lib/site/gooeyReveal";
-import { getSiteLenis, subscribeSiteLenis } from "@/lib/site/lenisBridge";
-import { prefersReducedMotion } from "@/lib/site/prefersReducedMotion";
-import { previousFlowSibling } from "@/lib/site/previousFlowSibling";
-import { useCopyEmail } from "@/lib/site/copyEmail";
+} from "@/lib/site/reveal/gooeyReveal";
+import { getSiteLenis, subscribeSiteLenis } from "@/lib/site/scroll/lenisBridge";
+import { prefersReducedMotion } from "@/lib/site/util/prefersReducedMotion";
+import { previousFlowSibling } from "@/lib/site/util/previousFlowSibling";
+import { useCopyEmail } from "@/lib/site/util/copyEmail";
 import {
   EMAIL_HREF,
   NAV_STACKS,
@@ -23,7 +23,7 @@ import {
   socialLinkTabProps,
 } from "./Menu";
 import FooterAsciiLogo from "./FooterAsciiLogo";
-import { MOBILE_LAYOUT_MQ } from "@/lib/site/isMobileLayout";
+import { MOBILE_LAYOUT_MQ } from "@/lib/site/util/isMobileLayout";
 import RollingText from "./RollingText";
 import "./Footer.css";
 

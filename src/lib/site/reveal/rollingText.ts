@@ -6,7 +6,7 @@
 
 import gsap from "gsap";
 import { SplitText } from "gsap/SplitText";
-import { prefersReducedMotion } from "./prefersReducedMotion";
+import { prefersReducedMotion } from "../util/prefersReducedMotion";
 
 gsap.registerPlugin(SplitText);
 

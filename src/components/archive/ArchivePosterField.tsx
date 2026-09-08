@@ -1,5 +1,5 @@
 import { useMemo, useRef } from "react";
-import { SWATCH_LIGHT } from "@/lib/site/siteColors";
+import { SWATCH_LIGHT } from "@/lib/site/webgl/siteColors";
 import { Text } from "@react-three/drei";
 import { useFrame } from "@react-three/fiber";
 import ArchiveRig from "./ArchiveRig";

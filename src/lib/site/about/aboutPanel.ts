@@ -1,7 +1,7 @@
 /** Module API so Menu, Footer, and any link can open About without page routing. */
 
-import { MOBILE_LAYOUT_MQ } from "./isMobileLayout";
-import { go } from "./navigate";
+import { MOBILE_LAYOUT_MQ } from "../util/isMobileLayout";
+import { go } from "../nav/navigate";
 
 type AboutSetter = (open: boolean | ((prev: boolean) => boolean)) => void;
 

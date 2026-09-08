@@ -7,17 +7,17 @@ import {
   useState,
 } from "react";
 import gsap from "gsap";
-import { shouldMountAboutBust } from "@/lib/site/aboutBust";
-import { ABOUT_OPEN_CLASS } from "@/lib/site/aboutPanel";
-import { followAboutNav, releaseAboutNav } from "@/lib/site/aboutNavDock";
-import { getSiteLenis } from "@/lib/site/lenisBridge";
-import { prefersReducedMotion } from "@/lib/site/prefersReducedMotion";
+import { shouldMountAboutBust } from "@/lib/site/about/aboutBust";
+import { ABOUT_OPEN_CLASS } from "@/lib/site/about/aboutPanel";
+import { followAboutNav, releaseAboutNav } from "@/lib/site/about/aboutNavDock";
+import { getSiteLenis } from "@/lib/site/scroll/lenisBridge";
+import { prefersReducedMotion } from "@/lib/site/util/prefersReducedMotion";
 import {
   addGooeyReveal,
   parkGooey,
   prepareGooey,
-} from "@/lib/site/gooeyReveal";
-import "@/lib/site/eases";
+} from "@/lib/site/reveal/gooeyReveal";
+import "@/lib/site/util/eases";
 
 import AboutContent from "./about/AboutContent";
 

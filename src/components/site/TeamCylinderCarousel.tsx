@@ -11,7 +11,7 @@ import * as THREE from "three";
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import { workItems } from "@/content/work";
-import { prefersReducedMotion } from "@/lib/site/prefersReducedMotion";
+import { prefersReducedMotion } from "@/lib/site/util/prefersReducedMotion";
 import { useThemeInk, useThemeLight } from "@/lib/site/ascii/useThemeInk";
 import AsciiField from "./ascii/AsciiField";
 

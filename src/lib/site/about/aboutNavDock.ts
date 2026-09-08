@@ -6,7 +6,7 @@
  * close then looks like a snap to the bottom and a second hop home.
  */
 import gsap from "gsap";
-import { MOBILE_LAYOUT_MQ } from "./isMobileLayout";
+import { MOBILE_LAYOUT_MQ } from "../util/isMobileLayout";
 
 let restTop: number | null = null;
 

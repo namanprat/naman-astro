@@ -21,11 +21,11 @@ import {
   FluidSimStateProvider,
   useFluidSimStateRef,
 } from "@/lib/site/fluid/fluidSimContext";
-import { MOBILE_LAYOUT_MQ } from "@/lib/site/isMobileLayout";
-import { useCameraOverlay } from "@/lib/site/cameraOverlay";
-import { readCssColor, shaderColor } from "@/lib/site/cssColor";
+import { MOBILE_LAYOUT_MQ } from "@/lib/site/util/isMobileLayout";
+import { useCameraOverlay } from "@/lib/site/webgl/cameraOverlay";
+import { readCssColor, shaderColor } from "@/lib/site/webgl/cssColor";
 import { useThemeLight } from "@/lib/site/ascii/useThemeInk";
-import { SWATCH_TRAIL } from "@/lib/site/siteColors";
+import { SWATCH_TRAIL } from "@/lib/site/webgl/siteColors";
 import * as THREE from "three";
 
 /**

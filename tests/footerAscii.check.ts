@@ -7,7 +7,7 @@ import {
   footerAsciiInk,
   SWATCH_BLACK,
   SWATCH_LIGHT,
-} from "../src/lib/site/siteColors.ts";
+} from "../src/lib/site/webgl/siteColors.ts";
 
 assert.equal(
   footerAsciiInk(true),

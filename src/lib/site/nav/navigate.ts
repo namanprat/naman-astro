@@ -6,7 +6,7 @@ import {
   PT_COVER_KEY,
   resetPageTransition,
 } from "./pageTransition";
-import { writeFlag } from "./sessionFlag";
+import { writeFlag } from "../util/sessionFlag";
 
 export type GoOptions = {
   /** Menu overlay already covers the viewport — skip the rising-panel cover. */

@@ -1,4 +1,4 @@
-import { prefersReducedMotion } from "./prefersReducedMotion";
+import { prefersReducedMotion } from "../util/prefersReducedMotion";
 
 /** Swap this path to drop in any About-panel GLB (Draco OK). */
 export const BUST_URL = "/models/bust.glb";

@@ -20,11 +20,11 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { useFrame, useThree } from "@react-three/fiber";
 import * as THREE from "three";
 import gsap from "gsap";
-import { subscribeWordmark, type WordmarkCue } from "@/lib/site/heroIntro";
+import { subscribeWordmark, type WordmarkCue } from "@/lib/site/reveal/heroIntro";
 import { useThemeInk, useThemeLight } from "@/lib/site/ascii/useThemeInk";
 import { useFluidSimStateRef } from "@/lib/site/fluid/fluidSimContext";
-import { readCssColor, shaderColor } from "@/lib/site/cssColor";
-import { SWATCH_TRAIL } from "@/lib/site/siteColors";
+import { readCssColor, shaderColor } from "@/lib/site/webgl/cssColor";
+import { SWATCH_TRAIL } from "@/lib/site/webgl/siteColors";
 import { getGlassTuning } from "@/lib/site/hero/glassTuning";
 import {
   createWordmarkTexture,

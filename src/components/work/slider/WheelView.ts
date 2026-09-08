@@ -1,7 +1,7 @@
 import { gsap } from "gsap";
 import { Observer } from "gsap/Observer";
 import { scrollDelta } from "./scrollDelta";
-import { MOBILE_LAYOUT_MQ } from "@/lib/site/isMobileLayout";
+import { MOBILE_LAYOUT_MQ } from "@/lib/site/util/isMobileLayout";
 import { ringCopies, ringRadius } from "./wheelGeometry";
 
 gsap.registerPlugin(Observer);

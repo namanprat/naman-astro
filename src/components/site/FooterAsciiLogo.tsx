@@ -1,5 +1,5 @@
 import { useEffect, useRef, type RefObject } from "react";
-import { REDUCED_MOTION_QUERY } from "@/lib/site/prefersReducedMotion";
+import { REDUCED_MOTION_QUERY } from "@/lib/site/util/prefersReducedMotion";
 import { FooterAsciiField } from "@/lib/site/ascii/FooterAsciiField";
 import "./FooterAsciiLogo.css";
 

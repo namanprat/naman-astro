@@ -1,6 +1,6 @@
 import "../AboutPanel.css";
 import { useEffect, useRef, useState } from "react";
-import { shouldMountAboutBust } from "@/lib/site/aboutBust";
+import { shouldMountAboutBust } from "@/lib/site/about/aboutBust";
 import AboutContent from "./AboutContent";
 
 /**

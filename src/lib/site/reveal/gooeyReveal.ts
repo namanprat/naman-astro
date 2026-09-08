@@ -44,9 +44,9 @@ import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import { SplitText } from "gsap/SplitText";
 import { LINE_PARK_PERCENT } from "./lineMask";
-import { isMobileLayout } from "./isMobileLayout";
-import { prefersReducedMotion } from "./prefersReducedMotion";
-import { pollUntil, REVEAL_FAILSAFE_MS, REVEAL_POLL_MS } from "./pollUntil";
+import { isMobileLayout } from "../util/isMobileLayout";
+import { prefersReducedMotion } from "../util/prefersReducedMotion";
+import { pollUntil, REVEAL_FAILSAFE_MS, REVEAL_POLL_MS } from "../util/pollUntil";
 
 gsap.registerPlugin(ScrollTrigger, SplitText);
 

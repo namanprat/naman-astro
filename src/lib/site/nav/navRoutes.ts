@@ -11,9 +11,9 @@
  */
 import type Lenis from "lenis";
 import { go, type GoOptions } from "./navigate";
-import { hashId, scrollToSection } from "./scrollToSection";
-import { closeAboutPanel, openAbout } from "./aboutPanel";
-import { replayHomeIntro } from "./heroIntro";
+import { hashId, scrollToSection } from "../scroll/scrollToSection";
+import { closeAboutPanel, openAbout } from "../about/aboutPanel";
+import { replayHomeIntro } from "../reveal/heroIntro";
 import { markWorkReturn } from "./workSession";
 
 type RouteContext = {

@@ -8,7 +8,7 @@
  * sessionStorage, so they survive the hard navigations `pageTransition.ts` does.
  */
 import type GUI from "lil-gui";
-import { MOBILE_LAYOUT_MQ } from "../isMobileLayout";
+import { MOBILE_LAYOUT_MQ } from "../util/isMobileLayout";
 import {
   GLASS_DEFAULTS,
   getGlassTuning,

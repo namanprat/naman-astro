@@ -9,11 +9,11 @@
  * `output`, hung on `scene.background`.
  */
 import * as THREE from "three";
-import { readCssColor, shaderColor } from "../cssColor";
-import { MOBILE_LAYOUT_MQ } from "../isMobileLayout";
-import { prefersReducedMotion } from "../prefersReducedMotion";
-import { reportHomeCanvasReady } from "../preloadAssets";
-import { SWATCH_DARK, SWATCH_TRAIL } from "../siteColors";
+import { readCssColor, shaderColor } from "../webgl/cssColor";
+import { MOBILE_LAYOUT_MQ } from "../util/isMobileLayout";
+import { prefersReducedMotion } from "../util/prefersReducedMotion";
+import { reportHomeCanvasReady } from "../boot/preloadAssets";
+import { SWATCH_DARK, SWATCH_TRAIL } from "../webgl/siteColors";
 import { pace, SETTLE_AFTER_MS } from "./fluidPacing";
 import shaders from "./shaders";
 

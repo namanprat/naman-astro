@@ -7,8 +7,8 @@
 import gsap from "gsap";
 import { SplitText } from "gsap/SplitText";
 import { parkLines } from "./lineMask";
-import { prefersReducedMotion } from "./prefersReducedMotion";
-import { pollUntil, REVEAL_FAILSAFE_MS, REVEAL_POLL_MS } from "./pollUntil";
+import { prefersReducedMotion } from "../util/prefersReducedMotion";
+import { pollUntil, REVEAL_FAILSAFE_MS, REVEAL_POLL_MS } from "../util/pollUntil";
 
 gsap.registerPlugin(SplitText);
 

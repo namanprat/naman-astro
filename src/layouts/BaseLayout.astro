@@ -110,10 +110,10 @@ const isArchive = Astro.url.pathname === "/archive";
       <slot />
     </main>
     <script>
-      import { bootIfCovered } from "@/lib/site/pageTransition";
-      import { revealLines } from "@/lib/site/lineReveal";
-      import { bootGooeyHeadings } from "@/lib/site/gooeyReveal";
-      import { bootOverlayScrollbar } from "@/lib/site/overlayScrollbar";
+      import { bootIfCovered } from "@/lib/site/nav/pageTransition";
+      import { revealLines } from "@/lib/site/reveal/lineReveal";
+      import { bootGooeyHeadings } from "@/lib/site/reveal/gooeyReveal";
+      import { bootOverlayScrollbar } from "@/lib/site/scroll/overlayScrollbar";
       bootOverlayScrollbar();
       // Parallel, not chained: each owns its own hold class and its own 2s
       // failsafe, so chaining would stack the two budgets into a 4s worst case.

@@ -9,7 +9,7 @@ import {
   reset,
   segmentCount,
   subscribe,
-} from "../src/lib/site/preloadProgress.ts";
+} from "../src/lib/site/boot/preloadProgress.ts";
 
 function latest(): number {
   let value = -1;
