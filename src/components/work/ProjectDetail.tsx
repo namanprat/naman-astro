@@ -19,7 +19,7 @@ function CoverFigure({ item }: { item: WorkItem }) {
 function CoverVideo({ src, title }: { src: string; title: string }) {
   return (
     <figure className="project_cover_video">
-      {/* `data-lazy-src`, not `src`: see `lib/site/lazyVideo.ts`. `/work`
+      {/* `data-lazy-src`, not `src`: see `lib/site/util/lazyVideo.ts`. `/work`
           renders every project's markup for the Flip overlay, so a real `src`
           with `autoPlay` downloaded all of them on arrival. */}
       <video

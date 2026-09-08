@@ -3,9 +3,13 @@
  * Studio closer. Copy is server-rendered; the cylinder is an R3F island,
  * same split as archive.astro / CamilleSlider.
  */
+import { getEntry } from "astro:content";
 import TeamCylinderCarousel from "./TeamCylinderCarousel";
 import AnimeLink from "./AnimeLink.astro";
-import "./Team.css";
+
+const site = await getEntry("site", "site");
+if (!site) throw new Error("content: the `site` entry is missing");
+const { titleLines, body, ctaLabel, ctaHref } = site.data.team;
 ---
 
 <section class="team_wrap" id="team" aria-label="Practice">
@@ -15,18 +19,11 @@ import "./Team.css";
   <div class="team_copy container">
     <div class="team_layout grid is-12">
       <h2 class="team_title text-style-h1 alignment-center">
-        We close
-        <br />
-        that gap.
+        {titleLines.map((line, i) => (<>{i > 0 && <br />}{line}</>))}
       </h2>
       <div class="team_copy_stack">
-        <p class="text-style-main alignment-center">
-          Early on, every impression counts double. People decide whether
-          you're worth their time before they read a word. We find what makes
-          you different, build the whole presence around it, and make sure they
-          feel that first.
-        </p>
-        <AnimeLink href="/work" class="team_cta">View Work</AnimeLink>
+        <p class="text-style-main alignment-center">{body}</p>
+        <AnimeLink href={ctaHref} class="team_cta">{ctaLabel}</AnimeLink>
       </div>
     </div>
   </div>
@@ -37,3 +34,97 @@ import "./Team.css";
   bootRollingText();
   bootTransitionLinks();
 </script>
+
+<style>
+  /* ponytail: scoped, and layered on purpose. Astro adds its cid to this
+     component's own selectors and leaves `html.*` alone, so nothing here can
+     reach another component. The `@layer` wrapper is what keeps that from
+     changing the cascade: a scoped block is unlayered by default and unlayered
+     beats every layer, so without it these rules would outrank the whole
+     `components` layer they came from. */
+@layer components.section {
+  .team_wrap {
+    position: relative;
+    width: 100%;
+    /* Small viewport, same reason as `.hero` in `styles/site.css`: a `dvh`
+       spacer grows when the phone toolbar hides, and home carries two of them,
+       so the footer used to net away from the reader as they scrolled. The
+       token is also the only legal spelling here — `css-guard` holds this file
+       breakpointless, so the 64rem cut cannot be written as a media query. */
+    min-height: var(--site--screen-height);
+    margin: 0;
+    padding-top: 0;
+    padding-bottom: 0;
+    background-color: transparent;
+    overflow: clip;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+  }
+
+  .team_cylinder {
+    position: absolute;
+    inset: 0;
+    z-index: 0;
+    width: 100%;
+    height: 100%;
+    display: block;
+    pointer-events: none;
+  }
+
+  .team_cylinder canvas {
+    display: block;
+    width: 100%;
+    height: 100%;
+  }
+
+  .team_copy {
+    position: relative;
+    /* No `z-index`, same reason as `.hero` and `.studio` in `styles/site.css`:
+       a stacking context here isolates the group from the page backdrop, and
+       `.team_title` / `.team_copy_stack` blend `difference` against the fluid
+       trail (`FluidCanvas.css`) — "We close that gap." sat flat while the
+       liquid ran under it. Paint order is unchanged: `.team_cylinder` is the
+       earlier sibling, so this still lands on top of it. */
+    width: 100%;
+    min-width: 0;
+    color: var(--text);
+  }
+
+  .team_layout {
+    width: 100%;
+    align-content: center;
+    row-gap: var(--space-8);
+  }
+
+  /* Span `--site-column-count`, not 12 — a 4-col `.grid.is-12` must not grow
+     implicit tracks past padding. Large inset is title 3/span 8, copy 5/span 4.
+     Both collapse to 1/span 4 below the large breakpoint, where the multiplier
+     is 0 and the count is 4. */
+  .team_title {
+    grid-column: calc(1 + 2 * var(--_responsive---large)) / span calc(var(--site-column-count) - 4 * var(--_responsive---large));
+    margin: 0;
+    max-width: none;
+    min-width: 0;
+  }
+
+  .team_copy_stack {
+    grid-column: calc(1 + 4 * var(--_responsive---large)) / span calc(var(--site-column-count) - 8 * var(--_responsive---large));
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: var(--space-5);
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
+  }
+
+  .team_cta {
+    margin: 0;
+    pointer-events: auto;
+    text-decoration: none;
+    color: inherit;
+  }
+}
+</style>

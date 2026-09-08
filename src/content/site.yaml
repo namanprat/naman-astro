@@ -3,14 +3,21 @@
 # drawn and why consts.ts cannot move.
 
 site:
-  heroNote: Brand, web, and motion<br />for early-stage companies.
+  # ponytail: lines, not one string with a <br /> in it. The break is an
+  # editorial decision so it belongs in the content, but as markup it would
+  # force set:html at every render site and put raw HTML in a CMS field.
+  heroNote:
+    - Brand, web, and motion
+    - for early-stage companies.
 
   manifesto: We're a design practice for early-stage brands, closing the gap
     between who you already are and how the world sees you. Good design isn't
     about adding more. It's about knowing what to leave out.
 
   team:
-    title: We close<br />that gap.
+    titleLines:
+      - We close
+      - that gap.
     body: Early on, every impression counts double. People decide whether you're
       worth their time before they read a word. We find what makes you different,
       build the whole presence around it, and make sure they feel that first.

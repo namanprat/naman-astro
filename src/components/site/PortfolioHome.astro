@@ -4,12 +4,17 @@
  * (CamilleSlider overlay chrome) can sit between React islands. Footer/Menu
  * read the document scroller from `lenisBridge`.
  */
+import { getEntry } from "astro:content";
 import Manifesto from "./Manifesto.astro";
 import CamilleSlider from "./CamilleSlider.astro";
 import Process from "./Process.tsx";
 import Faq from "./Faq.astro";
 import Team from "./Team.astro";
 import Footer from "./Footer.tsx";
+
+const site = await getEntry("site", "site");
+if (!site) throw new Error("content: the `site` entry is missing");
+const { heroNote } = site.data;
 ---
 
 <section class="hero" id="hero" aria-label="Home">
@@ -17,7 +22,7 @@ import Footer from "./Footer.tsx";
       reserves the first viewport, which makes it the one box already sized to
       the screen these two can hang off. */}
   <p class="hero_note text-style-main">
-    Brand, web, and motion<br />for early-stage companies.
+    {heroNote.map((line, i) => (<>{i > 0 && <br />}{line}</>))}
   </p>
   <a class="hero_scroll" href="#studio">
     <span class="sr-only">Skip to the studio</span>

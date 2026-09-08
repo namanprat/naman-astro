@@ -856,7 +856,7 @@ export default function Menu({ initialPathname = "/" }: MenuProps) {
     setAboutOpen(false);
   };
 
-  /* Shared with the footer — see `lib/site/navRoutes.ts`. */
+  /* Shared with the footer — see `lib/site/nav/navRoutes.ts`. */
   const goTo = (path: string, options?: GoOptions) =>
     goToRoute(path, { lenis, options });
 

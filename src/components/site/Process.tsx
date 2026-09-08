@@ -13,7 +13,7 @@ const ProcessCardCanvas = lazy(() => import("./ProcessCardCanvas"));
 
 /**
  * The section heading is an ordinary `h2` and each card title an `h3`, so both
- * are picked up by the site-wide gooey entrance in `lib/site/gooeyReveal.ts` —
+ * are picked up by the site-wide gooey entrance in `lib/site/reveal/gooeyReveal.ts` —
  * `.process` is absent from that module's SKIP list for exactly this reason.
  * The heading's hanging first line is the empty `.studio_title_indent` box,
  * not a `text-indent` — being ordinary inline content, it wraps and splits

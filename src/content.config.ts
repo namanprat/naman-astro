@@ -169,10 +169,10 @@ const viewItem = z.object({ id: z.string(), label: z.string() });
 const site = defineCollection({
   loader: file("src/content/site.yaml"),
   schema: z.object({
-    heroNote: z.string(),
+    heroNote: z.array(z.string()).nonempty(),
     manifesto: z.string(),
     team: z.object({
-      title: z.string(),
+      titleLines: z.array(z.string()).nonempty(),
       body: z.string(),
       ctaLabel: z.string(),
       ctaHref: z.string(),

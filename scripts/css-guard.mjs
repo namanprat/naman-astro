@@ -9,10 +9,10 @@ import { readFileSync } from "node:fs";
 const files = [
   "src/components/site/Faq.astro",
   "src/components/site/Process.css",
-  "src/components/site/Manifesto.css",
+  "src/components/site/Manifesto.astro",
   "src/components/site/CamilleSlider.css",
-  "src/components/site/Team.css",
-  "src/components/site/AnimeLink.css",
+  "src/components/site/Team.astro",
+  "src/components/site/AnimeLink.astro",
   "src/components/site/RollingText.css",
   "src/components/ViewSwitcher.css",
   "src/styles/patterns.css",
