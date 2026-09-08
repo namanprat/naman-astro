@@ -4,8 +4,8 @@
   "version": "1.0.0",
   "license": "UNLICENSED",
   "scripts": {
-    "dev": "sanity dev",
-    "start": "sanity dev",
+    "dev": "sanity dev --host 0.0.0.0 --port 3333",
+    "start": "sanity dev --host 0.0.0.0 --port 3333",
     "build": "sanity build",
     "deploy": "sanity deploy"
   },
