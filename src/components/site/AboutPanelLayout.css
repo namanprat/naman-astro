@@ -1,0 +1,346 @@
+/* Form: sibling sheet, first of four the `AboutPanel.css` barrel imports.
+ *
+ * ponytail: the parts of the panel that are the same in all three modes — the
+ * shell, the surface, the scrollport, the 12-column content map and the copy
+ * inside it. Everything here is written without naming a mode, which is the
+ * test for belonging in this file: `AboutPanelOverlay.css` qualifies its
+ * selectors with `.is-in-menu`, `:not(.is-page)` or `.about_panel_backdrop`,
+ * `AboutPanelPage.css` with `.is-page`, and what is left over is this.
+ *
+ * ponytail: `AboutPage.tsx` leans on that split deliberately. The route
+ * inherits the phone stacking rather than restating it, so a rule that
+ * genuinely applies to every mode has to stay unqualified here — qualifying
+ * one to "clarify" which mode it serves would silently drop it from the
+ * route.
+ *
+ * Breakpointless, so `scripts/css-guard.mjs` holds it there. The
+ * `(hover: hover) and (pointer: fine)` block below is not a width query and
+ * stays: it asks whether there is a pointer to give a grab cursor to, which
+ * is the question it means, and no viewport width answers it.
+ */
+@layer components.page {
+.about_panel {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: auto;
+  z-index: calc(var(--z--nav) - 1);
+  /* Fill lives on __surface — the panel stays transparent so it can carry the
+     floating gutter as padding. Overflow stays visible so the surface can
+     slide in from above (scroll lives on __surface). */
+  background-color: transparent;
+  /* Dark mode: black on accent. Light mode: white on frost.
+     Never inherit the page's light-mode grey ink.
+
+     Hoisted out of `.about_panel` onto `:not(.is-page)` below: the route is a
+     document, not a card, so it has to keep the theme's own ink. Overriding
+     from `.is-page` is not possible — `--text` is reassigned on this same
+     element, so any `var(--text)` there would read the shadowed value. */
+  overflow: visible;
+  pointer-events: none;
+  visibility: hidden;
+  box-sizing: border-box;
+  /* Outer float — gutter air on all four sides; surface is width 100% inside. */
+  padding: var(--site-gutter);
+  display: flex;
+  flex-direction: column;
+  /*
+    Distance from the surface edge to the content band, on every side.
+
+    The band stays locked to the site grid (`--site--grid-width`), so its side
+    inset is not a padding at all — it is what is left over after centring a
+    `100vw - margin*2` band inside a `100vw - gutter*2` surface, i.e. exactly
+    `margin - gutter`. `--max-width-main` is `100vw`, so the band never clamps
+    and that identity always holds.
+
+    Mirroring it on the block axis is what makes top match the sides. Hardcoding
+    a gutter here is what drifted them apart: both tokens are fluid clamps with
+    different ranges (gutter 16→32, margin 16→48), so the gap between them —
+    and so the mismatch — grew with the viewport.
+  */
+  --about--inset: calc(var(--site-margin) - var(--site-gutter));
+}
+
+.about_panel_surface {
+  position: relative;
+  background-color: var(--surface-accent);
+  /* Same one-function chain as the other three frosted surfaces (footer, menu
+     overlay, view switcher). This used to add
+     `saturate(var(--surface-frost-saturate, 1)) contrast(var(--surface-frost-contrast, 1))`
+     — neither token was ever defined anywhere, so both resolved to their `1`
+     fallback and the pass was a no-op dressed up as a tuning knob. If the
+     light frost ever needs the blob edges pulled back out, define the tokens
+     for real and give all four surfaces the same chain. */
+  backdrop-filter: blur(var(--surface-frost-blur));
+  width: 100%;
+  max-height: calc(85vh - var(--site-gutter) * 2);
+  overflow: visible;
+  box-sizing: border-box;
+  /* Slide with `top`, not transform: a GSAP translate makes this a backdrop
+     root and the frost samples the empty panel instead of the page. */
+}
+
+/* Dark mode: fully opaque orange; blur is not needed. */
+html.theme-dark .about_panel_surface {
+  background-color: var(--brand-500);
+  backdrop-filter: none;
+}
+
+/* Scroll lives here, not on the frost node: overflow on the same box as
+   backdrop-filter is a common Safari miss, and `will-change: transform`
+   used to promote an empty layer the filter then sampled. */
+.about_panel_scroll {
+  max-height: calc(85vh - var(--site-gutter) * 2);
+  overflow-x: hidden;
+  overflow-y: auto;
+  scrollbar-width: none;
+}
+
+.about_panel_scroll::-webkit-scrollbar {
+  width: 0;
+  height: 0;
+  display: none;
+  background: transparent;
+}
+
+/* Transparent to the parent grid, so the reveal wrapper costs no box. The
+   overlay needs a real one for GSAP to move and overrides this — see
+   `AboutPanelOverlay.css`. */
+.about_panel_reveal_inner {
+  display: contents;
+}
+
+.about_panel.is-open {
+  visibility: visible;
+}
+
+.about_panel.is-open .about_panel_surface {
+  pointer-events: auto;
+}
+
+.about_panel:focus {
+  outline: none;
+}
+
+/*
+  Same column band as the page overlay / nav. Vertical pad only.
+*/
+.about_panel_inner.container {
+  flex: 0 1 auto;
+  min-height: 0;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  /* `--site-width` is `%`-based, so it shrinks inside this padded card.
+     `--site--grid-width` is `vw`-based — same band as the Shift+G overlay. */
+  width: var(--site--grid-width);
+  max-width: var(--max-width-main);
+  margin-inline: auto;
+  padding-block: var(--about--inset);
+  padding-inline: 0;
+}
+
+/*
+  12-col map, on the nav stacks' own tracks:
+    media 1–4, lead 5–end
+    Services 8–9 (.nav_stack.is-home)
+    Clients 10–12 (.nav_stack.is-about + .nav_utility_stack)
+
+  Two rows: the lead takes row 1, the lists row 2. Media spans both, and
+  row 2 is the 1fr that absorbs whatever height the media's square forces —
+  which is what lets the lists sit on its bottom edge.
+*/
+.about_panel_grid {
+  flex: 0 1 auto;
+  width: 100%;
+  min-height: 0;
+  align-items: start;
+  grid-template-rows: auto 1fr;
+  /* Row gap only used when content stacks under media on small. */
+  row-gap: var(--space-8);
+}
+
+.about_panel_media {
+  grid-column: 1 / span 4;
+  grid-row: 1 / span 2;
+  justify-self: stretch;
+  align-self: start;
+  position: relative;
+  margin: 0;
+  box-sizing: border-box;
+  width: 100%;
+  max-width: 100%;
+  aspect-ratio: 1;
+  height: auto;
+  overflow: clip;
+  /* Ride-mode ground — always --black (both themes); the ASCII canvas clears
+     transparent and composites onto it with mix-blend-mode: screen.
+     inMenu parks this on the dissolve inner so the plate isn't visible
+     before the headers unreveal. */
+  background-color: var(--dark-900);
+  pointer-events: auto;
+}
+
+.about_panel_media canvas,
+.about_panel_canvas {
+  width: 100%;
+  height: 100%;
+  display: block;
+  pointer-events: auto;
+  mix-blend-mode: screen;
+}
+
+/* Same query `AboutAsciiCanvas` mounts `<OrbitControls>` behind. Without the
+   controls there is nothing to grab, and a grab cursor over a bust that only
+   spins by itself promises an interaction that is not there. */
+@media (hover: hover) and (pointer: fine) {
+  .about_panel_media canvas,
+  .about_panel_canvas {
+    cursor: grab;
+  }
+
+  .about_panel_media canvas:active,
+  .about_panel_canvas:active {
+    cursor: grabbing;
+  }
+}
+
+.about_panel_intro {
+  grid-column: 5 / -1;
+  grid-row: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  min-width: 0;
+  /* Lead spans 8 of 12 tracks (5–12). Two tracks in = column 7.
+     Indent is % of this box so it tracks the about grid, not a page token
+     that can resolve to 0. */
+  --about--indent-cols: 2;
+  --about--lead-cols: 8;
+  --about--indent: calc(var(--about--indent-cols) * (100% + var(--site-gutter)) / var(--about--lead-cols));
+}
+
+/*
+  `width: 100%` is load-bearing, not tidying.
+
+  `.about_panel_intro` is a column flex box with `align-items: flex-start`, and
+  `.about_panel_reveal_inner` is `display: contents`, so this heading is itself
+  a flex item — which means its width would otherwise be shrink-to-fit. Blink
+  resolves that as `min(max-content, available)` and lands on the full column;
+  WebKit folds the `overflow-wrap: break-word` that `base.css` puts on every
+  heading into its min-content calculation and collapses the box to its
+  narrowest legal width, i.e. one word per line.
+
+  That is not a transient mis-measure either: `prepareGooey` splits this
+  heading with SplitText on open and bakes the wrap points into real
+  `.gooey_reveal_line` divs, so a collapsed first layout stays collapsed.
+
+  A definite width means no engine ever computes an intrinsic one. It resolves
+  against the flex container in all three modes (ride / padded / inMenu), so
+  the in-menu variant — same `align-items: flex-start` — is covered too.
+*/
+.about_panel_lead {
+  margin: 0;
+  width: 100%;
+  max-width: none;
+  color: var(--panel-ink);
+  line-height: 1.1;
+  display: block;
+  text-wrap: wrap;
+  /* Leading-trim ::before would swallow text-indent. */
+  text-indent: var(--about--indent);
+}
+
+.about_panel_lead::before,
+.about_panel_lead::after {
+  content: none;
+  display: none;
+  margin: 0;
+}
+
+.about_panel_col.is-services {
+  grid-column: 8 / span 2;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.about_panel_col.is-clients {
+  grid-column: 10 / -1;
+  display: grid;
+  grid-template-columns: subgrid;
+  grid-template-rows: auto auto;
+  gap: var(--space-3) var(--site-gutter);
+}
+
+.about_panel_col.is-services,
+.about_panel_col.is-clients {
+  grid-row: 2;
+  align-self: end;
+}
+
+.about_panel :is(h1, h2, h3, h4, h5, h6, p) {
+  color: var(--panel-ink);
+}
+
+.about_panel_col {
+  min-width: 0;
+}
+
+.about_panel_col_label {
+  margin: 0;
+  color: var(--panel-ink);
+}
+
+/* Grid placement owns the width now — a span token here would fight it. */
+.about_panel_col_list {
+  margin: 0;
+  padding: 0;
+  color: var(--panel-ink);
+  max-width: 100%;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+
+.about_panel_col_list p {
+  margin: 0;
+}
+
+.about_panel_col.is-clients .about_panel_col_label {
+  grid-column: 1 / span 2;
+  grid-row: 1;
+}
+
+.about_panel_clients_cols {
+  display: grid;
+  grid-template-columns: subgrid;
+  grid-column: 1 / -1;
+  grid-row: 2;
+  align-items: start;
+}
+
+/* Hug the names rather than stretching to a track, while each column's left
+   edge still lands on a site grid line. Two columns (8 clients / 4 per col)
+   placed two tracks apart — one track is 72px and the longest name needs
+   123px, so adjacent tracks would collide. */
+.about_panel_clients_cols .about_panel_col_list {
+  /* Hug the longest name. `max-width: none` is load-bearing: the base
+     .about_panel_col_list sets `max-width: 100%`, which resolves against the
+     72px track and clamps max-content straight back to a wrapping column. */
+  width: max-content;
+  max-width: none;
+  min-width: 0;
+  justify-self: start;
+}
+
+.about_panel_clients_cols > *:nth-child(2) {
+  grid-column: 3;
+}
+
+.about_panel_lists {
+  display: contents;
+}
+}

@@ -1,0 +1,210 @@
+/* Form: sibling sheet, second of four the `AboutPanel.css` barrel imports.
+ *
+ * ponytail: the panel as a card — the scrim behind it, the inverted ink it
+ * paints on, and the full-screen `.is-in-menu` variant that drops the card
+ * geometry to become the menu's own field. Every selector is qualified by
+ * `.about_panel_backdrop`, `:not(.is-page)`, `.is-padded` or `.is-in-menu`,
+ * so nothing here reaches the `/about` route.
+ *
+ * ponytail: after `AboutPanelLayout.css` and before the breakpoints, and both
+ * halves of that matter. `.about_panel.is-in-menu` re-points `--text` at the
+ * menu ink and ties on specificity with the `:not(.is-page)` block above it,
+ * so the two have to keep their order; and `@media (width >= 48rem)` in
+ * `AboutPanelBreakpoints.css` overrides `.is-padded`'s `padding-top` at the
+ * same specificity, so it has to come after this file.
+ *
+ * ponytail: the two `html.theme-light` blocks are here rather than in a shared
+ * sheet because the thing they describe is this card. Light mode drops the
+ * scrim entirely — the frost already separates the card from the page, and a
+ * second darkening on top of it reads as a smudge — and flips the card's ink
+ * to `--light-100` to stay legible on the frost. Both are card behaviour, so
+ * they live with the card.
+ */
+@layer components.page {
+.about_panel_backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: calc(var(--z--nav) - 2);
+  margin: 0;
+  padding: 0;
+  border: 0;
+  background-color: color-mix(in srgb, var(--dark-900) 20%, transparent);
+  cursor: pointer;
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+}
+
+.about_panel_backdrop.is-open {
+  pointer-events: all;
+}
+
+/* Soften the scrim in light mode so the frosted surface can read the page. */
+html.theme-light .about_panel_backdrop {
+  background-color: transparent;
+}
+
+.about_panel:not(.is-page) {
+  --panel-ink: var(--dark-900);
+  --text: var(--panel-ink);
+  color: var(--panel-ink);
+}
+
+html.theme-light .about_panel:not(.is-page) {
+  --panel-ink: var(--light-100);
+}
+
+.about_panel.is-padded {
+  padding-top: calc(var(--nav-offset, var(--site--nav-offset)) + var(--site-gutter));
+}
+
+.about_panel.is-in-menu {
+  z-index: var(--z--menu);
+  inset: 0;
+  width: 100%;
+  height: 100dvh;
+  /* Overlay is the field — no floating card gutter. Inline padding is
+     the gutter, not the margin, so the surface sits where it does in the card
+     modes and `--about--inset` resolves to the same number in all three. The
+     band inside is still `--site--grid-width`, so content lands on the same
+     grid line either way — only the (transparent) surface edge moves. */
+  padding: 0;
+  padding-top: var(--nav-offset, var(--site--nav-offset));
+  padding-inline: var(--site-gutter);
+  padding-bottom: calc(var(--site-margin) + var(--site--safe-area-bottom));
+  overflow: clip;
+  /* Overlay ink: black on accent (dark), white on frost (light). */
+  --panel-ink: var(--menu-ink, var(--dark-900));
+  --text: var(--menu-ink, var(--dark-900));
+}
+
+html.theme-light .about_panel.is-in-menu {
+  --panel-ink: var(--menu-ink, var(--light-100));
+  --text: var(--menu-ink, var(--light-100));
+}
+
+.about_panel.is-in-menu .about_panel_backdrop {
+  pointer-events: none;
+  visibility: hidden;
+}
+
+.about_panel.is-in-menu .about_panel_surface {
+  background-color: transparent;
+  backdrop-filter: none;
+  border-radius: 0;
+  max-height: none;
+  height: 100%;
+  overflow: visible;
+}
+
+.about_panel.is-in-menu .about_panel_scroll {
+  max-height: none;
+  height: 100%;
+}
+
+/* No width/padding override — inMenu uses the same grid band and the same
+   `--about--inset` as the card modes. */
+
+.about_panel.is-in-menu .about_panel_reveal:not(.about_panel_intro) {
+  overflow: clip;
+  clip-path: polygon(0 0, 100% 0, 100% 100%, 0% 100%);
+}
+
+/* The wrapper is `display: contents` everywhere else (`AboutPanelLayout.css`).
+   Here it has to be a real box, because GSAP moves it. */
+.about_panel.is-in-menu .about_panel_reveal_inner {
+  display: block;
+  will-change: transform, opacity;
+}
+
+.about_panel.is-in-menu .about_panel_intro .about_panel_reveal_inner {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  min-width: 0;
+}
+
+.about_panel.is-in-menu .about_panel_col.is-services .about_panel_reveal_inner,
+.about_panel.is-in-menu .about_panel_col.is-clients .about_panel_reveal_inner {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.about_panel.is-in-menu .about_panel_media {
+  background-color: transparent;
+}
+
+.about_panel.is-in-menu .about_panel_media .about_panel_reveal_inner {
+  width: 100%;
+  height: 100%;
+  background-color: var(--dark-900);
+}
+
+/*
+  Stacked card: h3, then canvas, then Services | Clients (side by side).
+  Below 48rem the lists stack with Clients above Services.
+  inMenu always; standalone padded About below 48rem.
+*/
+.about_panel.is-in-menu .about_panel_grid {
+  grid-template-rows: auto auto auto;
+}
+
+.about_panel.is-in-menu .about_panel_intro {
+  grid-column: 1 / -1;
+  grid-row: 1;
+  --about--indent-cols: 0;
+  --about--lead-cols: 1;
+  --about--indent: 0;
+}
+
+.about_panel.is-in-menu .about_panel_lead {
+  text-indent: 0;
+}
+
+.about_panel.is-in-menu .about_panel_media {
+  grid-column: 1 / -1;
+  grid-row: 2;
+  width: 100%;
+  max-width: none;
+}
+
+.about_panel.is-in-menu .about_panel_lists {
+  display: grid;
+  grid-column: 1 / -1;
+  grid-row: 3;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1.4fr);
+  gap: var(--space-8) var(--site-gutter);
+  align-items: start;
+}
+
+.about_panel.is-in-menu .about_panel_col.is-services,
+.about_panel.is-in-menu .about_panel_col.is-clients {
+  grid-column: auto;
+  grid-row: auto;
+  align-self: start;
+}
+
+.about_panel.is-in-menu .about_panel_col.is-clients {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.about_panel.is-in-menu .about_panel_clients_cols {
+  display: grid;
+  grid-template-columns: repeat(2, max-content);
+  grid-column: auto;
+  grid-row: auto;
+  gap: var(--space-3) var(--site-gutter);
+}
+
+.about_panel.is-in-menu .about_panel_clients_cols > *:nth-child(2) {
+  grid-column: auto;
+}
+
+.about_panel.is-in-menu .about_panel_col.is-clients .about_panel_col_label {
+  grid-column: auto;
+  grid-row: auto;
+}
+}
