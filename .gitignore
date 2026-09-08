@@ -33,8 +33,3 @@ studio-duforn-portfolio/.sanity
 # local agent settings
 .claude/settings.local.json
 
-# playwright
-/test-results/
-/playwright-report/
-/blob-report/
-/.playwright/

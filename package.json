@@ -17,8 +17,7 @@
     "format": "prettier --write .",
     "studio": "npm run dev --prefix studio-duforn-portfolio",
     "sanity:seed": "node scripts/seed-sanity.mjs",
-    "test:unit": "node scripts/run-checks.mjs",
-    "test:e2e": "playwright test"
+    "test:unit": "node scripts/run-checks.mjs"
   },
   "dependencies": {
     "@astrojs/react": "^6.0.2",
@@ -39,7 +38,6 @@
   },
   "devDependencies": {
     "@astrojs/check": "^0.9.10",
-    "@playwright/test": "^1.62.1",
     "@types/react": "^19.2.18",
     "@types/react-dom": "^19.2.4",
     "@types/three": "^0.185.4",
