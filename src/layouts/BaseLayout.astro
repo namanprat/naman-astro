@@ -7,6 +7,10 @@ import Menu from "@/components/site/Menu";
 import GooeyFilter from "@/components/site/GooeyFilter.astro";
 import FluidCanvas from "@/components/site/FluidCanvas.astro";
 import type { SeoProps } from "@/types.ts";
+import {
+  THEME_COLOR_DARK,
+  THEME_COLOR_LIGHT,
+} from "@/lib/site/util/themeColor";
 
 type Props = SeoProps & {
   /** Theme for the whole page. `inherit` leaves the root defaults in place. */
@@ -72,9 +76,19 @@ const isArchive = Astro.url.pathname === "/archive";
       })();
     </script>
     <slot name="head" />
-    <script is:inline>
-      /* Hexes match THEME_COLOR_* in lib/site/util/themeColor.ts. Inline so the
-         bar is right before React hydrates. Archive is always dark. */
+    <script
+      is:inline
+      define:vars={{ dark: THEME_COLOR_DARK, light: THEME_COLOR_LIGHT }}
+    >
+      /* Inline so the bar is right before React hydrates, and `define:vars`
+         rather than two hexes typed out again: this used to carry its own copy
+         of THEME_COLOR_* with a comment asking the next reader to keep them in
+         sync by hand. `syncThemeColor` in lib/site/util/themeColor.ts does the
+         same job for every later class change and reads the same two consts.
+
+         Archive is always the dark bar, whatever theme the visitor stored —
+         one of the three places that deliberately does not follow the toggle,
+         and the reason `themeColorForRoot` tests `page-archive` first. */
       (function () {
         var root = document.documentElement;
         var metas = document.querySelectorAll('meta[name="theme-color"]');
@@ -85,10 +99,10 @@ const isArchive = Astro.url.pathname === "/archive";
           metas = document.querySelectorAll('meta[name="theme-color"]');
         }
         var color = root.classList.contains("page-archive")
-          ? "#101010"
+          ? dark
           : root.classList.contains("theme-light")
-            ? "#e2e2dd"
-            : "#101010";
+            ? light
+            : dark;
         for (var i = 0; i < metas.length; i++) metas[i].setAttribute("content", color);
       })();
     </script>
