@@ -40,7 +40,9 @@ const footerLinks = [
 ];
 ---
 
-<footer class="footer_wrap" id="contact">
+{/* `data-no-reveal`: the footer runs its own scrubbed entrance, so neither
+    site-wide entrance module may hold or split anything in here. */}
+<footer class="footer_wrap" id="contact" data-no-reveal>
   <div class="footer_child">
     <div class="footer_scale">
       {/* Panel is the floating card; the container inside keeps content on grid. */}

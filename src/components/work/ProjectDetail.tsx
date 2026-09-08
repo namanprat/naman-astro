@@ -154,10 +154,15 @@ function ProjectLayout({ item }: { item: WorkItem }) {
 export default function ProjectDetail(props: Props) {
   if (props.variant === "overlay") {
     return (
+      /* `data-no-reveal` on the overlay variant only. Inside the Flip overlay
+         the title and body are animated by `Transition`; the hard
+         `/work/[slug]` page renders `ProjectLayout` bare and does want the
+         site-wide entrances. */
       <div
         className="content_group"
         data-index={props.index}
         data-slug={props.item.slug}
+        data-no-reveal
       >
         <ProjectLayout item={props.item} />
       </div>

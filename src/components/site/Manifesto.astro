@@ -2,8 +2,13 @@
 /**
  * Markup only. The lead used to run its own scrubbed word-by-word rise; it is
  * now an ordinary `h1`, picked up by the site-wide gooey entrance in
- * `lib/site/reveal/gooeyReveal.ts`. `.manifesto_wrap` is absent from that
- * module's SKIP list for exactly this reason.
+ * `lib/site/reveal/gooeyReveal.ts`.
+ *
+ * Hence `data-no-line-reveal` rather than `data-no-reveal`: this section opts
+ * out of the line entrance and stays in the gooey's reach. It is one of the
+ * two asymmetric opt-outs on the site (the other is `.camille_slider_wrap`,
+ * which is the mirror image), and it is spelled here — on the root that means
+ * it — rather than as an entry in a list two modules and a stylesheet away.
  */
 import { getEntry } from "astro:content";
 
@@ -12,7 +17,7 @@ if (!site) throw new Error("content: the `site` entry is missing");
 const { manifesto } = site.data;
 ---
 
-<section class="manifesto_wrap" aria-label="Manifesto">
+<section class="manifesto_wrap" aria-label="Manifesto" data-no-line-reveal>
   <div class="manifesto_contain container gap-0">
     <div class="manifesto_layout grid is-12">
       <h1 class="manifesto_lead text-style-h2">

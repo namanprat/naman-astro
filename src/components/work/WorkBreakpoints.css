@@ -1,0 +1,189 @@
+/* Form: the quarantine sheet for the `Work.css` family, and the one file in it
+ * `scripts/css-guard.mjs` does not hold breakpointless.
+ *
+ * ponytail: the guard bans `@media` width queries so a migrated sheet cannot
+ * grow the old breakpoint idiom back. These five blocks are the genuine
+ * article — a nav that re-docks, a ring that reflows into a column, a hover
+ * affordance that must not reach touch, a hero that becomes a stack — and
+ * converting them to `calc()` over `--_responsive---*` would trade four
+ * readable cuts for arithmetic with no behavioural gain. So they are named and
+ * quarantined instead: the three sheets they belong to stay on the guard, and
+ * everything the guard would flag is in here where it is meant to be.
+ *
+ * ponytail: last in the barrel, and that is load-bearing. Several of these tie
+ * on specificity with the rule they override — `.project_hero`,
+ * `.project_title`, `.project_cover`, `html.page-work .nav_wrap`,
+ * `--project--content-start` — so they win by coming later, exactly as they did
+ * when this was one file. `Work.css` fixes that order with `@import` rather
+ * than leaving it to the module graph.
+ *
+ * Blocks are in the order they had in the original sheet. Two `(width < 48rem)`
+ * blocks are kept apart rather than merged because each carries the reasoning
+ * for a different concern.
+ */
+@layer components.page {
+/* Phones only, where the ring is width-capped and the label would otherwise run
+   under the tiles. The `min()` is load-bearing: above ~48rem the radius is capped
+   by height instead and grows to ~330, so the bare ratio *enlarged* the label to
+   137px rather than shrinking it. This can only ever take size away. */
+@media (width < 48rem) {
+  html.page-work .nav_wrap,
+  html.page-work-project .nav_wrap {
+    top: var(--lockup-top);
+  }
+
+  /*
+    Phone slider: the ring's centre is off the left edge and its anchor is at 3
+    o'clock (`WheelView`), so the tiles run as a column down the middle and the
+    focused one lands dead centre. The label and the marker move out of the ring
+    to suit — the label to the top under the nav, the marker to the anchor's
+    right, aimed back at it.
+
+    The label sizes off the radius everywhere else, which no longer means
+    anything here: that radius is now larger than the screen. A plain clamp
+    against the viewport instead.
+  */
+  /* Cards, not thumbnails: they are the whole view at this width, and the ring
+     is large enough to space them like the reference does. */
+  .work_wrap[data-work-view="slider"] {
+    --wheel-tile-w: 62vw;
+    --wheel-tile-h: 62vw;
+  }
+
+  .work_wrap[data-work-view="slider"] .gallery_label {
+    top: var(--chrome-clear);
+    transform: translate(-50%, 0);
+  }
+
+  /* Points left at the anchored tile, from the inner edge of the page
+     margin — fully right, not in the padding. The desktop marker is the
+     same triangle rotated a quarter turn — border-right is the left-pointing
+     face. */
+  .work_wrap[data-work-view="slider"] .gallery::after {
+    /* The arc's centre sits below the middle of the screen here, so the
+       anchored card does too. `WheelView` publishes the offset it used. */
+    top: calc(50% + var(--wheel-center-drop, 0px));
+    left: auto;
+    right: var(--site-margin);
+    border-left: 0;
+    border-right: 0.375rem solid var(--text);
+    border-top: 0.3125rem solid transparent;
+    border-bottom: 0.3125rem solid transparent;
+    transform: translateY(-50%);
+  }
+}
+
+@media (width < 48rem) {
+  .work_wrap .view_switcher {
+    display: none;
+  }
+}
+
+/* Desktop grid: rest/focus dim, keyed off hover — the grid has no single
+   centred tile. `(hover: hover) and (pointer: fine)` keeps touch devices at
+   the 48rem+ grid width (tablet) out of it, since a tap would otherwise leave a
+   tile stuck dim with no hover-out to clear it.
+
+   Opacity only. Do not `saturate(0)` the covers: the fluid canvas composites
+   in `saturation` and paints grey everywhere the trail has not reached, so
+   the images have to arrive in colour or there is nothing to uncover. */
+@media (width >= 48rem) and (hover: hover) and (pointer: fine) {
+  .work_wrap[data-work-view="grid"] .gallery_img {
+    opacity: 0.8;
+    transition: opacity 0.3s ease;
+  }
+
+  .work_wrap[data-work-view="grid"] .gallery_slide:hover .gallery_img,
+  .work_wrap[data-work-view="grid"] .gallery_slide:focus-visible .gallery_img {
+    opacity: 1;
+  }
+}
+
+/* Phone grid: no column stagger — flex already centres the stack. Cover crop
+   is centred too; image parallax (same factor on every tile) lives in Slider. */
+@media (width < 48rem) {
+  .work_wrap[data-work-view="grid"] .gallery_slide {
+    transform: none;
+  }
+
+  .work_wrap[data-work-view="grid"] .gallery_img_wrap .gallery_img {
+    object-position: center;
+  }
+}
+
+/* Stack below Lumos large so copy isn't squeezed into one of 8 cols. */
+@media (width < 64rem) {
+  .work_wrap,
+  .work_project {
+    --project--content-start: 1;
+  }
+
+  /* Phone only: the hero becomes a top-aligned stack — title in flow at the top
+     with the copy beneath it — instead of the desktop lockup that centres
+     services and description on an absolutely-centred title. This is also what
+     gives the title somewhere to travel to, so the morph carries it from the
+     gallery label down here and leaves it still on desktop.
+
+     `--hero-chrome-height` is 0 on these routes (the nav is fixed and skipped
+     by the chrome measure). Same `--chrome-clear` as the gallery label,
+     the about page, and the home lockup. */
+  .project_hero {
+    min-height: 0;
+    padding-top: var(--chrome-clear);
+  }
+
+  .project_hero_contain {
+    position: relative;
+    inset: auto;
+    margin-top: var(--site-gutter);
+  }
+
+  .project_hero_contain,
+  .project_hero_grid {
+    height: auto;
+    min-height: 0;
+  }
+
+  .project_hero_grid {
+    grid-template-rows: none;
+    align-items: start;
+  }
+
+  .project_services,
+  .project_body {
+    align-self: start;
+  }
+
+  .project_cover {
+    margin-top: 0;
+  }
+
+  .project_title {
+    position: relative;
+    top: auto;
+    left: auto;
+    transform: none;
+    width: var(--site--grid-width);
+    margin-inline: auto;
+    pointer-events: auto;
+    text-align: center;
+  }
+
+  .project_services,
+  .project_body,
+  .project_panel_media,
+  .project_copy {
+    grid-row: auto;
+    grid-column: 1 / -1;
+  }
+
+  /* Full width like the rest, but the cover section keeps its explicit rows —
+     `grid-row: auto` here would let the siblings re-place into the cover's row
+     the moment Flip lifts it out of flow, which is the desktop bug again. */
+  .project_cover_media,
+  .project_cover_video,
+  .project_cover_below {
+    grid-column: 1 / -1;
+  }
+}
+}

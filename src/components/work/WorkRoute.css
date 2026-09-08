@@ -1,0 +1,62 @@
+/* Form: sibling sheet, one of three the `Work.css` barrel imports in order.
+ *
+ * ponytail: this file is the part of `/work` and `/work/[slug]` that is not a
+ * work component at all — every subject below is `html`, `body`, `main` or a
+ * Menu-owned node. It is split out under its own name because those rules are
+ * the ones another component has to be able to find: `.nav_wrap` is the nav's,
+ * and the only reason this override wins rather than Menu's own is that
+ * `components.page` beats `components.chrome`. Keeping them mixed into 771
+ * lines of gallery and case-study layout is what made that hard to see.
+ *
+ * Breakpointless on purpose so `scripts/css-guard.mjs` can hold it there; the
+ * one `@media width` block that belongs to these rules is quarantined in
+ * `WorkBreakpoints.css`.
+ */
+@layer components.page {
+html.page-work,
+html.page-work body {
+  /* `svh` is the small viewport — it does not grow when Safari's toolbar
+     hides, so the ring, the label and the lock never reflow with chrome. */
+  position: fixed;
+  inset: 0;
+  width: 100%;
+  height: 100svh;
+  max-height: 100svh;
+  overflow: hidden;
+  overscroll-behavior: none;
+  touch-action: none;
+  scrollbar-width: none;
+  --site--screen-height: 100svh;
+  /* The sim follows, unlike on the scrolling routes: this page never scrolls,
+     so Safari's chrome never collapses and there is no band to cover — and the
+     splat maps client coordinates onto the canvas, so a canvas taller than the
+     screen puts the trail somewhere it is not (see `FluidCanvas.css`). */
+  --site--fluid-height: 100svh;
+}
+
+html.page-work body,
+html.page-work-project body {
+  background-color: var(--background);
+  color: var(--text);
+}
+
+html.page-work .nav_wrap,
+html.page-work-project .nav_wrap {
+  position: fixed;
+  top: var(--nav-marquee-height, 0px);
+  left: 0;
+  right: 0;
+}
+
+html.page-work main,
+html.page-work-project main {
+  position: relative;
+}
+
+/* Busy cursor for the length of the morph. Needs `*` + !important to beat the
+   `cursor: pointer` the slides set on themselves. */
+html.work-transitioning,
+html.work-transitioning * {
+  cursor: progress !important;
+}
+}

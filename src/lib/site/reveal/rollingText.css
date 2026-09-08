@@ -1,3 +1,14 @@
+/* Form: a module's sheet, not a component's.
+ *
+ * ponytail: `.roll_text` is a contract of `rollingText.ts`, not of either
+ * `RollingText` component. Four files import that module and three of them mint
+ * this markup without rendering a `RollingText` at all — `CamilleSlider.astro`
+ * writes `[data-roll-text]` spans, the preloader CTA does the same — so a
+ * scoped `<style>` in either component would style one caller out of four, and
+ * an `is:global` block there would put the module's own classes in a file that
+ * does not own them. It sits next to the module and is imported once, from it.
+ * That also removes the last lib -> component-CSS import.
+ */
 @layer components.chrome {
   .roll_text {
     display: inline-block;

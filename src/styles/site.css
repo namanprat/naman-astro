@@ -123,26 +123,12 @@
   }
 }
 
-.theme-light {
-  /* Scrim over the frosted surfaces (About panel, footer). Keep enough ink
-     contrast for white type, but leave the liquid readable through the blur. */
-  --surface-accent: color-mix(in srgb, var(--text) 45%, transparent);
-  /* Radius for every frosted surface. Kept shallow on purpose: a heavy one
-     over the mostly-flat liquid sim averages the blobs into a uniform tint, so
-     the frost stops reading as glass and reads as a plain fill.
-
-     If this ever looks flat again, check the built CSS before re-tuning the
-     number. The declaration is easy to lose in the build — see the
-     `cssTarget` note in `astro.config.mjs` — and a dropped `backdrop-filter`
-     and a too-wide radius look identical on screen. */
-  --surface-frost-blur: 1.125rem;
-}
-
-.theme-dark {
-  /* Dark mode: the footer + About sheet are fully opaque orange. */
-  --surface-accent: var(--brand-500);
-  --surface-frost-blur: 0rem;
-}
+/* The two `.theme-light` / `.theme-dark` blocks that used to sit here declared
+   `--surface-accent` and `--surface-frost-blur`. They are paired theme tokens
+   with four consumers, so they moved to the paired blocks in `base.css` where
+   every other one lives — a shared sheet holding one stray pair of them was
+   the only reason a component's frost could not be reasoned about from the
+   component. */
 
 @layer components.site {
   .grid {
@@ -429,16 +415,30 @@
     visibility: visible;
   }
 
-  /* Two independent pre-paint holds, one per entrance module. Each list mirrors
-     the SKIP constant in its own module — `lineReveal.ts` for the first,
-     `gooeyReveal.ts` for the second — and the two lists differ on purpose:
-     `.manifesto_wrap` opts out of the line reveal but not the gooey. */
+  /* Two independent pre-paint holds, one per entrance module: `lineReveal.ts`
+     for the first, `gooeyReveal.ts` for the second.
 
-  html.is-line-revealing .text-style-main:not(:is(.nav_wrap, .footer_wrap, .menu_wrap, .about_panel, .manifesto_wrap, .content_group, .transition_panel, [data-no-reveal]) *) {
+     Both read attributes rather than a class list. The list used to be spelled
+     out four times — twice here, once in each module — and the four copies
+     differed by two entries on purpose, which is to say the asymmetry was only
+     ever legible by diffing them. Now a component declares its own opt-out on
+     its own root and the four readers agree by construction:
+
+       data-no-reveal        both modules  (chrome, overlays, the cover)
+       data-no-line-reveal   line only     (`.manifesto_wrap` — its lead is a
+                                            gooey heading, not body copy)
+       data-no-gooey         gooey only    (`.camille_slider_wrap` — the stage
+                                            animates its own headings)
+
+     Specificity is unchanged: `:not()` takes its most specific argument, and
+     an attribute selector weighs the same as a class (0-1-0 either way), so
+     every rule that used to tie with these still does. */
+
+  html.is-line-revealing .text-style-main:not(:is([data-no-reveal], [data-no-line-reveal]) *) {
     visibility: hidden;
   }
 
-  html.is-gooey-arming :is(h1, h2, h3):not(:is(.nav_wrap, .footer_wrap, .menu_wrap, .about_panel, .camille_slider_wrap, .content_group, .transition_panel, [data-no-reveal]) *) {
+  html.is-gooey-arming :is(h1, h2, h3):not(:is([data-no-reveal], [data-no-gooey]) *) {
     visibility: hidden;
   }
 

@@ -2,6 +2,9 @@
 import { SITE_TITLE, SITE_DESCRIPTION } from "@/consts.ts";
 import { isNoindexRoute } from "@/utils/seo.ts";
 import type { SeoProps } from "@/types.ts";
+/* Same two consts the runtime sync reads, so the static markup and the script
+   that rewrites it can never disagree. */
+import { THEME_COLOR_DARK } from "@/lib/site/util/themeColor";
 
 type Props = SeoProps;
 
@@ -45,16 +48,21 @@ const socialImage = image ? new URL(image, Astro.site) : null;
   name="viewport"
   content="width=device-width, initial-scale=1, viewport-fit=cover, interactive-widget=overlays-content"
 />
-<meta name="theme-color" content="#101010" />
+{
+  /* Dark in all three, on purpose: this is only what the bar shows before the
+    inline script in `BaseLayout.astro` reads the stored theme, and starting
+    dark is what stops Safari sampling a cover and tinting the bar orange. */
+}
+<meta name="theme-color" content={THEME_COLOR_DARK} />
 <meta
   name="theme-color"
   media="(prefers-color-scheme: light)"
-  content="#101010"
+  content={THEME_COLOR_DARK}
 />
 <meta
   name="theme-color"
   media="(prefers-color-scheme: dark)"
-  content="#101010"
+  content={THEME_COLOR_DARK}
 />
 <meta name="color-scheme" content="dark light" />
 <meta name="mobile-web-app-capable" content="yes" />
@@ -124,6 +132,10 @@ const socialImage = image ? new URL(image, Astro.site) : null;
   href="/favicon/favicon-light.png"
   media="(prefers-color-scheme: dark)"
 />
-<link rel="mask-icon" href="/favicon/favicon-dark.svg" color="#101010" />
+<link
+  rel="mask-icon"
+  href="/favicon/favicon-dark.svg"
+  color={THEME_COLOR_DARK}
+/>
 <link rel="manifest" href="/site.webmanifest" />
 <meta name="generator" content={Astro.generator} />

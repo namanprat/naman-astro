@@ -1,0 +1,610 @@
+/* Form: sibling sheet, first of three the `Menu.css` barrel imports.
+ *
+ * ponytail: sibling rather than a scoped `<style>` because `Menu` is React
+ * with no `.astro` boundary in its render path — `BaseLayout.astro` mounts
+ * it `client:load` — so there is no cid on any element below. Two names here
+ * are also contracts other files reach for: `WorkRoute.css` and
+ * `Archive.css` restyle `.nav_wrap` / `.nav_fade`, and `heroIntro.ts` /
+ * `HeroWordmark.tsx` measure `.name_hero_gooey` / `.name_hero_lockup`.
+ * Scoping any of those would break the overrides and the WebGL measurement.
+ *
+ * The chrome that is on the page when the menu is closed: the SVG lockup, the
+ * sticky bar, the fade behind it, the parked availability ticker, and every
+ * control on the bar. The open menu is `MenuOverlay.css`. The lockup, the
+ * ticker and the grid do not get files of their own — `Menu.tsx` renders
+ * them as one cluster inside `.hero_chrome`, and a comment that says
+ * "independent" is not an owner.
+ *
+ * Breakpointless on purpose so `scripts/css-guard.mjs` can hold it there;
+ * the three `@media width` blocks that belong to these rules are
+ * quarantined in `MenuBreakpoints.css`.
+ */
+@layer components.chrome {
+/*
+  Chrome over the hero. display:contents so sticky nav is not trapped in a
+  short parent — children participate in the page flow; ResizeObserver still
+  measures .name_hero + .nav_wrap via chrome.children.
+*/
+.hero_chrome {
+  display: contents;
+}
+
+/* Name lockup — SVG mask, full grid width */
+.name_hero_contain {
+  gap: 0;
+}
+
+.name_hero_grid {
+  width: 100%;
+}
+
+/* Carries the gooey reveal. heroIntro.ts adds `.is-gooey-armed` here and tweens
+   `--gooey-blur`; the filter chain itself lives on that class in site.css. Both
+   halves have to sit above the mask: CSS applies `filter` before `mask`, so
+   blurring the lockup itself would blur a flat colour box and then clip it with
+   a razor-sharp mask. Hidden until bootHomeIntro parks the start blur (or skips
+   it), so the sharp lockup never flashes before the melt. */
+.name_hero_gooey {
+  grid-column: 1 / -1;
+  min-width: 0;
+  /* em box for the melt: the lockup's height (grid width × 44/363). heroIntro
+     parks at 0.450em of this, so the start radius tracks the mark, not a bbox
+     that can still be 0 when the island hydrates. */
+  font-size: calc(var(--site--grid-width) * 44 / 363);
+}
+
+.name_hero_gooey:not(.is-gooey-parked) {
+  visibility: hidden;
+}
+
+/* The painted shape — `--text` clipped by the mask. aspect-ratio matches
+   name-hero.svg so the box has height on WebKit before the sizer <img>
+   lays out; a 0-height lockup makes mask-size: 100% resolve to nothing. */
+/* Two nested spans — both need to be blocks or the `aspect-ratio` box collapses
+   to an inline run. Inert: the mark is not a link (the nav wordmark is), and the
+   glass canvas above it owns pointer input across the first viewport. */
+.name_hero_home {
+  display: block;
+  width: 100%;
+  min-width: 0;
+  pointer-events: none;
+}
+
+.name_hero_lockup {
+  display: block;
+  width: 100%;
+  min-width: 0;
+  aspect-ratio: 363 / 44;
+  background-color: var(--text);
+  -webkit-mask-image: url("/main-assets/name-hero.svg");
+  -webkit-mask-repeat: no-repeat;
+  -webkit-mask-position: 0 0;
+  -webkit-mask-size: 100% 100%;
+  mask-image: url("/main-assets/name-hero.svg");
+  mask-repeat: no-repeat;
+  mask-position: 0 0;
+  mask-size: 100% 100%;
+}
+
+/* Layout is `aspect-ratio` on the lockup. The SVG is the mask source, not
+   a painted child. */
+.name_hero_lockup img {
+  display: none;
+}
+
+/*
+  Centres the lockup + nav cluster in the hero's first viewport.
+
+  Split into two vars on purpose. --hero-chrome-content is the cluster measured
+  from its inner boxes (see Menu.tsx), so it does not include this pad and is
+  stable in one layout pass; the pad is then pure CSS. .hero's pull-up in
+  site/index.css adds the same two vars rather than reading the measured total,
+  which would lag a frame behind the pad and drag .hero off the document top.
+  The margin floor keeps it sane on viewports too short to centre.
+*/
+:root {
+  --hero-chrome-pad: max(calc(var(--site--safe-area-top) + var(--site-margin)), calc((100svh - var(--hero-chrome-content, 0px)) / 2));
+}
+
+.name_hero {
+  position: relative;
+  z-index: var(--z--raised);
+  width: 100%;
+  padding-top: var(--hero-chrome-pad);
+  box-sizing: border-box;
+}
+
+.nav_wrap {
+  /*
+   * The liquid trail cuts through the nav, the way it cuts through the copy in
+   * `.studio` — but it cannot work the same way. That copy lives inside `main`,
+   * which paints no fill of its own, so difference against a bare backdrop is
+   * the identity and the words only react where the trail actually is. The nav
+   * is a body-level element: its backdrop always includes the page fill, so a
+   * plain difference would tint it everywhere.
+   *
+   * So the colour is pre-corrected. `--nav-blend-text` is chosen per theme so
+   * that `|page - it|` lands on `--text`: off the trail the nav is exactly the
+   * colour it always was, and over the trail it swaps.
+   *
+   * On the wrap, not on `.nav_grid` inside it. `position: sticky` makes this a
+   * stacking context, and a blend mode inside one only sees that context's own
+   * backdrop — from the grid there is nothing behind it and the blend silently
+   * did nothing, which read as the nav simply vanishing under the trail.
+   */
+  mix-blend-mode: difference;
+  color: var(--nav-blend-text);
+  position: sticky;
+  top: var(--nav-marquee-height, 0px);
+  width: 100%;
+  height: auto;
+  z-index: var(--z--nav);
+  pointer-events: none;
+  padding-top: 0;
+  box-sizing: border-box;
+  overflow: visible;
+}
+
+
+/* Theme-aware readability fade. `--background` is the page fill, so light
+   gets the warm grey and dark gets near-black. A real node, not ::before:
+   heading leading-trim also uses ::before, and an unlayered reset would
+   win the cascade on a pseudo. Starts above the bar so once it is showing,
+   inner pages get the usual top-down dissolve. On home it stays out of the
+   way of the wordmark until the bar sticks (see the `:not(.is-stuck)` rule
+   below), then dissolves in quickly. */
+.nav_fade {
+  position: absolute;
+  left: 0;
+  width: 100%;
+  top: -4rem;
+  height: 6.9rem;
+  margin: 0;
+  padding: 0;
+  pointer-events: none;
+  z-index: 0;
+  opacity: 1;
+  transition: opacity 0.3s ease;
+  background-image: linear-gradient(
+    to bottom,
+    color-mix(in srgb, var(--background) 50%, transparent) 0%,
+    color-mix(in srgb, var(--background) 40%, transparent) 40%,
+    color-mix(in srgb, var(--background) 17.5%, transparent) 70%,
+    transparent 100%
+  );
+}
+
+/* Light mode only: the warm-grey wash reads twice as strong as the dark
+   fade, so cut it in half. Hide rules below still win on specificity. */
+html.theme-light .nav_fade {
+  opacity: 0.5;
+}
+
+/* Home only: float clean over the SVG wordmark until the sticky bar reaches
+   the top, then dissolve the fade in. `html:has(.hero)` is the same
+   home/inner-page test `.name_hero` uses above. */
+html:has(.hero) .nav_wrap:not(.is-stuck) .nav_fade {
+  opacity: 0;
+}
+
+/* About open, either mode. Mobile's in-menu overlay owns this strip itself
+   (see AboutPanel.css's `.about_panel.is-in-menu`, which reserves this exact
+   height as transparent padding). Desktop's ride mode is the other reason:
+   it translates `.nav_wrap` down to dock at the card's bottom edge, dragging
+   this absolutely-positioned fade with it, which would otherwise paint the
+   gradient across the card. Dissolve it while About is open, back in on close. */
+.nav_wrap.is-about-open .nav_fade,
+html:has(.about_panel.is-open:not(.is-in-menu)) .nav_wrap .nav_fade {
+  opacity: 0;
+}
+
+.nav_wrap.is-menu-open .nav_fade {
+  opacity: 0;
+  transition: none;
+}
+
+/* Availability ticker. Independent of the nav — fixed to the viewport top
+   on every breakpoint, painted above the bar. Dissolves while About is open. */
+.nav_marquee {
+  /* ponytail: parked. Restore: display: block and the --nav-marquee-height calc. */
+  display: none;
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  z-index: calc(var(--z--nav) + 1);
+  overflow: clip;
+  background-color: var(--brand-500);
+  color: var(--dark-900);
+  padding-top: var(--site--safe-area-top);
+  pointer-events: none;
+  opacity: 1;
+  transition: opacity 0.45s ease;
+}
+
+html.about-open .nav_marquee,
+html.page-about .nav_marquee {
+  opacity: 0;
+}
+
+.nav_marquee_track {
+  display: flex;
+  width: max-content;
+  animation: nav-marquee 28s linear infinite;
+}
+
+.nav_marquee_group {
+  display: flex;
+  flex: none;
+  align-items: center;
+  gap: 2em;
+  padding-block: var(--space-2);
+  padding-inline: 1em;
+}
+
+.nav_marquee_copy {
+  margin: 0;
+  color: inherit;
+  line-height: 1;
+  white-space: nowrap;
+}
+
+.nav_marquee_copy::before,
+.nav_marquee_copy::after {
+  content: none;
+}
+
+.nav_contain {
+  pointer-events: none;
+}
+
+.nav_grid {
+  pointer-events: all;
+  position: relative;
+  z-index: 1;
+  width: 100%;
+  /* Gutter = logo→nav gap and sticky top padding (with safe-area on container) */
+  padding-block: var(--site-gutter);
+  align-items: start;
+}
+
+/* Frame items are column-anchored but may overflow empty gutters */
+.nav_grid > .nav_logo,
+.nav_grid > .nav_stack,
+.nav_grid > .nav_utility_stack {
+  min-width: max-content;
+}
+
+.nav_wrap .nav_grid a,
+.nav_wrap .nav_grid .nav_menu_toggle,
+.nav_wrap .nav_grid .nav_theme_toggle,
+.nav_wrap .nav_grid h5 {
+  color: var(--text);
+}
+
+.nav_wrap.is-menu-open {
+  z-index: calc(var(--z--menu) + 1);
+}
+
+.nav_wrap.is-menu-open .nav_grid a,
+.nav_wrap.is-menu-open .nav_grid .nav_menu_toggle,
+.nav_wrap.is-menu-open .nav_grid .nav_theme_toggle,
+.nav_wrap.is-menu-open .nav_grid h5 {
+  color: var(--menu-ink);
+}
+
+.nav_logo a {
+  position: relative;
+  display: inline-block;
+}
+
+.nav_logo_target {
+  display: inline-block;
+}
+
+.nav_logo_wordmark {
+  display: block;
+  color: inherit;
+  white-space: nowrap;
+  transition: color 0.45s ease;
+}
+
+/* ─── Nav column map (Lumos 12-col at ≥64rem) ───────────────────────────────
+   Logo 1–2. Link stacks sit one column in from the previous 7 / 9 / 11 map:
+
+     8–9   home/work
+     10–11 about/contact
+     12    archive + theme
+
+   48–64rem remaps onto 8 tracks below. Under 48rem the stacks flatten into
+   the typographic 3-col nav (Work/About · Archive/Contact · theme). */
+.nav_logo {
+  grid-column: 1 / span 2;
+  overflow: visible;
+  z-index: 1;
+  display: block;
+}
+
+.nav_stack.is-home {
+  grid-column: 8 / span 2;
+}
+
+.nav_stack.is-about {
+  grid-column: 10 / span 2;
+}
+
+.nav_logo .revealer,
+.nav_logo a,
+.nav_logo_target {
+  overflow: visible;
+  max-width: none;
+  width: max-content;
+}
+
+/* Stacked link pairs — remapped under 48rem into the typographic grid. */
+.nav_stack {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.15rem;
+  width: max-content;
+  max-width: none;
+  overflow: visible;
+}
+
+.nav_contact {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  overflow: visible;
+}
+
+.nav_contact_toggle {
+  appearance: none;
+  background: none;
+  border: none;
+  margin: 0;
+  cursor: pointer;
+  font: inherit;
+  text-align: left;
+  color: inherit;
+}
+
+.nav_contact_dropdown {
+  display: none;
+  position: absolute;
+  top: calc(100% + var(--space-2));
+  left: 0;
+  z-index: 1;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.15rem;
+}
+
+.nav_link {
+  position: relative;
+  display: inline-block;
+  color: inherit;
+  width: max-content;
+  line-height: 1;
+  /* Active-dot gutter — click box still tracks the label metrics. */
+  padding-left: 0.8em;
+  margin-left: -0.8em;
+}
+
+.nav_logo_wordmark,
+.nav_link,
+.nav_archive,
+.nav_menu_toggle_line {
+  /* Size/face/weight/tracking from text-style-main; tight leading for hit box. */
+  line-height: 1;
+}
+
+/* Mask for the entrance in heroIntro.ts — the h5 inside is what slides up.
+   RollingText has already split those h5s into .roll-char stacks for the hover,
+   so the reveal moves the whole heading rather than splitting it a second
+   time. .roll-char is 1em inside a 1em line, so this clips nothing on hover. */
+.nav_grid .nav_link,
+.nav_grid .nav_logo_wordmark {
+  overflow: clip;
+}
+
+.nav_link h5,
+.nav_logo_wordmark h5,
+.nav_archive h5,
+.nav_menu_toggle_line h5,
+.nav_theme_toggle_label h5 {
+  margin: 0;
+  color: inherit;
+  line-height: 1;
+}
+
+/* Leading-trim pulls glyphs up inside the 1em pill viewport. */
+.nav_menu_toggle_line h5::before,
+.nav_menu_toggle_line h5::after {
+  content: none;
+}
+
+/* Archive link + theme toggle stack — last two columns. */
+.nav_utility_stack {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.45rem;
+  grid-column: 12 / -1;
+  width: max-content;
+  max-width: none;
+  overflow: visible;
+  pointer-events: auto;
+}
+
+.nav_theme_toggle {
+  appearance: none;
+  background: none;
+  background-color: transparent;
+  border: none;
+  margin: 0;
+  padding: 0;
+  color: inherit;
+  cursor: pointer;
+  pointer-events: auto;
+  display: flex;
+  align-items: center;
+  /*
+    Exactly one nav label tall, derived rather than guessed.
+
+    `base.css` leading-trims every `.text-style-*` box with two table
+    pseudo-elements at `-0.5lh + trim`, so a label's rendered height collapses
+    to `trim-top + trim-bottom` — the `lh` terms cancel. Reusing the same two
+    tokens makes this track the labels at every breakpoint and survive a
+    change to the trim, with no ratio to keep in sync.
+
+    Neither font unit works here: `1cap` reads 0.58em in Duforn Mono (~2.4px
+    short) and `1em` is the untrimmed line box (~5.2px tall).
+  */
+  font-family: var(--text-main-font-family);
+  font-size: var(--text-main);
+  line-height: 1;
+  height: calc(var(--text-main-trim-top) + var(--text-main-trim-bottom));
+}
+
+.nav_theme_toggle_svg {
+  display: block;
+  /* Fill the button's box — it is already the label height. */
+  height: 100%;
+  width: auto;
+  background: none;
+  background-color: transparent;
+}
+
+.nav_link.is-active::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 0.35em;
+  height: 0.35em;
+  border-radius: 50%;
+  background: currentColor;
+  pointer-events: none;
+  animation: nav-active-pulse 2.4s ease-in-out infinite;
+}
+
+@keyframes nav-active-pulse {
+  0%,
+  100% {
+    opacity: 0.2;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .nav_link.is-active::before {
+    animation: none;
+    opacity: 1;
+  }
+}
+
+/* Archive link — hide at medium via band flag (the overlay menu carries it
+   there); toggle stays visible. Unlike the clock this is interactive, so no
+   pointer-events:none. */
+.nav_archive {
+  display: block;
+  /* Same active-dot gutter as `.nav_link`. */
+  padding-left: 0.8em;
+  margin-left: -0.8em;
+  margin-top: 0;
+  margin-bottom: 0;
+  margin-right: 0;
+  color: inherit;
+  white-space: nowrap;
+  width: max-content;
+  max-width: none;
+  overflow: visible;
+}
+
+.nav_menu_toggle_open {
+  display: none;
+  justify-content: flex-end;
+  justify-self: end;
+  align-self: center;
+  height: max-content;
+}
+
+.nav_menu_toggle {
+  appearance: none;
+  background: transparent;
+  color: inherit;
+  cursor: pointer;
+  margin: 0;
+  padding: 0;
+  border: none;
+}
+
+/* Inner pages carry the wordmark in `.nav_logo` on desktop. Below 48rem the
+   SVG lockup comes back and the wordmark sits in the first nav column. */
+html:not(:has(.hero)) .name_hero {
+  display: none;
+}
+
+.nav_theme_toggle_label {
+  display: none;
+}
+
+.nav_theme_toggle_label h5 {
+  white-space: nowrap;
+}
+
+@keyframes nav-marquee {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(-50%);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .nav_marquee {
+    transition: none;
+  }
+
+  .nav_marquee_track {
+    animation: none;
+    width: 100%;
+    justify-content: center;
+  }
+
+  .nav_marquee_group + .nav_marquee_group {
+    display: none;
+  }
+}
+
+.nav_menu_toggle_viewport {
+  display: block;
+  overflow: clip;
+  height: 1em;
+}
+
+.nav_menu_toggle_track {
+  display: flex;
+  flex-direction: column;
+  will-change: transform;
+}
+
+.nav_menu_toggle_line {
+  display: block;
+  height: 1em;
+  line-height: 1;
+  margin: 0;
+  text-align: center;
+}
+
+img.logo-img {
+  width: 2rem;
+}
+}

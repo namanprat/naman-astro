@@ -21,10 +21,14 @@ const SLIDES = (await getFeaturedWorkItems()).map((entry, i) => ({
 const first = SLIDES[0];
 ---
 
+{/* `data-no-gooey`, not `data-no-reveal`: the stage owns its own titles (they
+    morph on slide change, see the script below), but its body copy still
+    belongs to `lineReveal`. The mirror image of `.manifesto_wrap`. */}
 <section
   class="camille_slider_wrap studio_section"
   id="series"
   aria-label="Featured work"
+  data-no-gooey
 >
   <div class="camille_slider_contain container gap-0">
     <div class="camille_slider_layout studio_layout grid is-12">

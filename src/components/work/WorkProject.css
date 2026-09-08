@@ -1,0 +1,242 @@
+/* Form: sibling sheet, one of three the `Work.css` barrel imports in order.
+ *
+ * ponytail: sibling rather than a scoped `<style>` in `WorkProject.astro`, even
+ * though that template exists and renders this markup on a hard load. The
+ * markup comes from `ProjectDetail`, a React component — Astro's scoping
+ * rewrites selectors to require a cid it only puts on elements the template
+ * itself writes, and a React child is not one of them. So a scoped block here
+ * would style nothing, and an `is:global` block would be this file with an
+ * `.astro` wrapper around it.
+ *
+ * The other half of the reason it is one sheet rather than one per route: the
+ * same rules dress the case study twice over — server-rendered on
+ * `/work/[slug]`, and inside the Flip overlay that `WorkGallery` flies a
+ * project into. Only one of those two has a template at all.
+ *
+ * Breakpointless on purpose so `scripts/css-guard.mjs` can hold it there; the
+ * `@media width` block that belongs to these rules is quarantined in
+ * `WorkBreakpoints.css`.
+ */
+@layer components.page {
+/* ── Vertical case-study (overlay + hard page share one namespace) ────── */
+.project_layout {
+  position: relative;
+  /* No `z-index`: it would isolate `.project_title` from the page backdrop and
+     kill its `difference` blend on the hard `/work/[slug]` page. Inside the
+     Flip overlay this box sits in `.content`, which is `position: fixed` and
+     therefore its own isolated group — the overlay's title cannot reach the
+     trail either way. */
+  width: 100%;
+  color: var(--text);
+}
+
+/* ponytail: nothing reads this token. It is left in place because the split is
+   a move, not an edit — delete it, and the `<64rem` half in
+   `WorkBreakpoints.css`, in a change that says so. */
+.work_wrap,
+.work_project {
+  --project--content-start: 8;
+}
+
+.project_hero {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  /* Small viewport below 64rem — see `.hero` in `styles/site.css`. This route
+     scrolls and is footered on a hard load, so a growing spacer pushed the
+     wordmark out of reach the same way home's did. */
+  min-height: var(--site--screen-height);
+  box-sizing: border-box;
+  overflow: visible;
+  padding-block: calc(var(--hero-chrome-height, 4rem) + var(--site-gutter)) var(--site-margin);
+}
+
+/* Same box as the absolutely centered title, so services and body share its
+   vertical midpoint. Stretch overrides `.container`'s center/start alignment. */
+.project_hero_contain {
+  position: absolute;
+  inset: 0;
+  height: auto;
+  min-height: 0;
+  justify-content: stretch;
+  align-items: stretch;
+  gap: 0;
+}
+
+/* One full-height row so services and description sit on the title's center. */
+.project_hero_grid {
+  height: 100%;
+  min-height: 100%;
+  grid-template-rows: 1fr;
+  align-items: center;
+}
+
+/* Same viewport lockup as `.gallery_label` — dead-center, so opening a project
+   leaves it exactly where the label was and `Transition` has nothing to travel.
+   Under 64rem it drops into flow at the top of the hero instead, and there the
+   morph does carry it up. Width is the grid band, then `left: 50%` + translate
+   centres that box; a `100%` width would sit half a screen off centre. */
+.project_title {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  z-index: 1;
+  margin: 0;
+  padding-inline: 0;
+  width: var(--site--grid-width);
+  max-width: var(--max-width-main);
+  box-sizing: border-box;
+  transform: translate(-50%, -50%);
+  pointer-events: none;
+  text-align: center;
+  color: var(--text);
+  /* Beat the `h1` type rule so the slug matches the gallery label's Lumos
+     display, not `--h1`. */
+  font-family: var(--display-font-family);
+  font-size: var(--display);
+  font-weight: var(--display-font-weight);
+  line-height: var(--display-line-height);
+  letter-spacing: var(--display-letter-spacing);
+  text-transform: var(--display-text-transform);
+  text-wrap: var(--display-text-wrap);
+}
+
+.project_services {
+  grid-column: 1 / span 3;
+  align-self: center;
+  justify-self: start;
+  text-align: left;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--space-3);
+  min-width: 0;
+  position: relative;
+  z-index: 1;
+}
+
+.project_services_label,
+.project_services_list h5 {
+  margin: 0;
+}
+
+.project_services_list {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--space-1);
+}
+
+.project_body {
+  grid-column: 10 / -1;
+  align-self: center;
+  justify-self: stretch;
+  text-align: left;
+  text-wrap: wrap;
+  margin: 0;
+  /* One grey on this page. `--muted` is the same hue at 70% alpha, which reads
+     as a second, lighter grey against the ground. */
+  color: var(--text);
+  position: relative;
+  z-index: 1;
+}
+
+/* SplitText line wrappers inherit; otherwise mask inners can sit centered. */
+.project_body * {
+  text-align: inherit;
+}
+
+.project_cover {
+  margin-top: calc(-0.25 * var(--site--span-4));
+  padding-block: 0 var(--site-margin);
+}
+
+.project_block {
+  padding-block: 0 var(--site-margin);
+}
+
+.project_panel_media {
+  grid-column: 5 / span 4;
+  margin: 0;
+  overflow: clip;
+  background-color: var(--background);
+}
+
+/* Explicit rows, not auto-placement. The cover is the Flip target, so it spends
+   the morph at `position: absolute` — out of grid flow. Auto-placed siblings
+   would slide up into row 1 the moment it leaves and drop back when it lands,
+   which is exactly the flicker where the second image surfaced under the cover.
+   Pinned rows cannot be re-placed. `Transition.lockCoverRow` freezes the track
+   sizes to match, so row 1 keeps its height while the cover is away. */
+.project_cover_media {
+  grid-row: 1;
+  grid-column: 5 / span 4;
+  margin: 0;
+  overflow: clip;
+  background-color: var(--background);
+  aspect-ratio: 0.8;
+}
+
+.project_cover_media img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.project_cover_video,
+.project_cover_below {
+  /* Both sit under the cover and only one is ever present per project, so they
+     share row 2 rather than each claiming one and leaving an empty track. */
+  grid-row: 2;
+  grid-column: 5 / span 4;
+  margin: 0;
+  overflow: clip;
+  background-color: var(--background);
+}
+
+.project_cover_video video,
+.project_cover_below img {
+  width: 100%;
+  height: auto;
+  display: block;
+}
+
+.project_panel_media img {
+  width: 100%;
+  height: auto;
+  display: block;
+}
+
+.project_copy {
+  grid-column: 5 / span 4;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  align-self: start;
+}
+
+.project_copy_title,
+.project_copy_body {
+  margin: 0;
+}
+
+/* Panel copy is parked, not deleted — delete this rule to bring it back. Must
+   sit after `.project_copy`'s own `display: flex`, which otherwise wins on
+   source order. The text-only block goes too, or it keeps paying its padding
+   for content that no longer renders. */
+.project_copy,
+.project_block.is-text {
+  display: none;
+}
+
+.work_project {
+  position: relative;
+  /* No `z-index`, same reason as `.project_layout` above. The footer keeps its
+     own `z-index: 2` and is the later sibling, so it still paints over this. */
+  width: 100%;
+  background-color: transparent;
+  color: var(--text);
+}
+}

@@ -2,6 +2,7 @@
 import { defineConfig } from "astro/config";
 import react from "@astrojs/react";
 import sitemap from "@astrojs/sitemap";
+import sanity from "@sanity/astro";
 import { SITE_URL } from "./src/consts.ts";
 import { isNoindexRoute } from "./src/utils/seo.ts";
 
@@ -55,6 +56,35 @@ const cssTarget = [
   "ios16.4",
 ];
 
+/**
+ * Studio at `/studio` only when a project id is present. Without one the
+ * public pages must still build from the committed YAML — this container, CI
+ * without secrets, and an offline laptop all take that path.
+ *
+ * Route-split: `@sanity/astro` only injects the studio page when this
+ * integration is in the array, so the public payload does not grow.
+ */
+const sanityProjectId = process.env.PUBLIC_SANITY_PROJECT_ID?.trim();
+const sanityStudio = sanityProjectId
+  ? sanity({
+      projectId: sanityProjectId,
+      dataset: process.env.PUBLIC_SANITY_DATASET?.trim() || "production",
+      apiVersion: "2025-02-19",
+      useCdn: false,
+      studioBasePath: "/studio",
+    })
+  : null;
+
+const sanityIslands = sanityProjectId
+  ? [
+      "sanity",
+      "sanity/structure",
+      "@sanity/client",
+      "styled-components",
+      "react-is",
+    ]
+  : [];
+
 export default defineConfig({
   site: SITE_URL,
   integrations: [
@@ -62,6 +92,7 @@ export default defineConfig({
     sitemap({
       filter: (page) => !isNoindexRoute(new URL(page).pathname),
     }),
+    ...(sanityStudio ? [sanityStudio] : []),
   ],
   vite: {
     cacheDir: viteCacheDir,
@@ -114,6 +145,7 @@ export default defineConfig({
         // Only reached from the ASCII GUI's dynamic import, but that import
         // fires from inside a client:only island — same 504 as the rest.
         "lil-gui",
+        ...sanityIslands,
       ],
     },
   },

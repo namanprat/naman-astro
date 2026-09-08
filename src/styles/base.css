@@ -352,6 +352,28 @@
   --border: color-mix(in lab, var(--text) 20%, transparent);
   --heading-accent: color-mix(in srgb, var(--brand-500), black 20%);
 
+  /* The frosted-surface pair. Light gets a scrim over the liquid sim with a
+     real blur behind it; dark gets flat brand orange and no blur at all.
+     Scrim: enough ink contrast for white type, but the liquid stays readable
+     through it. Radius kept shallow on purpose — a heavy one over the mostly
+     flat sim averages the blobs into a uniform tint, so the frost stops
+     reading as glass and reads as a plain fill.
+
+     If the light frost ever looks flat again, check the built CSS before
+     re-tuning the number. The declaration is easy to lose in the build (see
+     the `cssTarget` note in `astro.config.mjs`) and a dropped
+     `backdrop-filter` and a too-wide radius look identical on screen.
+
+     ponytail: here rather than with a component because four of them consume
+     it — the footer card, the About card, the menu overlay and the preloader
+     card — so there is no one component it could move into. Being in the
+     paired block rather than a bare `.theme-light` rule is also what makes
+     `.theme-invert` work on a frosted surface: an inverted subtree now gets
+     the opposite theme's frost along with the opposite theme's ink, instead of
+     white type on the fill it was already sitting on. */
+  --surface-accent: color-mix(in srgb, var(--text) 45%, transparent);
+  --surface-frost-blur: 1.125rem;
+
   --selection-background: var(--text);
   --selection-text: var(--background);
 
@@ -389,6 +411,11 @@
   --text: var(--light-100);
   --border: color-mix(in lab, var(--text) 20%, transparent);
   --heading-accent: var(--brand-500);
+
+  /* Dark half of the frosted-surface pair — see the light block above. Fully
+     opaque orange, so there is nothing to blur through. */
+  --surface-accent: var(--brand-500);
+  --surface-frost-blur: 0rem;
 
   --selection-background: var(--text);
   --selection-text: var(--background);

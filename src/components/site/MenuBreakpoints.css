@@ -1,0 +1,190 @@
+/* Form: the quarantine sheet for the `Menu.css` family, and the one file in
+ * it `scripts/css-guard.mjs` does not hold breakpointless.
+ *
+ * ponytail: three genuine width cuts. The phone drops the fade, 48–64rem
+ * remaps the nav onto eight tracks instead of twelve, and the phone rebuilds
+ * the bar as two rows with the lockup pinned above it. That last one is 140
+ * lines on its own, and converting it to arithmetic over
+ * `--_responsive---*` would trade the clearest description of a nav layout
+ * in the codebase for a large regression surface and no behavioural gain.
+ *
+ * ponytail: last in the barrel, and two of these need it. The phone block's
+ * `.name_hero_gooey` ties on specificity with the base rule in
+ * `MenuChrome.css`, and its `.nav_stack` / `.nav_utility_stack` rules
+ * tie with the column map in the same file — both won by coming later when
+ * this was one sheet, and they still do.
+ *
+ * Blocks are in the order they had in the original sheet.
+ */
+@layer components.chrome {
+/* Phone: no fade at all. It is a translucent `--background` fill inside a
+   `difference` group, which is not a fade — it inverts whatever is behind it
+   and stops dead on its own bottom edge, so on a narrow screen it read as a
+   grey bar across the page rather than a dissolve, and it was doing that on
+   top of the fluid backdrop. The bar does not need it: it blends `difference`
+   with `--nav-blend-text` pre-corrected per theme (`base.css`), which is the
+   mechanism that keeps it legible over an arbitrary backdrop in the first
+   place. Archive keeps its own variant (`Archive.css`) — that page is an
+   opaque WebGL stage with no trail under the bar. */
+@media (width < 48rem) {
+  html:not(.page-archive) .nav_fade {
+    display: none;
+  }
+}
+
+/* 48–64rem: the site grid is 8 tracks here, not 12, so the desktop nav gets its
+   own map. Reusing the 12-col one would put `is-about` (10) and the utility
+   stack (12 / -1) in tracks that don't exist. */
+@media (width >= 48rem) and (width < 64rem) {
+  .nav_stack.is-home {
+    grid-column: 4 / span 2;
+  }
+
+  .nav_stack.is-about {
+    grid-column: 6 / span 2;
+  }
+
+  .nav_utility_stack {
+    grid-column: 8 / -1;
+  }
+}
+
+/* Phones: wordmark and theme switch on row 1, then Work / Archive / Contact /
+   About spread across row 2. Tablet portrait and up keeps the desktop stacks. */
+@media (width < 48rem) {
+  .nav_menu_toggle_open,
+  .nav_home {
+    display: none;
+  }
+
+  /*
+    Home, phone: the nav cluster is pinned to the top of the screen and the
+    wordmark sits under it, rather than the two being centred as one block.
+
+    Pinned, not ordered. A flex column on the chrome puts the nav first just as
+    well, but it also becomes the sticky containing block — and then the nav
+    only sticks for as long as the chrome is on screen, which is to say it
+    scrolls away with the hero. `position: fixed` is the thing that actually
+    keeps it there for the whole page.
+
+    The cost is that a pinned nav reserves no space, and `.hero`'s pull-up and
+    the fluid wrap's are both computed from the chrome's in-flow height. That is
+    handled where it is measured: `Menu.tsx` drops any chrome child that is
+    `fixed` out of the total, so the pull-up follows on its own.
+  */
+  html:has(.hero) .nav_wrap {
+    position: fixed;
+    top: var(--lockup-top);
+    left: 0;
+    right: 0;
+    width: 100%;
+  }
+
+  /* Same inset as the nav wordmark + one site margin — home lockup, work
+     label, slug hero, about page all read `--chrome-clear`. */
+  html:has(.hero) {
+    --hero-chrome-pad: var(--chrome-clear);
+  }
+
+  .nav_grid.grid {
+    grid-template-columns: repeat(4, max-content);
+    justify-content: space-between;
+    align-items: start;
+    column-gap: var(--site-gutter);
+    row-gap: var(--space-2);
+    padding-block: 0 var(--lockup-gap);
+    /* Bigger tap targets. Rebinding the token rather than setting `font-size`
+       carries `.nav_theme_toggle` with it — the switch sizes off `--text-main`
+       and the label trim tokens, so it stays label-height for free. 18px is the
+       token's own desktop ceiling (`--text-main-max`), not a new number. */
+    --text-main: 1.125rem;
+  }
+
+  /*
+    Hold the Contact cell at its widest label so pressing it cannot reflow the
+    row. The toggle swaps "Contact" → "Close" (Menu.tsx), and with
+    `max-content` tracks under `justify-content: space-between` a narrower track
+    grows the free space and shifts every item in row 2.
+
+    Of the two labels that swap, this is the only one that changes width:
+    About↔"Close" is 5↔5. Work no longer swaps at all — it keeps its own name
+    with a project open.
+
+    On the label, not the cell: `ch` resolves against the element's own
+    font-size, and only the `h5` carries the `--text-main` rebind (18px). The
+    wrapper inherits the body's 16.1px, so `7ch` there came out 6.7px short and
+    the row still moved. The button's active-dot padding sits outside the `h5`
+    and is constant, so holding the label steady holds the cell steady.
+
+    ponytail: `ch` is exact only because the nav face is monospace
+    (`--mono-family`) at `letter-spacing: 0`. If either changes, or a longer
+    label lands in this cell, swap to a hidden `::before` sizer carrying the
+    literal widest string.
+  */
+  .nav_contact_toggle h5 {
+    min-width: 7ch; /* "CONTACT" */
+  }
+
+  .nav_stack,
+  .nav_utility_stack {
+    display: contents;
+  }
+
+  /* Row 1 is the wordmark and the theme switch alone, pushed to opposite edges.
+     Both span the full row so neither forces a track wide — that keeps row 2's
+     four labels evenly spread by the `space-between` above. */
+  .nav_logo {
+    grid-column: 1 / -1;
+    grid-row: 1;
+    justify-self: start;
+    display: block;
+  }
+
+  .nav_theme_toggle {
+    grid-column: 1 / -1;
+    grid-row: 1;
+    justify-self: end;
+  }
+
+  /* Row 2, left to right. Visual order deliberately differs from DOM order
+     (Work, About, Contact, Archive), same as it did before. */
+  .nav_work {
+    grid-column: 1;
+    grid-row: 2;
+  }
+
+  .nav_archive {
+    grid-column: 2;
+    grid-row: 2;
+  }
+
+  .nav_contact {
+    grid-column: 3;
+    grid-row: 2;
+  }
+
+  .nav_about {
+    grid-column: 4;
+    grid-row: 2;
+  }
+
+  .name_hero_gooey {
+    grid-column: 1 / -1;
+  }
+
+  /* No phone-only sticky lockup. The SVG scrolls away with the hero and the
+     bar sticks under the ticker (`top: var(--nav-marquee-height)`), so every
+     breakpoint now shares one hero/nav interaction. */
+
+  /* Inner pages: the bar alone, overlaying the stage so overflow-hidden routes
+     don't get pushed down. The SVG lockup is a home-page element now, so there
+     is no mark height to reserve above the links. */
+  html:not(:has(.hero)) .nav_wrap {
+    position: fixed;
+    top: var(--lockup-top);
+    left: 0;
+    width: 100%;
+    padding-top: 0;
+  }
+}
+}

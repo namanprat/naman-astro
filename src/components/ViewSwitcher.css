@@ -1,3 +1,13 @@
+/* Form: sibling sheet, not an Astro `<style>`.
+ *
+ * ponytail: `ViewSwitcher` is React and nothing renders it from a template —
+ * `WorkGallery.tsx` mounts it directly, and that island is itself `client:only`
+ * — so there is no `.astro` boundary in the render path to hang a scoped block
+ * off. Every selector here matches an element this component writes, so if it
+ * ever gains one, the whole sheet moves in as a plain scoped `<style>`
+ * including the `html:not(.theme-light)` blend rule: Astro leaves the `html.*`
+ * part unscoped and only adds the cid to `.view_switcher`.
+ */
 @layer components.chrome {
   .view_switcher {
     --view_switcher_ink: var(--text);

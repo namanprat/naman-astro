@@ -1,0 +1,287 @@
+/* Form: the quarantine sheet for the `AboutPanel.css` family, and the one file
+ * in it `scripts/css-guard.mjs` does not hold breakpointless.
+ *
+ * ponytail: seven genuine width cuts — the desktop card, the tablet's shorter
+ * viewport, the 8-column band, the phone stack, and the route's own two. They
+ * are the readable form of what they say, and rewriting them as arithmetic
+ * over `--_responsive---*` would trade that for a large regression surface and
+ * no behavioural gain. Quarantining them is what puts the other three sheets
+ * on the guard.
+ *
+ * ponytail: third in the barrel, not last, and that is the whole ordering
+ * contract of this family. `AboutPage.tsx` inherits the phone stacking from
+ * `.about_panel:not(.is-in-menu)`, which lives in the `(width < 48rem)` block
+ * below — and five of those rules tie on specificity with the `.is-page`
+ * rules that undo them (`max-height`, the container's block padding, the
+ * bust's `display`, the grid's row count, the intro's row). All five are
+ * 0-3-0 against 0-3-0, so the route only wins by coming later. Emitting this
+ * file last would hide the bust on `/about` and cap the document at 85vh.
+ *
+ * ponytail: the route's own two blocks are in here too, at the end, even
+ * though they are emitted before `AboutPanelPage.css`. They can be: every
+ * subject in them is a list or a column, and the route's base rules touch
+ * none of those — the two sets are disjoint, so nothing decides between them.
+ * What they do need is each other's order, since `(width >= 30rem)` re-places
+ * the same two columns the block above it placed, and they keep it.
+ *
+ * Blocks are in the order they had in the original sheet.
+ */
+@layer components.page {
+/* Desktop overlay only — the mobile `/about` route never sets `about-open`.
+   Lenis is stopped in AboutPanel; this is the native-scroll backup so a
+   wheel that leaks past still has nowhere to go. */
+@media (width >= 48rem) {
+  html:has(.about_panel.is-open:not(.is-in-menu)),
+  html:has(.about_panel.is-open:not(.is-in-menu)) body {
+    overflow: hidden;
+    overscroll-behavior: none;
+  }
+}
+
+/* Desktop overlay chrome. Cut at 48rem with the nav (Menu.tsx's
+   DESKTOP_NAV_MQ), not at the site's 64rem grid cut — the 8-col content map
+   further down already covers the 48–64rem band. */
+@media (width >= 48rem) {
+  .about_panel:not(.is-in-menu) {
+    padding: 0;
+    /* Ride mode (desktop About) is not --padded. Side gap is --about--inset
+       (margin − gutter); mirror it on top so the card covers the nav. Do not
+       use --nav-offset here: it tracks the transformed nav as it docks to the
+       card and would feed back. */
+    padding-top: var(--about--inset);
+  }
+
+  .about_panel.is-padded:not(.is-in-menu) {
+    padding-top: calc(var(--nav-offset, var(--site--nav-offset)) + var(--about--inset));
+  }
+
+  .about_panel:not(.is-in-menu) .about_panel_surface {
+    width: calc(var(--site--grid-width) + var(--site-gutter) * 2);
+    margin-inline: auto;
+    max-height: 85vh;
+  }
+
+  .about_panel:not(.is-in-menu) .about_panel_scroll {
+    max-height: 85vh;
+  }
+
+  .about_panel:not(.is-in-menu) .about_panel_inner.container {
+    width: 100%;
+    max-width: none;
+    margin-inline: 0;
+    padding: var(--site-gutter);
+  }
+
+  .about_panel:not(.is-in-menu) .about_panel_grid {
+    width: 100%;
+    max-width: none;
+    margin-inline: 0;
+  }
+}
+
+/* Tablet portrait is only 1024px tall and the nav docks to the card's bottom
+   edge, so 85vh would push the close row off screen. */
+@media (width >= 48rem) and (width < 64rem) {
+  .about_panel:not(.is-in-menu) .about_panel_surface,
+  .about_panel:not(.is-in-menu) .about_panel_scroll {
+    max-height: 75vh;
+  }
+}
+
+/* 8-col band (Lumos medium) */
+@media (width < 64rem) {
+  /* Run-off room under the last row. On the content, not the panel — padding on
+     the fixed shell would just shorten the scrollport instead of adding travel
+     the reader can scroll into. */
+  .about_panel_inner.container {
+    padding-bottom: 20vh;
+  }
+
+  .about_panel:not(.is-in-menu) .about_panel_media {
+    grid-column: 1 / span 3;
+  }
+
+  .about_panel:not(.is-in-menu) .about_panel_intro {
+    grid-column: 4 / -1;
+    --about--indent-cols: 1;
+    --about--lead-cols: 5;
+  }
+
+  .about_panel:not(.is-in-menu) .about_panel_col.is-services {
+    grid-column: 5 / span 2;
+  }
+
+  .about_panel:not(.is-in-menu) .about_panel_col.is-clients {
+    grid-column: 7 / -1;
+  }
+
+  /* Only 2 tracks here, so the two-track offset above would push the second
+     column into an implicit track. */
+  .about_panel:not(.is-in-menu) .about_panel_clients_cols > *:nth-child(2) {
+    grid-column: auto;
+  }
+}
+
+/* Stack on 6/4-col. Ride card is full-bleed (into the site margin) and
+   docks the nav underneath, same motion as desktop. */
+@media (width < 48rem) {
+  .about_panel:not(.is-in-menu) {
+    padding: 0;
+  }
+
+  .about_panel:not(.is-in-menu) .about_panel_surface,
+  .about_panel:not(.is-in-menu) .about_panel_scroll {
+    width: 100%;
+    max-width: none;
+    margin-inline: 0;
+    max-height: 85vh;
+  }
+
+  .about_panel:not(.is-in-menu) .about_panel_inner.container {
+    /* Same top air as the name lockup; gutter at the bottom, not the 20vh runoff. */
+    padding-top: var(--lockup-top, calc(var(--site--safe-area-top) + var(--site-gutter)));
+    padding-bottom: var(--site-gutter);
+  }
+
+  .about_panel:not(.is-in-menu) .about_panel_media {
+    display: none;
+  }
+
+  .about_panel:not(.is-in-menu) .about_panel_grid {
+    grid-template-rows: auto auto;
+  }
+
+  .about_panel:not(.is-in-menu) .about_panel_intro {
+    grid-column: 1 / -1;
+    grid-row: 1;
+    --about--indent-cols: 0;
+    --about--lead-cols: 1;
+    --about--indent: 0;
+  }
+
+  .about_panel:not(.is-in-menu) .about_panel_lead {
+    text-indent: 0;
+  }
+
+  .about_panel.is-in-menu .about_panel_lists,
+  .about_panel:not(.is-in-menu) .about_panel_lists {
+    display: grid;
+    grid-column: 1 / -1;
+    grid-row: 3;
+    grid-template-columns: minmax(0, 1fr);
+    gap: var(--space-8) 0;
+    align-items: start;
+  }
+
+  .about_panel:not(.is-in-menu) .about_panel_lists {
+    grid-row: 2;
+  }
+
+  .about_panel.is-in-menu .about_panel_col.is-services,
+  .about_panel.is-in-menu .about_panel_col.is-clients,
+  .about_panel:not(.is-in-menu) .about_panel_col.is-services,
+  .about_panel:not(.is-in-menu) .about_panel_col.is-clients {
+    grid-column: auto;
+    grid-row: auto;
+    align-self: start;
+  }
+
+  /* Clients above Services on small screens (DOM order is Services, Clients). */
+  .about_panel.is-in-menu .about_panel_col.is-clients,
+  .about_panel:not(.is-in-menu) .about_panel_col.is-clients {
+    order: -1;
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-3);
+  }
+
+  .about_panel.is-in-menu .about_panel_clients_cols,
+  .about_panel:not(.is-in-menu) .about_panel_clients_cols {
+    display: grid;
+    /* Track 1 is the Archive/Contact inset from the 3-col nav (Menu.tsx).
+       Names hug the left of that track; col 2 starts on the mid cluster. */
+    grid-template-columns: var(--nav-mid-inset, max-content) max-content;
+    grid-column: auto;
+    grid-row: auto;
+    gap: var(--space-3) 0;
+    width: 100%;
+  }
+
+  .about_panel.is-in-menu .about_panel_clients_cols > *:nth-child(2),
+  .about_panel:not(.is-in-menu) .about_panel_clients_cols > *:nth-child(2) {
+    grid-column: auto;
+  }
+
+  .about_panel.is-in-menu .about_panel_col.is-clients .about_panel_col_label,
+  .about_panel:not(.is-in-menu) .about_panel_col.is-clients .about_panel_col_label {
+    grid-column: auto;
+    grid-row: auto;
+  }
+}
+
+/*
+  Phone About is a document on `.grid.is-12`, which is 4 tracks below 30rem
+  and 6 from there to the 48rem overlay cut. Keep `display: contents` so
+  Services / Clients sit on those tracks — not in a nested 1-col grid, and
+  not on a pixel inset measured off the nav.
+
+  4-col: stack. Clients span all four with names on 1 and 3 (same skip-a-track
+  as desktop's 10/12). Services follows on 1–2.
+  6-col: side by side. Services 1–2, Clients 3–6, names on 1 and 3 of that span.
+*/
+@media (width < 48rem) {
+  .about_panel.is-page:not(.is-in-menu) .about_panel_lists {
+    display: contents;
+  }
+
+  .about_panel.is-page:not(.is-in-menu) .about_panel_col.is-clients {
+    order: 0;
+    grid-column: 1 / -1;
+    grid-row: 3;
+    display: grid;
+    grid-template-columns: subgrid;
+    grid-template-rows: auto auto;
+    gap: var(--space-3) var(--site-gutter);
+    align-self: start;
+    width: 100%;
+  }
+
+  .about_panel.is-page:not(.is-in-menu) .about_panel_col.is-services {
+    order: 0;
+    grid-column: 1 / span 2;
+    grid-row: 4;
+    align-self: start;
+    width: 100%;
+  }
+
+  .about_panel.is-page:not(.is-in-menu) .about_panel_col.is-clients .about_panel_col_label {
+    grid-column: 1 / span 2;
+    grid-row: 1;
+  }
+
+  .about_panel.is-page:not(.is-in-menu) .about_panel_clients_cols {
+    display: grid;
+    grid-template-columns: subgrid;
+    grid-column: 1 / -1;
+    grid-row: 2;
+    gap: var(--space-3) var(--site-gutter);
+    width: 100%;
+  }
+
+  .about_panel.is-page:not(.is-in-menu) .about_panel_clients_cols > *:nth-child(2) {
+    grid-column: 3;
+  }
+}
+
+@media (width >= 30rem) and (width < 48rem) {
+  .about_panel.is-page:not(.is-in-menu) .about_panel_col.is-services {
+    grid-column: 1 / span 2;
+    grid-row: 3;
+  }
+
+  .about_panel.is-page:not(.is-in-menu) .about_panel_col.is-clients {
+    grid-column: 3 / -1;
+    grid-row: 3;
+  }
+}
+}

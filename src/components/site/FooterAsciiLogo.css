@@ -1,3 +1,11 @@
+/* Form: sibling sheet, not an Astro `<style>`.
+ *
+ * ponytail: `FooterAsciiLogo` is React and there is no `.astro` boundary
+ * anywhere in its render path — `Footer.astro` mounts `FooterAsciiStage`
+ * `client:only`, so every element below is written by React and would never
+ * receive the cid a scoped block rewrites its selectors to require. One of the
+ * WebGL set that keeps a sheet of its own for exactly this reason.
+ */
 @layer components.chrome {
 .footer_ascii {
   position: absolute;
