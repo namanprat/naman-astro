@@ -1,0 +1,14 @@
+title: Perception Pod
+description: "Perception Pod: design for a product that turns perception into
+  something you can see, share, and trust."
+image: /work/perception-pod/perception-pod-cover.webp
+alt: Perception Pod
+span: 5
+col: 5
+services:
+  - Website design
+panels:
+  - kind: text
+    title: Selected work
+    body: "Product and brand design for Perception Pod. Live site:
+      perceptionpod.com"

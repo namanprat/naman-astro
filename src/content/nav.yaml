@@ -1,0 +1,58 @@
+nav:
+  availabilityLine: available for projects from october ’26
+  availabilityCopies: 6
+  email: mailto:a.namanprat@gmail.com
+
+  # The desktop nav, in its two stacks. `id` is the home-page section the link
+  # scroll-spies against; a link with no section on the current page just never
+  # goes active.
+  stacks:
+    - col: is-home
+      links:
+        - label: Home
+          path: /
+          id: hero
+        - label: Work
+          path: /work
+          id: work
+    - col: is-about
+      links:
+        - label: About
+          path: /#about
+          id: about
+        - label: Contact
+          path: /#contact
+          id: contact
+
+  socials:
+    - label: Email
+      href: mailto:a.namanprat@gmail.com
+    - label: Instagram
+      href: https://www.instagram.com/namanprat_
+      newTab: true
+    - label: Discovery Call
+      href: https://cal.com/namanprat/discovery-call
+      newTab: true
+
+  # ponytail: the full-screen overlay is a second, differently shaped listing of
+  # the same routes, not a rendering of `stacks` — it adds Archive, drops Home,
+  # and carries a theme action that is not a route at all. Deriving one from the
+  # other needs more exceptions than it saves lines, so both are written out and
+  # this note is the reason they are allowed to disagree.
+  overlayColumns:
+    - - label: Work
+        path: /work
+      - label: About
+        path: /#about
+    - - label: Archive
+        path: /archive
+      - label: Switch theme
+        action: theme
+    - - label: Contact
+        path: /#contact
+
+  # Home sections the nav scroll-spies, in document order.
+  sectionIds:
+    - hero
+    - team
+    - contact

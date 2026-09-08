@@ -1,0 +1,45 @@
+# Page copy that belongs to no single section. Identity and SEO stay in
+# src/consts.ts — see the ponytail in content.config.ts for where that line is
+# drawn and why consts.ts cannot move.
+
+site:
+  heroNote: Brand, web, and motion<br />for early-stage companies.
+
+  manifesto: We're a design practice for early-stage brands, closing the gap
+    between who you already are and how the world sees you. Good design isn't
+    about adding more. It's about knowing what to leave out.
+
+  team:
+    title: We close<br />that gap.
+    body: Early on, every impression counts double. People decide whether you're
+      worth their time before they read a word. We find what makes you different,
+      build the whole presence around it, and make sure they feel that first.
+    ctaLabel: View Work
+    ctaHref: /work
+
+  footerTagline: We're a design practice. We work with early-stage brands on
+    identity, web, and motion, and we care more about what gets left out than
+    what gets added.
+
+  preloader:
+    # Two lines with a hard break between them on the phone card.
+    locationLine: Based in Mumbai and Bangalore, working worldwide
+    disciplineLine: Brand, web, and motion for early-stage companies
+
+  notFound:
+    title: This page doesn't exist
+    body: The page you're looking for may have moved, or the link that brought
+      you here might be out of date.
+    linkLabel: Back to home
+
+  # View-switcher labels. `id` is the view key the controller stores, not copy.
+  workViews:
+    - id: slider
+      label: Slider
+    - id: grid
+      label: Grid
+  archiveViews:
+    - id: orb
+      label: Orb
+    - id: grid
+      label: Grid

@@ -1,0 +1,15 @@
+title: Notice
+description: Brand and digital work for Notice, a studio that builds clear,
+  considered creative systems for clients who need presence without noise.
+image: /work/notice/notice-cover.webp
+alt: Notice
+featured: true
+span: 3
+col: 8
+services:
+  - Website design
+panels:
+  - kind: text
+    title: Selected work
+    body: "Collaboration with Notice across brand and digital surfaces. Live site:
+      wearenotice.com"
