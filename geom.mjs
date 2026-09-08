@@ -15,7 +15,7 @@ for (const [w, h] of [[1440, 900], [390, 844]]) {
     if (!(await loc.count())) { out[`${w}|${s}`] = "MISSING"; continue; }
     const box = await loc.boundingBox();
     const txt = (await loc.innerText()).replace(/\s+/g, " ").trim();
-    out[`${w}|${s}`] = box ? `${Math.round(box.width)}x${Math.round(box.height)} @${Math.round(box.x)},${Math.round(box.y)} "${txt.slice(0,60)}"` : "no box";
+    out[`${w}|${s}`] = box ? `${Math.round(box.width)}x${Math.round(box.height)} @${Math.round(box.x)},${Math.round(box.y)}` : "no box";
   }
   if (errs.length) out[`${w}|__errors`] = errs.join("; ");
   await ctx.close();

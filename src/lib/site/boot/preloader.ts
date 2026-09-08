@@ -13,7 +13,6 @@ import { prefersReducedMotion } from "../util/prefersReducedMotion";
 import { startPreload } from "./preloadAssets";
 import { segmentCount, subscribe } from "./preloadProgress";
 import { initRollingText } from "../reveal/rollingText";
-import "@/components/site/RollingText.css";
 import "../util/eases";
 
 /**

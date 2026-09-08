@@ -4,6 +4,16 @@
  * https://codepen.io/GreenSock/pen/dPMjJWv
  */
 
+/*
+ * ponytail: the stylesheet belongs to this module, not to a component. Three
+ * of its four importers minted `.roll_char` markup without rendering either
+ * RollingText — CamilleSlider's `[data-roll-text]` spans and the preloader CTA
+ * go through `initRollingText` directly — and one of them was a lib module
+ * importing a component's CSS. The classes below are this file's contract, so
+ * the sheet arrives wherever the markup can.
+ */
+import "./rollingText.css";
+
 import gsap from "gsap";
 import { SplitText } from "gsap/SplitText";
 import { prefersReducedMotion } from "../util/prefersReducedMotion";

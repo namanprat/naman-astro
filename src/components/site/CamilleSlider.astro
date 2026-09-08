@@ -4,20 +4,18 @@
  * Overlay: title top-left, white-filled arrows bottom-right; chips sit
  * centered under the image on the landscape stage (hidden on mobile).
  */
-import { featuredWorkItems } from "@/content/work";
-import "./CamilleSlider.css";
-import "./RollingText.css";
+import { getFeaturedWorkItems, workHref } from "@/lib/content/work";
 
 // ponytail: placeholder art from the cg-yzavoku slider stands in for the real
 // covers. Swap `src`/`alt` back to `item.image`/`item.alt` to restore them.
-const SLIDES = featuredWorkItems.map((item, i) => ({
-  title: item.title,
-  kicker: item.services.join(", "),
-  href: `/work/${item.slug}`,
+const SLIDES = (await getFeaturedWorkItems()).map((entry, i) => ({
+  title: entry.data.title,
+  kicker: entry.data.services.join(", "),
+  href: workHref(entry),
   src: `/slider/slide-${i + 1}.jpg`,
-  alt: item.alt,
-  film: item.coverVideo,
-  poster: item.image,
+  alt: entry.data.alt,
+  film: entry.data.coverVideo,
+  poster: entry.data.image,
 }));
 
 const first = SLIDES[0];
@@ -167,3 +165,248 @@ const first = SLIDES[0];
     initCamilleSlider(node);
   });
 </script>
+
+<style>
+  /* ponytail: scoped, and layered on purpose. Astro adds its cid to this
+     component's own selectors and leaves `html.*` alone, so nothing here can
+     reach another component. The `@layer` wrapper is what keeps that from
+     changing the cascade: a scoped block is unlayered by default and unlayered
+     beats every layer, so without it these rules would outrank the whole
+     `components` layer they came from — `.camille_slider_pill` is on
+     FluidCanvas's trail-blend list, which is exactly that kind of rule. */
+@layer components.section {
+  .camille_slider_layout {
+    grid-column: 1 / -1;
+  }
+
+  /* Every breakpoint below keys off this one signal: how wide the stage itself
+     ended up. Named, because the frame declares a container of its own and an
+     unnamed query inside the overlay would resolve to that instead. */
+  .camille_slider_stage {
+    container: camille / inline-size;
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    grid-column: calc(2 * var(--_responsive---large) + 1) / span calc(8 * var(--_responsive---large) + 12 * (1 - var(--_responsive---large)));
+    width: 100%;
+    min-width: 0;
+    user-select: none;
+  }
+
+  .camille_slider_frame {
+    position: relative;
+    width: 100%;
+    aspect-ratio: 10 / 16;
+    overflow: clip;
+    background-color: var(--background-skeleton);
+    color: var(--light-100);
+    container-type: inline-size;
+  }
+
+  .camille_slider_images {
+    position: absolute;
+    inset: 0;
+  }
+
+  .camille_slider_img {
+    position: absolute;
+    inset: 0;
+    visibility: hidden;
+    z-index: 0;
+  }
+
+  .camille_slider_img.is-active,
+  .camille_slider_img.is-hopping {
+    visibility: visible;
+    z-index: 1;
+  }
+
+  .camille_slider_img.is-hopping.is-incoming {
+    z-index: 2;
+  }
+
+  .camille_slider_photo {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+    background-color: var(--background-skeleton);
+  }
+
+  /* Title top-left, white-filled arrows bottom-right. Chips live under
+     the frame, not on the photo. Padding comes from Lumos utilities. */
+  .camille_slider_overlay {
+    position: absolute;
+    inset: 0;
+    z-index: 3;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    pointer-events: none;
+    color: var(--light-100);
+  }
+
+  .camille_slider_overlay > * {
+    pointer-events: auto;
+  }
+
+  .camille_slider_rail {
+    flex: 0 0 auto;
+    align-self: end;
+  }
+
+  .camille_slider_index {
+    flex: none;
+    color: var(--light-100);
+    white-space: nowrap;
+  }
+
+  .camille_slider_prev,
+  .camille_slider_next {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0;
+    border: var(--border-width) solid var(--light-100);
+    border-radius: 0;
+    background-color: var(--light-100);
+    color: var(--dark-900);
+    cursor: pointer;
+    transition:
+      background-color 200ms ease,
+      color 200ms ease,
+      border-color 200ms ease;
+  }
+
+  .camille_slider_prev:hover,
+  .camille_slider_next:hover {
+    background-color: var(--dark-900);
+    border-color: var(--dark-900);
+    color: var(--light-100);
+  }
+
+  .camille_slider_copy {
+    min-width: 0;
+    flex: 0 1 auto;
+    color: var(--light-100);
+  }
+
+  .camille_slider_title {
+    margin: 0;
+    text-align: start;
+    color: var(--light-100);
+  }
+
+  .camille_slider_kicker {
+    margin: var(--space-2) 0 0;
+    color: var(--light-100);
+  }
+
+  .camille_slider_icon {
+    display: block;
+    width: 1.5rem;
+    aspect-ratio: 1 / 1;
+    flex-shrink: 0;
+    fill: currentColor;
+  }
+
+  /* Trails the pointer over the photo. Same box as the chips under the
+     image — square corners, space-1 / space-3 pad — so the label reads as
+     one of those, not a different control. System cursor stays visible. */
+  .camille_slider_cursor {
+    position: fixed;
+    top: 0;
+    left: 0;
+    z-index: var(--z--overlay);
+    display: none;
+    align-items: center;
+    pointer-events: none;
+    margin: 0;
+    padding: var(--space-1) var(--space-3);
+    border: var(--border-width) solid var(--brand-500);
+    border-radius: 0;
+    background-color: var(--brand-500);
+    color: var(--brand-text);
+    line-height: 1;
+    white-space: nowrap;
+    will-change: transform;
+  }
+
+  .camille_slider_cursor::before,
+  .camille_slider_cursor::after {
+    content: none;
+  }
+
+  @media (hover: hover) and (pointer: fine) {
+    .camille_slider_frame.is-view-cursor .camille_slider_cursor {
+      display: flex;
+    }
+
+    .camille_slider_frame,
+    .camille_slider_images,
+    .camille_slider_photo {
+      cursor: pointer;
+    }
+  }
+
+  /* Chips sit under the frame on the landscape stage. Portrait/mobile
+     keeps only the overlay arrows — the pill row is too tight there. */
+  .camille_slider_pills {
+    display: none;
+    flex: 0 0 auto;
+    align-self: stretch;
+    justify-content: center;
+    max-width: 100%;
+    overflow-x: auto;
+    scrollbar-width: none;
+  }
+
+  .camille_slider_pills::-webkit-scrollbar {
+    display: none;
+  }
+
+  .camille_slider_pill {
+    display: flex;
+    align-items: center;
+    flex: none;
+    margin: 0;
+    padding: var(--space-1) var(--space-3);
+    border: var(--border-width) solid var(--text);
+    border-radius: 0;
+    background-color: var(--text);
+    color: var(--background);
+    cursor: pointer;
+    white-space: nowrap;
+    line-height: 1;
+    transition:
+      background-color 200ms ease,
+      color 200ms ease,
+      border-color 200ms ease,
+      border-style 200ms ease;
+  }
+
+  /* text-style-small's leading-trim ::before/::after would inflate the
+     chip past the view label's 1lh box. Kill the same pair as the cursor. */
+  .camille_slider_pill::before,
+  .camille_slider_pill::after {
+    content: none;
+  }
+
+  .camille_slider_pill.is-active {
+    background-color: transparent;
+    border-color: var(--text);
+    border-style: dashed;
+    color: var(--text);
+  }
+
+  @container camille (width >= 40rem) {
+    .camille_slider_frame {
+      aspect-ratio: 16 / 10;
+    }
+
+    .camille_slider_pills {
+      display: flex;
+    }
+  }
+}
+</style>

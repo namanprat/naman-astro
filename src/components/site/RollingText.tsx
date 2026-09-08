@@ -1,6 +1,5 @@
 import { useEffect, useRef, type ReactNode } from "react";
 import { initRollingText } from "@/lib/site/reveal/rollingText";
-import "./RollingText.css";
 
 type RollingTextProps = {
   children: ReactNode;

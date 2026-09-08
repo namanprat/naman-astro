@@ -60,6 +60,18 @@ const work = defineCollection({
   // invites a file whose name and slug disagree.
   loader: glob({ base: "./src/content/work", pattern: "**/*.yaml" }),
   schema: z.object({
+    /**
+     * Where the project sits in every listing — the gallery grid, the featured
+     * slider, the /work order.
+     *
+     * ponytail: explicit, because the collection cannot infer it. This content
+     * was an ordered array in `content/work.ts` and the order was load-bearing;
+     * `glob()` returns entries in filesystem order, which is alphabetical, so
+     * without this every project silently reshuffles the moment it is read from
+     * the collection instead of the array. Callers sort on it rather than
+     * trusting `getCollection`'s order.
+     */
+    order: z.number().int().nonnegative(),
     title: z.string(),
     description: z.string(),
     image: z.string(),
