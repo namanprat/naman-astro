@@ -1,12 +1,12 @@
 ---
 import Layout from "@/layouts/BaseLayout.astro";
-import { workItems } from "@/content/work.ts";
+import { getWorkItems, toWorkItem } from "@/lib/content/work";
 import WorkProject from "@/components/work/WorkProject.astro";
 
-export function getStaticPaths() {
-  return workItems.map((item) => ({
-    params: { slug: item.slug },
-    props: { item },
+export async function getStaticPaths() {
+  return (await getWorkItems()).map((entry) => ({
+    params: { slug: entry.id },
+    props: { item: toWorkItem(entry) },
   }));
 }
 

@@ -1,6 +1,11 @@
 ---
 import Layout from "@/layouts/BaseLayout.astro";
 import ArchiveCanvas from "@/components/archive/ArchiveCanvas";
+import { getArchiveItems } from "@/lib/content/archive";
+import { getEntry } from "astro:content";
+
+const items = await getArchiveItems();
+const site = await getEntry("site", "site");
 ---
 
 <Layout
@@ -14,5 +19,5 @@ import ArchiveCanvas from "@/components/archive/ArchiveCanvas";
   <script slot="head" is:inline>
     document.documentElement.classList.add("page-archive");
   </script>
-  <ArchiveCanvas client:only="react" />
+  <ArchiveCanvas client:only="react" items={items} views={site?.data.archiveViews} />
 </Layout>

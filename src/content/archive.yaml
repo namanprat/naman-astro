@@ -1,23 +1,34 @@
 brhm:
+  order: 0
   src: /archive/brhm.webp
 duforn-poster-1:
+  order: 1
   src: /archive/Duforn%20Poster%201.webp
 duforn-poster-2:
+  order: 2
   src: /archive/Duforn%20Poster%202.webp
 first-act:
+  order: 3
   src: /archive/first%20act.webp
 frame-12:
+  order: 4
   src: /archive/Frame%2012.webp
 img-4294:
+  order: 5
   src: /archive/IMG_4294.webm
 ipod:
+  order: 6
   src: /archive/ipod.webp
 poster-6:
+  order: 7
   src: /archive/Poster%206.webp
 poster9-file:
+  order: 8
   src: /archive/Poster9%20File.webp
 unstoppable:
+  order: 9
   src: /archive/Unstoppable.webp
 vector-1:
+  order: 10
   src: /archive/Vector-1.webp
   span: width

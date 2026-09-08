@@ -1,7 +1,8 @@
 import { useEffect, useRef, useState, type CSSProperties } from "react";
 import { gsap } from "gsap";
 import Lenis from "lenis";
-import { workItems } from "@/content/work";
+import type { WorkItem } from "@/content/work";
+import type { ViewItem } from "@/lib/content/models";
 import { ABOUT_OPEN_CLASS } from "@/lib/site/about/aboutPanel";
 import { gooeyMorph } from "@/lib/site/reveal/gooeyReveal";
 import { setSiteLenis } from "@/lib/site/scroll/lenisBridge";
@@ -23,10 +24,20 @@ import Transition, { type CloseReason } from "./slider/Transition";
 import ViewSwitcher, { type ViewSwitcherItem } from "../ViewSwitcher";
 import "./Work.css";
 
-const WORK_VIEWS: readonly ViewSwitcherItem<WorkView>[] = [
+const DEFAULT_WORK_VIEWS: readonly ViewSwitcherItem<WorkView>[] = [
   { id: "slider", label: "Slider" },
   { id: "grid", label: "Grid" },
 ];
+
+function workViewsFrom(
+  views: readonly ViewItem[] | undefined,
+): readonly ViewSwitcherItem<WorkView>[] {
+  const next = (views ?? [])
+    .filter((view): view is ViewSwitcherItem<WorkView> =>
+      view.id === "slider" || view.id === "grid",
+    );
+  return next.length ? next : DEFAULT_WORK_VIEWS;
+}
 
 /** Settled hover before a morph fires, so sweeping across tiles doesn't melt
  *  the label once per tile the cursor crosses. */
@@ -55,7 +66,14 @@ type ViewEngine = {
   readonly centeredIndex: number;
 };
 
-export default function WorkGallery() {
+export default function WorkGallery({
+  items,
+  views,
+}: {
+  items: WorkItem[];
+  views?: readonly ViewItem[];
+}) {
+  const workViews = workViewsFrom(views);
   const rootRef = useRef<HTMLDivElement>(null);
   const [ready, setReady] = useState(false);
   /* Two states, because the text has to change at the blur peak rather than
@@ -117,7 +135,7 @@ export default function WorkGallery() {
        from this flag, so a boot that never reads it would strand that. */
     const returnSlug = takeWorkReturn();
     const returnIndex = returnSlug
-      ? workItems.findIndex((item) => item.slug === returnSlug)
+      ? items.findIndex((item) => item.slug === returnSlug)
       : -1;
 
     const endReturn = () =>
@@ -220,7 +238,7 @@ export default function WorkGallery() {
             if (viewRef.current !== "grid") return;
             if (switchingRef.current) return;
             if (!isMobileLayout()) return;
-            setHoverTitle(workItems[index]?.title ?? null);
+            setHoverTitle(items[index]?.title ?? null);
           },
         });
       }
@@ -233,7 +251,7 @@ export default function WorkGallery() {
         enabled: engineEnabled,
         onCenterChange: (index) => {
           if (viewRef.current !== "slider") return;
-          setHoverTitle(workItems[index]?.title ?? null);
+          setHoverTitle(items[index]?.title ?? null);
         },
       });
     };
@@ -258,7 +276,7 @@ export default function WorkGallery() {
         setHoverTitle(null);
         setShownTitle(null);
       } else {
-        setHoverTitle(workItems[centered]?.title ?? null);
+        setHoverTitle(items[centered]?.title ?? null);
       }
 
       engine.suspendResize(true);
@@ -384,7 +402,7 @@ export default function WorkGallery() {
             engineRef.current?.start();
             if (viewRef.current === "grid" && isMobileLayout()) {
               const centered = engineRef.current?.centeredIndex ?? -1;
-              setHoverTitle(workItems[centered]?.title ?? null);
+              setHoverTitle(items[centered]?.title ?? null);
             }
           },
           onOpenComplete: (slug) => {
@@ -410,7 +428,7 @@ export default function WorkGallery() {
         engineRef.current = makeEngine(viewRef.current);
         if (viewRef.current === "grid" && isMobileLayout()) {
           const centered = engineRef.current.centeredIndex;
-          setHoverTitle(workItems[centered]?.title ?? null);
+          setHoverTitle(items[centered]?.title ?? null);
         }
 
         const slides = slideEls();
@@ -479,7 +497,7 @@ export default function WorkGallery() {
             viewRef.current === "slider" ||
             (viewRef.current === "grid" && isMobileLayout());
           setHoverTitle(
-            fromCenter ? (workItems[centered]?.title ?? null) : null,
+            fromCenter ? (items[centered]?.title ?? null) : null,
           );
         };
 
@@ -566,7 +584,7 @@ export default function WorkGallery() {
         if (viewRef.current === "grid") switchView("slider", false);
         else {
           const centered = engineRef.current?.centeredIndex ?? -1;
-          setHoverTitle(workItems[centered]?.title ?? null);
+          setHoverTitle(items[centered]?.title ?? null);
         }
         return;
       }
@@ -626,14 +644,14 @@ export default function WorkGallery() {
           ) : (
             <>
               Works
-              <span className="gallery_label_count">({workItems.length})</span>
+              <span className="gallery_label_count">({items.length})</span>
             </>
           )}
         </span>
       </p>
 
       <div className="gallery container" aria-label="Selected work">
-        {workItems.map((item, index) => (
+        {items.map((item, index) => (
           <figure
             key={item.slug}
             className="gallery_slide"
@@ -667,7 +685,7 @@ export default function WorkGallery() {
 
       <ViewSwitcher
         label="Work view"
-        views={WORK_VIEWS}
+        views={workViews}
         view={view}
         busy={switching || !ready}
         onSelect={(next) => switchViewRef.current(next)}
@@ -676,7 +694,7 @@ export default function WorkGallery() {
       <div className="content" aria-hidden="true">
         <div className="content_wrap">
           <div className="content_group_list">
-            {workItems.map((item, index) => (
+            {items.map((item, index) => (
               <ProjectDetail
                 key={item.slug}
                 item={item}

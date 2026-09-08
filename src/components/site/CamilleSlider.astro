@@ -6,13 +6,11 @@
  */
 import { getFeaturedWorkItems, workHref } from "@/lib/content/work";
 
-// ponytail: placeholder art from the cg-yzavoku slider stands in for the real
-// covers. Swap `src`/`alt` back to `item.image`/`item.alt` to restore them.
-const SLIDES = (await getFeaturedWorkItems()).map((entry, i) => ({
+const SLIDES = (await getFeaturedWorkItems()).map((entry) => ({
   title: entry.data.title,
   kicker: entry.data.services.join(", "),
   href: workHref(entry),
-  src: `/slider/slide-${i + 1}.jpg`,
+  src: entry.data.image,
   alt: entry.data.alt,
   film: entry.data.coverVideo,
   poster: entry.data.image,

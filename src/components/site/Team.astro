@@ -4,18 +4,29 @@
  * same split as archive.astro / CamilleSlider.
  */
 import { getEntry } from "astro:content";
+import { getWorkItems } from "@/lib/content/work";
 import TeamCylinderCarousel from "./TeamCylinderCarousel";
 import AnimeLink from "./AnimeLink.astro";
 
 const site = await getEntry("site", "site");
 if (!site) throw new Error("content: the `site` entry is missing");
 const { titleLines, body, ctaLabel, ctaHref } = site.data.team;
+const work = await getWorkItems();
+const imageSrcs = [
+  ...work.map((entry) => entry.data.image),
+  ...work.flatMap((entry) =>
+    entry.data.panels
+      .filter((panel) => panel.kind === "image")
+      .slice(0, 1)
+      .map((panel) => panel.src),
+  ),
+];
 ---
 
 <section class="team_wrap" id="team" aria-label="Practice">
   {/* `client:only` rather than `client:visible`: the island SSRs nothing, so
       Astro's visible observer has no child box and never hydrates. */}
-  <TeamCylinderCarousel client:only="react" />
+  <TeamCylinderCarousel client:only="react" imageSrcs={imageSrcs} />
   <div class="team_copy container">
     <div class="team_layout grid is-12">
       <h2 class="team_title text-style-h1 alignment-center">

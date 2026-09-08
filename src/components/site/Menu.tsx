@@ -32,6 +32,7 @@ import {
   settleGooey,
   type GooeyTarget,
 } from "@/lib/site/reveal/gooeyReveal";
+import type { AboutData, NavData, OverlayItem } from "@/lib/content/models";
 import AboutPanel, { type AboutPanelMode } from "./AboutPanel";
 import RollingText from "./RollingText";
 import ThemeToggle from "./ThemeToggle";
@@ -59,76 +60,16 @@ function clearRootVar(name: string): void {
   document.documentElement.style.removeProperty(name);
 }
 
-const AVAILABILITY_LINE = "available for projects from october ’26";
-const AVAILABILITY_COPIES = 6;
-
 gsap.registerPlugin(SplitText);
 
 const PANEL_DURATION = 0.9;
 
-export const NAV_STACKS = [
-  {
-    col: "is-home",
-    links: [
-      { label: "Home", path: "/", id: "hero" },
-      { label: "Work", path: "/work", id: "work" },
-    ],
-  },
-  {
-    col: "is-about",
-    links: [
-      { label: "About", path: "/#about", id: "about" },
-      { label: "Contact", path: "/#contact", id: "contact" },
-    ],
-  },
-];
-
-export const EMAIL_HREF = "mailto:a.namanprat@gmail.com";
-
-export type SocialLink = {
-  label: string;
-  href: string;
-  /** Opens in a new tab (Instagram, booking links, etc.). */
-  newTab?: boolean;
-};
-
-export const SOCIAL_LINKS: SocialLink[] = [
-  { label: "Email", href: EMAIL_HREF },
-  {
-    label: "Instagram",
-    href: "https://www.instagram.com/namanprat_",
-    newTab: true,
-  },
-  {
-    label: "Discovery Call",
-    href: "https://cal.com/namanprat/discovery-call",
-    newTab: true,
-  },
-];
-
 export const socialLinkTabProps = (newTab?: boolean) =>
   newTab ? ({ target: "_blank", rel: "noreferrer noopener" } as const) : {};
 
-type OverlayLink = { label: string; path: string };
-type OverlayAction = { label: string; action: "theme" };
-type OverlayItem = OverlayLink | OverlayAction;
-
-const isOverlayLink = (item: OverlayItem): item is OverlayLink =>
-  "path" in item;
-
-const OVERLAY_COLUMNS: OverlayItem[][] = [
-  [
-    { label: "Work", path: "/work" },
-    { label: "About", path: "/#about" },
-  ],
-  [
-    { label: "Archive", path: "/archive" },
-    { label: "Switch theme", action: "theme" },
-  ],
-  [{ label: "Contact", path: "/#contact" }],
-];
-
-const SECTION_IDS = ["hero", "team", "contact"];
+const isOverlayLink = (
+  item: OverlayItem,
+): item is Extract<OverlayItem, { path: string }> => "path" in item;
 
 /**
  * Where the chrome switches between the compact mobile nav and the desktop
@@ -174,9 +115,15 @@ function isInPageMenuNav(path: string): boolean {
 type MenuProps = {
   /** Current path from Astro — must match SSR HTML to avoid hydration mismatch. */
   initialPathname?: string;
+  nav: NavData;
+  about: AboutData;
 };
 
-export default function Menu({ initialPathname = "/" }: MenuProps) {
+export default function Menu({
+  initialPathname = "/",
+  nav,
+  about,
+}: MenuProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [aboutOpen, setAboutOpen] = useState(false);
   const [aboutMode, setAboutMode] = useState<AboutPanelMode>("ride");
@@ -187,7 +134,7 @@ export default function Menu({ initialPathname = "/" }: MenuProps) {
   const [pathname, setPathname] = useState(initialPathname);
   const [isDesktopNav, setIsDesktopNav] = useState(false);
   const [contactOpen, setContactOpen] = useState(false);
-  const emailCopy = useCopyEmail(EMAIL_HREF);
+  const emailCopy = useCopyEmail(nav.email);
   const [lenis, setLenis] = useState<Lenis | null>(() => getSiteLenis());
 
   /** Single source of truth for the nav active dot. */
@@ -554,7 +501,7 @@ export default function Menu({ initialPathname = "/" }: MenuProps) {
       raf = 0;
       const marker = window.innerHeight * 0.28;
       let current = "hero";
-      for (const id of SECTION_IDS) {
+      for (const id of nav.sectionIds) {
         const el = resolve(id);
         if (!el) continue;
         /* Use viewport top — offsetTop breaks when a section sits inside
@@ -578,7 +525,7 @@ export default function Menu({ initialPathname = "/" }: MenuProps) {
       window.removeEventListener("scroll", schedule);
       unsub?.();
     };
-  }, [lenis, aboutOpen, pathname]);
+  }, [lenis, aboutOpen, pathname, nav.sectionIds]);
 
   const menuHeads = (): GooeyTarget[] => {
     if (menuHeadsRef.current.length) return menuHeadsRef.current;
@@ -1083,13 +1030,13 @@ export default function Menu({ initialPathname = "/" }: MenuProps) {
   return (
     <>
       <div className="nav_marquee" ref={marqueeRef}>
-        <p className="sr-only">{AVAILABILITY_LINE}</p>
+        <p className="sr-only">{nav.availabilityLine}</p>
         <div className="nav_marquee_track" aria-hidden="true">
           {[0, 1].map((group) => (
             <div className="nav_marquee_group" key={group}>
-              {Array.from({ length: AVAILABILITY_COPIES }, (_, i) => (
+              {Array.from({ length: nav.availabilityCopies }, (_, i) => (
                 <span key={i} className="nav_marquee_copy text-style-small">
-                  {AVAILABILITY_LINE}
+                  {nav.availabilityLine}
                 </span>
               ))}
             </div>
@@ -1152,7 +1099,7 @@ export default function Menu({ initialPathname = "/" }: MenuProps) {
                 </div>
               </div>
 
-              {NAV_STACKS.map(({ col, links }) => (
+              {nav.stacks.map(({ col, links }) => (
                 <div key={col} className={`nav_stack ${col}`}>
                   {links.map(({ label, path, id }) => {
                     const isActive = activeId === id;
@@ -1179,7 +1126,7 @@ export default function Menu({ initialPathname = "/" }: MenuProps) {
                             id="nav_contact_dropdown"
                             className="nav_contact_dropdown"
                           >
-                            {SOCIAL_LINKS.map(
+                            {nav.socials.map(
                               ({ label: socialLabel, href, newTab }) => {
                                 const isMail = href.startsWith("mailto:");
                                 const line = isMail
@@ -1324,7 +1271,7 @@ export default function Menu({ initialPathname = "/" }: MenuProps) {
               </a>
             </div>
             <div className="menu_overlay_grid">
-              {OVERLAY_COLUMNS.map((column, columnIndex) => (
+              {nav.overlayColumns.map((column, columnIndex) => (
                 <div className="menu_overlay_col" key={columnIndex}>
                   {column.map((item) =>
                     isOverlayLink(item) ? (
@@ -1363,7 +1310,12 @@ export default function Menu({ initialPathname = "/" }: MenuProps) {
           overlay too would put a second, hidden copy of every heading and list
           in the DOM — duplicate `id="site-about-panel"` included. */}
       {pathname !== ABOUT_PATH && (
-        <AboutPanel open={aboutOpen} mode={aboutMode} onClose={dismissAbout} />
+        <AboutPanel
+          open={aboutOpen}
+          mode={aboutMode}
+          onClose={dismissAbout}
+          about={about}
+        />
       )}
     </>
   );

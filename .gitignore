@@ -20,6 +20,10 @@ pnpm-debug.log*
 .env
 .env.production
 
+# Sanity Studio
+studio-duforn-portfolio/dist
+studio-duforn-portfolio/.sanity
+
 # macOS-specific files
 .DS_Store
 

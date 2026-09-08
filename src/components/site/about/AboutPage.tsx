@@ -1,6 +1,7 @@
 import "../AboutPanel.css";
 import { useEffect, useRef, useState } from "react";
 import { shouldMountAboutBust } from "@/lib/site/about/aboutBust";
+import type { AboutData } from "@/lib/content/models";
 import AboutContent from "./AboutContent";
 
 /**
@@ -21,7 +22,7 @@ import AboutContent from "./AboutContent";
  * that cannot advance while the tab is backgrounded — which would leave the
  * bust parked at opacity 0 on a route opened in a background tab.
  */
-export default function AboutPage() {
+export default function AboutPage({ about }: { about: AboutData }) {
   const mediaRef = useRef<HTMLDivElement>(null);
   const [mountCanvas, setMountCanvas] = useState(false);
 
@@ -42,7 +43,11 @@ export default function AboutPage() {
         {/* No `data-lenis-prevent` here — the document scrolls, not this box. */}
         <div className="about_panel_scroll">
           <div className="about_panel_inner container gap-0">
-            <AboutContent mediaRef={mediaRef} mountCanvas={mountCanvas} />
+            <AboutContent
+              about={about}
+              mediaRef={mediaRef}
+              mountCanvas={mountCanvas}
+            />
           </div>
         </div>
       </div>

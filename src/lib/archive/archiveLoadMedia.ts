@@ -1,4 +1,5 @@
 import * as THREE from "three";
+import { isSanityCdnUrl, withSanityWidth } from "@/lib/sanity/cdn";
 import { isMobileLayout } from "@/lib/site/util/isMobileLayout";
 
 /**
@@ -24,9 +25,10 @@ const TEXTURE_CAPS = { mobile: 1024, desktop: 1600 } as const;
  * (see `loadArchiveImage`) in case the sharp step was skipped.
  */
 function variantUrl(url: string): string | null {
+  const cap = isMobileLayout() ? TEXTURE_CAPS.mobile : TEXTURE_CAPS.desktop;
+  if (isSanityCdnUrl(url)) return withSanityWidth(url, cap);
   if (!import.meta.env.PROD) return null;
   if (!/\.webp$/i.test(url)) return null;
-  const cap = isMobileLayout() ? TEXTURE_CAPS.mobile : TEXTURE_CAPS.desktop;
   /* Paths in the manifest are pre-encoded and several carry `%20`, so this
      splices the basename rather than round-tripping through decode/encode. */
   const slash = url.lastIndexOf("/");
@@ -146,6 +148,7 @@ async function loadArchiveImage(url: string): Promise<ArchiveMediaSource> {
      compression; at this poster count the saving didn't justify carrying the
      wasm blob and its loader init, so the plain loader takes the .webp. */
   const loader = new THREE.TextureLoader();
+  if (/^https?:/i.test(url)) loader.setCrossOrigin("anonymous");
   const variant = variantUrl(url);
 
   let texture: THREE.Texture;
