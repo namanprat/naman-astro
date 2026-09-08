@@ -1,4 +1,4 @@
-@layer components {
+@layer components.section {
   .faq_layout {
     grid-column: 1 / -1;
   }

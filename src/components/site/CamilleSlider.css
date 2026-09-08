@@ -1,4 +1,4 @@
-@layer components {
+@layer components.section {
   .camille_slider_layout {
     grid-column: 1 / -1;
   }

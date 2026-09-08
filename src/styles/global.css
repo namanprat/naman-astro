@@ -5,6 +5,25 @@
 
 @layer base, patterns, components, utilities;
 
+/* Inside `components`, four sub-layers, ordered by how wide a thing's reach is:
+   `site` is the page shell, `chrome` the nav and footer that sit on every
+   route, `section` the studio sections, `page` the per-route sheets.
+
+   ponytail: this exists so cross-component overrides stop riding on import
+   order. Work.css and Archive.css restyle Menu's `.nav_wrap` and `.nav_fade`
+   at exactly the same specificity Menu.css uses — `:has()` and `:not()` take
+   the weight of their most specific argument, so `html:not(:has(.hero))
+   .nav_wrap` and `html.page-work .nav_wrap` are both 0-2-1 — and the winner
+   was whichever stylesheet Rollup happened to emit last. That order is derived
+   from the module graph, which every component conversion reshuffles. Naming
+   the layers makes the outcome the one we chose rather than the one we got.
+
+   ponytail: the statement form with dotted names, not a `@layer components {
+   @layer site, ... }` block. `@import` may only be preceded by `@charset` and
+   layer *statements*; a block rule here would make all three imports below
+   invalid and silently drop every base, pattern and utility style. */
+@layer components.site, components.chrome, components.section, components.page;
+
 @import "./base.css" layer(base);
 @import "./patterns.css" layer(patterns);
 @import "./utilities.css" layer(utilities);

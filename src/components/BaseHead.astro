@@ -21,6 +21,9 @@ const socialImage = image ? new URL(image, Astro.site) : null;
 <meta charset="utf-8" />
 <style is:inline>
   @layer base, patterns, components, utilities;
+  /* Must match styles/global.css exactly; see the note there. This copy is
+     inline so the order holds before any stylesheet arrives. */
+  @layer components.site, components.chrome, components.section, components.page;
   @font-face {
     font-family: "Duforn Mono";
     src:

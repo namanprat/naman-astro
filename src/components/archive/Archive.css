@@ -1,4 +1,4 @@
-@layer components {
+@layer components.page {
 /* Archive — full-viewport WebGL stage. Ground is always brand black; theme
    tokens would wash it to grey in light mode. Nav is brand white so it
    stays readable over the scene. */

@@ -48,9 +48,43 @@ function styleSource(file, src) {
   return css.replace(/\/\*[\s\S]*?\*\//g, "");
 }
 
+/**
+ * Sub-layer each component sheet must declare, from styles/global.css:
+ *   site < chrome < section < page
+ *
+ * ponytail: this is a structural check, not a style one, and it is here because
+ * the cascade now leans on it. Work.css and Archive.css restyle Menu-owned
+ * nodes at identical specificity, so which one wins is decided purely by layer
+ * — and a sheet that quietly reverts to a bare `@layer components` rejoins the
+ * order-dependent behaviour this replaced, with nothing visible to say so until
+ * a nav bar lands in the wrong place on one route at one width.
+ */
+const LAYERS = ["site", "chrome", "section", "page"];
+
+/**
+ * The Lumos backbone. These carry no `@layer` of their own because
+ * `styles/global.css` imports each one into its layer with `layer(...)`, so a
+ * declaration inside the file would be a second, conflicting answer.
+ */
+const BACKBONE = new Set([
+  "src/styles/base.css",
+  "src/styles/patterns.css",
+  "src/styles/utilities.css",
+]);
+const layerOpener = new RegExp(`@layer components\\.(${LAYERS.join("|")})\\s*\\{`);
+
 let failed = 0;
 for (const file of files) {
   const src = styleSource(file, readFileSync(file, "utf8"));
+  // .astro sheets are scoped and unlayered by design, so only .css is checked.
+  if (file.endsWith(".css") && !BACKBONE.has(file) && !layerOpener.test(src)) {
+    const found = src.match(/@layer[^{]*\{/);
+    console.error(
+      `${file}: must open with @layer components.<${LAYERS.join("|")}> ` +
+        `(found ${found ? found[0].trim() : "no @layer"})`,
+    );
+    failed++;
+  }
   for (const { name, re } of bans) {
     if (re.test(src)) {
       console.error(`${file}: ${name}`);
