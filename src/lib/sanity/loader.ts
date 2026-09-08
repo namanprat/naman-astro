@@ -1,7 +1,7 @@
 import type { Loader, LoaderContext } from "astro/loaders";
 import { getSanityClient } from "./client";
 
-export type MappedEntry = { id: string; data: Record<string, unknown> };
+type MappedEntry = { id: string; data: Record<string, unknown> };
 
 async function fetchSanityDocs(query: string): Promise<unknown[] | null> {
   try {

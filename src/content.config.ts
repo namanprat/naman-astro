@@ -46,8 +46,6 @@ import {
   WORK_QUERY,
 } from "./lib/sanity/queries";
 
-export { WORK_SERVICES };
-
 const workService = z.enum(WORK_SERVICES);
 
 /** One block of a case study. Ordered; `groupWorkPanels` pairs neighbours. */

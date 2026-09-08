@@ -33,3 +33,6 @@ studio-duforn-portfolio/.sanity
 # local agent settings
 .claude/settings.local.json
 
+# leftover local test output
+/test-results/
+

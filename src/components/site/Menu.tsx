@@ -64,7 +64,7 @@ gsap.registerPlugin(SplitText);
 
 const PANEL_DURATION = 0.9;
 
-export const socialLinkTabProps = (newTab?: boolean) =>
+const socialLinkTabProps = (newTab?: boolean) =>
   newTab ? ({ target: "_blank", rel: "noreferrer noopener" } as const) : {};
 
 const isOverlayLink = (
@@ -78,7 +78,7 @@ const isOverlayLink = (
  * site's 64rem grid cut, which still hands this band 8 columns. Mirrored by
  * `Menu.css`'s `< 48rem` block and `AboutPanel.css`'s `>= 48rem` block.
  */
-export const DESKTOP_NAV_MQ = "(width >= 48rem)";
+const DESKTOP_NAV_MQ = "(width >= 48rem)";
 
 const MENU_COPY = ".menu_overlay_items .revealer :is(a, button)";
 /* The ASCII canvas has no lines to split, so it dissolves rather than melts —

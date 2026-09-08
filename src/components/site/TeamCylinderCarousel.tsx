@@ -16,11 +16,6 @@ import AsciiField from "./ascii/AsciiField";
 
 gsap.registerPlugin(ScrollTrigger);
 
-/** Work covers plus detail stills so the ring reads wide, not sparse. */
-const FALLBACK_STILLS = [
-  "/work/haptic/haptic-hero.webp",
-  "/work/money-me/money-cover.webp",
-];
 /** Landscape tile — 5:4 width:height. */
 const TILE_ASPECT = 5 / 4;
 const TILE_W = 1280;
@@ -305,9 +300,9 @@ function CylinderStrip({ imageSrcs }: { imageSrcs: string[] }) {
 }
 
 export default function TeamCylinderCarousel({
-  imageSrcs = FALLBACK_STILLS,
+  imageSrcs,
 }: {
-  imageSrcs?: string[];
+  imageSrcs: string[];
 }) {
   const [inView, setInView] = useState(false);
   const ink = useThemeInk();

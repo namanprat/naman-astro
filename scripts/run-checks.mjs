@@ -8,9 +8,7 @@
  * is worse than no check. Discovery is by filename so adding a file is the
  * whole of adding a check.
  *
- * `.check.ts` is the unit suffix and `.spec.ts` the Playwright one; they share
- * `tests/` and must not share a runner, so the pattern is exact rather than
- * `*.ts`.
+ * `.check.ts` is the unit suffix, so the pattern is exact rather than `*.ts`.
  */
 import { spawnSync } from "node:child_process";
 import { readdirSync } from "node:fs";

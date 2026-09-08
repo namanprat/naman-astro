@@ -4,8 +4,6 @@ import {
 } from "@sanity/image-url";
 import { SANITY_DATASET, SANITY_PROJECT_ID } from "./config.ts";
 
-export { isSanityCdnUrl, withSanityWidth } from "./cdn.ts";
-
 const builder = createImageUrlBuilder({
   projectId: SANITY_PROJECT_ID,
   dataset: SANITY_DATASET,
