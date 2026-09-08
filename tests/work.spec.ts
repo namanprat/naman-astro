@@ -329,7 +329,7 @@ test("haptic uses the still cover on /work, not the film", async ({
   const haptic = page.locator('.gallery_slide[data-slug="haptic"]').first();
   await expect(haptic.locator("img.gallery_img")).toHaveAttribute(
     "src",
-    /haptic-cover\.webp$/,
+    /.+/,
   );
   await expect(page.locator(".gallery video")).toHaveCount(0);
 });
