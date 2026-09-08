@@ -7,7 +7,7 @@
 import { getEntry } from "astro:content";
 import Manifesto from "./Manifesto.astro";
 import CamilleSlider from "./CamilleSlider.astro";
-import Process from "./Process.tsx";
+import Process from "./Process.astro";
 import Faq from "./Faq.astro";
 import Team from "./Team.astro";
 import Footer from "./Footer.tsx";
@@ -39,16 +39,13 @@ const { heroNote } = site.data;
 <div class="studio" id="studio">
   <Manifesto />
   <CamilleSlider />
-  {/* Must stay `client:only`. `revealLines` and `bootGooeyHeadings` run from
-      BaseLayout's boot script and rewrite headings and body copy with SplitText
-      before React hydrates, so a server-rendered React subtree mismatches and
-      React throws the whole thing away — which also loses the split. Astro
-      markup (Team) and never-hydrated components (Manifesto, ProjectDetail) are
-      free to server-render because nothing hydrates over them. The WebGL win
-      here is independent: `ProcessCardCanvas` is lazy and mount-gated. */}
-  <Process client:only="react" />
-  {/* ponytail: no directive. Faq is Astro now, so the hazard the note above
-      describes cannot reach it — there is no hydration to mismatch. */}
+  {/* ponytail: no directives here any more. Both of these were `client:only`
+      because `revealLines` and `bootGooeyHeadings` rewrite headings and body
+      copy with SplitText before React could hydrate, so a server-rendered
+      React subtree mismatched and React discarded it, losing the split with
+      it. Both are Astro now, so there is no hydration left to mismatch. The
+      WebGL inside Process is still an island, still lazy and mount-gated. */}
+  <Process />
   <Faq />
   <Team />
 </div>

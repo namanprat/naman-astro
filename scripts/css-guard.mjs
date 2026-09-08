@@ -8,7 +8,7 @@ import { readFileSync } from "node:fs";
 
 const files = [
   "src/components/site/Faq.astro",
-  "src/components/site/Process.css",
+  "src/components/site/Process.astro",
   "src/components/site/Manifesto.astro",
   "src/components/site/CamilleSlider.astro",
   "src/components/site/Team.astro",
