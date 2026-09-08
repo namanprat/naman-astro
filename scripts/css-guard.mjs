@@ -29,9 +29,28 @@ const bans = [
   { name: "bare 1fr", re: /(?<!minmax\(0,\s*)1fr/ },
 ];
 
+/**
+ * The CSS a ban should actually read: `<style>` bodies for `.astro`, the whole
+ * file for `.css`, with block comments stripped from both.
+ *
+ * ponytail: the stripping is not tidiness, it is correctness. `@media[^{]*width`
+ * spans newlines and stops only at a `{`, so a comment that mentions `@media`
+ * and later the word "width" — which is exactly how this codebase explains why
+ * a rule uses `--_responsive---*` instead of a breakpoint — matched as a
+ * breakpoint. `Preloader.astro` failed on that, with no `@media` in it but
+ * `prefers-reduced-motion`. Narrowing `.astro` to its `<style>` bodies is the
+ * same argument one level up: `width="20"` on an inline SVG is not CSS.
+ */
+function styleSource(file, src) {
+  const css = file.endsWith(".astro")
+    ? [...src.matchAll(/<style[^>]*>([\s\S]*?)<\/style>/g)].map((m) => m[1]).join("\n")
+    : src;
+  return css.replace(/\/\*[\s\S]*?\*\//g, "");
+}
+
 let failed = 0;
 for (const file of files) {
-  const src = readFileSync(file, "utf8");
+  const src = styleSource(file, readFileSync(file, "utf8"));
   for (const { name, re } of bans) {
     if (re.test(src)) {
       console.error(`${file}: ${name}`);
