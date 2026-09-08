@@ -30,6 +30,8 @@ const files = [
   "src/components/site/AboutPanelLayout.css",
   "src/components/site/AboutPanelOverlay.css",
   "src/components/site/AboutPanelPage.css",
+  "src/components/site/MenuChrome.css",
+  "src/components/site/MenuOverlay.css",
 ];
 
 /**
@@ -41,6 +43,7 @@ const files = [
 const EXEMPT = {
   "src/components/work/WorkBreakpoints.css": "Work family breakpoints",
   "src/components/site/AboutPanelBreakpoints.css": "About panel family breakpoints",
+  "src/components/site/MenuBreakpoints.css": "Menu family breakpoints",
 };
 
 const bans = [

@@ -1,0 +1,140 @@
+/* Form: sibling sheet, second of three the `Menu.css` barrel imports.
+ *
+ * ponytail: the full-screen menu is a different surface from the bar, with
+ * its own document lock and its own ink. The lock (`html.menu-open`) and
+ * the mount (`.menu_wrap`) used to sit at the top of the 880-line sheet,
+ * six hundred lines from the panel they belong to; they are here because
+ * `--menu-ink` is this panel's ink and nothing else reads it.
+ *
+ * ponytail: safe to emit after `MenuChrome.css` even though `.menu_wrap a`
+ * and `.nav_wrap .nav_grid a` both colour an anchor. They can never match
+ * the same one: `Menu.tsx` renders the lockup and the bar as siblings of
+ * `.menu_wrap`, not children, and says so at the mount.
+ *
+ * ponytail: the theme pair is here rather than in a shared sheet because the
+ * thing it describes is this panel. Dark puts black ink on flat accent,
+ * light puts white ink on frost; `--surface-frost-blur` is the same paired
+ * token the footer, the About card and the view switcher read, and it is
+ * `0rem` in dark, so the `backdrop-filter` below costs nothing there.
+ */
+@layer components.chrome {
+html.menu-open {
+  overflow: hidden;
+  /* Dark: black on accent. Light: white on frost. Same pairing as footer / About. */
+  --menu-ink: var(--dark-900);
+}
+
+html.theme-light.menu-open {
+  --menu-ink: var(--light-100);
+}
+
+.menu_wrap {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100dvh;
+  pointer-events: none;
+  z-index: var(--z--menu);
+}
+
+.menu_wrap a,
+.menu_wrap p {
+  position: relative;
+  color: var(--menu-ink);
+  display: block;
+  text-decoration: none;
+  will-change: transform;
+}
+
+.menu_overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  /* svh on the phone so the accent cannot run under Safari's bars (those
+     strips are page ground via html::before/after). Everything inside is
+     top-anchored (`flex-start`, no auto margins). The About sheet stays on
+     `dvh` so its scroller does not park under the toolbar. */
+  height: var(--site--screen-height);
+  overflow: clip;
+  background-color: var(--brand-500);
+  backdrop-filter: blur(var(--surface-frost-blur));
+  transform: translateY(100%);
+  will-change: transform;
+  pointer-events: none;
+  z-index: 2;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  justify-content: flex-start;
+  box-sizing: border-box;
+  /* Same pad as the Close row so the brand sits on that baseline. */
+  padding-top: calc(
+    var(--lockup-top, calc(var(--site--safe-area-top) + var(--site-gutter))) +
+      var(--lockup-gap, var(--site-gutter))
+  );
+  padding-inline: var(--site-margin);
+  padding-bottom: calc(var(--site-margin) + var(--site--safe-area-bottom));
+}
+
+.menu_overlay a,
+.menu_overlay p,
+.menu_overlay .nav_theme_toggle {
+  color: var(--menu-ink);
+}
+
+.menu_overlay_items {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: var(--space-4);
+  width: 100%;
+  text-align: left;
+}
+
+.menu_overlay_brand {
+  padding-right: 4.5em;
+}
+
+.menu_overlay_grid {
+  display: grid;
+  grid-template-columns: repeat(3, max-content);
+  justify-content: space-between;
+  align-items: start;
+  width: 100%;
+}
+
+.menu_overlay_col {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 1em;
+}
+
+.menu_overlay_items .revealer {
+  width: max-content;
+}
+
+.menu_overlay_items .revealer a,
+.menu_overlay_items .revealer .nav_theme_toggle {
+  display: block;
+}
+
+.menu_overlay_title {
+  margin: 0;
+  line-height: 1;
+  white-space: nowrap;
+}
+
+.menu_overlay_title::before,
+.menu_overlay_title::after {
+  content: none;
+}
+
+.menu_overlay.is-about-open .menu_overlay_items {
+  pointer-events: none;
+}
+}
