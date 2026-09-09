@@ -20,4 +20,10 @@ import WorkPage from "@/components/work/WorkPage.astro";
     } catch (e) {}
   </script>
   <WorkPage />
+  {/* Sideways trackpad swipes belong to the browser, not to the gallery —
+      the ring's Observer would otherwise consume them. */}
+  <script>
+    import { horizontalWheelPassthrough } from "@/lib/site/util/horizontalWheelPassthrough";
+    horizontalWheelPassthrough();
+  </script>
 </Layout>

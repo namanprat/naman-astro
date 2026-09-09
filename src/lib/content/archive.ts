@@ -9,5 +9,7 @@ export async function getArchiveItems(): Promise<ArchiveItem[]> {
     .map((entry) => ({
       src: entry.data.src,
       span: entry.data.span,
+      title: entry.data.title,
+      description: entry.data.description,
     }));
 }

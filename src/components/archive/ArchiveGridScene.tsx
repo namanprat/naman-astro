@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef } from "react";
 import * as THREE from "three";
 import { useFrame, useThree } from "@react-three/fiber";
+import { archiveFocusDim } from "@/lib/archive/archiveFocus";
 import { rigState } from "@/lib/archive/rigState";
 import { prefersReducedMotion } from "@/lib/site/util/prefersReducedMotion";
 
@@ -110,7 +111,8 @@ export default function ArchiveGridScene() {
 
     const m = rigState.morph;
     const u = glowMaterial.uniforms;
-    u.uOpacity.value = lerp(0.55, 0.35, m);
+    // Also pulls back behind an opened poster — see `archiveFocusDim`.
+    u.uOpacity.value = lerp(0.55, 0.35, m) * (1 - archiveFocusDim());
 
     // Smooth the cursor and project it onto the grid plane (world z = ORB_Z).
     pointerSmooth.current.lerp(pointerTarget.current, GLOW_LERP);

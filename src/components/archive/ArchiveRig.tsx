@@ -40,7 +40,11 @@ export default function ArchiveRig() {
     let pinchStartSpan = 0;
     let pinchStartZoom = 0;
 
-    const orbMode = () => rigState.morph < 0.05 && !rigState.isMorphing;
+    /* Focus is part of the gate: while the lightbox holds a poster open the
+       orb keeps spinning but must not accept a drag, pinch or zoom. The DOM
+       backdrop already swallows the events; this is the belt to that brace. */
+    const orbMode = () =>
+      rigState.morph < 0.05 && !rigState.isMorphing && rigState.focusIndex < 0;
     const gridMode = () => rigState.morph > 0.95 && !rigState.isMorphing;
 
     const pinchSpan = () => {
@@ -83,6 +87,7 @@ export default function ArchiveRig() {
       startX = e.clientX;
       startY = e.clientY;
       maxTravel = 0;
+      rigState.wasDrag = false;
       velX = 0;
       velY = 0;
       lastMoveT = e.timeStamp;
@@ -173,13 +178,24 @@ export default function ArchiveRig() {
         rigState.gridPanTarget.x += velX * ARCHIVE_CONFIG.gridPanFlingMs;
         rigState.gridPanTarget.y += velY * ARCHIVE_CONFIG.gridPanFlingMs;
       }
+      /* Latched for the `click` that follows: `isDragging` is cleared here,
+         and `pointerup` runs before `click`, so a tile's handler would always
+         see `false` and a drag ending over a poster would open it. */
+      rigState.wasDrag = maxTravel > (isTouch ? 15 : ARCHIVE_CONFIG.clickThreshold);
       rigState.isDragging = false;
       rigState.isGridPanning = false;
-      canvas.style.cursor = gridMode() || orbMode() ? "grab" : "default";
+      // Hover wins: a drag that ends on a poster should offer the click, not
+      // hand back `grab` until the pointer next moves.
+      if (rigState.hoverTiles > 0 && orbMode()) canvas.style.cursor = "pointer";
+      else canvas.style.cursor = gridMode() || orbMode() ? "grab" : "default";
     };
 
     const onWheel = (e: WheelEvent) => {
       if (!orbMode()) return;
+      /* A sideways trackpad swipe is the browser's back/forward gesture, not a
+         zoom. Never preventDefault it — `horizontalWheelPassthrough` normally
+         stops it reaching us at all, this keeps the handler honest on its own. */
+      if (Math.abs(e.deltaX) > Math.abs(e.deltaY)) return;
       e.preventDefault();
       rigState.zoom = clamp(
         rigState.zoom + e.deltaY * ARCHIVE_CONFIG.globeWheelSpeed,

@@ -1,34 +1,58 @@
+# `title` and `description` are the lightbox caption. Seeded from the filenames
+# as placeholders — rewrite them, they are the only copy the archive carries.
 brhm:
   order: 0
   src: /archive/brhm.webp
+  title: BRHM
+  description: Poster study.
 duforn-poster-1:
   order: 1
   src: /archive/Duforn%20Poster%201.webp
+  title: Duforn Poster 1
+  description: Poster study.
 duforn-poster-2:
   order: 2
   src: /archive/Duforn%20Poster%202.webp
+  title: Duforn Poster 2
+  description: Poster study.
 first-act:
   order: 3
   src: /archive/first%20act.webp
+  title: First Act
+  description: Poster study.
 frame-12:
   order: 4
   src: /archive/Frame%2012.webp
+  title: Frame 12
+  description: Poster study.
 img-4294:
   order: 5
   src: /archive/IMG_4294.webm
+  title: IMG 4294
+  description: Motion study.
 ipod:
   order: 6
   src: /archive/ipod.webp
+  title: iPod
+  description: Poster study.
 poster-6:
   order: 7
   src: /archive/Poster%206.webp
+  title: Poster 6
+  description: Poster study.
 poster9-file:
   order: 8
   src: /archive/Poster9%20File.webp
+  title: Poster 9
+  description: Poster study.
 unstoppable:
   order: 9
   src: /archive/Unstoppable.webp
+  title: Unstoppable
+  description: Poster study.
 vector-1:
   order: 10
   src: /archive/Vector-1.webp
   span: width
+  title: Vector
+  description: Sticker study.

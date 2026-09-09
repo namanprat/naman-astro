@@ -7,7 +7,9 @@ html.page-archive,
 html.page-archive body {
   height: 100%;
   overflow: hidden;
-  overscroll-behavior: none;
+  /* y only — see the note in `Work.css`: horizontal is the browser's
+     back/forward swipe and has to stay `auto`. */
+  overscroll-behavior-y: none;
   touch-action: none;
   scrollbar-width: none;
   background-color: var(--dark-900);
@@ -80,5 +82,82 @@ html.page-archive .nav_wrap.is-menu-open .nav_grid h5 {
   display: block;
   width: 100%;
   height: 100%;
+}
+
+/* --------------------------------------------------------------------------
+   Lightbox — scrim + caption for an opened poster.
+
+   The artwork is not in here: it is the WebGL tile, which flies forward inside
+   the canvas while the rest of the orb keeps spinning behind this scrim. All
+   this owns is the dimming and the copy underneath.
+   -------------------------------------------------------------------------- */
+
+.archive_lightbox_wrap {
+  position: fixed;
+  inset: 0;
+  /* Over the stage (0) and over the view switcher (6), which stands down while
+     this is open — see `html.archive-focused` below. Under the loader (7). */
+  z-index: 6;
+  display: grid;
+  align-content: end;
+  justify-items: center;
+  opacity: 0;
+  visibility: hidden;
+  transition:
+    opacity var(--archive_lightbox_fade, 0.7s) ease,
+    visibility 0s linear var(--archive_lightbox_fade, 0.7s);
+}
+
+.archive_lightbox_wrap[data-open] {
+  opacity: 1;
+  visibility: visible;
+  transition:
+    opacity var(--archive_lightbox_fade, 0.7s) ease,
+    visibility 0s;
+}
+
+/* A button, so the close is reachable by keyboard and announced — the poster
+   itself is a canvas mesh and cannot be either. Covers the canvas, which is
+   also what stops the orb being dragged while a poster is open.
+
+   Transparent on purpose: the opened poster is a tile *inside* the canvas, so
+   a scrim painted here would darken the artwork along with the orb behind it.
+   The dimming happens in WebGL instead — see `archiveFocusDim`. */
+.archive_lightbox_backdrop {
+  position: absolute;
+  inset: 0;
+  border: 0;
+  padding: 0;
+  cursor: pointer;
+  background: transparent;
+}
+
+.archive_lightbox_caption {
+  position: relative;
+  /* Above the view switcher, not on it: that pill sits at `--space-4` + the
+     safe area and stands about 2.5rem tall. */
+  margin-bottom: calc(var(--space-4) + var(--site--safe-area-bottom) + 4.5rem);
+  padding-inline: var(--space-4);
+  max-width: 40rem;
+  text-align: center;
+  color: var(--light-100);
+  /* The scrim takes the clicks — the caption is copy, not a control. */
+  pointer-events: none;
+}
+
+.archive_lightbox_title {
+  margin-bottom: var(--space-2);
+  opacity: 0.6;
+}
+
+.archive_lightbox_body {
+  margin: 0;
+}
+
+/* While a poster is open the switcher stands down: unwrapping the orb from
+   under the lightbox would strand the focused tile mid-flight. */
+html.archive-focused .view_switcher {
+  pointer-events: none;
+  opacity: 0.35;
 }
 }

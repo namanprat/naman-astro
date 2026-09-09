@@ -258,6 +258,12 @@ const archive = defineCollection({
      * `width` is for landscape stickers so they don't blow up to poster height.
      */
     span: z.enum(["height", "width"]).default("height"),
+    /**
+     * Lightbox caption. The artwork is a WebGL tile, so these two are the only
+     * text the archive carries. Optional — an item without them opens bare.
+     */
+    title: z.string().optional(),
+    description: z.string().optional(),
   }),
 });
 
