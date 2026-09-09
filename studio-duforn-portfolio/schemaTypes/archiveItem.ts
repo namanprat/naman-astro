@@ -1,4 +1,5 @@
 import { defineField, defineType } from "sanity";
+import { VIDEO_ACCEPT } from "./constants";
 
 export const archiveItem = defineType({
   name: "archiveItem",
@@ -25,13 +26,13 @@ export const archiveItem = defineType({
       name: "image",
       type: "image",
       options: { hotspot: true },
-      hidden: ({ parent }) => Boolean(parent?.video),
     }),
     defineField({
       name: "video",
+      title: "Video (WebM)",
+      description: "Use this instead of the image for motion tiles.",
       type: "file",
-      options: { accept: "video/*" },
-      hidden: ({ parent }) => Boolean(parent?.image),
+      options: { accept: VIDEO_ACCEPT },
     }),
     defineField({
       name: "span",
@@ -54,10 +55,19 @@ export const archiveItem = defineType({
     },
   ],
   preview: {
-    select: { title: "title", media: "image", order: "order" },
-    prepare: ({ title, media, order }) => ({
+    select: {
+      title: "title",
+      media: "image",
+      video: "video.asset.originalFilename",
+      order: "order",
+    },
+    prepare: ({ title, media, video, order }) => ({
       title,
-      subtitle: typeof order === "number" ? `Order ${order}` : undefined,
+      subtitle: video
+        ? `WebM${typeof order === "number" ? ` · ${order}` : ""}`
+        : typeof order === "number"
+          ? `Order ${order}`
+          : undefined,
       media,
     }),
   },

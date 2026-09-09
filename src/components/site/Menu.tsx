@@ -35,6 +35,7 @@ import {
 import type { AboutData } from "@/lib/content/models";
 import {
   EMAIL_HREF,
+  MARQUEE_LOOP_COPIES,
   NAV_STACKS,
   OVERLAY_COLUMNS,
   SECTION_IDS,
@@ -368,7 +369,7 @@ export default function Menu({
       window.removeEventListener("resize", setHeight);
       clearRootVar("--nav-marquee-height");
     };
-  }, []);
+  }, [marquee.enabled]);
 
   useEffect(() => {
     const nav = navContainerRef.current;
@@ -1038,20 +1039,22 @@ export default function Menu({
 
   return (
     <>
-      <div className="nav_marquee" ref={marqueeRef}>
-        <p className="sr-only">{marquee.availabilityLine}</p>
-        <div className="nav_marquee_track" aria-hidden="true">
-          {[0, 1].map((group) => (
-            <div className="nav_marquee_group" key={group}>
-              {Array.from({ length: marquee.availabilityCopies }, (_, i) => (
-                <span key={i} className="nav_marquee_copy text-style-small">
-                  {marquee.availabilityLine}
-                </span>
-              ))}
-            </div>
-          ))}
+      {marquee.enabled ? (
+        <div className="nav_marquee" ref={marqueeRef}>
+          <p className="sr-only">{marquee.availabilityLine}</p>
+          <div className="nav_marquee_track" aria-hidden="true">
+            {[0, 1].map((group) => (
+              <div className="nav_marquee_group" key={group}>
+                {Array.from({ length: MARQUEE_LOOP_COPIES }, (_, i) => (
+                  <span key={i} className="nav_marquee_copy text-style-small">
+                    {marquee.availabilityLine}
+                  </span>
+                ))}
+              </div>
+            ))}
+          </div>
         </div>
-      </div>
+      ) : null}
       <div className="hero_chrome" ref={heroChromeRef}>
         <div className="name_hero">
           <div className="name_hero_contain container gap-0">

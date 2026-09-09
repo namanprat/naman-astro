@@ -1,5 +1,5 @@
 import { defineArrayMember, defineField, defineType } from "sanity";
-import { WORK_SERVICES, WORK_SPANS } from "./constants";
+import { VIDEO_ACCEPT, WORK_SERVICES, WORK_SPANS } from "./constants";
 
 export const workPanelText = defineType({
   name: "workPanelText",
@@ -50,6 +50,33 @@ export const workPanelImage = defineType({
   },
 });
 
+export const workPanelVideo = defineType({
+  name: "workPanelVideo",
+  title: "Video panel (WebM)",
+  type: "object",
+  fields: [
+    defineField({
+      name: "video",
+      title: "Video (WebM)",
+      type: "file",
+      options: { accept: VIDEO_ACCEPT },
+      validation: (rule) => rule.required(),
+    }),
+    defineField({
+      name: "alt",
+      type: "string",
+      validation: (rule) => rule.required(),
+    }),
+  ],
+  preview: {
+    select: { title: "alt", filename: "video.asset.originalFilename" },
+    prepare: ({ title, filename }) => ({
+      title: title || filename || "Video panel",
+      subtitle: filename,
+    }),
+  },
+});
+
 export const workProject = defineType({
   name: "workProject",
   title: "Work project",
@@ -92,9 +119,10 @@ export const workProject = defineType({
     }),
     defineField({
       name: "coverVideo",
-      description: "Motion piece stacked under the cover on the case-study page.",
+      title: "Cover video (WebM)",
+      description: "Motion piece stacked under the cover on the case-study page and in the home featured slider.",
       type: "file",
-      options: { accept: "video/*" },
+      options: { accept: VIDEO_ACCEPT },
     }),
     defineField({
       name: "coverImage",
@@ -137,6 +165,7 @@ export const workProject = defineType({
       of: [
         defineArrayMember({ type: "workPanelText" }),
         defineArrayMember({ type: "workPanelImage" }),
+        defineArrayMember({ type: "workPanelVideo" }),
       ],
       validation: (rule) => rule.required().min(1),
     }),

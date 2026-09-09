@@ -157,10 +157,10 @@ async function seedSingletons() {
     ...process,
   });
   await client.createOrReplace({
-    _id: "nav",
-    _type: "navSettings",
+    _id: "marquee",
+    _type: "marqueeSettings",
     availabilityLine: nav.availabilityLine,
-    availabilityCopies: nav.availabilityCopies,
+    enabled: Boolean(nav.enabled),
   });
   console.log("seed-sanity: singletons");
 }

@@ -72,15 +72,65 @@ assert.equal((faq.data.items as { question: string }[])[0]?.question, "Who?");
 
 const nav = mapNav({
   availabilityLine: "available",
-  availabilityCopies: 6,
+  enabled: true,
 });
 assert.ok(nav);
 assert.equal(nav.data.availabilityLine, "available");
-assert.equal(nav.data.availabilityCopies, 6);
+assert.equal(nav.data.enabled, true);
 assert.equal(
-  mapNav({ availabilityLine: "available" }),
-  null,
-  "incomplete marquee is dropped so YAML can take over",
+  mapNav({ availabilityLine: "available" })?.data.enabled,
+  false,
+  "legacy marquee docs stay off until the toggle is set",
 );
+assert.equal(mapNav({}), null, "empty marquee is dropped so YAML can take over");
+
+const archiveVideo = mapArchiveItem({
+  id: "img-4294",
+  order: 5,
+  span: "height",
+  image: {},
+  video: {
+    asset: {
+      url: "https://cdn.sanity.io/files/dj9l9mvw/production/IMG_4294.webm",
+    },
+  },
+});
+assert.ok(archiveVideo, "archive webm must map even when an empty image object is present");
+assert.equal(
+  archiveVideo.data.src,
+  "https://cdn.sanity.io/files/dj9l9mvw/production/IMG_4294.webm",
+);
+
+const workVideoPanel = mapWorkProject({
+  slug: "haptic",
+  order: 1,
+  title: "Haptic",
+  description: "A tactile AI brand.",
+  image: {
+    asset: {
+      _id: "image-abc-800x600-webp",
+      url: "https://cdn.sanity.io/images/dj9l9mvw/production/abc-800x600.webp",
+    },
+  },
+  alt: "Haptic",
+  featured: true,
+  span: 3,
+  col: 7,
+  services: ["Brand identity", "Motion design"],
+  panels: [
+    {
+      _type: "workPanelVideo",
+      video: {
+        asset: { url: "https://cdn.sanity.io/files/dj9l9mvw/production/loop.webm" },
+      },
+      alt: "Loop",
+    },
+    { _type: "workPanelText", title: "Why this", body: "Because." },
+  ],
+} satisfies RawWorkProject);
+assert.ok(workVideoPanel);
+const videoPanels = workVideoPanel.data.panels as { kind: string; src?: string }[];
+assert.equal(videoPanels[0]?.kind, "video");
+assert.match(String(videoPanels[0]?.src), /loop\.webm$/);
 
 console.log("sanityMap: all assertions passed");

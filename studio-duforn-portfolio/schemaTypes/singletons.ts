@@ -14,7 +14,7 @@ const viewItem = defineArrayMember({
 
 export const siteSettings = defineType({
   name: "siteSettings",
-  title: "Site",
+  title: "Homepage",
   type: "document",
   fields: [
     defineField({
@@ -67,58 +67,37 @@ export const siteSettings = defineType({
     defineField({
       name: "preloader",
       type: "object",
+      hidden: true,
       fields: [
-        defineField({
-          name: "locationLine",
-          type: "string",
-          validation: (rule) => rule.required(),
-        }),
-        defineField({
-          name: "disciplineLine",
-          type: "string",
-          validation: (rule) => rule.required(),
-        }),
+        defineField({ name: "locationLine", type: "string" }),
+        defineField({ name: "disciplineLine", type: "string" }),
       ],
-      validation: (rule) => rule.required(),
     }),
     defineField({
       name: "notFound",
       type: "object",
+      hidden: true,
       fields: [
-        defineField({
-          name: "title",
-          type: "string",
-          validation: (rule) => rule.required(),
-        }),
-        defineField({
-          name: "body",
-          type: "text",
-          rows: 3,
-          validation: (rule) => rule.required(),
-        }),
-        defineField({
-          name: "linkLabel",
-          type: "string",
-          validation: (rule) => rule.required(),
-        }),
+        defineField({ name: "title", type: "string" }),
+        defineField({ name: "body", type: "text", rows: 3 }),
+        defineField({ name: "linkLabel", type: "string" }),
       ],
-      validation: (rule) => rule.required(),
     }),
     defineField({
       name: "workViews",
       type: "array",
       of: [viewItem],
-      validation: (rule) => rule.required().min(1),
+      hidden: true,
     }),
     defineField({
       name: "archiveViews",
       type: "array",
       of: [viewItem],
-      validation: (rule) => rule.required().min(1),
+      hidden: true,
     }),
   ],
   preview: {
-    prepare: () => ({ title: "Site" }),
+    prepare: () => ({ title: "Homepage" }),
   },
 });
 
@@ -252,23 +231,38 @@ export const processSettings = defineType({
   },
 });
 
-export const navSettings = defineType({
-  name: "navSettings",
+export const marqueeSettings = defineType({
+  name: "marqueeSettings",
   title: "Marquee",
   type: "document",
   fields: [
     defineField({
-      name: "availabilityLine",
-      type: "string",
-      validation: (rule) => rule.required(),
+      name: "enabled",
+      title: "Enable marquee",
+      type: "boolean",
+      description: "Turn the homepage availability ticker on or off.",
+      initialValue: false,
     }),
     defineField({
-      name: "availabilityCopies",
-      type: "number",
-      validation: (rule) => rule.required().integer().positive(),
+      name: "availabilityLine",
+      title: "Availability line",
+      type: "string",
+      description: "Text shown in the ticker when the marquee is enabled.",
+      validation: (rule) =>
+        rule.custom((value, context) => {
+          const enabled = Boolean(
+            (context.parent as { enabled?: boolean } | undefined)?.enabled,
+          );
+          if (!enabled) return true;
+          return value?.trim() ? true : "Required when the marquee is on";
+        }),
     }),
   ],
   preview: {
-    prepare: () => ({ title: "Marquee" }),
+    select: { enabled: "enabled", line: "availabilityLine" },
+    prepare: ({ enabled, line }) => ({
+      title: "Marquee",
+      subtitle: enabled ? line || "On" : "Off",
+    }),
   },
 });

@@ -9,12 +9,15 @@ export const WORK_SERVICES = [
 
 export const WORK_SPANS = [2, 3, 5] as const;
 
+/** Sanity file pickers: WebM first, MP4 as a fallback. */
+export const VIDEO_ACCEPT = "video/webm,.webm,video/mp4,.mp4";
+
 export const SINGLETON_TYPES = [
   "siteSettings",
   "aboutSettings",
   "faqSettings",
   "processSettings",
-  "navSettings",
+  "marqueeSettings",
 ] as const;
 
 export type SingletonType = (typeof SINGLETON_TYPES)[number];
@@ -25,5 +28,5 @@ export const SINGLETON_IDS = {
   aboutSettings: "about",
   faqSettings: "faq",
   processSettings: "process",
-  navSettings: "nav",
+  marqueeSettings: "marquee",
 } as const satisfies Record<SingletonType, string>;

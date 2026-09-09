@@ -18,7 +18,8 @@ export const WORK_QUERY = /* groq */ `*[_type == "workProject"] | order(order as
     title,
     body,
     ${IMAGE},
-    alt
+    alt,
+    video { asset->{ url, mimeType, originalFilename } }
   }
 }`;
 
@@ -58,7 +59,7 @@ export const PROCESS_QUERY = /* groq */ `*[_id == "process"][0]{
   cards[]{ title, description, model }
 }`;
 
-export const NAV_QUERY = /* groq */ `*[_id == "nav"][0]{
+export const MARQUEE_QUERY = /* groq */ `*[_id == "marquee"][0]{
   availabilityLine,
-  availabilityCopies
+  enabled
 }`;

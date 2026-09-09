@@ -1,8 +1,8 @@
 /**
  * Nav chrome. Routes, socials, and the overlay live here — not in Sanity —
  * because they are the site's wiring, not copy. The availability marquee is
- * the one line an editor should change without a deploy; that stays in the
- * `nav` collection.
+ * the one line an editor should change without a deploy; that lives in the
+ * `marquee` Sanity document (and `src/content/nav.yaml` as fallback).
  */
 export type NavLink = {
   label: string;
@@ -27,8 +27,11 @@ export type OverlayItem = OverlayLink | OverlayAction;
 
 export type NavMarquee = {
   availabilityLine: string;
-  availabilityCopies: number;
+  enabled: boolean;
 };
+
+/** Repeats inside each marquee track so the CSS loop can scroll seamlessly. */
+export const MARQUEE_LOOP_COPIES = 6;
 
 export const EMAIL_HREF = "mailto:a.namanprat@gmail.com";
 
