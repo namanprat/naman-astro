@@ -1,9 +1,8 @@
 import { archiveItem } from "./archiveItem";
 import {
   aboutSettings,
-  faqSettings,
-  navSettings,
-  processSettings,
+  footerSettings,
+  marqueeSettings,
   siteSettings,
 } from "./singletons";
 import { workPanelImage, workPanelText, workProject } from "./workProject";
@@ -14,8 +13,7 @@ export const schemaTypes = [
   workPanelImage,
   archiveItem,
   siteSettings,
+  footerSettings,
   aboutSettings,
-  faqSettings,
-  processSettings,
-  navSettings,
+  marqueeSettings,
 ];

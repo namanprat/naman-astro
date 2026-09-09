@@ -2,7 +2,7 @@
  * Nav chrome. Routes, socials, and the overlay live here — not in Sanity —
  * because they are the site's wiring, not copy. The availability marquee is
  * the one line an editor should change without a deploy; that stays in the
- * `nav` collection.
+ * `marquee` collection.
  */
 export type NavLink = {
   label: string;
@@ -26,9 +26,12 @@ export type OverlayAction = { label: string; action: "theme" };
 export type OverlayItem = OverlayLink | OverlayAction;
 
 export type NavMarquee = {
-  availabilityLine: string;
-  availabilityCopies: number;
+  copy: string;
+  enabled: boolean;
 };
+
+/** How many times the marquee line repeats in each track group. Layout, not CMS. */
+export const MARQUEE_COPIES = 6;
 
 export const EMAIL_HREF = "mailto:a.namanprat@gmail.com";
 

@@ -14,7 +14,7 @@ import Footer from "./Footer.astro";
 
 const site = await getEntry("site", "site");
 if (!site) throw new Error("content: the `site` entry is missing");
-const { heroNote } = site.data;
+const { eyebrow } = site.data;
 ---
 
 <section class="hero" id="hero" aria-label="Home">
@@ -22,7 +22,7 @@ const { heroNote } = site.data;
       reserves the first viewport, which makes it the one box already sized to
       the screen these two can hang off. */}
   <p class="hero_note text-style-main">
-    {heroNote.map((line, i) => (<>{i > 0 && <br />}{line}</>))}
+    {eyebrow.map((line, i) => (<>{i > 0 && <br />}{line}</>))}
   </p>
   <a class="hero_scroll" href="#studio">
     <span class="sr-only">Skip to the studio</span>

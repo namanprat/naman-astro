@@ -1,8 +1,7 @@
-import { useEffect, useRef, useState, type CSSProperties } from "react";
+import { useEffect, useRef, useState } from "react";
 import { gsap } from "gsap";
 import Lenis from "lenis";
 import type { WorkItem } from "@/content/work";
-import type { ViewItem } from "@/lib/content/models";
 import { ABOUT_OPEN_CLASS } from "@/lib/site/about/aboutPanel";
 import { gooeyMorph } from "@/lib/site/reveal/gooeyReveal";
 import { setSiteLenis } from "@/lib/site/scroll/lenisBridge";
@@ -24,20 +23,10 @@ import Transition, { type CloseReason } from "./slider/Transition";
 import ViewSwitcher, { type ViewSwitcherItem } from "../ViewSwitcher";
 import "./Work.css";
 
-const DEFAULT_WORK_VIEWS: readonly ViewSwitcherItem<WorkView>[] = [
+const WORK_VIEWS: readonly ViewSwitcherItem<WorkView>[] = [
   { id: "slider", label: "Slider" },
   { id: "grid", label: "Grid" },
 ];
-
-function workViewsFrom(
-  views: readonly ViewItem[] | undefined,
-): readonly ViewSwitcherItem<WorkView>[] {
-  const next = (views ?? [])
-    .filter((view): view is ViewSwitcherItem<WorkView> =>
-      view.id === "slider" || view.id === "grid",
-    );
-  return next.length ? next : DEFAULT_WORK_VIEWS;
-}
 
 /** Settled hover before a morph fires, so sweeping across tiles doesn't melt
  *  the label once per tile the cursor crosses. */
@@ -66,14 +55,7 @@ type ViewEngine = {
   readonly centeredIndex: number;
 };
 
-export default function WorkGallery({
-  items,
-  views,
-}: {
-  items: WorkItem[];
-  views?: readonly ViewItem[];
-}) {
-  const workViews = workViewsFrom(views);
+export default function WorkGallery({ items }: { items: WorkItem[] }) {
   const rootRef = useRef<HTMLDivElement>(null);
   const [ready, setReady] = useState(false);
   /* Two states, because the text has to change at the blur peak rather than
@@ -572,7 +554,7 @@ export default function WorkGallery({
 
     /* The returning path must not sit behind image decode: the gallery is
        hidden until the reverse starts, and its box sizes come from CSS
-       (span token + aspect-ratio), so centreOn can measure before any
+       (span-3 token + aspect-ratio), so centreOn can measure before any
        thumbnail has decoded. The project's own image is already cached.
        Two frames so imported CSS has laid out slide sizes before measure. */
     if (!pending.length || returnIndex >= 0) scheduleBoot();
@@ -658,17 +640,10 @@ export default function WorkGallery({
             data-slug={item.slug}
             data-title={item.title}
             data-href={`/work/${item.slug}`}
-            data-span={item.span}
             data-index={index}
             tabIndex={0}
             role="link"
             aria-label={`View ${item.title}`}
-            style={
-              {
-                "--slide-span": item.span,
-                "--slide-col": item.col,
-              } as CSSProperties
-            }
           >
             <div className="gallery_img_wrap">
               <img
@@ -685,7 +660,7 @@ export default function WorkGallery({
 
       <ViewSwitcher
         label="Work view"
-        views={workViews}
+        views={WORK_VIEWS}
         view={view}
         busy={switching || !ready}
         onSelect={(next) => switchViewRef.current(next)}

@@ -2,9 +2,6 @@ export type WorkPanel =
   | { kind: "text"; title: string; body: string }
   | { kind: "image"; src: string; alt: string };
 
-/** Lumos grid column spans available as --site--span-* tokens. */
-export type WorkSpan = 2 | 3 | 5;
-
 /** About-panel vocabulary, reused per project on the case-study hero. */
 export type WorkService =
   | "Brand identity"
@@ -25,11 +22,6 @@ export type WorkItem = {
   coverImage?: string;
   /** Shown in the home Camille featured slider when true. */
   featured?: boolean;
-  /** Width in Lumos column spans. */
-  span: WorkSpan;
-  /** Start column on the Lumos grid, 0-indexed. Clamped so col + span fits
-      the column count at the current breakpoint. */
-  col: number;
   services: WorkService[];
   panels: WorkPanel[];
 };

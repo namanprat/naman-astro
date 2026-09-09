@@ -1,0 +1,16 @@
+# ponytail: footer labels can diverge from the menu; the menu is wiring in
+# src/lib/content/nav.ts. Contact is omitted — the footer is the contact
+# section.
+footer:
+  tagline: We're a design practice. We work with early-stage brands on
+    identity, web, and motion, and we care more about what gets left out than
+    what gets added.
+  links:
+    - label: Home
+      path: /
+    - label: Work
+      path: /work
+    - label: About
+      path: /#about
+    - label: Archive
+      path: /archive

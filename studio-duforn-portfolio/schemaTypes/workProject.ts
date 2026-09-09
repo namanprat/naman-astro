@@ -1,5 +1,5 @@
 import { defineArrayMember, defineField, defineType } from "sanity";
-import { WORK_SERVICES, WORK_SPANS } from "./constants";
+import { WORK_SERVICES } from "./constants";
 
 export const workPanelText = defineType({
   name: "workPanelText",
@@ -92,9 +92,9 @@ export const workProject = defineType({
     }),
     defineField({
       name: "coverVideo",
-      description: "Motion piece stacked under the cover on the case-study page.",
-      type: "file",
-      options: { accept: "video/*" },
+      description:
+        "Public path or CDN URL for the motion piece under the cover, e.g. /work/haptic/haptic-reveal.webm.",
+      type: "string",
     }),
     defineField({
       name: "coverImage",
@@ -108,21 +108,6 @@ export const workProject = defineType({
       type: "boolean",
       description: "Shown in the home featured slider.",
       initialValue: false,
-    }),
-    defineField({
-      name: "span",
-      type: "number",
-      options: {
-        list: WORK_SPANS.map((value) => ({ title: String(value), value })),
-        layout: "radio",
-      },
-      validation: (rule) => rule.required(),
-    }),
-    defineField({
-      name: "col",
-      type: "number",
-      description: "0-indexed Lumos start column.",
-      validation: (rule) => rule.required().integer().min(0),
     }),
     defineField({
       name: "services",

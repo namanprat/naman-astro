@@ -17,9 +17,9 @@
 import { getEntry } from "astro:content";
 import ProcessCardStage from "./ProcessCardStage";
 
-const process = await getEntry("process", "process");
-if (!process) throw new Error("content: the `process` entry is missing");
-const { statement, cards } = process.data;
+const site = await getEntry("site", "site");
+if (!site) throw new Error("content: the `site` entry is missing");
+const { statement, cards } = site.data.process;
 ---
 
 <section class="process_wrap studio_section" id="process" aria-label="Process">

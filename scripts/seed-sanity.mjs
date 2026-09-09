@@ -55,12 +55,12 @@ function imageField(asset) {
   return asset ? { _type: "image", asset } : undefined;
 }
 
-function fileField(asset) {
-  return asset ? { _type: "file", asset } : undefined;
-}
-
 function loadYaml(rel) {
   return parse(readFileSync(path.join(ROOT, rel), "utf8"));
+}
+
+function keyed(items, prefix) {
+  return items.map((item, index) => ({ ...item, _key: `${prefix}-${index}` }));
 }
 
 async function seedWork() {
@@ -97,11 +97,9 @@ async function seedWork() {
       description: data.description,
       image: imageField(await uploadFile(data.image, "image")),
       alt: data.alt,
-      coverVideo: fileField(await uploadFile(data.coverVideo, "file")),
+      coverVideo: data.coverVideo,
       coverImage: imageField(await uploadFile(data.coverImage, "image")),
       featured: Boolean(data.featured),
-      span: data.span,
-      col: data.col,
       services: data.services,
       panels,
     });
@@ -122,7 +120,7 @@ async function seedArchive() {
       image: isVideo
         ? undefined
         : imageField(await uploadFile(data.src, "image")),
-      video: isVideo ? fileField(await uploadFile(data.src, "file")) : undefined,
+      videoPath: isVideo ? data.src : undefined,
       span: data.span ?? "height",
     });
     console.log(`seed-sanity: archive ${id}`);
@@ -132,14 +130,22 @@ async function seedArchive() {
 async function seedSingletons() {
   const site = loadYaml("src/content/site.yaml").site;
   const about = loadYaml("src/content/about.yaml").about;
-  const faq = loadYaml("src/content/faq.yaml").faq;
-  const process = loadYaml("src/content/process.yaml").process;
-  const nav = loadYaml("src/content/nav.yaml").nav;
+  const footer = loadYaml("src/content/footer.yaml").footer;
+  const marquee = loadYaml("src/content/marquee.yaml").marquee;
 
   await client.createOrReplace({
     _id: "site",
     _type: "siteSettings",
-    ...site,
+    eyebrow: site.eyebrow,
+    faq: {
+      statement: site.faq.statement,
+      lead: site.faq.lead,
+      items: keyed(site.faq.items, "faq"),
+    },
+    process: {
+      statement: site.process.statement,
+      cards: keyed(site.process.cards, "process"),
+    },
   });
   await client.createOrReplace({
     _id: "about",
@@ -147,20 +153,16 @@ async function seedSingletons() {
     ...about,
   });
   await client.createOrReplace({
-    _id: "faq",
-    _type: "faqSettings",
-    ...faq,
+    _id: "footer",
+    _type: "footerSettings",
+    tagline: footer.tagline,
+    links: keyed(footer.links, "link"),
   });
   await client.createOrReplace({
-    _id: "process",
-    _type: "processSettings",
-    ...process,
-  });
-  await client.createOrReplace({
-    _id: "nav",
-    _type: "navSettings",
-    availabilityLine: nav.availabilityLine,
-    availabilityCopies: nav.availabilityCopies,
+    _id: "marquee",
+    _type: "marqueeSettings",
+    copy: marquee.copy,
+    enabled: Boolean(marquee.enabled),
   });
   console.log("seed-sanity: singletons");
 }

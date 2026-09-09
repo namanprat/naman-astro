@@ -6,8 +6,6 @@ image: /work/t-bonk/t-bonk-cover.webp
 alt: t.Bonk
 coverImage: /work/t-bonk/t-bonk-project.webp
 featured: true
-span: 3
-col: 9
 services:
   - Brand identity
   - Website design

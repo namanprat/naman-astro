@@ -1,10 +1,8 @@
 ---
-import { getEntry } from "astro:content";
 import Layout from "@/layouts/BaseLayout.astro";
+import { SITE_COPY } from "@/lib/content/copy";
 
-const site = await getEntry("site", "site");
-if (!site) throw new Error("content: the `site` entry is missing");
-const { title, body, linkLabel } = site.data.notFound;
+const { title, body, linkLabel } = SITE_COPY.notFound;
 ---
 
 <Layout
