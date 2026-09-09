@@ -95,6 +95,7 @@ async function seedWork() {
       slug: { _type: "slug", current: slug },
       order: data.order,
       description: data.description,
+      website: data.website,
       image: imageField(await uploadFile(data.image, "image")),
       alt: data.alt,
       coverVideo: data.coverVideo,

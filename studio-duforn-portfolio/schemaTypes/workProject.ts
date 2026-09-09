@@ -79,6 +79,13 @@ export const workProject = defineType({
       validation: (rule) => rule.required(),
     }),
     defineField({
+      name: "website",
+      title: "Website",
+      type: "url",
+      description:
+        "Live site. Shown as “Open website” under the project description.",
+    }),
+    defineField({
       name: "image",
       title: "Cover image",
       type: "image",

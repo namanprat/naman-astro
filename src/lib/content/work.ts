@@ -29,6 +29,7 @@ export function toWorkItem(entry: WorkEntry): WorkItem {
     slug: entry.id,
     title: entry.data.title,
     description: entry.data.description,
+    website: entry.data.website,
     image: entry.data.image,
     alt: entry.data.alt,
     coverVideo: entry.data.coverVideo,

@@ -19,6 +19,7 @@ const work = mapWorkProject({
   order: 1,
   title: "Haptic",
   description: "A tactile AI brand.",
+  website: "https://haptic.example",
   image: {
     asset: {
       _id: "image-abc-800x600-webp",
@@ -46,6 +47,7 @@ const work = mapWorkProject({
 assert.ok(work, "valid work document must map");
 assert.equal(work.id, "haptic");
 assert.equal(work.data.title, "Haptic");
+assert.equal(work.data.website, "https://haptic.example");
 assert.equal(work.data.featured, true);
 assert.match(String(work.data.image), /cdn\.sanity\.io/);
 assert.equal(

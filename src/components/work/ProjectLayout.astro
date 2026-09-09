@@ -7,6 +7,7 @@ import { groupWorkPanels, type WorkItem } from "@/content/work";
 import Grid from "@/components/Wrapper/Grid.astro";
 import Heading from "@/components/Typography/Heading.astro";
 import Paragraph from "@/components/Typography/Paragraph.astro";
+import Button from "@/components/Button.astro";
 
 interface Props {
   item: WorkItem;
@@ -28,7 +29,23 @@ const groups = groupWorkPanels(item.panels);
             ))}
           </div>
         </div>
-        <Paragraph variant="main" class="project_body">{item.description}</Paragraph>
+        <div class="project_intro">
+          <Paragraph variant="main" class="project_body">{item.description}</Paragraph>
+          {
+            item.website ? (
+              <Button
+                element="link"
+                variant="link"
+                href={item.website}
+                target="_blank"
+                rel="noreferrer noopener"
+                class="project_website"
+              >
+                Open website
+              </Button>
+            ) : null
+          }
+        </div>
       </Grid>
     </div>
   </section>

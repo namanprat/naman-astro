@@ -89,6 +89,8 @@ const work = defineCollection({
     order: z.number().int().nonnegative(),
     title: z.string(),
     description: z.string(),
+    /** Live site. Shown as “Open website” under the case-study description. */
+    website: z.string().optional(),
     image: z.string(),
     alt: z.string(),
     /** Motion piece stacked under the cover on the case-study page. */

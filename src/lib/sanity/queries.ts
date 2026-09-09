@@ -8,6 +8,7 @@ export const WORK_QUERY = /* groq */ `*[_type == "workProject"] | order(order as
   order,
   title,
   description,
+  website,
   ${IMAGE},
   alt,
   "coverVideo": coalesce(coverVideo.asset->url, coverVideo),
