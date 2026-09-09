@@ -28,7 +28,8 @@ covers the conventions that keep a Lumos site consistent as it grows.
 
 Task-specific Lumos procedures live in `.claude/skills/` (`lumos-upgrade-version`,
 `lumos-audit-props`, `lumos-import-figma`, `lumos-import-webflow`,
-`lumos-scaling-graphic`).
+`lumos-scaling-graphic`). Ponytail (lazy senior mode) lives in
+`.cursor/rules/ponytail.mdc` and `.claude/skills/ponytail/`.
 
 ## Cursor Cloud specific instructions
 
