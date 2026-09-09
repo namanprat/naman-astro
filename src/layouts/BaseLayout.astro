@@ -1,13 +1,13 @@
 ---
 import Analytics from "@vercel/analytics/astro";
-import { getEntry } from "astro:content";
 import "@/styles/global.css";
 import "@/styles/site.css";
 import BaseHead from "@/components/BaseHead.astro";
-import Menu from "@/components/site/Menu";
+import Menu from "@/components/site/Menu.astro";
 import GooeyFilter from "@/components/site/GooeyFilter.astro";
 import FluidCanvas from "@/components/site/FluidCanvas.astro";
 import type { SeoProps } from "@/types.ts";
+import { pagePathname } from "@/utils/seo.ts";
 
 type Props = SeoProps & {
   /** Theme for the whole page. `inherit` leaves the root defaults in place. */
@@ -23,13 +23,7 @@ type Props = SeoProps & {
 
 const { theme = "inherit", rootClass, ...seo } = Astro.props;
 
-const isArchive = Astro.url.pathname === "/archive";
-const [marquee, about] = await Promise.all([
-  getEntry("marquee", "marquee"),
-  getEntry("about", "about"),
-]);
-if (!marquee || !about)
-  throw new Error("content: `marquee` or `about` entry is missing");
+const isArchive = pagePathname(Astro.url.pathname) === "/archive";
 ---
 
 <!doctype html>
@@ -81,7 +75,7 @@ if (!marquee || !about)
     <slot name="head" />
     <script is:inline>
       /* Hexes match THEME_COLOR_* in lib/site/util/themeColor.ts. Inline so the
-         bar is right before React hydrates. Archive is always dark. */
+         bar is right before first paint. Archive is always dark. */
       (function () {
         var root = document.documentElement;
         var metas = document.querySelectorAll('meta[name="theme-color"]');
@@ -108,12 +102,7 @@ if (!marquee || !about)
     <GooeyFilter />
     <div class="site-grain" aria-hidden="true"></div>
     <div class="transition_panel" aria-hidden="true"></div>
-    <Menu
-      client:load
-      initialPathname={Astro.url.pathname}
-      marquee={marquee.data}
-      about={about.data}
-    />
+    <Menu />
     <div class="site-backdrop">
       <slot name="backdrop" />
     </div>

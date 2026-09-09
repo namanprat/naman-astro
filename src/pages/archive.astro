@@ -1,9 +1,16 @@
 ---
 import Layout from "@/layouts/BaseLayout.astro";
 import ArchiveCanvas from "@/components/archive/ArchiveCanvas";
+import ViewSwitcher from "@/components/ViewSwitcher.astro";
 import { getArchiveItems } from "@/lib/content/archive";
+import "@/components/archive/Archive.css";
 
 const items = await getArchiveItems();
+
+const ARCHIVE_VIEWS = [
+  { id: "orb", label: "Orb" },
+  { id: "grid", label: "Grid" },
+] as const;
 ---
 
 <Layout
@@ -17,5 +24,13 @@ const items = await getArchiveItems();
   <script slot="head" is:inline>
     document.documentElement.classList.add("page-archive");
   </script>
-  <ArchiveCanvas client:only="react" items={items} />
+  <div class="archive_stage">
+    <p class="sr-only" role="heading" aria-level={1}>Archive</p>
+    <ArchiveCanvas client:only="react" items={items} />
+    <ViewSwitcher label="Archive view" views={ARCHIVE_VIEWS} view="orb" locked />
+  </div>
+  <script>
+    import { bootArchiveSwitcher } from "@/lib/archive/bootArchiveSwitcher";
+    bootArchiveSwitcher();
+  </script>
 </Layout>

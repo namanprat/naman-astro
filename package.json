@@ -13,22 +13,23 @@
     "prebuild": "node scripts/archive-variants.mjs",
     "build": "astro build",
     "preview": "astro preview",
+    "probe": "vite --config tools/shader-probe/vite.config.ts",
     "astro": "astro",
     "format": "prettier --write .",
     "studio": "npm run dev --prefix studio-duforn-portfolio",
     "sanity:seed": "node scripts/seed-sanity.mjs",
-    "test:unit": "node scripts/run-checks.mjs"
+    "test:unit": "node scripts/run-checks.mjs",
+    "test:e2e": "playwright test"
   },
   "dependencies": {
-    "@astrojs/react": "^6.0.2",
-    "@astrojs/sitemap": "^3.7.3",
-    "@gsap/react": "^2.1.2",
+    "@astrojs/react": "^6.0.5",
+    "@astrojs/sitemap": "^3.7.4",
     "@react-three/drei": "^10.7.8",
     "@react-three/fiber": "^9.7.0",
     "@sanity/client": "^8.6.1",
     "@sanity/image-url": "^2.1.1",
     "@vercel/analytics": "^2.0.1",
-    "astro": "^7.1.4",
+    "astro": "^7.3.2",
     "gsap": "^3.15.0",
     "lenis": "^1.3.26",
     "lil-gui": "^0.21.0",
@@ -38,6 +39,7 @@
   },
   "devDependencies": {
     "@astrojs/check": "^0.9.10",
+    "@playwright/test": "^1.62.1",
     "@types/react": "^19.2.18",
     "@types/react-dom": "^19.2.4",
     "@types/three": "^0.185.4",
@@ -45,5 +47,13 @@
     "prettier-plugin-astro": "^0.14.1",
     "typescript": "^6.0.3",
     "yaml": "^2.9.0"
+  },
+  "lumos": {
+    "version": "0.0.3",
+    "commit": "1a8e1777ff072a3faeaebddcadb6ff80c6951c38",
+    "scaffolded": "2026-09-09"
+  },
+  "allowScripts": {
+    "esbuild": true
   }
 }

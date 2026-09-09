@@ -1,0 +1,242 @@
+---
+/**
+ * Site chrome: availability ticker, desktop stacks, mobile overlay.
+ * Markup is Astro on the Lumos grid; `Menu.ts` owns open/close, scroll-spy,
+ * and the overlay timelines. About's bust stays an R3F island.
+ */
+import { getEntry } from "astro:content";
+import { SITE_NAME } from "@/consts.ts";
+import {
+  EMAIL_HREF,
+  MARQUEE_COPIES,
+  NAV_STACKS,
+  OVERLAY_COLUMNS,
+  SOCIAL_LINKS,
+} from "@/lib/content/nav";
+import { ABOUT_PATH } from "@/lib/site/about/aboutPanel";
+import { pagePathname } from "@/utils/seo.ts";
+import RollingText from "./RollingText.astro";
+import ThemeToggle from "./ThemeToggle.astro";
+import AboutPanel from "./AboutPanel.astro";
+import "./Menu.css";
+
+const [marquee, about] = await Promise.all([
+  getEntry("marquee", "marquee"),
+  getEntry("about", "about"),
+]);
+if (!marquee || !about)
+  throw new Error("content: `marquee` or `about` entry is missing");
+
+const { copy, enabled } = marquee.data;
+const pathname = pagePathname(Astro.url.pathname);
+const showAboutOverlay = pathname !== ABOUT_PATH;
+
+const initialActive =
+  pathname === ABOUT_PATH
+    ? "about"
+    : pathname === "/work" || pathname.startsWith("/work/")
+      ? "work"
+      : pathname === "/archive"
+        ? "archive"
+        : "hero";
+
+const copies = Array.from({ length: MARQUEE_COPIES }, (_, i) => i);
+---
+
+{
+  enabled ? (
+    <div class="nav_marquee">
+      <p class="sr-only">{copy}</p>
+      <div class="nav_marquee_track" aria-hidden="true">
+        {
+          [0, 1].map(() => (
+            <div class="nav_marquee_group">
+              {copies.map(() => (
+                <span class="nav_marquee_copy text-style-small">{copy}</span>
+              ))}
+            </div>
+          ))
+        }
+      </div>
+    </div>
+  ) : null
+}
+
+<div class="hero_chrome">
+  <div class="name_hero">
+    <div class="name_hero_contain container gap-0">
+      <div class="name_hero_grid grid is-12">
+        <div class="name_hero_gooey">
+          <span class="name_hero_home">
+            <span class="name_hero_lockup" role="img" aria-label={SITE_NAME}>
+              <img src="/main-assets/name-hero.svg" alt="" aria-hidden="true" />
+            </span>
+          </span>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="nav_wrap">
+    <div class="nav_fade" aria-hidden="true"></div>
+    <div class="nav_contain container gap-0">
+      <nav class="nav_grid grid is-12" aria-label="Main">
+        <div class="nav_logo">
+          <div class="revealer">
+            <a href="/" data-nav-path="/">
+              <span class="nav_logo_target">
+                <span class="nav_logo_wordmark">
+                  <h5 class="text-style-main">
+                    <RollingText>{SITE_NAME}</RollingText>
+                  </h5>
+                </span>
+              </span>
+            </a>
+          </div>
+        </div>
+
+        {
+          NAV_STACKS.map(({ col, links }) => (
+            <div class={`nav_stack ${col}`}>
+              {links.map(({ label, path, id }) =>
+                id === "contact" ? (
+                  <div class="nav_contact">
+                    <button
+                      type="button"
+                      class="nav_link nav_contact_toggle"
+                      aria-expanded="false"
+                      aria-controls="nav_contact_dropdown"
+                    >
+                      <h5 class="text-style-main">
+                        <RollingText>{label}</RollingText>
+                      </h5>
+                    </button>
+                    <div id="nav_contact_dropdown" class="nav_contact_dropdown">
+                      {SOCIAL_LINKS.map(({ label: socialLabel, href, newTab }) => {
+                        const isMail = href.startsWith("mailto:");
+                        return (
+                          <a
+                            href={href}
+                            class="nav_link"
+                            aria-live={isMail ? "polite" : undefined}
+                            data-copy-email={isMail ? EMAIL_HREF : undefined}
+                            {...(newTab
+                              ? { target: "_blank", rel: "noreferrer noopener" }
+                              : {})}
+                          >
+                            <h5 class="text-style-main">
+                              <RollingText>{socialLabel}</RollingText>
+                            </h5>
+                          </a>
+                        );
+                      })}
+                    </div>
+                  </div>
+                ) : (
+                  <a
+                    href={path === "/" ? "/" : path}
+                    class:list={[
+                      "nav_link",
+                      id === "hero" && "nav_home",
+                      id === "work" && "nav_work",
+                      id === "about" && "nav_about",
+                      initialActive === id && "is-active",
+                    ]}
+                    aria-current={initialActive === id ? "page" : undefined}
+                    data-nav-path={path}
+                    data-nav-id={id}
+                  >
+                    <h5 class="text-style-main">
+                      <RollingText>{label}</RollingText>
+                    </h5>
+                  </a>
+                ),
+              )}
+            </div>
+          ))
+        }
+
+        <div class="nav_utility_stack">
+          <a
+            href="/archive"
+            class:list={["nav_link", "nav_archive", initialActive === "archive" && "is-active"]}
+            aria-current={initialActive === "archive" ? "page" : undefined}
+            data-nav-path="/archive"
+            data-nav-id="archive"
+          >
+            <h5 class="text-style-main">
+              <RollingText>Archive</RollingText>
+            </h5>
+          </a>
+          <ThemeToggle />
+        </div>
+
+        <div class="nav_menu_toggle_open">
+          <button
+            type="button"
+            class="nav_menu_toggle"
+            aria-expanded="false"
+            aria-controls="site-menu-overlay"
+            aria-label="Open menu"
+          >
+            <span class="nav_menu_toggle_viewport">
+              <span class="nav_menu_toggle_track">
+                <span class="nav_menu_toggle_line">
+                  <h5 class="text-style-main">
+                    <RollingText>Menu</RollingText>
+                  </h5>
+                </span>
+                <span class="nav_menu_toggle_line" data-menu-toggle-alt>
+                  <h5 class="text-style-main">
+                    <RollingText>Close</RollingText>
+                  </h5>
+                </span>
+              </span>
+            </span>
+          </button>
+        </div>
+      </nav>
+    </div>
+  </div>
+</div>
+
+<div class="menu_wrap" aria-hidden="true" inert>
+  <div class="menu_overlay" id="site-menu-overlay">
+    <div class="menu_overlay_items" aria-hidden="false">
+      <div class="revealer menu_overlay_brand">
+        <a href="/" data-overlay-nav="/">
+          <span class="menu_overlay_title text-style-main">{SITE_NAME}</span>
+        </a>
+      </div>
+      <div class="menu_overlay_grid">
+        {
+          OVERLAY_COLUMNS.map((column) => (
+            <div class="menu_overlay_col">
+              {column.map((item) =>
+                "path" in item ? (
+                  <div class="revealer" data-overlay-link={item.path}>
+                    <a href={item.path} data-overlay-nav={item.path}>
+                      <span class="menu_overlay_title text-style-main">
+                        {item.label}
+                      </span>
+                    </a>
+                  </div>
+                ) : (
+                  <div class="revealer">
+                    <ThemeToggle />
+                  </div>
+                ),
+              )}
+            </div>
+          ))
+        }
+      </div>
+    </div>
+  </div>
+</div>
+
+{showAboutOverlay && <AboutPanel about={about.data} />}
+
+<script>
+  import { bootMenu } from "./Menu";
+  bootMenu();
+</script>

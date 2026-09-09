@@ -2,19 +2,7 @@ import { useEffect } from "react";
 import { Canvas } from "@react-three/fiber";
 import type { ArchiveItem } from "@/content/archive";
 import ArchiveScene from "./ArchiveScene";
-import ViewSwitcher, { type ViewSwitcherItem } from "../ViewSwitcher";
-import {
-  resetArchiveToOrbView,
-  setArchiveView,
-  useArchiveView,
-  type ArchiveView,
-} from "@/lib/archive/archiveView";
-import "./Archive.css";
-
-const ARCHIVE_VIEWS: readonly ViewSwitcherItem<ArchiveView>[] = [
-  { id: "orb", label: "Orb" },
-  { id: "grid", label: "Grid" },
-];
+import { resetArchiveToOrbView } from "@/lib/archive/archiveView";
 
 /**
  * The archive's own canvas. Perspective camera (ArchiveCameras sets
@@ -22,38 +10,22 @@ const ARCHIVE_VIEWS: readonly ViewSwitcherItem<ArchiveView>[] = [
  *
  * pointerEvents stays on: the orb's arcball drag and the grid pan both read
  * pointer events straight off the canvas.
+ *
+ * View tabs are Astro (`archive.astro`) so this file is R3F only.
  */
 export default function ArchiveCanvas({ items }: { items: ArchiveItem[] }) {
-  const { view, isMorphing } = useArchiveView();
-
   useEffect(() => {
-    document.documentElement.classList.add("page-archive");
-    // rigState is module-level, so a second visit in the same session would
-    // otherwise resume mid-morph or mid-pan.
     resetArchiveToOrbView();
     return () => document.documentElement.classList.remove("page-archive");
   }, []);
 
   return (
-    <div className="archive_stage">
-      <p className="sr-only" role="heading" aria-level={1}>
-        Archive
-      </p>
-      <Canvas
-        dpr={[1, 1.5]}
-        gl={{ antialias: true, alpha: false }}
-        style={{ width: "100%", height: "100%", display: "block" }}
-      >
-        <ArchiveScene items={items} />
-      </Canvas>
-      <ViewSwitcher
-        label="Archive view"
-        views={ARCHIVE_VIEWS}
-        view={view}
-        busy={isMorphing}
-        onSelect={setArchiveView}
-        locked
-      />
-    </div>
+    <Canvas
+      dpr={[1, 1.5]}
+      gl={{ antialias: true, alpha: false }}
+      style={{ width: "100%", height: "100%", display: "block" }}
+    >
+      <ArchiveScene items={items} />
+    </Canvas>
   );
 }

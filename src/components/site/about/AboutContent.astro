@@ -1,0 +1,63 @@
+---
+/**
+ * About copy + lists on the Lumos 12-col grid. Shared by the desktop overlay
+ * and the mobile `/about` route so the two presentations cannot drift.
+ *
+ * The bust is an R3F island; this file is markup only.
+ */
+import type { AboutData } from "@/lib/content/models";
+import { chunk } from "@/lib/site/util/chunk";
+import AboutBustStage from "./AboutBustStage";
+
+interface Props {
+  about: AboutData;
+  /** Mount the bust as soon as the device can take it (the `/about` page). */
+  eager?: boolean;
+}
+
+const { about, eager = false } = Astro.props;
+const CLIENTS_PER_COL = 4;
+const clientColumns = chunk(about.clients, CLIENTS_PER_COL);
+---
+
+<div class="about_panel_grid grid is-12">
+  <div class="about_panel_reveal about_panel_media" aria-hidden="true">
+    <div class="about_panel_reveal_inner">
+      <AboutBustStage client:only="react" eager={eager} />
+    </div>
+  </div>
+
+  <div class="about_panel_reveal about_panel_intro">
+    <div class="about_panel_reveal_inner">
+      <h3 class="about_panel_lead text-style-h3">{about.lead}</h3>
+    </div>
+  </div>
+
+  <div class="about_panel_lists">
+    <div class="about_panel_reveal about_panel_col is-services">
+      <div class="about_panel_reveal_inner">
+        <h5 class="about_panel_col_label text-style-main">Services</h5>
+        <div class="about_panel_col_list">
+          {about.services.map((item) => (
+            <h5 class="text-style-main">{item}</h5>
+          ))}
+        </div>
+      </div>
+    </div>
+
+    <div class="about_panel_reveal about_panel_col is-clients">
+      <div class="about_panel_reveal_inner">
+        <h5 class="about_panel_col_label text-style-main">Clients</h5>
+        <div class="about_panel_clients_cols">
+          {clientColumns.map((column) => (
+            <div class="about_panel_col_list">
+              {column.map((item) => (
+                <h5 class="text-style-main">{item}</h5>
+              ))}
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

@@ -101,6 +101,22 @@ export default defineConfig({
         "react/jsx-dev-runtime",
         "scheduler",
         "three",
+        // The WebGPU migration's entry points. `three/webgpu` is its own Rollup
+        // bundle built from `src/Three.WebGPU.js` — it does NOT re-export
+        // `three.module.js` — so a module that imports from both gets two
+        // independent copies of every class and `instanceof` quietly fails.
+        // `three/tsl` is built with `three/webgpu` marked external, so those two
+        // always share instances; plain `three` is the one to keep away from a
+        // WebGPU module.
+        //
+        // ponytail: named here for the same reason as everything else on this
+        // list — subpaths are optimized as their own entries, so "three" does
+        // not cover "three/webgpu", exactly as "gsap" does not cover "gsap/Flip".
+        "three/webgpu",
+        "three/tsl",
+        "three/addons/loaders/GLTFLoader.js",
+        "three/addons/loaders/DRACOLoader.js",
+        "three/addons/controls/OrbitControls.js",
         "@react-three/fiber",
         "@react-three/drei",
         "gsap",
@@ -109,7 +125,6 @@ export default defineConfig({
         "gsap/Observer",
         "gsap/ScrollTrigger",
         "gsap/SplitText",
-        "@gsap/react",
         "lenis",
         // Only reached from the ASCII GUI's dynamic import, but that import
         // fires from inside a client:only island — same 504 as the rest.

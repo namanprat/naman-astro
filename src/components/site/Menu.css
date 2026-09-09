@@ -819,6 +819,13 @@ img.logo-img {
   padding-bottom: calc(var(--site-margin) + var(--site--safe-area-bottom));
 }
 
+/* Closed-state gate that cannot miss. `parkOverlay` must also zero `y` so
+   GSAP does not inherit this `translateY(100%)` as `y` and cancel it with
+   `yPercent: -100` — that combination paints the overlay at identity. */
+html:not(.menu-open) .menu_overlay {
+  visibility: hidden;
+}
+
 .menu_overlay a,
 .menu_overlay p,
 .menu_overlay .nav_theme_toggle {

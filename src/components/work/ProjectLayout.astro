@@ -1,0 +1,114 @@
+---
+/**
+ * Case-study body on the Lumos 12-col grid. Shared by the hard `/work/[slug]`
+ * page and the Flip overlay on `/work`.
+ */
+import { groupWorkPanels, type WorkItem } from "@/content/work";
+
+interface Props {
+  item: WorkItem;
+}
+
+const { item } = Astro.props;
+const groups = groupWorkPanels(item.panels);
+---
+
+<div class="project_layout" data-project-track>
+  <section class="project_hero">
+    <h1 class="project_title text-style-display">{item.title}</h1>
+    <div class="container gap-0 project_hero_contain">
+      <div class="grid is-12 project_hero_grid">
+        <div class="project_services">
+          <div class="project_services_list">
+            {item.services.map((service) => (
+              <h5 class="text-style-main">{service}</h5>
+            ))}
+          </div>
+        </div>
+        <p class="project_body text-style-main">{item.description}</p>
+      </div>
+    </div>
+  </section>
+
+  <section class="project_cover">
+    <div class="container gap-0">
+      <div class="grid is-12">
+        <figure class="project_cover_media" data-project-preview>
+          <img src={item.image} alt={item.alt} draggable="false" />
+        </figure>
+        {
+          item.coverVideo ? (
+            <figure class="project_cover_video">
+              <video
+                data-lazy-src={item.coverVideo}
+                aria-label={`${item.title} reveal`}
+                muted
+                loop
+                playsinline
+                preload="none"
+              />
+            </figure>
+          ) : null
+        }
+        {
+          item.coverImage ? (
+            <figure class="project_cover_below">
+              <img src={item.coverImage} alt={item.alt} draggable="false" />
+            </figure>
+          ) : null
+        }
+      </div>
+    </div>
+  </section>
+
+  {
+    groups.map((group) =>
+      group.kind === "pair" ? (
+        <section class="project_block is-pair">
+          <div class="container gap-0">
+            <div class="grid is-12">
+              <figure class="project_panel_media">
+                <img
+                  src={group.src}
+                  alt={group.alt}
+                  draggable="false"
+                  loading="lazy"
+                />
+              </figure>
+              <div class="project_copy">
+                <h2 class="project_copy_title text-style-h3">{group.title}</h2>
+                <p class="project_copy_body text-style-main">{group.body}</p>
+              </div>
+            </div>
+          </div>
+        </section>
+      ) : group.kind === "image" ? (
+        <section class="project_block is-image">
+          <div class="container gap-0">
+            <div class="grid is-12">
+              <figure class="project_panel_media">
+                <img
+                  src={group.src}
+                  alt={group.alt}
+                  draggable="false"
+                  loading="lazy"
+                />
+              </figure>
+            </div>
+          </div>
+        </section>
+      ) : (
+        <section class="project_block is-text">
+          <div class="container gap-0">
+            <div class="grid is-12">
+              <div class="project_copy">
+                <h2 class="project_copy_title text-style-h3">{group.title}</h2>
+                <p class="project_copy_body text-style-main">{group.body}</p>
+              </div>
+            </div>
+          </div>
+        </section>
+      ),
+    )
+  }
+</div>

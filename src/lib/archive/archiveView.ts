@@ -1,24 +1,27 @@
-import { useSyncExternalStore } from "react";
 import { requestArchiveMorph } from "./rigMorph";
 import { rigState } from "./rigState";
 
 export type ArchiveView = "orb" | "grid";
 
-type Snapshot = { view: ArchiveView; isMorphing: boolean };
+export type ArchiveViewSnapshot = { view: ArchiveView; isMorphing: boolean };
 
-let snapshot: Snapshot = { view: "orb", isMorphing: false };
+let snapshot: ArchiveViewSnapshot = { view: "orb", isMorphing: false };
 const listeners = new Set<() => void>();
 
-function emit(next: Snapshot) {
+function emit(next: ArchiveViewSnapshot) {
   snapshot = next;
   listeners.forEach((listener) => listener());
 }
 
-function subscribe(listener: () => void) {
+export function subscribeArchiveView(listener: () => void): () => void {
   listeners.add(listener);
   return () => {
     listeners.delete(listener);
   };
+}
+
+export function getArchiveViewSnapshot(): ArchiveViewSnapshot {
+  return snapshot;
 }
 
 export function setArchiveView(view: ArchiveView): void {
@@ -39,12 +42,4 @@ export function resetArchiveToOrbView(): void {
   rigState.gridPanTarget.y = 0;
   rigState.isGridPanning = false;
   emit({ view: "orb", isMorphing: false });
-}
-
-export function useArchiveView(): Snapshot {
-  return useSyncExternalStore(
-    subscribe,
-    () => snapshot,
-    () => snapshot,
-  );
 }
