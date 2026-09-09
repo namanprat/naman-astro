@@ -1,6 +1,7 @@
 export type WorkPanel =
   | { kind: "text"; title: string; body: string }
-  | { kind: "image"; src: string; alt: string };
+  | { kind: "image"; src: string; alt: string }
+  | { kind: "video"; src: string; alt: string };
 
 /** Lumos grid column spans available as --site--span-* tokens. */
 export type WorkSpan = 2 | 3 | 5;
@@ -43,7 +44,8 @@ export type WorkGroup =
       alt: string;
     }
   | { kind: "text"; title: string; body: string }
-  | { kind: "image"; src: string; alt: string };
+  | { kind: "image"; src: string; alt: string }
+  | { kind: "video"; src: string; alt: string };
 
 export function groupWorkPanels(panels: WorkPanel[]): WorkGroup[] {
   const groups: WorkGroup[] = [];

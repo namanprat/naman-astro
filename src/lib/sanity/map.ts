@@ -11,7 +11,8 @@ type FileAsset = {
 
 export type RawWorkPanel =
   | { _type: "workPanelText"; title?: string; body?: string }
-  | { _type: "workPanelImage"; image?: SanityImage; alt?: string };
+  | { _type: "workPanelImage"; image?: SanityImage; alt?: string }
+  | { _type: "workPanelVideo"; video?: FileAsset; alt?: string };
 
 export type RawWorkProject = {
   slug?: string;
@@ -72,7 +73,7 @@ export type RawProcess = {
 
 export type RawNav = {
   availabilityLine?: string;
-  availabilityCopies?: number;
+  enabled?: boolean;
 };
 
 function asWorkService(value: string): WorkService | null {
@@ -94,6 +95,11 @@ function mapPanel(panel: RawWorkPanel): WorkPanel | null {
       const src = imageUrl(panel.image, 2000);
       if (!src) return null;
       return { kind: "image", src, alt: panel.alt ?? "" };
+    }
+    case "workPanelVideo": {
+      const src = panel.video?.asset?.url;
+      if (!src) return null;
+      return { kind: "video", src, alt: panel.alt ?? "" };
     }
     default: {
       const _exhaustive: never = panel;
@@ -291,19 +297,16 @@ export function mapNav(
   doc: RawNav | null | undefined,
 ): { id: string; data: Record<string, unknown> } | null {
   if (!doc) return null;
-  const availabilityLine = requiredString(doc.availabilityLine);
-  if (
-    !availabilityLine ||
-    typeof doc.availabilityCopies !== "number" ||
-    doc.availabilityCopies < 1
-  ) {
+  const availabilityLine = requiredString(doc.availabilityLine) ?? "";
+  const enabled = Boolean(doc.enabled) && Boolean(availabilityLine);
+  if (!enabled && !availabilityLine && doc.enabled == null) {
     return null;
   }
   return {
     id: "nav",
     data: {
       availabilityLine,
-      availabilityCopies: doc.availabilityCopies,
+      enabled,
     },
   };
 }

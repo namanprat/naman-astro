@@ -2,4 +2,4 @@
 # overlay, scroll-spy ids) is site wiring and lives in src/lib/content/nav.ts.
 nav:
   availabilityLine: available for projects from october ’26
-  availabilityCopies: 6
+  enabled: false

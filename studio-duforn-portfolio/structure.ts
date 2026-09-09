@@ -1,27 +1,29 @@
 import type { StructureResolver } from "sanity/structure";
-import { SINGLETON_IDS, SINGLETON_TYPES } from "./schemaTypes/constants";
+import { SINGLETON_IDS } from "./schemaTypes/constants";
 
-const SINGLETON_TITLES: Record<(typeof SINGLETON_TYPES)[number], string> = {
-  siteSettings: "Site",
-  aboutSettings: "About",
-  faqSettings: "FAQ",
-  processSettings: "Process",
-  navSettings: "Marquee",
-};
+function singleton(
+  S: Parameters<StructureResolver>[0],
+  type: keyof typeof SINGLETON_IDS,
+  title: string,
+) {
+  const id = SINGLETON_IDS[type];
+  return S.listItem()
+    .title(title)
+    .id(id)
+    .child(S.document().schemaType(type).documentId(id));
+}
 
 export const structure: StructureResolver = (S) =>
   S.list()
     .title("Content")
     .items([
+      singleton(S, "siteSettings", "Homepage"),
+      S.divider(),
       S.documentTypeListItem("workProject").title("Work"),
       S.documentTypeListItem("archiveItem").title("Archive"),
       S.divider(),
-      ...SINGLETON_TYPES.map((type) =>
-        S.listItem()
-          .title(SINGLETON_TITLES[type])
-          .id(SINGLETON_IDS[type])
-          .child(
-            S.document().schemaType(type).documentId(SINGLETON_IDS[type]),
-          ),
-      ),
+      singleton(S, "aboutSettings", "About"),
+      singleton(S, "faqSettings", "FAQ"),
+      singleton(S, "processSettings", "Process"),
+      singleton(S, "navSettings", "Marquee"),
     ]);

@@ -9,6 +9,9 @@ export const WORK_SERVICES = [
 
 export const WORK_SPANS = [2, 3, 5] as const;
 
+/** Sanity file pickers: WebM first, MP4 as a fallback. */
+export const VIDEO_ACCEPT = "video/webm,.webm,video/mp4,.mp4";
+
 export const SINGLETON_TYPES = [
   "siteSettings",
   "aboutSettings",

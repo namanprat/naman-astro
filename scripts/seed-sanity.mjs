@@ -160,7 +160,7 @@ async function seedSingletons() {
     _id: "nav",
     _type: "navSettings",
     availabilityLine: nav.availabilityLine,
-    availabilityCopies: nav.availabilityCopies,
+    enabled: Boolean(nav.enabled),
   });
   console.log("seed-sanity: singletons");
 }

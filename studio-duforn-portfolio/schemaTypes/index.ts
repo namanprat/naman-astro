@@ -6,12 +6,13 @@ import {
   processSettings,
   siteSettings,
 } from "./singletons";
-import { workPanelImage, workPanelText, workProject } from "./workProject";
+import { workPanelImage, workPanelText, workPanelVideo, workProject } from "./workProject";
 
 export const schemaTypes = [
   workProject,
   workPanelText,
   workPanelImage,
+  workPanelVideo,
   archiveItem,
   siteSettings,
   aboutSettings,

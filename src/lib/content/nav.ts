@@ -27,8 +27,11 @@ export type OverlayItem = OverlayLink | OverlayAction;
 
 export type NavMarquee = {
   availabilityLine: string;
-  availabilityCopies: number;
+  enabled: boolean;
 };
+
+/** Repeats inside each marquee track so the CSS loop can scroll seamlessly. */
+export const MARQUEE_LOOP_COPIES = 6;
 
 export const EMAIL_HREF = "mailto:a.namanprat@gmail.com";
 

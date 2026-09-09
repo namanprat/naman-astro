@@ -655,7 +655,8 @@ html.work-returning .view_switcher {
   display: block;
 }
 
-.project_panel_media img {
+.project_panel_media img,
+.project_panel_media video {
   width: 100%;
   height: auto;
   display: block;

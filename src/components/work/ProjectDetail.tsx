@@ -62,6 +62,21 @@ function PanelMedia({ src, alt }: { src: string; alt: string }) {
   );
 }
 
+function PanelVideo({ src, alt }: { src: string; alt: string }) {
+  return (
+    <figure className="project_panel_media">
+      <video
+        src={src}
+        aria-label={alt}
+        muted
+        loop
+        playsInline
+        preload="metadata"
+      />
+    </figure>
+  );
+}
+
 function CaseBlock({ group }: { group: WorkGroup }) {
   switch (group.kind) {
     case "pair":
@@ -81,6 +96,16 @@ function CaseBlock({ group }: { group: WorkGroup }) {
           <div className="container gap-0">
             <div className="grid is-12">
               <PanelMedia src={group.src} alt={group.alt} />
+            </div>
+          </div>
+        </section>
+      );
+    case "video":
+      return (
+        <section className="project_block is-image">
+          <div className="container gap-0">
+            <div className="grid is-12">
+              <PanelVideo src={group.src} alt={group.alt} />
             </div>
           </div>
         </section>

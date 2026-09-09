@@ -60,6 +60,11 @@ const workPanel = z.discriminatedUnion("kind", [
     src: z.string(),
     alt: z.string(),
   }),
+  z.object({
+    kind: z.literal("video"),
+    src: z.string(),
+    alt: z.string(),
+  }),
 ]);
 
 const work = defineCollection({
@@ -169,8 +174,9 @@ const about = defineCollection({
 });
 
 const nav = defineCollection({
-  // ponytail: only the availability marquee. Stacks, socials, overlay, email,
-  // and scroll-spy ids are site wiring in `src/lib/content/nav.ts`.
+  // ponytail: only the availability marquee line and its on/off toggle.
+  // Loop copies live in code. Stacks, socials, overlay, email, and
+  // scroll-spy ids are site wiring in `src/lib/content/nav.ts`.
   loader: sanityOrYaml({
     query: NAV_QUERY,
     fallback: file("src/content/nav.yaml"),
@@ -179,7 +185,7 @@ const nav = defineCollection({
   }),
   schema: z.object({
     availabilityLine: z.string(),
-    availabilityCopies: z.number().int().positive(),
+    enabled: z.boolean().default(false),
   }),
 });
 
