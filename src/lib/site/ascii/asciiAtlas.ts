@@ -27,14 +27,14 @@ const CELL = 64;
 const MONO_FONT =
   '"Duforn Mono", ui-monospace, SFMono-Regular, Menlo, monospace';
 
-export function readThemeInk(): string {
-  const probe = document.createElement("span");
-  probe.style.color = "var(--text)";
-  document.documentElement.appendChild(probe);
-  const color = getComputedStyle(probe).color;
-  probe.remove();
-  return color || "#8b8b8b";
-}
+/**
+ * Re-exported from its new home so existing callers keep working.
+ *
+ * It moved to `webgl/themeInk.ts` because WebGPU stages need it and this module
+ * imports plain `three` — importing across that line yields two copies of the
+ * library and `instanceof` failures that do not look like import problems.
+ */
+export { readThemeInk } from "../webgl/themeInk";
 
 type AtlasBake = { canvas: HTMLCanvasElement; glyphCount: number };
 
