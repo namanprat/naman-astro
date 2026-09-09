@@ -297,10 +297,6 @@ export default class Slider {
 
     this.scrub.vars.time += scrollDelta(self) / 100;
     if (prefersReducedMotion()) {
-      // Skip the 0.75s scrub: Lumos zeros CSS transitions to 0.01ms, and
-      // interpolating that against the stylesheet `translateX` on each slide
-      // leaves the loop's yPercent at whatever GSAP last cached — which is
-      // "nothing moved".
       this.playhead.time = this.scrub.vars.time;
       this.loop.time(this.wrap(this.playhead.time));
       this.applyParallax(true);
