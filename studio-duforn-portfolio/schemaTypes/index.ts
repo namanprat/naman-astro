@@ -2,10 +2,7 @@ import { archiveItem } from "./archiveItem";
 import {
   aboutSettings,
   faqSettings,
-  navSettings,
-  overlayAction,
-  overlayColumn,
-  overlayLink,
+  marqueeSettings,
   processSettings,
   siteSettings,
 } from "./singletons";
@@ -21,8 +18,5 @@ export const schemaTypes = [
   aboutSettings,
   faqSettings,
   processSettings,
-  navSettings,
-  overlayColumn,
-  overlayLink,
-  overlayAction,
+  marqueeSettings,
 ];

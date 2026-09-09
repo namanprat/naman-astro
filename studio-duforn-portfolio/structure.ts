@@ -25,5 +25,5 @@ export const structure: StructureResolver = (S) =>
       singleton(S, "aboutSettings", "About"),
       singleton(S, "faqSettings", "FAQ"),
       singleton(S, "processSettings", "Process"),
-      singleton(S, "navSettings", "Marquee"),
+      singleton(S, "marqueeSettings", "Marquee"),
     ]);

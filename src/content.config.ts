@@ -40,7 +40,7 @@ import {
   ABOUT_QUERY,
   ARCHIVE_QUERY,
   FAQ_QUERY,
-  NAV_QUERY,
+  MARQUEE_QUERY,
   PROCESS_QUERY,
   SITE_QUERY,
   WORK_QUERY,
@@ -174,11 +174,10 @@ const about = defineCollection({
 });
 
 const nav = defineCollection({
-  // ponytail: only the availability marquee line and its on/off toggle.
-  // Loop copies live in code. Stacks, socials, overlay, email, and
-  // scroll-spy ids are site wiring in `src/lib/content/nav.ts`.
+  // ponytail: only the availability marquee. Routes, socials, overlay, email,
+  // and scroll-spy ids are site wiring in `src/lib/content/nav.ts` — not CMS.
   loader: sanityOrYaml({
-    query: NAV_QUERY,
+    query: MARQUEE_QUERY,
     fallback: file("src/content/nav.yaml"),
     map: (docs) =>
       docs.map((doc) => mapNav(doc as RawNav)).filter((entry) => entry !== null),

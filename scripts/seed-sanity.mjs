@@ -157,22 +157,11 @@ async function seedSingletons() {
     ...process,
   });
   await client.createOrReplace({
-    _id: "nav",
-    _type: "navSettings",
+    _id: "marquee",
+    _type: "marqueeSettings",
     availabilityLine: nav.availabilityLine,
     enabled: Boolean(nav.enabled),
   });
-  await client
-    .patch("nav")
-    .unset([
-      "email",
-      "overlayColumns",
-      "sectionIds",
-      "socials",
-      "stacks",
-      "availabilityCopies",
-    ])
-    .commit();
   console.log("seed-sanity: singletons");
 }
 

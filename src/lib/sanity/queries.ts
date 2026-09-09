@@ -59,7 +59,7 @@ export const PROCESS_QUERY = /* groq */ `*[_id == "process"][0]{
   cards[]{ title, description, model }
 }`;
 
-export const NAV_QUERY = /* groq */ `*[_id == "nav"][0]{
+export const MARQUEE_QUERY = /* groq */ `*[_id == "marquee"][0]{
   availabilityLine,
   enabled
 }`;

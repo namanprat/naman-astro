@@ -293,6 +293,7 @@ export function mapProcess(
   return { id: "process", data: { statement, cards } };
 }
 
+/** Maps the `marquee` Sanity document (or YAML fallback) onto the `nav` entry. */
 export function mapNav(
   doc: RawNav | null | undefined,
 ): { id: string; data: Record<string, unknown> } | null {

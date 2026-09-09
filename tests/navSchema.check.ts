@@ -1,48 +1,70 @@
 /**
- * Production `nav` still stores leftover full-nav fields. Studio must define
- * them (hidden) or the Marquee form shows "Unknown fields found".
+ * Studio keeps page copy/images plus a dedicated marquee document.
+ * Navigation chrome is not a CMS type — leftover `nav` fields must not return.
  *   npm run test:unit
  */
 import assert from "node:assert/strict";
-import { schemaTypes } from "../studio-duforn-portfolio/schemaTypes/index.ts";
+import { readFileSync } from "node:fs";
+import { dirname, join } from "node:path";
+import { fileURLToPath } from "node:url";
 
-const nav = schemaTypes.find((type) => type.name === "navSettings");
-assert.ok(nav, "navSettings must be registered");
-assert.equal(nav.type, "document");
+const root = join(dirname(fileURLToPath(import.meta.url)), "..");
+const singletons = readFileSync(
+  join(root, "studio-duforn-portfolio/schemaTypes/singletons.ts"),
+  "utf8",
+);
+const index = readFileSync(
+  join(root, "studio-duforn-portfolio/schemaTypes/index.ts"),
+  "utf8",
+);
+const structure = readFileSync(
+  join(root, "studio-duforn-portfolio/structure.ts"),
+  "utf8",
+);
+const constants = readFileSync(
+  join(root, "studio-duforn-portfolio/schemaTypes/constants.ts"),
+  "utf8",
+);
+const queries = readFileSync(join(root, "src/lib/sanity/queries.ts"), "utf8");
 
-const fields =
-  "fields" in nav && Array.isArray(nav.fields)
-    ? nav.fields.map((field: { name?: string }) => field.name)
-    : [];
+assert.match(singletons, /export const marqueeSettings/);
+assert.doesNotMatch(singletons, /navSettings/);
+assert.doesNotMatch(index, /navSettings|overlayColumn|overlayLink|overlayAction/);
+assert.match(index, /marqueeSettings/);
+assert.match(constants, /marqueeSettings: "marquee"/);
+assert.doesNotMatch(constants, /navSettings/);
 
-for (const name of [
-  "enabled",
-  "availabilityLine",
+const marqueeBlock = singletons.slice(
+  singletons.indexOf("export const marqueeSettings"),
+);
+assert.ok(marqueeBlock.length > 0);
+for (const name of ["enabled", "availabilityLine"] as const) {
+  assert.match(marqueeBlock, new RegExp(`name: "${name}"`));
+}
+for (const leftover of [
   "email",
   "overlayColumns",
   "sectionIds",
   "socials",
   "stacks",
+  "availabilityCopies",
 ] as const) {
-  assert.ok(fields.includes(name), `navSettings must define ${name}`);
-}
-
-const availability = (
-  "fields" in nav && Array.isArray(nav.fields) ? nav.fields : []
-).find((field: { name?: string }) => field.name === "availabilityLine") as
-  | { hidden?: unknown }
-  | undefined;
-assert.equal(
-  availability?.hidden,
-  undefined,
-  "availability line stays visible when the marquee is off",
-);
-
-for (const name of ["overlayColumn", "overlayLink", "overlayAction"] as const) {
-  assert.ok(
-    schemaTypes.some((type) => type.name === name),
-    `${name} must be registered so leftover overlay data type-checks`,
+  assert.doesNotMatch(
+    marqueeBlock,
+    new RegExp(`name: "${leftover}"`),
+    `marquee must not carry leftover nav field ${leftover}`,
   );
 }
 
-console.log("navSchema.check: leftover marquee fields are in schema");
+assert.match(structure, /singleton\(S, "marqueeSettings", "Marquee"\)/);
+assert.doesNotMatch(structure, /navSettings|Preloader|preloader/);
+assert.match(queries, /_id == "marquee"/);
+assert.doesNotMatch(queries, /_id == "nav"/);
+
+const siteBlock = singletons.slice(
+  singletons.indexOf("export const siteSettings"),
+  singletons.indexOf("export const aboutSettings"),
+);
+assert.match(siteBlock, /name: "preloader"[\s\S]{0,80}hidden: true/);
+
+console.log("navSchema.check: marquee is a clean singleton; nav is not in Studio");
