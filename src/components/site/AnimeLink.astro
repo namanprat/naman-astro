@@ -17,7 +17,7 @@ interface Props {
 const { href, class: className } = Astro.props;
 ---
 
-<a href={href} class={className} data-transition-link>
+<a href={href} class:list={["anime_link_wrap", className]} data-transition-link>
   <div class="anime_link">
     {
       /* `data-no-reveal` opts the label out of the line reveal. It has to sit
@@ -59,6 +59,13 @@ const { href, class: className } = Astro.props;
      beats every layer, so without it these rules would outrank the whole
      `components` layer they came from. */
 @layer components.section {
+  .anime_link_wrap,
+  .anime_link_wrap:link,
+  .anime_link_wrap:visited {
+    color: var(--text);
+    text-decoration: none;
+  }
+
   .anime_link {
     display: flex;
     gap: var(--space-2);
