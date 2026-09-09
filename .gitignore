@@ -20,6 +20,10 @@ pnpm-debug.log*
 .env
 .env.production
 
+# Sanity Studio
+studio-duforn-portfolio/dist
+studio-duforn-portfolio/.sanity
+
 # macOS-specific files
 .DS_Store
 
@@ -29,8 +33,6 @@ pnpm-debug.log*
 # local agent settings
 .claude/settings.local.json
 
-# playwright
+# leftover local test output
 /test-results/
-/playwright-report/
-/blob-report/
-/.playwright/
+

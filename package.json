@@ -15,8 +15,9 @@
     "preview": "astro preview",
     "astro": "astro",
     "format": "prettier --write .",
-    "test:unit": "node scripts/run-checks.mjs",
-    "test:e2e": "playwright test"
+    "studio": "npm run dev --prefix studio-duforn-portfolio",
+    "sanity:seed": "node scripts/seed-sanity.mjs",
+    "test:unit": "node scripts/run-checks.mjs"
   },
   "dependencies": {
     "@astrojs/react": "^6.0.2",
@@ -24,6 +25,8 @@
     "@gsap/react": "^2.1.2",
     "@react-three/drei": "^10.7.8",
     "@react-three/fiber": "^9.7.0",
+    "@sanity/client": "^8.6.1",
+    "@sanity/image-url": "^2.1.1",
     "@vercel/analytics": "^2.0.1",
     "astro": "^7.1.4",
     "gsap": "^3.15.0",
@@ -35,12 +38,12 @@
   },
   "devDependencies": {
     "@astrojs/check": "^0.9.10",
-    "@playwright/test": "^1.62.1",
     "@types/react": "^19.2.18",
     "@types/react-dom": "^19.2.4",
     "@types/three": "^0.185.4",
     "prettier": "^3.9.6",
     "prettier-plugin-astro": "^0.14.1",
-    "typescript": "^6.0.3"
+    "typescript": "^6.0.3",
+    "yaml": "^2.9.0"
   }
 }

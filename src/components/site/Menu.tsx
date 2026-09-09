@@ -32,6 +32,16 @@ import {
   settleGooey,
   type GooeyTarget,
 } from "@/lib/site/reveal/gooeyReveal";
+import type { AboutData } from "@/lib/content/models";
+import {
+  EMAIL_HREF,
+  NAV_STACKS,
+  OVERLAY_COLUMNS,
+  SECTION_IDS,
+  SOCIAL_LINKS,
+  type NavMarquee,
+  type OverlayItem,
+} from "@/lib/content/nav";
 import AboutPanel, { type AboutPanelMode } from "./AboutPanel";
 import RollingText from "./RollingText";
 import ThemeToggle from "./ThemeToggle";
@@ -59,76 +69,16 @@ function clearRootVar(name: string): void {
   document.documentElement.style.removeProperty(name);
 }
 
-const AVAILABILITY_LINE = "available for projects from october ’26";
-const AVAILABILITY_COPIES = 6;
-
 gsap.registerPlugin(SplitText);
 
 const PANEL_DURATION = 0.9;
 
-export const NAV_STACKS = [
-  {
-    col: "is-home",
-    links: [
-      { label: "Home", path: "/", id: "hero" },
-      { label: "Work", path: "/work", id: "work" },
-    ],
-  },
-  {
-    col: "is-about",
-    links: [
-      { label: "About", path: "/#about", id: "about" },
-      { label: "Contact", path: "/#contact", id: "contact" },
-    ],
-  },
-];
-
-export const EMAIL_HREF = "mailto:a.namanprat@gmail.com";
-
-export type SocialLink = {
-  label: string;
-  href: string;
-  /** Opens in a new tab (Instagram, booking links, etc.). */
-  newTab?: boolean;
-};
-
-export const SOCIAL_LINKS: SocialLink[] = [
-  { label: "Email", href: EMAIL_HREF },
-  {
-    label: "Instagram",
-    href: "https://www.instagram.com/namanprat_",
-    newTab: true,
-  },
-  {
-    label: "Discovery Call",
-    href: "https://cal.com/namanprat/discovery-call",
-    newTab: true,
-  },
-];
-
-export const socialLinkTabProps = (newTab?: boolean) =>
+const socialLinkTabProps = (newTab?: boolean) =>
   newTab ? ({ target: "_blank", rel: "noreferrer noopener" } as const) : {};
 
-type OverlayLink = { label: string; path: string };
-type OverlayAction = { label: string; action: "theme" };
-type OverlayItem = OverlayLink | OverlayAction;
-
-const isOverlayLink = (item: OverlayItem): item is OverlayLink =>
-  "path" in item;
-
-const OVERLAY_COLUMNS: OverlayItem[][] = [
-  [
-    { label: "Work", path: "/work" },
-    { label: "About", path: "/#about" },
-  ],
-  [
-    { label: "Archive", path: "/archive" },
-    { label: "Switch theme", action: "theme" },
-  ],
-  [{ label: "Contact", path: "/#contact" }],
-];
-
-const SECTION_IDS = ["hero", "team", "contact"];
+const isOverlayLink = (
+  item: OverlayItem,
+): item is Extract<OverlayItem, { path: string }> => "path" in item;
 
 /**
  * Where the chrome switches between the compact mobile nav and the desktop
@@ -137,7 +87,7 @@ const SECTION_IDS = ["hero", "team", "contact"];
  * site's 64rem grid cut, which still hands this band 8 columns. Mirrored by
  * `Menu.css`'s `< 48rem` block and `AboutPanel.css`'s `>= 48rem` block.
  */
-export const DESKTOP_NAV_MQ = "(width >= 48rem)";
+const DESKTOP_NAV_MQ = "(width >= 48rem)";
 
 const MENU_COPY = ".menu_overlay_items .revealer :is(a, button)";
 /* The ASCII canvas has no lines to split, so it dissolves rather than melts —
@@ -174,9 +124,15 @@ function isInPageMenuNav(path: string): boolean {
 type MenuProps = {
   /** Current path from Astro — must match SSR HTML to avoid hydration mismatch. */
   initialPathname?: string;
+  marquee: NavMarquee;
+  about: AboutData;
 };
 
-export default function Menu({ initialPathname = "/" }: MenuProps) {
+export default function Menu({
+  initialPathname = "/",
+  marquee,
+  about,
+}: MenuProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [aboutOpen, setAboutOpen] = useState(false);
   const [aboutMode, setAboutMode] = useState<AboutPanelMode>("ride");
@@ -1083,13 +1039,13 @@ export default function Menu({ initialPathname = "/" }: MenuProps) {
   return (
     <>
       <div className="nav_marquee" ref={marqueeRef}>
-        <p className="sr-only">{AVAILABILITY_LINE}</p>
+        <p className="sr-only">{marquee.availabilityLine}</p>
         <div className="nav_marquee_track" aria-hidden="true">
           {[0, 1].map((group) => (
             <div className="nav_marquee_group" key={group}>
-              {Array.from({ length: AVAILABILITY_COPIES }, (_, i) => (
+              {Array.from({ length: marquee.availabilityCopies }, (_, i) => (
                 <span key={i} className="nav_marquee_copy text-style-small">
-                  {AVAILABILITY_LINE}
+                  {marquee.availabilityLine}
                 </span>
               ))}
             </div>
@@ -1363,7 +1319,12 @@ export default function Menu({ initialPathname = "/" }: MenuProps) {
           overlay too would put a second, hidden copy of every heading and list
           in the DOM — duplicate `id="site-about-panel"` included. */}
       {pathname !== ABOUT_PATH && (
-        <AboutPanel open={aboutOpen} mode={aboutMode} onClose={dismissAbout} />
+        <AboutPanel
+          open={aboutOpen}
+          mode={aboutMode}
+          onClose={dismissAbout}
+          about={about}
+        />
       )}
     </>
   );

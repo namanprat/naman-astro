@@ -8,13 +8,17 @@ import {
   ARCHIVE_CONFIG,
   ARCHIVE_PRIMARY_FONT,
 } from "@/lib/archive/archiveConfig";
-import { ARCHIVE_ITEMS, type ArchiveSpan } from "@/content/archive";
+import type { ArchiveItem, ArchiveSpan } from "@/content/archive";
 import { fibonacciSpherePoints } from "@/lib/archive/archiveLayout";
 import { rigState } from "@/lib/archive/rigState";
 import { useArchiveMedia } from "@/lib/archive/useArchiveMedia";
 
-export default function ArchivePosterField() {
-  const sources = useArchiveMedia();
+export default function ArchivePosterField({
+  items,
+}: {
+  items: ArchiveItem[];
+}) {
+  const sources = useArchiveMedia(items.map((item) => item.src));
   const textMat = useRef<{ opacity: number } | null>(null);
 
   // By url, not by index: a source the device could not decode is dropped, so
@@ -22,9 +26,9 @@ export default function ArchivePosterField() {
   const spanByUrl = useMemo(
     () =>
       new Map<string, ArchiveSpan>(
-        ARCHIVE_ITEMS.map((item) => [item.src, item.span ?? "height"]),
+        items.map((item) => [item.src, item.span ?? "height"]),
       ),
-    [],
+    [items],
   );
 
   const tiles = useMemo<TileData[]>(() => {

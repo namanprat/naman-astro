@@ -8,24 +8,26 @@
  * wrong scroll position. Callers render `<Footer />` as a direct sibling of the
  * content above it.
  *
- * ponytail: the nav links come from the `nav` collection, not from `Menu`.
- * `Footer.tsx` imported NAV_STACKS, EMAIL_HREF, SOCIAL_LINKS and
+ * ponytail: the nav links come from `src/lib/content/nav.ts`, not from `Menu`
+ * and not from the `nav` collection. That collection is the availability
+ * marquee only. `Footer.tsx` imported NAV_STACKS, EMAIL_HREF, SOCIAL_LINKS and
  * socialLinkTabProps from `./Menu`, which meant every page carrying a footer
  * also pulled Menu's 1370 lines, gsap/SplitText, AboutPanel and the whole
  * About stack into its chunk — on /work/[slug] and /about, where the menu's
  * own island is the only other reason any of that would load.
  */
 import { getEntry } from "astro:content";
+import {
+  EMAIL_HREF,
+  NAV_STACKS,
+  SOCIAL_LINKS,
+} from "@/lib/content/nav";
 import FooterAsciiStage from "./FooterAsciiStage";
 import RollingText from "./RollingText.astro";
 
-const [nav, site] = await Promise.all([
-  getEntry("nav", "nav"),
-  getEntry("site", "site"),
-]);
-if (!nav || !site) throw new Error("content: `nav` or `site` entry is missing");
+const site = await getEntry("site", "site");
+if (!site) throw new Error("content: `site` entry is missing");
 
-const { email, socials } = nav.data;
 const { footerTagline } = site.data;
 
 /**
@@ -33,7 +35,7 @@ const { footerTagline } = site.data;
  * Contact is omitted — the footer *is* the contact section.
  */
 const footerLinks = [
-  ...nav.data.stacks.flatMap(({ links }) =>
+  ...NAV_STACKS.flatMap(({ links }) =>
     links.filter(({ id }) => id !== "contact").map(({ label, path }) => ({ label, path })),
   ),
   { label: "Archive", path: "/archive" },
@@ -71,13 +73,13 @@ const footerLinks = [
             <div class="footer_col is-connect">
               <ul class="footer_list">
                 {
-                  socials.map(({ label, href, newTab }) => (
+                  SOCIAL_LINKS.map(({ label, href, newTab }) => (
                     <li>
                       <a
                         class="footer_link is-external text-style-h4"
                         href={href}
                         aria-live={href.startsWith("mailto:") ? "polite" : undefined}
-                        data-copy-email={href.startsWith("mailto:") ? email : undefined}
+                        data-copy-email={href.startsWith("mailto:") ? EMAIL_HREF : undefined}
                         {...(newTab ? { target: "_blank", rel: "noreferrer noopener" } : {})}
                       >
                         <span class="footer_text">

@@ -8,6 +8,7 @@
  * gallery, the featured slider and /work would then disagree with each other.
  */
 import { getCollection, type CollectionEntry } from "astro:content";
+import type { WorkItem } from "@/content/work";
 
 export type WorkEntry = CollectionEntry<"work">;
 
@@ -21,4 +22,21 @@ export async function getWorkItems(): Promise<WorkEntry[]> {
 
 export async function getFeaturedWorkItems(): Promise<WorkEntry[]> {
   return (await getWorkItems()).filter((entry) => entry.data.featured);
+}
+
+export function toWorkItem(entry: WorkEntry): WorkItem {
+  return {
+    slug: entry.id,
+    title: entry.data.title,
+    description: entry.data.description,
+    image: entry.data.image,
+    alt: entry.data.alt,
+    coverVideo: entry.data.coverVideo,
+    coverImage: entry.data.coverImage,
+    featured: entry.data.featured,
+    span: entry.data.span,
+    col: entry.data.col,
+    services: [...entry.data.services],
+    panels: entry.data.panels,
+  };
 }

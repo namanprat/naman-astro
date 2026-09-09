@@ -10,20 +10,12 @@ import { Canvas, useFrame, useThree } from "@react-three/fiber";
 import * as THREE from "three";
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
-import { workItems } from "@/content/work";
 import { prefersReducedMotion } from "@/lib/site/util/prefersReducedMotion";
 import { useThemeInk, useThemeLight } from "@/lib/site/ascii/useThemeInk";
 import AsciiField from "./ascii/AsciiField";
 
 gsap.registerPlugin(ScrollTrigger);
 
-/** Work covers plus detail stills so the ring reads wide, not sparse. */
-const IMAGE_SRCS = [
-  ...workItems.map((item) => item.image),
-  "/work/haptic/haptic-hero.webp",
-  "/work/money-me/money-cover.webp",
-];
-const IMAGE_COUNT = IMAGE_SRCS.length;
 /** Landscape tile — 5:4 width:height. */
 const TILE_ASPECT = 5 / 4;
 const TILE_W = 1280;
@@ -83,6 +75,7 @@ function loadImage(src: string): Promise<HTMLImageElement> {
   return new Promise((resolve, reject) => {
     const img = new Image();
     img.decoding = "async";
+    if (/^https?:/i.test(src)) img.crossOrigin = "anonymous";
     img.onload = () => resolve(img);
     img.onerror = () => reject(new Error(`Failed to load ${src}`));
     img.src = src;
@@ -150,12 +143,14 @@ function buildAtlasFromImages(
 function getResponsiveDimensions(
   width: number,
   gapRatio: number,
+  imageCount: number,
   radiusOverride?: number,
 ) {
   const isMobile = width < 768;
   const isTablet = width >= 768 && width < 1024;
   const radius = radiusOverride ?? (isMobile ? 1.4 : isTablet ? 1.55 : 1.7);
-  const imageArc = ((2 * Math.PI * radius) / IMAGE_COUNT) * (1 - gapRatio);
+  const count = Math.max(1, imageCount);
+  const imageArc = ((2 * Math.PI * radius) / count) * (1 - gapRatio);
   return {
     radius,
     height: imageArc / TILE_ASPECT,
@@ -165,7 +160,7 @@ function getResponsiveDimensions(
 }
 
 /** The photo ring itself — no ASCII here, it renders into the field's target. */
-function CylinderStrip() {
+function CylinderStrip({ imageSrcs }: { imageSrcs: string[] }) {
   const { camera, gl, size } = useThree();
   const meshRef = useRef<THREE.Mesh>(null);
   const scrollUv = useRef(0);
@@ -180,13 +175,19 @@ function CylinderStrip() {
   const themeLight = useThemeLight();
   const reducedMotion = useMemo(() => prefersReducedMotion(), []);
   const baseDims = useMemo(
-    () => getResponsiveDimensions(size.width || 1024, 0, STRIP.radius),
-    [size.width],
+    () =>
+      getResponsiveDimensions(
+        size.width || 1024,
+        0,
+        imageSrcs.length,
+        STRIP.radius,
+      ),
+    [size.width, imageSrcs.length],
   );
 
   useEffect(() => {
     let disposed = false;
-    Promise.all(IMAGE_SRCS.map(loadImage))
+    Promise.all(imageSrcs.map(loadImage))
       .then((images) => {
         if (disposed) return;
         imagesRef.current = images;
@@ -202,7 +203,7 @@ function CylinderStrip() {
       photoTex.current = null;
       imagesRef.current = null;
     };
-  }, []);
+  }, [imageSrcs]);
 
   useEffect(() => {
     if (!imagesReady || !imagesRef.current) return;
@@ -247,7 +248,12 @@ function CylinderStrip() {
     const mesh = meshRef.current;
     if (!mesh) return;
 
-    const next = getResponsiveDimensions(size.width, gapRatio, STRIP.radius);
+    const next = getResponsiveDimensions(
+      size.width,
+      gapRatio,
+      imageSrcs.length,
+      STRIP.radius,
+    );
     const sx = next.radius / baseDims.radius;
     const sy = next.height / baseDims.height;
     mesh.position.set(STRIP.posX, STRIP.posY, STRIP.posZ);
@@ -293,7 +299,11 @@ function CylinderStrip() {
   );
 }
 
-export default function TeamCylinderCarousel() {
+export default function TeamCylinderCarousel({
+  imageSrcs,
+}: {
+  imageSrcs: string[];
+}) {
   const [inView, setInView] = useState(false);
   const ink = useThemeInk();
 
@@ -338,7 +348,7 @@ export default function TeamCylinderCarousel() {
         fov={45}
         cameraPosition={[0, 0, 6.4]}
       >
-        <CylinderStrip />
+        <CylinderStrip imageSrcs={imageSrcs} />
       </AsciiField>
     </Canvas>
   );

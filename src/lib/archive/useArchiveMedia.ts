@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { ARCHIVE_MEDIA_URLS } from "@/content/archive";
+import { isArchiveVideo } from "@/content/archive";
 import { isMobileLayout } from "@/lib/site/util/isMobileLayout";
 import {
   disposeArchiveMediaSource,
@@ -16,11 +16,12 @@ import {
  * the media, so the page still looked alive while every image was missing.
  * A source that fails is dropped and the rest mount.
  */
-export function useArchiveMedia(): ArchiveMediaSource[] {
+export function useArchiveMedia(urls: readonly string[]): ArchiveMediaSource[] {
   const [sources, setSources] = useState<ArchiveMediaSource[]>([]);
+  const urlsKey = urls.join("|");
 
   useEffect(() => {
-    if (!ARCHIVE_MEDIA_URLS.length) {
+    if (!urls.length) {
       setSources([]);
       return undefined;
     }
@@ -36,11 +37,11 @@ export function useArchiveMedia(): ArchiveMediaSource[] {
      * without it (`canPlayWebm` refuses the format), so this is the iPhone
      * archive on every phone rather than a new one.
      */
-    const urls = isMobileLayout()
-      ? ARCHIVE_MEDIA_URLS.filter((url) => !/\.webm$/i.test(url))
-      : ARCHIVE_MEDIA_URLS;
+    const loadUrls = isMobileLayout()
+      ? urls.filter((url) => !isArchiveVideo(url))
+      : [...urls];
 
-    void Promise.allSettled(urls.map(loadArchiveMediaSource)).then((results) => {
+    void Promise.allSettled(loadUrls.map(loadArchiveMediaSource)).then((results) => {
       const next: ArchiveMediaSource[] = [];
       const skipped: string[] = [];
       for (const result of results) {
@@ -65,7 +66,7 @@ export function useArchiveMedia(): ArchiveMediaSource[] {
       loaded.forEach(disposeArchiveMediaSource);
       setSources([]);
     };
-  }, []);
+  }, [urlsKey]);
 
   return sources;
 }

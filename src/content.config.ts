@@ -1,13 +1,10 @@
 /**
  * Every subject the site renders, as a queryable collection.
  *
- * ponytail: the shapes here are deliberately the shapes Sanity will hand back
- * later, not the shapes that were easiest to lift out of the components. The
- * case-study `panels` array is the clearest case — it could have been a
- * Markdown body, which reads better in a text editor, but a CMS returns an
- * ordered array of typed blocks and `groupWorkPanels` pairs adjacent text and
- * image blocks to build the grid. Keeping the array means swapping the loader
- * in the Sanity phase touches no component and no schema.
+ * Loaders prefer published Sanity documents and fall back to these YAML files
+ * when the dataset is empty or unreachable. The shapes here are the shapes
+ * Sanity hands back: an ordered `panels` array of typed blocks, not a Markdown
+ * body, so `groupWorkPanels` can pair neighbours without a second schema.
  *
  * ponytail: `src/consts.ts` stays where it is and out of these collections.
  * `astro.config.mjs` imports it at config-evaluation time, before any content
@@ -21,22 +18,33 @@ import { file, glob } from "astro/loaders";
 // that re-export is deprecated in Astro 7 and every schema line using it draws
 // a ts(6385). Same zod, one import away from 97 warnings.
 import { z } from "astro/zod";
-
-/**
- * What the studio sells, tagged per project and listed on the About panel.
- *
- * ponytail: one definition, two readers. `AboutContent.tsx` used to carry its
- * own `SERVICES` const alongside this union, which meant adding a service was
- * two edits and forgetting the second was silent. The About collection now
- * derives its list from this, so the two cannot disagree.
- */
-export const WORK_SERVICES = [
-  "Brand identity",
-  "Website design",
-  "Website development",
-  "Motion design",
-  "3D",
-] as const;
+import { WORK_SERVICES } from "./content/services";
+import { sanityOrYaml } from "./lib/sanity/loader";
+import {
+  mapAbout,
+  mapArchiveItem,
+  mapFaq,
+  mapNav,
+  mapProcess,
+  mapSite,
+  mapWorkProject,
+  type RawAbout,
+  type RawArchiveItem,
+  type RawFaq,
+  type RawNav,
+  type RawProcess,
+  type RawSite,
+  type RawWorkProject,
+} from "./lib/sanity/map";
+import {
+  ABOUT_QUERY,
+  ARCHIVE_QUERY,
+  FAQ_QUERY,
+  NAV_QUERY,
+  PROCESS_QUERY,
+  SITE_QUERY,
+  WORK_QUERY,
+} from "./lib/sanity/queries";
 
 const workService = z.enum(WORK_SERVICES);
 
@@ -55,10 +63,17 @@ const workPanel = z.discriminatedUnion("kind", [
 ]);
 
 const work = defineCollection({
-  // ponytail: the entry id is the filename stem, which is also the /work/[slug]
-  // route. `slug` is therefore absent from the front matter — carrying both
-  // invites a file whose name and slug disagree.
-  loader: glob({ base: "./src/content/work", pattern: "**/*.yaml" }),
+  // ponytail: the entry id is the filename stem / Sanity slug, which is also
+  // the /work/[slug] route. `slug` is therefore absent from the front matter —
+  // carrying both invites a file whose name and slug disagree.
+  loader: sanityOrYaml({
+    query: WORK_QUERY,
+    fallback: glob({ base: "./src/content/work", pattern: "**/*.yaml" }),
+    map: (docs) =>
+      docs
+        .map((doc) => mapWorkProject(doc as RawWorkProject))
+        .filter((entry) => entry !== null),
+  }),
   schema: z.object({
     /**
      * Where the project sits in every listing — the gallery grid, the featured
@@ -97,7 +112,12 @@ const work = defineCollection({
 });
 
 const faq = defineCollection({
-  loader: file("src/content/faq.yaml"),
+  loader: sanityOrYaml({
+    query: FAQ_QUERY,
+    fallback: file("src/content/faq.yaml"),
+    map: (docs) =>
+      docs.map((doc) => mapFaq(doc as RawFaq)).filter((entry) => entry !== null),
+  }),
   schema: z.object({
     statement: z.string(),
     lead: z.string(),
@@ -108,7 +128,14 @@ const faq = defineCollection({
 });
 
 const process = defineCollection({
-  loader: file("src/content/process.yaml"),
+  loader: sanityOrYaml({
+    query: PROCESS_QUERY,
+    fallback: file("src/content/process.yaml"),
+    map: (docs) =>
+      docs
+        .map((doc) => mapProcess(doc as RawProcess))
+        .filter((entry) => entry !== null),
+  }),
   schema: z.object({
     statement: z.string(),
     cards: z
@@ -125,7 +152,14 @@ const process = defineCollection({
 });
 
 const about = defineCollection({
-  loader: file("src/content/about.yaml"),
+  loader: sanityOrYaml({
+    query: ABOUT_QUERY,
+    fallback: file("src/content/about.yaml"),
+    map: (docs) =>
+      docs
+        .map((doc) => mapAbout(doc as RawAbout))
+        .filter((entry) => entry !== null),
+  }),
   schema: z.object({
     lead: z.string(),
     clients: z.array(z.string()).nonempty(),
@@ -134,52 +168,32 @@ const about = defineCollection({
   }),
 });
 
-const overlayItem = z.union([
-  z.object({ label: z.string(), path: z.string() }),
-  z.object({ label: z.string(), action: z.literal("theme") }),
-]);
-
 const nav = defineCollection({
-  loader: file("src/content/nav.yaml"),
+  // ponytail: only the availability marquee. Stacks, socials, overlay, email,
+  // and scroll-spy ids are site wiring in `src/lib/content/nav.ts`.
+  loader: sanityOrYaml({
+    query: NAV_QUERY,
+    fallback: file("src/content/nav.yaml"),
+    map: (docs) =>
+      docs.map((doc) => mapNav(doc as RawNav)).filter((entry) => entry !== null),
+  }),
   schema: z.object({
     availabilityLine: z.string(),
     availabilityCopies: z.number().int().positive(),
-    email: z.string(),
-    stacks: z
-      .array(
-        z.object({
-          col: z.string(),
-          links: z
-            .array(
-              z.object({
-                label: z.string(),
-                path: z.string(),
-                id: z.string(),
-              }),
-            )
-            .nonempty(),
-        }),
-      )
-      .nonempty(),
-    socials: z
-      .array(
-        z.object({
-          label: z.string(),
-          href: z.string(),
-          /** Opens in a new tab (Instagram, booking links). */
-          newTab: z.boolean().default(false),
-        }),
-      )
-      .nonempty(),
-    overlayColumns: z.array(z.array(overlayItem).nonempty()).nonempty(),
-    sectionIds: z.array(z.string()).nonempty(),
   }),
 });
 
 const viewItem = z.object({ id: z.string(), label: z.string() });
 
 const site = defineCollection({
-  loader: file("src/content/site.yaml"),
+  loader: sanityOrYaml({
+    query: SITE_QUERY,
+    fallback: file("src/content/site.yaml"),
+    map: (docs) =>
+      docs
+        .map((doc) => mapSite(doc as RawSite))
+        .filter((entry) => entry !== null),
+  }),
   schema: z.object({
     heroNote: z.array(z.string()).nonempty(),
     manifesto: z.string(),
@@ -205,11 +219,23 @@ const site = defineCollection({
 });
 
 const archive = defineCollection({
-  loader: file("src/content/archive.yaml"),
+  loader: sanityOrYaml({
+    query: ARCHIVE_QUERY,
+    fallback: file("src/content/archive.yaml"),
+    map: (docs) =>
+      docs
+        .map((doc) => mapArchiveItem(doc as RawArchiveItem))
+        .filter((entry) => entry !== null),
+  }),
   schema: z.object({
     /**
-     * Pre-encoded: several filenames contain spaces and the image `src` uses
-     * these strings verbatim.
+     * Listing order. YAML keys used to imply this; Sanity cannot, so both
+     * sources now carry it and callers sort on it.
+     */
+    order: z.number().int().nonnegative().optional(),
+    /**
+     * Pre-encoded when local: several filenames contain spaces and the image
+     * `src` uses these strings verbatim. Sanity CDN URLs are used as-is.
      */
     src: z.string(),
     /**

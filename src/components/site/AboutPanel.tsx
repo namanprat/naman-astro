@@ -19,6 +19,7 @@ import {
 } from "@/lib/site/reveal/gooeyReveal";
 import "@/lib/site/util/eases";
 
+import type { AboutData } from "@/lib/content/models";
 import AboutContent from "./about/AboutContent";
 
 const SLIDE_S = 0.45;
@@ -48,6 +49,7 @@ type AboutPanelProps = {
   open: boolean;
   mode: AboutPanelMode;
   onClose: () => void;
+  about: AboutData;
 };
 
 function hideChrome(
@@ -73,7 +75,12 @@ function scheduleAboutBustMount(onMount: () => void): () => void {
   return () => window.clearTimeout(id);
 }
 
-export default function AboutPanel({ open, mode, onClose }: AboutPanelProps) {
+export default function AboutPanel({
+  open,
+  mode,
+  onClose,
+  about,
+}: AboutPanelProps) {
   const panelRef = useRef<HTMLElement>(null);
   const surfaceRef = useRef<HTMLDivElement>(null);
   const backdropRef = useRef<HTMLButtonElement>(null);
@@ -300,6 +307,7 @@ export default function AboutPanel({ open, mode, onClose }: AboutPanelProps) {
           <div className="about_panel_scroll" data-lenis-prevent>
             <div className="about_panel_inner container gap-0">
               <AboutContent
+                about={about}
                 mediaRef={mediaRef}
                 mountCanvas={mountCanvas}
                 onCanvasReady={onBustReady}

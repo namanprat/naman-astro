@@ -1,5 +1,7 @@
 import { useEffect } from "react";
 import { Canvas } from "@react-three/fiber";
+import type { ArchiveItem } from "@/content/archive";
+import type { ViewItem } from "@/lib/content/models";
 import ArchiveScene from "./ArchiveScene";
 import ViewSwitcher, { type ViewSwitcherItem } from "../ViewSwitcher";
 import {
@@ -10,10 +12,20 @@ import {
 } from "@/lib/archive/archiveView";
 import "./Archive.css";
 
-const ARCHIVE_VIEWS: readonly ViewSwitcherItem<ArchiveView>[] = [
+const DEFAULT_ARCHIVE_VIEWS: readonly ViewSwitcherItem<ArchiveView>[] = [
   { id: "orb", label: "Orb" },
   { id: "grid", label: "Grid" },
 ];
+
+function archiveViewsFrom(
+  views: readonly ViewItem[] | undefined,
+): readonly ViewSwitcherItem<ArchiveView>[] {
+  const next = (views ?? []).filter(
+    (view): view is ViewSwitcherItem<ArchiveView> =>
+      view.id === "orb" || view.id === "grid",
+  );
+  return next.length ? next : DEFAULT_ARCHIVE_VIEWS;
+}
 
 /**
  * The archive's own canvas. Perspective camera (ArchiveCameras sets
@@ -22,7 +34,13 @@ const ARCHIVE_VIEWS: readonly ViewSwitcherItem<ArchiveView>[] = [
  * pointerEvents stays on: the orb's arcball drag and the grid pan both read
  * pointer events straight off the canvas.
  */
-export default function ArchiveCanvas() {
+export default function ArchiveCanvas({
+  items,
+  views,
+}: {
+  items: ArchiveItem[];
+  views?: readonly ViewItem[];
+}) {
   const { view, isMorphing } = useArchiveView();
 
   useEffect(() => {
@@ -43,11 +61,11 @@ export default function ArchiveCanvas() {
         gl={{ antialias: true, alpha: false }}
         style={{ width: "100%", height: "100%", display: "block" }}
       >
-        <ArchiveScene />
+        <ArchiveScene items={items} />
       </Canvas>
       <ViewSwitcher
         label="Archive view"
-        views={ARCHIVE_VIEWS}
+        views={archiveViewsFrom(views)}
         view={view}
         busy={isMorphing}
         onSelect={setArchiveView}

@@ -1,4 +1,5 @@
-import { lazy, Suspense, type RefObject } from "react";
+import { lazy, Suspense, useMemo, type RefObject } from "react";
+import type { AboutData } from "@/lib/content/models";
 
 /**
  * The About layout, shared verbatim by the desktop overlay (`AboutPanel`) and
@@ -8,23 +9,6 @@ import { lazy, Suspense, type RefObject } from "react";
  */
 
 const AboutAsciiCanvas = lazy(() => import("./AboutAsciiCanvas"));
-
-const SERVICES = [
-  "Brand identity",
-  "Website design",
-  "Website development",
-  "Motion design",
-  "3D",
-] as const;
-
-const CLIENTS = [
-  "Animal",
-  "Notice",
-  "Project Qaafi",
-  "Perception Pod",
-  "Haptic AI",
-  "t.Bonk",
-] as const;
 
 /** Max items per clients column before spilling to the next with gutter. */
 const CLIENTS_PER_COL = 4;
@@ -37,11 +21,8 @@ function chunkClients(items: readonly string[], size: number): string[][] {
   return columns;
 }
 
-/* Hoisted: the split never depends on props, so it must not be recomputed per
-   render (rerender-lazy-state-init / js-cache-function-results). */
-const CLIENT_COLUMNS = chunkClients(CLIENTS, CLIENTS_PER_COL);
-
 type AboutContentProps = {
+  about: AboutData;
   /** The media block — also the canvas's pointer `eventSource`. */
   mediaRef: RefObject<HTMLDivElement | null>;
   /** Owner decides when the WebGL bust is worth mounting; see `aboutBust.ts`. */
@@ -51,10 +32,15 @@ type AboutContentProps = {
 };
 
 export default function AboutContent({
+  about,
   mediaRef,
   mountCanvas,
   onCanvasReady,
 }: AboutContentProps) {
+  const clientColumns = useMemo(
+    () => chunkClients(about.clients, CLIENTS_PER_COL),
+    [about.clients],
+  );
   return (
     <div className="about_panel_grid grid is-12">
       <div
@@ -77,9 +63,7 @@ export default function AboutContent({
       <div className="about_panel_reveal about_panel_intro">
         <div className="about_panel_reveal_inner">
           <h3 className="about_panel_lead text-style-h3">
-            We make things look good and work better. We get deep into your
-            story, stay ruthless about what actually moves people, and close the
-            gap between who you already are and how the world sees you.
+            {about.lead}
           </h3>
         </div>
       </div>
@@ -89,7 +73,7 @@ export default function AboutContent({
           <div className="about_panel_reveal_inner">
             <h5 className="about_panel_col_label text-style-main">Services</h5>
             <div className="about_panel_col_list">
-              {SERVICES.map((item) => (
+              {about.services.map((item) => (
                 <h5 key={item} className="text-style-main">
                   {item}
                 </h5>
@@ -102,7 +86,7 @@ export default function AboutContent({
           <div className="about_panel_reveal_inner">
             <h5 className="about_panel_col_label text-style-main">Clients</h5>
             <div className="about_panel_clients_cols">
-              {CLIENT_COLUMNS.map((column, index) => (
+              {clientColumns.map((column, index) => (
                 <div
                   key={`clients-col-${index}`}
                   className="about_panel_col_list"

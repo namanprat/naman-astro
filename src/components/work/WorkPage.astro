@@ -3,7 +3,12 @@
  * Work page shell — infinite gallery + Flip project overlay.
  * No Lenis: the gallery owns wheel/touch via GSAP Observer.
  */
+import { getEntry } from "astro:content";
+import { getWorkItems, toWorkItem } from "@/lib/content/work";
 import WorkGallery from "./WorkGallery.tsx";
+
+const items = (await getWorkItems()).map(toWorkItem);
+const site = await getEntry("site", "site");
 ---
 
-<WorkGallery client:only="react" />
+<WorkGallery client:only="react" items={items} views={site?.data.workViews} />
