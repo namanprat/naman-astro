@@ -16,6 +16,8 @@ export const SITE_DESCRIPTION =
   "Based in Mumbai and Bangalore, working with clients everywhere. Brand, web, and motion for early-stage companies that refuse to look like everyone else.";
 /** Canonical origin. Resolves canonical URLs, social images, and the sitemap. */
 export const SITE_URL = "https://namanprat.com";
+/** BCP 47 locale tag used to format dates and numbers. */
+export const SITE_LOCALE = "en-IN";
 /**
  * Routes kept out of search results. Each is excluded from the sitemap,
  * listed as `Disallow` in robots.txt, and served with a

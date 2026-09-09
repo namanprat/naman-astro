@@ -36,3 +36,6 @@ studio-duforn-portfolio/.sanity
 # leftover local test output
 /test-results/
 
+# Lumos upgrade working copies
+.lumos-upgrade/
+

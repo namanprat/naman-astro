@@ -21,6 +21,15 @@ Consult these guides before working on related tasks:
 - [Adding styles or using Tailwind](https://docs.astro.build/en/guides/styling/)
 - [Supporting multiple languages](https://docs.astro.build/en/guides/internationalization/)
 
+## Building
+
+Read [LUMOS.md](LUMOS.md) before adding pages, components, or styles. It
+covers the conventions that keep a Lumos site consistent as it grows.
+
+Task-specific Lumos procedures live in `.claude/skills/` (`lumos-upgrade-version`,
+`lumos-audit-props`, `lumos-import-figma`, `lumos-import-webflow`,
+`lumos-scaling-graphic`).
+
 ## Cursor Cloud specific instructions
 
 This repo is a static Astro + React + Three.js portfolio site. Requires Node 22.12+ (VM has 22.14). Dependencies are refreshed automatically on startup by the environment update script (`npm install`), so no manual install is normally needed.
