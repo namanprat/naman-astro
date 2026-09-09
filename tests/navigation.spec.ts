@@ -29,6 +29,43 @@ test.beforeEach(async ({ page }) => {
   await skipPreloader(page);
 });
 
+/**
+ * The overlay parks with CSS `translateY(100%)`. GSAP's first `yPercent`
+ * write inherits that as `y`, and `yPercent: -100` then cancels it — the
+ * accent sheet lands at identity and paints over the whole site. This is
+ * the regression that reads as "I can only see orange".
+ */
+test("the closed menu overlay does not cover the page", async ({ page }) => {
+  await page.goto("/");
+  await expectRevealed(page);
+
+  await expect.poll(() => rootClasses(page)).not.toContain("menu-open");
+
+  const covering = await page.locator("#site-menu-overlay").evaluate((el) => {
+    const r = el.getBoundingClientRect();
+    const cs = getComputedStyle(el);
+    const vh = window.innerHeight;
+    const vw = window.innerWidth;
+    const onScreen =
+      r.width > vw * 0.5 &&
+      r.height > vh * 0.5 &&
+      r.top < vh &&
+      r.bottom > 0 &&
+      r.left < vw &&
+      r.right > 0 &&
+      cs.visibility !== "hidden" &&
+      cs.display !== "none" &&
+      Number(cs.opacity) > 0.01;
+    return {
+      onScreen,
+      top: r.top,
+      bottom: r.bottom,
+      vis: cs.visibility,
+    };
+  });
+  expect(covering.onScreen, JSON.stringify(covering)).toBe(false);
+});
+
 test("the homepage scrolls", async ({ page, context }) => {
   const cdp = await context.newCDPSession(page);
 

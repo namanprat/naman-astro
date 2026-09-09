@@ -183,7 +183,10 @@ export function bootMenu(): void {
   };
 
   const parkOverlay = () => {
-    gsap.set(overlay, { yPercent: -100, pointerEvents: "none" });
+    // y: 0 is load-bearing — without it GSAP inherits the CSS
+    // `translateY(100%)` park as `y` and yPercent stacks on top, which
+    // lands the accent overlay at identity over the whole page.
+    gsap.set(overlay, { y: 0, yPercent: -100, pointerEvents: "none" });
     parkOverlayCopy();
     gsap.set(toggleTrack, { yPercent: 0 });
   };
