@@ -1,16 +1,12 @@
 ---
-/**
- * Portfolio home shell. Studio sections are siblings so native Astro
- * (CamilleSlider overlay chrome) can sit between React islands. Footer/Menu
- * read the document scroller from `lenisBridge`.
- */
 import { getEntry } from "astro:content";
 import Manifesto from "./Manifesto.astro";
-import CamilleSlider from "./CamilleSlider.astro";
+import HeroSlider from "./HeroSlider.astro";
 import Process from "./Process.astro";
 import Faq from "./Faq.astro";
 import Team from "./Team.astro";
 import Footer from "./Footer.astro";
+import Paragraph from "@/components/Typography/Paragraph.astro";
 
 const site = await getEntry("site", "site");
 if (!site) throw new Error("content: the `site` entry is missing");
@@ -18,12 +14,9 @@ const { eyebrow } = site.data;
 ---
 
 <section class="hero" id="hero" aria-label="Home">
-  {/* Hero footnotes, phone only. The section is otherwise an empty spacer that
-      reserves the first viewport, which makes it the one box already sized to
-      the screen these two can hang off. */}
-  <p class="hero_note text-style-main">
+  <Paragraph variant="main" class="hero_note">
     {eyebrow.map((line, i) => (<>{i > 0 && <br />}{line}</>))}
-  </p>
+  </Paragraph>
   <a class="hero_scroll" href="#studio">
     <span class="sr-only">Skip to the studio</span>
     <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
@@ -38,13 +31,7 @@ const { eyebrow } = site.data;
 </section>
 <div class="studio" id="studio">
   <Manifesto />
-  <CamilleSlider />
-  {/* ponytail: no directives here any more. Both of these were `client:only`
-      because `revealLines` and `bootGooeyHeadings` rewrite headings and body
-      copy with SplitText before React could hydrate, so a server-rendered
-      React subtree mismatched and React discarded it, losing the split with
-      it. Both are Astro now, so there is no hydration left to mismatch. The
-      WebGL inside Process is still an island, still lazy and mount-gated. */}
+  <HeroSlider />
   <Process />
   <Faq />
   <Team />

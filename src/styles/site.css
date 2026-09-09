@@ -438,7 +438,7 @@
     visibility: hidden;
   }
 
-  html.is-gooey-arming :is(h1, h2, h3):not(:is(.nav_wrap, .footer_wrap, .menu_wrap, .about_panel, .camille_slider_wrap, .content_group, .transition_panel, [data-no-reveal]) *) {
+  html.is-gooey-arming :is(h1, h2, h3):not(:is(.nav_wrap, .footer_wrap, .menu_wrap, .about_panel, .hero_slider_wrap, .accordion_wrap, .content_group, .transition_panel, [data-no-reveal]) *) {
     visibility: hidden;
   }
 

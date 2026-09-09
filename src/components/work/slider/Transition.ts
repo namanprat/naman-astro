@@ -546,7 +546,7 @@ export default class Transition {
        the top of it. Not `.project_cover_media` itself, which is the thing
        morphing. */
     return gsap.utils.toArray<HTMLElement>(
-      ".project_services, .project_body, .project_block, .project_cover_video, .project_cover_below",
+      ".project_services, .project_intro, .project_block, .project_cover_video, .project_cover_below",
       group,
     );
   }

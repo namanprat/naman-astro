@@ -573,18 +573,38 @@ html.work-returning .view_switcher {
   gap: var(--space-1);
 }
 
-.project_body {
+.project_intro {
   grid-column: 10 / -1;
   align-self: center;
   justify-self: stretch;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--space-3);
+  min-width: 0;
+  position: relative;
+  z-index: 1;
+}
+
+.project_body {
   text-align: left;
   text-wrap: wrap;
   margin: 0;
   /* One grey on this page. `--muted` is the same hue at 70% alpha, which reads
      as a second, lighter grey against the ground. */
   color: var(--text);
-  position: relative;
-  z-index: 1;
+}
+
+.project_website {
+  --link-text: var(--text);
+  --link-text-hover: var(--text);
+  --link-border-hover: var(--text);
+}
+
+.project_website,
+.project_website:link,
+.project_website:visited {
+  color: var(--text);
 }
 
 /* SplitText line wrappers inherit; otherwise mask inners can sit centered. */
@@ -725,7 +745,7 @@ html.work-returning .view_switcher {
   }
 
   .project_services,
-  .project_body {
+  .project_intro {
     align-self: start;
   }
 
@@ -745,7 +765,7 @@ html.work-returning .view_switcher {
   }
 
   .project_services,
-  .project_body,
+  .project_intro,
   .project_panel_media,
   .project_copy {
     grid-row: auto;

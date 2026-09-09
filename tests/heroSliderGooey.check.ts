@@ -7,7 +7,7 @@ import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 
 const astro = readFileSync(
-  new URL("../src/components/site/CamilleSlider.astro", import.meta.url),
+  new URL("../src/components/site/HeroSlider.astro", import.meta.url),
   "utf8",
 );
 /**
@@ -25,38 +25,38 @@ const css = [...astro.matchAll(/<style[^>]*>([\s\S]*?)<\/style>/g)]
   .join("\n");
 assert.ok(css.length > 0, "slider must carry its styles in a <style> block");
 const ts = readFileSync(
-  new URL("../src/components/site/CamilleSlider.ts", import.meta.url),
+  new URL("../src/components/site/HeroSlider.ts", import.meta.url),
   "utf8",
 );
 
 assert.match(
   astro,
-  /class="camille_slider_title text-style-h1"/,
+  /class="hero_slider_title text-style-h1"/,
   "title host is unmarked — parkGooey / revealClass() own the melt class",
 );
 assert.match(
   astro,
-  /class="camille_slider_kicker text-style-small"/,
+  /class="hero_slider_kicker text-style-small"/,
   "kicker host is unmarked — parkGooey / revealClass() own the melt class",
 );
 assert.doesNotMatch(
   astro,
-  /class="camille_slider_title(?!_inner)[^"]*gooey_reveal/,
+  /class="hero_slider_title(?!_inner)[^"]*gooey_reveal/,
   "title must not hardcode gooey_reveal",
 );
 assert.doesNotMatch(
   astro,
-  /class="camille_slider_kicker(?!_inner)[^"]*gooey_reveal/,
+  /class="hero_slider_kicker(?!_inner)[^"]*gooey_reveal/,
   "kicker must not hardcode gooey_reveal",
 );
 assert.match(
   astro,
-  /camille_slider_title_inner gooey_reveal_inner/,
+  /hero_slider_title_inner gooey_reveal_inner/,
   "title inner is the shared gooey_reveal_inner",
 );
 assert.match(
   astro,
-  /camille_slider_kicker_inner gooey_reveal_inner/,
+  /hero_slider_kicker_inner gooey_reveal_inner/,
   "kicker inner is the shared gooey_reveal_inner",
 );
 
@@ -88,12 +88,12 @@ for (const api of [
 
 assert.doesNotMatch(
   astro,
-  /camille_slider_view_label|View project<\/span/,
+  /hero_slider_view_label|View project<\/span/,
   "desktop slider must not paint a View project control",
 );
 assert.match(
   astro,
-  /camille_slider_cursor/,
+  /hero_slider_cursor/,
   "photo hover uses the view cursor chip",
 );
 assert.doesNotMatch(
@@ -103,4 +103,4 @@ assert.doesNotMatch(
 );
 assert.match(ts, /quickTo/, "view chip lerps behind the pointer");
 
-console.log("camilleGooey: all assertions passed");
+console.log("heroSliderGooey: all assertions passed");

@@ -7,7 +7,7 @@
 /*
  * ponytail: the stylesheet belongs to this module, not to a component. Three
  * of its four importers minted `.roll_char` markup without rendering either
- * RollingText — CamilleSlider's `[data-roll-text]` spans and the preloader CTA
+ * RollingText — HeroSlider's `[data-roll-text]` spans and the preloader CTA
  * go through `initRollingText` directly — and one of them was a lib module
  * importing a component's CSS. The classes below are this file's contract, so
  * the sheet arrives wherever the markup can.

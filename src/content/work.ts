@@ -14,13 +14,15 @@ export type WorkItem = {
   slug: string;
   title: string;
   description: string;
+  /** Live site. Shown as “Open website” under the case-study description. */
+  website?: string;
   image: string;
   alt: string;
   /** Optional motion piece, stacked under the cover on the case-study page. */
   coverVideo?: string;
   /** Still stacked under the cover — same slot as `coverVideo`. */
   coverImage?: string;
-  /** Shown in the home Camille featured slider when true. */
+  /** Shown in the home featured slider when true. */
   featured?: boolean;
   services: WorkService[];
   panels: WorkPanel[];

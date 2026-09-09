@@ -5,6 +5,8 @@
  * centered under the image on the landscape stage (hidden on mobile).
  */
 import { getFeaturedWorkItems, workHref } from "@/lib/content/work";
+import Section from "@/components/Wrapper/Section.astro";
+import Grid from "@/components/Wrapper/Grid.astro";
 
 const SLIDES = (await getFeaturedWorkItems()).map((entry) => ({
   title: entry.data.title,
@@ -19,20 +21,22 @@ const SLIDES = (await getFeaturedWorkItems()).map((entry) => ({
 const first = SLIDES[0];
 ---
 
-<section
-  class="camille_slider_wrap studio_section"
+<Section
+  class="hero_slider_wrap"
   id="series"
   aria-label="Featured work"
+  paddingTop="large"
+  paddingBottom="large"
+  gap="0"
 >
-  <div class="camille_slider_contain container gap-0">
-    <div class="camille_slider_layout studio_layout grid is-12">
-      <div class="camille_slider_stage gap-row-4">
-        <div class="camille_slider_frame">
-          <div class="camille_slider_images">
+  <Grid class="is-12 studio_layout hero_slider_layout">
+      <div class="hero_slider_stage gap-row-4">
+        <div class="hero_slider_frame">
+          <div class="hero_slider_images">
             {
               SLIDES.map((slide, i) => (
                 <div
-                  class:list={["camille_slider_img", { "is-active": i === 0 }]}
+                  class:list={["hero_slider_img", { "is-active": i === 0 }]}
                   data-slide-index={i}
                   data-slide-title={slide.title}
                   data-slide-kicker={slide.kicker}
@@ -41,7 +45,7 @@ const first = SLIDES[0];
                   {
                     slide.film ? (
                       <video
-                        class="camille_slider_photo"
+                        class="hero_slider_photo"
                         src={slide.film}
                         poster={slide.poster}
                         muted
@@ -52,7 +56,7 @@ const first = SLIDES[0];
                       />
                     ) : (
                       <img
-                        class="camille_slider_photo"
+                        class="hero_slider_photo"
                         src={slide.src}
                         alt={slide.alt}
                         draggable="false"
@@ -66,32 +70,32 @@ const first = SLIDES[0];
             }
           </div>
 
-          <div class="camille_slider_overlay padding-4">
-            <div class="camille_slider_copy">
+          <div class="hero_slider_overlay padding-4">
+            <div class="hero_slider_copy">
               {
-                /* Host class is parked by initCamilleSlider via revealClass(),
+                /* Host class is parked by initHeroSlider via revealClass(),
                   not hardcoded — same hand-built inner as Footer. */
               }
-              <h2 class="camille_slider_title text-style-h1">
-                <span class="camille_slider_title_inner gooey_reveal_inner"
+              <h2 class="hero_slider_title text-style-h1">
+                <span class="hero_slider_title_inner gooey_reveal_inner"
                   >{first?.title ?? ""}</span
                 >
               </h2>
-              <p class="camille_slider_kicker text-style-small">
-                <span class="camille_slider_kicker_inner gooey_reveal_inner"
+              <p class="hero_slider_kicker text-style-small">
+                <span class="hero_slider_kicker_inner gooey_reveal_inner"
                   >{first?.kicker ? `[ ${first.kicker} ]` : ""}</span
                 >
               </p>
             </div>
 
-            <div class="camille_slider_rail flex-horizontal-nowrap gap-2">
+            <div class="hero_slider_rail flex-horizontal-nowrap gap-2">
               <button
                 type="button"
-                class="camille_slider_prev padding-4"
+                class="hero_slider_prev padding-4"
                 aria-label="Previous slide"
               >
                 <svg
-                  class="camille_slider_icon"
+                  class="hero_slider_icon"
                   xmlns="http://www.w3.org/2000/svg"
                   viewBox="0 -960 960 960"
                   aria-hidden="true"
@@ -99,14 +103,14 @@ const first = SLIDES[0];
                   <path d="M640-200 200-480l440-280v560Z"></path>
                 </svg>
               </button>
-              <span class="camille_slider_index text-style-small">01</span>
+              <span class="hero_slider_index text-style-small">01</span>
               <button
                 type="button"
-                class="camille_slider_next padding-4"
+                class="hero_slider_next padding-4"
                 aria-label="Next slide"
               >
                 <svg
-                  class="camille_slider_icon"
+                  class="hero_slider_icon"
                   xmlns="http://www.w3.org/2000/svg"
                   viewBox="0 -960 960 960"
                   aria-hidden="true"
@@ -116,9 +120,9 @@ const first = SLIDES[0];
               </button>
             </div>
           </div>
-          <div class="camille_slider_cursor text-style-small" aria-hidden="true">view</div>
+          <div class="hero_slider_cursor text-style-small" aria-hidden="true">view</div>
           <a
-            class="camille_slider_hit sr-only"
+            class="hero_slider_hit sr-only"
             href={first?.href ?? "/work"}
             data-no-reveal
           >
@@ -126,7 +130,7 @@ const first = SLIDES[0];
           </a>
         </div>
         <div
-          class="camille_slider_pills flex-horizontal-nowrap gap-2 alignment-center"
+          class="hero_slider_pills flex-horizontal-nowrap gap-2 alignment-center"
           role="tablist"
           aria-label="Featured projects"
         >
@@ -135,7 +139,7 @@ const first = SLIDES[0];
               <button
                 type="button"
                 class:list={[
-                  "camille_slider_pill",
+                  "hero_slider_pill",
                   "text-style-small",
                   { "is-active": i === 0 },
                 ]}
@@ -149,18 +153,17 @@ const first = SLIDES[0];
           }
         </div>
       </div>
-    </div>
-  </div>
-</section>
+    </Grid>
+</Section>
 
 <script>
-  import { initCamilleSlider } from "./CamilleSlider";
+  import { initHeroSlider } from "./HeroSlider";
 
-  document.querySelectorAll(".camille_slider_wrap").forEach((node) => {
+  document.querySelectorAll(".hero_slider_wrap").forEach((node) => {
     if (!(node instanceof HTMLElement) || node.dataset.scriptInitialized)
       return;
     node.dataset.scriptInitialized = "true";
-    initCamilleSlider(node);
+    initHeroSlider(node);
   });
 </script>
 
@@ -170,18 +173,18 @@ const first = SLIDES[0];
      reach another component. The `@layer` wrapper is what keeps that from
      changing the cascade: a scoped block is unlayered by default and unlayered
      beats every layer, so without it these rules would outrank the whole
-     `components` layer they came from — `.camille_slider_pill` is on
+     `components` layer they came from — `.hero_slider_pill` is on
      FluidCanvas's trail-blend list, which is exactly that kind of rule. */
 @layer components.section {
-  .camille_slider_layout {
+  .hero_slider_layout {
     grid-column: 1 / -1;
   }
 
   /* Every breakpoint below keys off this one signal: how wide the stage itself
      ended up. Named, because the frame declares a container of its own and an
      unnamed query inside the overlay would resolve to that instead. */
-  .camille_slider_stage {
-    container: camille / inline-size;
+  .hero_slider_stage {
+    container: hero-slider / inline-size;
     position: relative;
     display: flex;
     flex-direction: column;
@@ -191,7 +194,7 @@ const first = SLIDES[0];
     user-select: none;
   }
 
-  .camille_slider_frame {
+  .hero_slider_frame {
     position: relative;
     width: 100%;
     aspect-ratio: 10 / 16;
@@ -201,29 +204,29 @@ const first = SLIDES[0];
     container-type: inline-size;
   }
 
-  .camille_slider_images {
+  .hero_slider_images {
     position: absolute;
     inset: 0;
   }
 
-  .camille_slider_img {
+  .hero_slider_img {
     position: absolute;
     inset: 0;
     visibility: hidden;
     z-index: 0;
   }
 
-  .camille_slider_img.is-active,
-  .camille_slider_img.is-hopping {
+  .hero_slider_img.is-active,
+  .hero_slider_img.is-hopping {
     visibility: visible;
     z-index: 1;
   }
 
-  .camille_slider_img.is-hopping.is-incoming {
+  .hero_slider_img.is-hopping.is-incoming {
     z-index: 2;
   }
 
-  .camille_slider_photo {
+  .hero_slider_photo {
     width: 100%;
     height: 100%;
     object-fit: cover;
@@ -233,7 +236,7 @@ const first = SLIDES[0];
 
   /* Title top-left, white-filled arrows bottom-right. Chips live under
      the frame, not on the photo. Padding comes from Lumos utilities. */
-  .camille_slider_overlay {
+  .hero_slider_overlay {
     position: absolute;
     inset: 0;
     z-index: 3;
@@ -244,23 +247,23 @@ const first = SLIDES[0];
     color: var(--light-100);
   }
 
-  .camille_slider_overlay > * {
+  .hero_slider_overlay > * {
     pointer-events: auto;
   }
 
-  .camille_slider_rail {
+  .hero_slider_rail {
     flex: 0 0 auto;
     align-self: end;
   }
 
-  .camille_slider_index {
+  .hero_slider_index {
     flex: none;
     color: var(--light-100);
     white-space: nowrap;
   }
 
-  .camille_slider_prev,
-  .camille_slider_next {
+  .hero_slider_prev,
+  .hero_slider_next {
     display: flex;
     align-items: center;
     justify-content: center;
@@ -276,31 +279,31 @@ const first = SLIDES[0];
       border-color 200ms ease;
   }
 
-  .camille_slider_prev:hover,
-  .camille_slider_next:hover {
+  .hero_slider_prev:hover,
+  .hero_slider_next:hover {
     background-color: var(--dark-900);
     border-color: var(--dark-900);
     color: var(--light-100);
   }
 
-  .camille_slider_copy {
+  .hero_slider_copy {
     min-width: 0;
     flex: 0 1 auto;
     color: var(--light-100);
   }
 
-  .camille_slider_title {
+  .hero_slider_title {
     margin: 0;
     text-align: start;
     color: var(--light-100);
   }
 
-  .camille_slider_kicker {
+  .hero_slider_kicker {
     margin: var(--space-2) 0 0;
     color: var(--light-100);
   }
 
-  .camille_slider_icon {
+  .hero_slider_icon {
     display: block;
     width: 1.5rem;
     aspect-ratio: 1 / 1;
@@ -311,7 +314,7 @@ const first = SLIDES[0];
   /* Trails the pointer over the photo. Same box as the chips under the
      image — square corners, space-1 / space-3 pad — so the label reads as
      one of those, not a different control. System cursor stays visible. */
-  .camille_slider_cursor {
+  .hero_slider_cursor {
     position: fixed;
     top: 0;
     left: 0;
@@ -330,26 +333,26 @@ const first = SLIDES[0];
     will-change: transform;
   }
 
-  .camille_slider_cursor::before,
-  .camille_slider_cursor::after {
+  .hero_slider_cursor::before,
+  .hero_slider_cursor::after {
     content: none;
   }
 
   @media (hover: hover) and (pointer: fine) {
-    .camille_slider_frame.is-view-cursor .camille_slider_cursor {
+    .hero_slider_frame.is-view-cursor .hero_slider_cursor {
       display: flex;
     }
 
-    .camille_slider_frame,
-    .camille_slider_images,
-    .camille_slider_photo {
+    .hero_slider_frame,
+    .hero_slider_images,
+    .hero_slider_photo {
       cursor: pointer;
     }
   }
 
   /* Chips sit under the frame on the landscape stage. Portrait/mobile
      keeps only the overlay arrows — the pill row is too tight there. */
-  .camille_slider_pills {
+  .hero_slider_pills {
     display: none;
     flex: 0 0 auto;
     align-self: stretch;
@@ -359,11 +362,11 @@ const first = SLIDES[0];
     scrollbar-width: none;
   }
 
-  .camille_slider_pills::-webkit-scrollbar {
+  .hero_slider_pills::-webkit-scrollbar {
     display: none;
   }
 
-  .camille_slider_pill {
+  .hero_slider_pill {
     display: flex;
     align-items: center;
     flex: none;
@@ -385,24 +388,24 @@ const first = SLIDES[0];
 
   /* text-style-small's leading-trim ::before/::after would inflate the
      chip past the view label's 1lh box. Kill the same pair as the cursor. */
-  .camille_slider_pill::before,
-  .camille_slider_pill::after {
+  .hero_slider_pill::before,
+  .hero_slider_pill::after {
     content: none;
   }
 
-  .camille_slider_pill.is-active {
+  .hero_slider_pill.is-active {
     background-color: transparent;
     border-color: var(--text);
     border-style: dashed;
     color: var(--text);
   }
 
-  @container camille (width >= 40rem) {
-    .camille_slider_frame {
+  @container hero-slider (width >= 40rem) {
+    .hero_slider_frame {
       aspect-ratio: 16 / 10;
     }
 
-    .camille_slider_pills {
+    .hero_slider_pills {
       display: flex;
     }
   }

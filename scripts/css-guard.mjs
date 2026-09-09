@@ -10,7 +10,7 @@ const files = [
   "src/components/site/Faq.astro",
   "src/components/site/Process.astro",
   "src/components/site/Manifesto.astro",
-  "src/components/site/CamilleSlider.astro",
+  "src/components/site/HeroSlider.astro",
   "src/components/site/Team.astro",
   "src/components/site/AnimeLink.astro",
   "src/lib/site/reveal/rollingText.css",
@@ -18,7 +18,6 @@ const files = [
   "src/styles/patterns.css",
   "src/components/site/FluidCanvas.css",
   "src/components/site/Preloader.astro",
-  "src/pages/404.astro",
 ];
 
 const bans = [
@@ -84,7 +83,6 @@ const BACKBONE = new Set([
  */
 const UNLAYERED = new Set([
   "src/components/site/Preloader.astro",
-  "src/pages/404.astro",
 ]);
 const layerOpener = new RegExp(`@layer components\\.(${LAYERS.join("|")})\\s*\\{`);
 

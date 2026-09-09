@@ -17,6 +17,7 @@ export type RawWorkProject = {
   order?: number;
   title?: string;
   description?: string;
+  website?: string;
   image?: SanityImage;
   alt?: string;
   coverVideo?: string | FileAsset;
@@ -148,12 +149,14 @@ export function mapWorkProject(
   }
   const coverVideo = fileOrStringUrl(doc.coverVideo);
   const coverImage = imageUrl(doc.coverImage, 1800);
+  const website = requiredString(doc.website);
   return {
     id,
     data: {
       order: doc.order,
       title: doc.title,
       description: doc.description,
+      ...(website ? { website } : {}),
       image,
       alt: doc.alt,
       ...(coverVideo ? { coverVideo } : {}),

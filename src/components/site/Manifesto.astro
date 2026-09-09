@@ -1,57 +1,39 @@
 ---
-/**
- * Markup only. The lead used to run its own scrubbed word-by-word rise; it is
- * now an ordinary `h1`, picked up by the site-wide gooey entrance in
- * `lib/site/reveal/gooeyReveal.ts`. `.manifesto_wrap` is absent from that
- * module's SKIP list for exactly this reason.
- */
 import { getEntry } from "astro:content";
+import Section from "@/components/Wrapper/Section.astro";
+import Grid from "@/components/Wrapper/Grid.astro";
+import Heading from "@/components/Typography/Heading.astro";
 
 const site = await getEntry("site", "site");
 if (!site) throw new Error("content: the `site` entry is missing");
 const { manifesto } = site.data;
 ---
 
-<section class="manifesto_wrap" aria-label="Manifesto">
-  <div class="manifesto_contain container gap-0">
-    <div class="manifesto_layout grid is-12">
-      <h1 class="manifesto_lead text-style-h2">
-        <span class="studio_title_indent" aria-hidden="true"></span>{manifesto}
-      </h1>
-    </div>
-  </div>
-</section>
+<Section class="manifesto_wrap" aria-label="Manifesto" paddingTop="none" paddingBottom="none" gap="0">
+  <Grid class="is-12 manifesto_layout">
+    <Heading tag="h1" variant="h2" class="manifesto_lead">
+      <span class="studio_title_indent" aria-hidden="true"></span>{manifesto}
+    </Heading>
+  </Grid>
+</Section>
 
 <style>
-  /* ponytail: scoped, and layered on purpose. Astro adds its cid to this
-     component's own selectors and leaves `html.*` alone, so nothing here can
-     reach another component. The `@layer` wrapper is what keeps that from
-     changing the cascade: a scoped block is unlayered by default and unlayered
-     beats every layer, so without it these rules would outrank the whole
-     `components` layer they came from. */
-@layer components.section {
-  .manifesto_wrap {
-    position: relative;
-    width: 100%;
-    margin: 0;
-    background-color: transparent;
-    color: var(--text);
-    padding-top: 10vh;
-    padding-bottom: 40vh;
-  }
+  @layer components.section {
+    .manifesto_wrap {
+      padding-top: 10vh;
+      padding-bottom: 40vh;
+    }
 
-  .manifesto_layout {
-    width: 100%;
-  }
+    .manifesto_layout {
+      width: 100%;
+    }
 
-  .manifesto_lead {
-    grid-column: 1 / span calc(10 * var(--_responsive---large) + 12 * (1 - var(--_responsive---large)));
-    margin: 0;
-    max-width: none;
-    color: var(--text);
-    /* Same greedy wrap as `.studio_title`: the gooey split freezes each line,
-       and `balance` would not reproduce those breaks. */
-    text-wrap: wrap;
+    .manifesto_lead {
+      grid-column: 1 / span calc(10 * var(--_responsive---large) + 12 * (1 - var(--_responsive---large)));
+      margin: 0;
+      max-width: none;
+      color: var(--text);
+      text-wrap: wrap;
+    }
   }
-}
 </style>

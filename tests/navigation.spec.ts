@@ -768,7 +768,7 @@ test("the featured slider opens a project again after returning home", async ({
   await page.goto("/");
   await expectRevealed(page);
 
-  const frame = page.locator(".camille_slider_frame");
+  const frame = page.locator(".hero_slider_frame");
   await frame.scrollIntoViewIfNeeded();
   await frame.click({ position: { x: 220, y: 280 } });
 
@@ -786,9 +786,9 @@ test("the featured slider opens a project again after returning home", async ({
   await expectRevealed(page);
   await expect.poll(() => rootClasses(page)).not.toContain("is-page-covered");
 
-  await page.locator(".camille_slider_frame").scrollIntoViewIfNeeded();
+  await page.locator(".hero_slider_frame").scrollIntoViewIfNeeded();
   await page
-    .locator(".camille_slider_frame")
+    .locator(".hero_slider_frame")
     .click({ position: { x: 220, y: 280 } });
   await expect
     .poll(() => new URL(page.url()).pathname, { timeout: 30_000 })
@@ -944,7 +944,7 @@ test("bfcache restore parks the cover so the home slider is clickable", async ({
     )
     .toBe("ok");
 
-  const frame = page.locator(".camille_slider_frame");
+  const frame = page.locator(".hero_slider_frame");
   await frame.scrollIntoViewIfNeeded();
   await frame.click({ position: { x: 220, y: 280 } });
   await expect
