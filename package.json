@@ -13,6 +13,7 @@
     "prebuild": "node scripts/archive-variants.mjs",
     "build": "astro build",
     "preview": "astro preview",
+    "probe": "vite --config tools/shader-probe/vite.config.ts",
     "astro": "astro",
     "format": "prettier --write .",
     "studio": "npm run dev --prefix studio-duforn-portfolio",
