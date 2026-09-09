@@ -40,8 +40,11 @@ Commands (see `package.json` scripts and `README.md`):
 - Unit test: `npm run test:unit`.
 - Build: `npm run build` (static output to `dist/`).
 - Dev server: `astro dev --background` (serves on `http://localhost:4321`).
+- E2E: `npm run test:e2e` (Playwright; its `webServer` runs `npm run build && node tests/serve.mjs` on `127.0.0.1:4321`).
 - Studio: `npm run studio` (Sanity Studio at `http://localhost:3333`).
 
 Non-obvious caveats:
 
+- Playwright visual baselines were removed with the earlier Playwright drop and are not restored here. Functional specs (`navigation.spec.ts`, `reveal.spec.ts`, `work.spec.ts`, and the other `tests/*.spec.ts` files) are the e2e suite. Do NOT commit generated `*-linux.png` baselines.
+- `playwright.config.ts` honors `PLAYWRIGHT_CHROMIUM_EXECUTABLE` if set; when unset it uses Playwright's own downloaded Chromium. Leave it unset in this VM.
 - `/about` is a noindex overlay route: a hard load of `http://localhost:4321/about` briefly shows overlapping content before the overlay settles. Normal navigation from within the site is smooth.

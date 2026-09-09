@@ -1,0 +1,917 @@
+import { expect, test, type Page } from "@playwright/test";
+import {
+  blindRendererProbe,
+  expectNavVisible,
+  expectRevealed,
+  isNarrowNav,
+  isTouch,
+  rootClasses,
+  scrollDown,
+  seedTheme,
+  skipPreloader,
+  stubWebGL,
+  touchDrag,
+} from "./helpers";
+
+async function expectThemeColors(page: Page, color: string) {
+  const metas = page.locator('meta[name="theme-color"]');
+  await expect(metas).toHaveCount(3);
+  await expect
+    .poll(() =>
+      metas.evaluateAll((els) => els.map((el) => el.getAttribute("content"))),
+    )
+    .toEqual([color, color, color]);
+}
+
+/** Home's in-page section jumps and the About panel, which lives on every route. */
+test.beforeEach(async ({ page }) => {
+  await stubWebGL(page);
+  await skipPreloader(page);
+});
+
+test("the homepage scrolls", async ({ page, context }) => {
+  const cdp = await context.newCDPSession(page);
+
+  await page.goto("/");
+  await expectRevealed(page);
+
+  // A real finger drag on the touch projects: the homepage runs Lenis over the
+  // document scroller, and wheel and touch reach it by different routes.
+  await scrollDown(page, cdp, isTouch());
+  await expect
+    .poll(() => page.evaluate(() => window.scrollY), { timeout: 30_000 })
+    .toBeGreaterThan(0);
+});
+
+/**
+ * Scroll the homepage with this device's own input, then get back to the top
+ * through whichever surface the width actually offers.
+ *
+ * Home lives on the dedicated stack link above 48rem and on the nav logo
+ * below it — the SVG lockup scrolls away with the hero at every width now, so
+ * it is not a surface a scrolled page can offer. Both ends land in
+ * `goTo("/")`, which does not navigate when already on `/`: it replays the
+ * hero entrance and scrolls to the top, which is the path that regressed.
+ */
+test("returning Home scrolls to the top and keeps the nav up", async ({
+  page,
+  context,
+}) => {
+  const cdp = await context.newCDPSession(page);
+  const narrow = isNarrowNav();
+
+  await page.goto("/");
+  await expectRevealed(page);
+
+  await scrollDown(page, cdp, isTouch());
+  await expect
+    .poll(() => page.evaluate(() => window.scrollY), { timeout: 30_000 })
+    .toBeGreaterThan(0);
+
+  if (narrow) {
+    await page.locator('.nav_logo a[href="/"]').first().click();
+  } else {
+    await page.locator('.nav_stack a[href="/"]').first().click();
+  }
+
+  await expect
+    .poll(() => page.evaluate(() => window.scrollY), { timeout: 30_000 })
+    .toBe(0);
+  await expect
+    .poll(() => rootClasses(page), { timeout: 30_000 })
+    .not.toContain("menu-open");
+  await expectNavVisible(page);
+});
+
+test("About opens and closes without stranding its state", async ({ page }) => {
+  /* Below 48rem About is its own route — there is no overlay to strand, so the
+     equivalent guarantee is that the hash routes there and Back returns. */
+  test.skip(
+    isNarrowNav(),
+    "About is a route at this width — see the /about navigation test",
+  );
+
+  await page.goto("/");
+  await expectRevealed(page);
+
+  await page.evaluate(() => {
+    window.location.hash = "#about";
+  });
+  await expect.poll(() => rootClasses(page)).toContain("about-open");
+
+  await page.keyboard.press("Escape");
+  // Driven by the panel's `open` prop rather than the exit animation, so an
+  // interrupted close cannot leave it behind. `WorkGallery` mutes the gallery's
+  // wheel while it is set.
+  await expect
+    .poll(() => rootClasses(page), { timeout: 30_000 })
+    .not.toContain("about-open");
+});
+
+test("desktop About docks the nav under the card", async ({ page }) => {
+  test.skip(
+    isNarrowNav(),
+    "About is a route at this width — there is no overlay to dock onto",
+  );
+
+  await page.goto("/");
+  await expectRevealed(page);
+
+  await page.evaluate(() => {
+    window.location.hash = "#about";
+  });
+  await expect.poll(() => rootClasses(page)).toContain("about-open");
+
+  await expect
+    .poll(
+      async () => {
+        return page.evaluate(() => {
+          const nav = document.querySelector<HTMLElement>(".nav_wrap");
+          const surface = document.querySelector<HTMLElement>(
+            ".about_panel_surface",
+          );
+          if (!nav || !surface) return "missing";
+          const navTop = nav.getBoundingClientRect().top;
+          const cardBottom = surface.getBoundingClientRect().bottom;
+          /* Docked: the bar's top sits on the orange edge, not above the card
+           in the hero. A few pixels of subpixel / padding slack. */
+          if (navTop < 80) return `still at top ${Math.round(navTop)}`;
+          if (Math.abs(navTop - cardBottom) > 8) {
+            return `gap ${Math.round(navTop - cardBottom)}`;
+          }
+          return "ok";
+        });
+      },
+      { timeout: 15_000 },
+    )
+    .toBe("ok");
+
+  const restTop = await page.evaluate(() => {
+    const nav = document.querySelector<HTMLElement>(".nav_wrap")!;
+    const t = getComputedStyle(nav).transform;
+    const y = t && t !== "none" ? new DOMMatrix(t).f : 0;
+    return nav.getBoundingClientRect().top - y;
+  });
+
+  await page.keyboard.press("Escape");
+  await expect
+    .poll(() => rootClasses(page), { timeout: 10_000 })
+    .not.toContain("about-open");
+  await expect
+    .poll(async () =>
+      page.evaluate(() => {
+        const nav = document.querySelector<HTMLElement>(".nav_wrap")!;
+        const t = getComputedStyle(nav).transform;
+        const y = t && t !== "none" ? new DOMMatrix(t).f : 0;
+        return Math.round(y);
+      }),
+    )
+    .toBe(0);
+  await expect
+    .poll(async () =>
+      page.evaluate(() =>
+        Math.round(
+          document
+            .querySelector<HTMLElement>(".nav_wrap")!
+            .getBoundingClientRect().top,
+        ),
+      ),
+    )
+    .toBe(Math.round(restTop));
+});
+
+test("opening About on desktop locks scroll behind the overlay", async ({
+  page,
+}) => {
+  test.skip(
+    isNarrowNav(),
+    "About is a route at this width — the document is meant to scroll",
+  );
+
+  await page.goto("/");
+  await expectRevealed(page);
+
+  await page.evaluate(() => {
+    window.location.hash = "#about";
+  });
+  await expect.poll(() => rootClasses(page)).toContain("about-open");
+
+  const overflow = await page.evaluate(
+    () => getComputedStyle(document.documentElement).overflow,
+  );
+  expect(overflow).toBe("hidden");
+
+  const y0 = await page.evaluate(() => window.scrollY);
+  await page.mouse.wheel(0, 1200);
+  await expect.poll(async () => page.evaluate(() => window.scrollY)).toBe(y0);
+});
+
+/**
+ * Opening the Contact dropdown must not move the rest of the nav.
+ *
+ * Row 2 is `repeat(4, max-content)` under `justify-content: space-between`, so
+ * a track that narrows hands its width back to the gaps and shifts every item.
+ * The toggle swaps "Contact" (7 chars) for "Close" (5), which is the only
+ * label in the bar that changes width — About/"Close" is same-length, and Work
+ * no longer swaps. `.nav_contact_toggle h5` is pinned to `7ch` to hold it.
+ */
+test("opening Contact does not reflow the mobile nav row", async ({ page }) => {
+  test.skip(!isNarrowNav(), "the two-row nav only exists below 48rem");
+
+  await page.goto("/");
+  await expectRevealed(page);
+
+  const rowX = () =>
+    page.evaluate(() =>
+      [".nav_work", ".nav_archive", ".nav_contact", ".nav_about"].map((s) =>
+        Math.round(document.querySelector(s)!.getBoundingClientRect().x),
+      ),
+    );
+
+  const before = await rowX();
+  const toggle = page.locator(".nav_contact_toggle").first();
+  await toggle.click();
+  /* Not the label text: `RollingText` doubles every glyph for the hover roll,
+     so it reads "CClloossee". `aria-expanded` is the state itself. */
+  await expect(toggle).toHaveAttribute("aria-expanded", "true");
+
+  expect(await rowX(), "row shifted while Contact was open").toEqual(before);
+});
+
+/**
+ * The phone counterpart to the overlay test above.
+ *
+ * Below 48rem About is a document: the nav link routes to it, the ASCII bust
+ * that the card had no room for is laid out, and the footer is present. The
+ * overlay must NOT also mount there — `Menu` renders it on every route, so a
+ * second hidden copy of the whole panel (duplicate `id` included) is the
+ * regression this guards.
+ */
+test("About is a real page below the nav breakpoint", async ({ page }) => {
+  test.skip(!isNarrowNav(), "About is an overlay at this width");
+
+  await page.goto("/");
+  await expectRevealed(page);
+
+  await page.locator(".nav_about").first().click();
+  await expect.poll(() => new URL(page.url()).pathname).toBe("/about");
+  await expectRevealed(page);
+
+  await expect(page.locator(".about_panel.is-page")).toBeVisible();
+  await expect(page.locator(".about_panel")).toHaveCount(1);
+  await expect(page.locator(".about_panel_media")).toBeVisible();
+  await expect(page.locator(".footer_wrap")).toHaveCount(1);
+  // The lockup is a home-page element now.
+  await expect(page.locator(".name_hero")).toBeHidden();
+});
+
+/**
+ * A swipe that starts on the bust still scrolls the page.
+ *
+ * `OrbitControls.connect()` writes `touch-action: none` inline onto the bust
+ * canvas before it reads `enabled` or `enableRotate`, and that canvas fills
+ * `.about_panel_media`, which is full-bleed and square on this route — so a
+ * screen-tall band of the page refused to pan and the only way down was to find
+ * the copy below it. `AboutAsciiCanvas` gates the controls on `(pointer: fine)`
+ * for that reason: no prop and no stylesheet can undo an inline declaration.
+ *
+ * Both halves are asserted because they fail separately — the computed style is
+ * the mechanism, the scroll is the symptom. Dispatched through CDP because
+ * `touch-action` is precisely what is on trial: a wheel event ignores it and
+ * would pass either way.
+ */
+test("a swipe over the About bust scrolls the page", async ({
+  page,
+  context,
+}) => {
+  test.skip(!isNarrowNav(), "the bust route is phones only");
+  test.skip(!isTouch(), "this is a touch gesture, not a wheel");
+
+  const cdp = await context.newCDPSession(page);
+  await blindRendererProbe(page);
+  await page.goto("/about");
+  await expectRevealed(page);
+
+  const media = page.locator(".about_panel_media");
+  await expect(media).toBeVisible();
+
+  /* The bust is device-tiered (`aboutBust.ts` refuses a software renderer), and
+     with no canvas there are no controls to have hijacked anything — the
+     assertions below would pass without testing them. Say so rather than bank
+     a green. */
+  const mounted = await media
+    .locator("canvas")
+    .first()
+    .waitFor({ state: "attached", timeout: 20_000 })
+    .then(
+      () => true,
+      () => false,
+    );
+  test.skip(!mounted, "no WebGL bust on this machine, nothing to hijack");
+
+  await expect(media.locator("canvas").first()).toHaveCSS(
+    "touch-action",
+    "auto",
+  );
+
+  const box = await media.boundingBox();
+  if (!box) throw new Error("no bust box");
+  const before = await page.evaluate(() => window.scrollY);
+  await touchDrag(cdp, page, {
+    x: box.x + box.width / 2,
+    y: box.y + box.height * 0.75,
+  });
+  await page.waitForTimeout(1200);
+
+  expect(await page.evaluate(() => window.scrollY)).toBeGreaterThan(before);
+});
+
+/**
+ * Phone About sits on `.grid.is-12`, not a nested 1-col stack or a pixel
+ * inset measured off the nav. 4-col (< 30rem): Clients spans 1–4 with names
+ * on tracks 1 and 3; Services follows on 1–2. 6-col: they sit side by side.
+ */
+test("phone About lists sit on the site grid tracks", async ({ page }) => {
+  test.skip(!isNarrowNav(), "About is an overlay at this width");
+
+  await page.goto("/about");
+  await expectRevealed(page);
+
+  const geometry = await page.evaluate(() => {
+    const grid = document.querySelector<HTMLElement>(".about_panel_grid");
+    const services = document.querySelector<HTMLElement>(
+      ".about_panel_col.is-services",
+    );
+    const clients = document.querySelector<HTMLElement>(
+      ".about_panel_col.is-clients",
+    );
+    const clientCols = [
+      ...document.querySelectorAll<HTMLElement>(
+        ".about_panel_clients_cols > .about_panel_col_list",
+      ),
+    ];
+    if (!grid || !services || !clients || clientCols.length < 2) return null;
+
+    const cs = getComputedStyle(grid);
+    const widths = cs.gridTemplateColumns
+      .split(" ")
+      .map((value) => parseFloat(value));
+    const gap = parseFloat(cs.columnGap) || 0;
+    const origin = grid.getBoundingClientRect().left;
+    const trackStart = (index: number) => {
+      let x = origin;
+      for (let i = 0; i < index; i += 1) x += widths[i] + gap;
+      return x;
+    };
+
+    return {
+      cols: widths.length,
+      listsDisplay: getComputedStyle(
+        document.querySelector(".about_panel_lists")!,
+      ).display,
+      servicesLeft: services.getBoundingClientRect().left,
+      clientsLeft: clients.getBoundingClientRect().left,
+      clientCol0: clientCols[0].getBoundingClientRect().left,
+      clientCol1: clientCols[1].getBoundingClientRect().left,
+      track1: trackStart(0),
+      track3: trackStart(2),
+    };
+  });
+
+  expect(geometry).not.toBeNull();
+  expect(geometry!.listsDisplay).toBe("contents");
+  expect(geometry!.cols).toBeGreaterThanOrEqual(4);
+  expect(geometry!.servicesLeft).toBeCloseTo(geometry!.track1, 1);
+  expect(geometry!.clientsLeft).toBeCloseTo(geometry!.track1, 1);
+  expect(geometry!.clientCol0).toBeCloseTo(geometry!.track1, 1);
+  expect(geometry!.clientCol1).toBeCloseTo(geometry!.track3, 1);
+});
+
+/**
+ * The About lead has to fill its column, not shrink-to-fit it.
+ *
+ * `.about_panel_intro` is a column flex box with `align-items: flex-start` and
+ * a `display: contents` wrapper, so the heading is itself a flex item. Without
+ * an explicit width its size is intrinsic, and WebKit folds the
+ * `overflow-wrap: break-word` that `base.css` puts on every heading into its
+ * min-content calculation — collapsing the lead to one word per line. It then
+ * stays collapsed, because `prepareGooey` splits the heading with SplitText on
+ * open and bakes the wrap points into real `.gooey_reveal_line` divs.
+ *
+ * Blink resolves the same shrink-to-fit to the full column, so this cannot
+ * reproduce the Safari rendering. What it can do is lock the geometry the bug
+ * needs: an intrinsic width here would be a regression on WebKit whether or
+ * not Chromium shows it.
+ */
+test("the About lead fills its column rather than sizing to its text", async ({
+  page,
+}) => {
+  /* Same lead, same column rule — only how you reach it differs by width. */
+  if (isNarrowNav()) {
+    await page.goto("/about");
+    await expectRevealed(page);
+  } else {
+    await page.goto("/");
+    await expectRevealed(page);
+    await page.evaluate(() => {
+      window.location.hash = "#about";
+    });
+    await expect.poll(() => rootClasses(page)).toContain("about-open");
+  }
+
+  const lead = page.locator(".about_panel_lead");
+  await expect(lead).toBeVisible();
+
+  const geometry = await page.evaluate(() => {
+    const el = document.querySelector<HTMLElement>(".about_panel_lead");
+    const column = el?.closest<HTMLElement>(".about_panel_intro");
+    if (!el || !column) return null;
+    return {
+      lead: el.getBoundingClientRect().width,
+      column: column.getBoundingClientRect().width,
+      words: (el.textContent ?? "").trim().split(/\s+/).length,
+      // Zero before the split runs; the reveal bakes one div per line.
+      lines: el.querySelectorAll(".gooey_reveal_line").length,
+    };
+  });
+
+  expect(geometry).not.toBeNull();
+  expect(geometry!.lead).toBeCloseTo(geometry!.column, 0);
+  // The collapse puts every word on its own line, so anything near the word
+  // count is the failure this guards.
+  if (geometry!.lines > 0) {
+    expect(geometry!.lines).toBeLessThan(geometry!.words / 2);
+  }
+});
+
+/**
+ * Every frosted surface must ship a `backdrop-filter` this engine understands.
+ *
+ * The stylesheets used to hand-write `-webkit-backdrop-filter` after the
+ * unprefixed property. Lightning CSS merges that pair into one property, and
+ * with no `build.cssTarget` the last declaration won outright — so the build
+ * shipped the `-webkit-` form alone. Safari honours it; Chromium dropped the
+ * alias and Firefox never had it, so the frost silently computed to `none` in
+ * both and every card read as a flat tint.
+ *
+ * Nothing about that is visible in the source, which is why it is asserted
+ * against the *built* CSS through a real browser rather than by grepping.
+ */
+test("the frosted surfaces actually carry a backdrop filter", async ({
+  page,
+}) => {
+  // Light mode is where the frost exists at all: dark turns it off and fills
+  // the same surfaces with opaque orange.
+  await seedTheme(page, "light");
+
+  const narrow = isNarrowNav();
+
+  if (narrow) {
+    await page.goto("/about");
+    await expectRevealed(page);
+  } else {
+    await page.goto("/");
+    await expectRevealed(page);
+    await page.evaluate(() => {
+      window.location.hash = "#about";
+    });
+    await expect.poll(() => rootClasses(page)).toContain("about-open");
+  }
+
+  /* Below 48rem About is a route, not a card, so its surface is deliberately
+     unfrosted — it would read as a box floating over the document. The footer
+     on that same page still carries the frost, so the built-CSS regression
+     this test exists for is still covered here. */
+  const frosted = narrow
+    ? [".footer_child"]
+    : [".about_panel_surface", ".footer_child", ".menu_overlay"];
+
+  const frost = await page.evaluate(
+    (selectors) =>
+      selectors
+        .map((selector) => {
+          const el = document.querySelector(selector);
+          return {
+            selector,
+            value: el ? getComputedStyle(el).backdropFilter : "ABSENT",
+          };
+        })
+        .filter((entry) => entry.value !== "ABSENT"),
+    frosted,
+  );
+
+  expect(frost.length).toBeGreaterThan(0);
+  for (const { selector, value } of frost) {
+    expect(value, `${selector} backdrop-filter`).toMatch(/blur\(\d/);
+  }
+
+  if (narrow) {
+    const aboutSurface = await page.evaluate(() => {
+      const el = document.querySelector(".about_panel_surface");
+      return el ? getComputedStyle(el).backdropFilter : "ABSENT";
+    });
+    expect(aboutSurface, "the /about route must not be frosted").toBe("none");
+  }
+});
+
+/**
+ * iPhone Safari chrome (status bar / home indicator) follows the page theme
+ * via `theme-color`. Archive is always the dark bar. Never the accent.
+ */
+test("theme-color follows the page theme so Safari chrome can match it", async ({
+  page,
+}) => {
+  await seedTheme(page, "dark");
+  await page.goto("/");
+  await expectRevealed(page);
+
+  await expect(page.locator('meta[name="viewport"]')).toHaveAttribute(
+    "content",
+    /viewport-fit=cover/,
+  );
+  await expectThemeColors(page, "#101010");
+
+  await page.locator(".nav_wrap .nav_theme_toggle").first().click();
+  await expectThemeColors(page, "#e2e2dd");
+});
+
+test("archive theme-color stays dark regardless of the stored theme", async ({
+  page,
+}) => {
+  await seedTheme(page, "light");
+  await page.goto("/archive");
+  await expect(page.locator("html")).toHaveClass(/page-archive/);
+  await expectThemeColors(page, "#101010");
+
+  await page.locator(".nav_wrap .nav_theme_toggle").first().click();
+  await expectThemeColors(page, "#101010");
+});
+
+/**
+ * Tab icons follow OS chrome (`prefers-color-scheme`), not the site theme
+ * toggle: cream mark on dark chrome, near-black on light. No catch-all icon
+ * without `media` — Chromium then ignores the pairs.
+ */
+test("favicons and the web app manifest follow the OS colour scheme", async ({
+  page,
+}) => {
+  await page.goto("/");
+
+  await expect
+    .poll(() =>
+      page.locator('link[rel="icon"]').evaluateAll((els) =>
+        els.map((el) => ({
+          href: el.getAttribute("href"),
+          type: el.getAttribute("type"),
+          media: el.getAttribute("media"),
+          sizes: el.getAttribute("sizes"),
+        })),
+      ),
+    )
+    .toEqual([
+      {
+        href: "/favicon/favicon-dark.svg",
+        type: "image/svg+xml",
+        media: "(prefers-color-scheme: light)",
+        sizes: null,
+      },
+      {
+        href: "/favicon/favicon-light.svg",
+        type: "image/svg+xml",
+        media: "(prefers-color-scheme: dark)",
+        sizes: null,
+      },
+      {
+        href: "/favicon/favicon-dark.png",
+        type: "image/png",
+        media: "(prefers-color-scheme: light)",
+        sizes: "1000x1000",
+      },
+      {
+        href: "/favicon/favicon-light.png",
+        type: "image/png",
+        media: "(prefers-color-scheme: dark)",
+        sizes: "1000x1000",
+      },
+    ]);
+
+  await expect
+    .poll(() =>
+      page.locator('link[rel="apple-touch-icon"]').evaluateAll((els) =>
+        els.map((el) => ({
+          href: el.getAttribute("href"),
+          media: el.getAttribute("media"),
+        })),
+      ),
+    )
+    .toEqual([
+      {
+        href: "/favicon/favicon-dark.png",
+        media: "(prefers-color-scheme: light)",
+      },
+      {
+        href: "/favicon/favicon-light.png",
+        media: "(prefers-color-scheme: dark)",
+      },
+    ]);
+
+  await expect(page.locator('link[rel="mask-icon"]')).toHaveAttribute(
+    "href",
+    "/favicon/favicon-dark.svg",
+  );
+  await expect(page.locator('link[rel="mask-icon"]')).toHaveAttribute(
+    "color",
+    "#101010",
+  );
+  await expect(
+    page.locator('meta[name="apple-mobile-web-app-title"]'),
+  ).toHaveAttribute("content", "Duforn");
+  await expect(page.locator('link[rel="manifest"]')).toHaveAttribute(
+    "href",
+    "/site.webmanifest",
+  );
+
+  const faviconPaths = [
+    "/favicon/favicon-dark.svg",
+    "/favicon/favicon-light.svg",
+    "/favicon/favicon-dark.png",
+    "/favicon/favicon-light.png",
+  ];
+  for (const path of faviconPaths) {
+    const res = await page.request.get(path);
+    expect(res.ok(), path).toBe(true);
+  }
+
+  const manifestRes = await page.request.get("/site.webmanifest");
+  expect(manifestRes.ok()).toBe(true);
+  const manifest = (await manifestRes.json()) as {
+    icons: { src: string }[];
+  };
+  expect(manifest.icons.map((icon) => icon.src)).toEqual([
+    "/favicon/favicon-light.png",
+    "/favicon/favicon-light.svg",
+  ]);
+});
+
+test("the page-transition cover sits above the nav and ticker", async ({
+  page,
+}) => {
+  await page.goto("/");
+  await expectRevealed(page);
+  await expectNavVisible(page);
+
+  const stacking = await page.evaluate(() => {
+    const nav = document.querySelector<HTMLElement>(".nav_wrap");
+    const marquee = document.querySelector<HTMLElement>(".nav_marquee");
+    const panel = document.querySelector<HTMLElement>(".transition_panel");
+    if (!nav || !panel) return null;
+    const z = (el: HTMLElement) =>
+      Number.parseFloat(getComputedStyle(el).zIndex);
+    document.documentElement.classList.add("is-page-transitioning");
+    const locked = {
+      navZ: z(nav),
+      marqueeZ: marquee ? z(marquee) : 0,
+      panelZ: z(panel),
+    };
+    document.documentElement.classList.remove("is-page-transitioning");
+    return {
+      rest: { navZ: z(nav), panelZ: z(panel) },
+      locked,
+    };
+  });
+
+  expect(stacking).not.toBeNull();
+  expect(stacking!.rest.panelZ).toBeGreaterThan(stacking!.rest.navZ);
+  expect(stacking!.locked.panelZ).toBeGreaterThan(stacking!.locked.navZ);
+  expect(stacking!.locked.panelZ).toBeGreaterThan(stacking!.locked.marqueeZ);
+});
+
+test("arming the cover lock does not snap the panel over the nav", async ({
+  page,
+}) => {
+  await page.goto("/");
+  await expectRevealed(page);
+  await expectNavVisible(page);
+
+  const shot = await page.evaluate(() => {
+    const nav = document.querySelector<HTMLElement>(".nav_wrap");
+    const panel = document.querySelector<HTMLElement>(".transition_panel");
+    if (!nav || !panel) return null;
+    const navBefore = nav.getBoundingClientRect();
+    document.documentElement.classList.add("is-page-transitioning");
+    const navAfter = nav.getBoundingClientRect();
+    const panelBox = panel.getBoundingClientRect();
+    const navStyle = getComputedStyle(nav);
+    document.documentElement.classList.remove("is-page-transitioning");
+    return {
+      navTopShift: Math.abs(navAfter.top - navBefore.top),
+      navHidden:
+        navStyle.visibility === "hidden" ||
+        Number.parseFloat(navStyle.opacity) === 0,
+      panelTop: panelBox.top,
+      view: window.innerHeight,
+    };
+  });
+
+  expect(shot).not.toBeNull();
+  expect(shot!.navHidden).toBe(false);
+  expect(shot!.panelTop).toBeGreaterThan(shot!.view * 0.5);
+});
+
+/**
+ * Home featured slider → `/work/[slug]` is a hard nav with the cover panel.
+ * Returning home (HOME, not the overlay close) and clicking the slider again
+ * used to miss: Back restored the covered document from bfcache, or a second
+ * `go()` waited on a killed tween. Round-trip both ways and keep the cover off
+ * the arriving page.
+ */
+test("the featured slider opens a project again after returning home", async ({
+  page,
+}) => {
+  await page.goto("/");
+  await expectRevealed(page);
+
+  const frame = page.locator(".camille_slider_frame");
+  await frame.scrollIntoViewIfNeeded();
+  await frame.click({ position: { x: 220, y: 280 } });
+
+  await expect
+    .poll(() => new URL(page.url()).pathname, { timeout: 30_000 })
+    .toMatch(/^\/work\/[^/]+$/);
+  await expectRevealed(page);
+  await expect.poll(() => rootClasses(page)).not.toContain("is-page-covered");
+
+  const home = page.locator(".nav_home, .nav_logo a[href='/']").first();
+  await home.click();
+  await expect
+    .poll(() => new URL(page.url()).pathname, { timeout: 30_000 })
+    .toBe("/");
+  await expectRevealed(page);
+  await expect.poll(() => rootClasses(page)).not.toContain("is-page-covered");
+
+  await page.locator(".camille_slider_frame").scrollIntoViewIfNeeded();
+  await page
+    .locator(".camille_slider_frame")
+    .click({ position: { x: 220, y: 280 } });
+  await expect
+    .poll(() => new URL(page.url()).pathname, { timeout: 30_000 })
+    .toMatch(/^\/work\/[^/]+$/);
+  await expectRevealed(page);
+  await expect.poll(() => rootClasses(page)).not.toContain("is-page-covered");
+});
+
+/**
+ * The full-screen spacers are sized from `--site--screen-height`, and the
+ * footer mark is reachable at the end of the scroll.
+ *
+ * They used to be `100dvh`. The dynamic viewport *grows* when a phone's toolbar
+ * retracts, so home — which stacks two of these — got taller under the reader
+ * mid-scroll and the footer wordmark receded by a toolbar height every time you
+ * swiped for it. Headless Chromium has no toolbar, so `svh`, `lvh` and `dvh`
+ * are all the same number here and the symptom itself cannot be reproduced;
+ * what this catches is the other failure, which is silent and permanent: a
+ * token that does not resolve leaves `height: auto` and collapses the spacer.
+ * Hence the exact-viewport assertion rather than a relative one.
+ */
+test("the full-screen spacers are one viewport, and the footer mark is reachable", async ({
+  page,
+}) => {
+  await page.goto("/");
+  await expectRevealed(page);
+
+  const viewport = page.viewportSize()!.height;
+  const spacers = await page.evaluate(() => ({
+    hero: document.querySelector(".hero")?.getBoundingClientRect().height ?? 0,
+    team:
+      document.querySelector(".team_wrap")?.getBoundingClientRect().height ?? 0,
+  }));
+
+  expect(Math.round(spacers.hero)).toBe(viewport);
+  // `.team_wrap` is a floor, not a fixed height — its copy may push it taller.
+  expect(spacers.team).toBeGreaterThanOrEqual(viewport - 1);
+
+  await page.evaluate(() =>
+    window.scrollTo(0, document.documentElement.scrollHeight),
+  );
+  await expect
+    .poll(
+      () =>
+        page.evaluate(() => {
+          const mark = document.querySelector(".footer_logo");
+          if (!mark) return "no mark";
+          const box = mark.getBoundingClientRect();
+          if (box.height < 1) return "collapsed";
+          if (box.bottom > window.innerHeight + 1) return "below the fold";
+          if (box.top < 0) return "scrolled past";
+          return "in view";
+        }),
+      { timeout: 30_000 },
+    )
+    .toBe("in view");
+});
+
+/**
+ * Back out of a project should look like arriving anywhere else: the cover is
+ * already over the page and wipes up off it.
+ *
+ * A browser Back never runs `go()`, so nothing raises the panel on the way out
+ * and nothing wrote the arrival flag. What it does instead is restore the
+ * document with the cover `animateIn` left on it — which `pagehide` used to
+ * park before the freeze, so the page snapped back with no transition at all.
+ *
+ * The two states are told apart without waiting for a single frame. Parking is
+ * a synchronous `gsap.set` that puts the panel a whole viewport below; the wipe
+ * is a `fromTo`, which renders its "from" immediately and leaves the panel over
+ * the page. So read the position in the same task as the dispatch — no rAF, no
+ * tween progress, nothing for a loaded CI worker to get wrong.
+ */
+test("bfcache restore wipes the cover off rather than snapping it away", async ({
+  page,
+}) => {
+  test.skip(
+    test.info().project.name === "reduced-motion",
+    "reduced motion clears the cover outright, by design",
+  );
+
+  await page.goto("/");
+  await expectRevealed(page);
+
+  const { top, viewport } = await page.evaluate(() => {
+    const panel = document.querySelector<HTMLElement>(".transition_panel");
+    if (!panel) throw new Error("no transition panel");
+    document.documentElement.classList.add(
+      "is-page-covered",
+      "is-page-transitioning",
+    );
+    panel.style.pointerEvents = "all";
+    panel.style.transform = "translateY(0px)";
+
+    const event = new Event("pageshow");
+    Object.defineProperty(event, "persisted", { value: true });
+    window.dispatchEvent(event);
+
+    return {
+      top: panel.getBoundingClientRect().top,
+      viewport: window.innerHeight,
+    };
+  });
+
+  expect(top).toBeLessThan(viewport * 0.5);
+
+  // And it still finishes parked — the wipe is a transition, not a new state.
+  await expect
+    .poll(() =>
+      page.evaluate(() => {
+        const panel = document.querySelector<HTMLElement>(".transition_panel");
+        return panel ? panel.getBoundingClientRect().top : 0;
+      }),
+    )
+    .toBeGreaterThan(viewport * 0.5);
+  await expect.poll(() => rootClasses(page)).not.toContain("is-page-covered");
+});
+
+test("bfcache restore parks the cover so the home slider is clickable", async ({
+  page,
+}) => {
+  await page.goto("/");
+  await expectRevealed(page);
+
+  await page.evaluate(() => {
+    document.documentElement.classList.add(
+      "is-page-covered",
+      "is-page-transitioning",
+    );
+    const panel = document.querySelector<HTMLElement>(".transition_panel");
+    if (panel) {
+      panel.style.pointerEvents = "all";
+      panel.style.transform = "translateY(0px)";
+    }
+    const event = new Event("pageshow");
+    Object.defineProperty(event, "persisted", { value: true });
+    window.dispatchEvent(event);
+  });
+
+  await expect.poll(() => rootClasses(page)).not.toContain("is-page-covered");
+  await expect
+    .poll(() =>
+      page.evaluate(() => {
+        const panel = document.querySelector<HTMLElement>(".transition_panel");
+        if (!panel) return "no panel";
+        const top = panel.getBoundingClientRect().top;
+        const pe = getComputedStyle(panel).pointerEvents;
+        if (pe !== "none") return `pointer-events ${pe}`;
+        if (top < window.innerHeight * 0.5)
+          return `panel top ${Math.round(top)}`;
+        return "ok";
+      }),
+    )
+    .toBe("ok");
+
+  const frame = page.locator(".camille_slider_frame");
+  await frame.scrollIntoViewIfNeeded();
+  await frame.click({ position: { x: 220, y: 280 } });
+  await expect
+    .poll(() => new URL(page.url()).pathname, { timeout: 30_000 })
+    .toMatch(/^\/work\/[^/]+$/);
+  await expectRevealed(page);
+});
