@@ -1,8 +1,7 @@
 /**
- * Nav chrome. Routes, socials, and the overlay live here — not in Sanity —
- * because they are the site's wiring, not copy. The availability marquee is
- * the one line an editor should change without a deploy; that stays in the
- * `marquee` collection.
+ * Nav chrome. Routes and the overlay live here — not in Sanity — because they
+ * are the site's wiring, not copy. Social links are the `social` collection.
+ * The availability marquee is copy plus on/off in the `marquee` collection.
  */
 export type NavLink = {
   label: string;
@@ -15,25 +14,12 @@ export type NavStack = {
   links: NavLink[];
 };
 
-export type NavSocial = {
-  label: string;
-  href: string;
-  newTab: boolean;
-};
-
 export type OverlayLink = { label: string; path: string };
 export type OverlayAction = { label: string; action: "theme" };
 export type OverlayItem = OverlayLink | OverlayAction;
 
-export type NavMarquee = {
-  copy: string;
-  enabled: boolean;
-};
-
 /** How many times the marquee line repeats in each track group. Layout, not CMS. */
 export const MARQUEE_COPIES = 6;
-
-export const EMAIL_HREF = "mailto:a.namanprat@gmail.com";
 
 export const NAV_STACKS: NavStack[] = [
   {
@@ -49,20 +35,6 @@ export const NAV_STACKS: NavStack[] = [
       { label: "About", path: "/#about", id: "about" },
       { label: "Contact", path: "/#contact", id: "contact" },
     ],
-  },
-];
-
-export const SOCIAL_LINKS: NavSocial[] = [
-  { label: "Email", href: EMAIL_HREF, newTab: false },
-  {
-    label: "Instagram",
-    href: "https://www.instagram.com/namanprat_",
-    newTab: true,
-  },
-  {
-    label: "Discovery Call",
-    href: "https://cal.com/namanprat/discovery-call",
-    newTab: true,
   },
 ];
 

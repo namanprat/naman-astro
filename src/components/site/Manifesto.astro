@@ -5,9 +5,11 @@
  * `lib/site/reveal/gooeyReveal.ts`. `.manifesto_wrap` is absent from that
  * module's SKIP list for exactly this reason.
  */
-import { SITE_COPY } from "@/lib/content/copy";
+import { getEntry } from "astro:content";
 
-const { manifesto } = SITE_COPY;
+const site = await getEntry("site", "site");
+if (!site) throw new Error("content: the `site` entry is missing");
+const { manifesto } = site.data;
 ---
 
 <section class="manifesto_wrap" aria-label="Manifesto">

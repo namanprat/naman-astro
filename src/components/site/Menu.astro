@@ -7,11 +7,9 @@
 import { getEntry } from "astro:content";
 import { SITE_NAME } from "@/consts.ts";
 import {
-  EMAIL_HREF,
   MARQUEE_COPIES,
   NAV_STACKS,
   OVERLAY_COLUMNS,
-  SOCIAL_LINKS,
 } from "@/lib/content/nav";
 import { ABOUT_PATH } from "@/lib/site/about/aboutPanel";
 import { pagePathname } from "@/utils/seo.ts";
@@ -20,14 +18,16 @@ import ThemeToggle from "./ThemeToggle.astro";
 import AboutPanel from "./AboutPanel.astro";
 import "./Menu.css";
 
-const [marquee, about] = await Promise.all([
+const [marquee, about, social] = await Promise.all([
   getEntry("marquee", "marquee"),
   getEntry("about", "about"),
+  getEntry("social", "social"),
 ]);
-if (!marquee || !about)
-  throw new Error("content: `marquee` or `about` entry is missing");
+if (!marquee || !about || !social)
+  throw new Error("content: `marquee`, `about`, or `social` entry is missing");
 
 const { copy, enabled } = marquee.data;
+const { links: socialLinks, emailHref } = social.data;
 const pathname = pagePathname(Astro.url.pathname);
 const showAboutOverlay = pathname !== ABOUT_PATH;
 
@@ -111,14 +111,14 @@ const copies = Array.from({ length: MARQUEE_COPIES }, (_, i) => i);
                       </h5>
                     </button>
                     <div id="nav_contact_dropdown" class="nav_contact_dropdown">
-                      {SOCIAL_LINKS.map(({ label: socialLabel, href, newTab }) => {
+                      {socialLinks.map(({ label: socialLabel, href, newTab }) => {
                         const isMail = href.startsWith("mailto:");
                         return (
                           <a
                             href={href}
                             class="nav_link"
                             aria-live={isMail ? "polite" : undefined}
-                            data-copy-email={isMail ? EMAIL_HREF : undefined}
+                            data-copy-email={isMail ? emailHref : undefined}
                             {...(newTab
                               ? { target: "_blank", rel: "noreferrer noopener" }
                               : {})}

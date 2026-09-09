@@ -10,21 +10,22 @@
  *
  * ponytail: the nav links come from the `footer` collection, not from `Menu`
  * and not from `src/lib/content/nav.ts`. That module is menu chrome (stacks,
- * socials, overlay). Footer labels can diverge from the menu on purpose.
- * `Footer.tsx` imported NAV_STACKS, EMAIL_HREF, SOCIAL_LINKS and
- * socialLinkTabProps from `./Menu`, which meant every page carrying a footer
- * also pulled Menu's 1370 lines, gsap/SplitText, AboutPanel and the whole
- * About stack into its chunk — on /work/[slug] and /about, where the menu's
- * own island is the only other reason any of that would load.
+ * overlay). Socials come from the `social` collection — the same document
+ * the header Contact dropdown reads. Footer page links can diverge from the
+ * header stacks on purpose.
  */
 import { getEntry } from "astro:content";
-import { EMAIL_HREF, SOCIAL_LINKS } from "@/lib/content/nav";
 import RollingText from "./RollingText.astro";
 
-const footerEntry = await getEntry("footer", "footer");
-if (!footerEntry) throw new Error("content: the `footer` entry is missing");
+const [footerEntry, social] = await Promise.all([
+  getEntry("footer", "footer"),
+  getEntry("social", "social"),
+]);
+if (!footerEntry || !social)
+  throw new Error("content: `footer` or `social` entry is missing");
 
 const { tagline, links: footerLinks } = footerEntry.data;
+const { links: socialLinks, emailHref } = social.data;
 ---
 
 <footer class="footer_wrap" id="contact">
@@ -64,7 +65,7 @@ const { tagline, links: footerLinks } = footerEntry.data;
             <div class="footer_col is-connect">
               <ul class="footer_list">
                 {
-                  SOCIAL_LINKS.map(({ label, href, newTab }) => (
+                  socialLinks.map(({ label, href, newTab }) => (
                     <li>
                       <a
                         class="footer_link is-external text-style-h4"
@@ -73,7 +74,7 @@ const { tagline, links: footerLinks } = footerEntry.data;
                           href.startsWith("mailto:") ? "polite" : undefined
                         }
                         data-copy-email={
-                          href.startsWith("mailto:") ? EMAIL_HREF : undefined
+                          href.startsWith("mailto:") ? emailHref : undefined
                         }
                         {...(newTab
                           ? { target: "_blank", rel: "noreferrer noopener" }

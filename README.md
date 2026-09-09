@@ -21,7 +21,7 @@ Node 22.12 or newer is required.
 
 Site name, description, canonical origin, and noindex routes live in [`src/consts.ts`](src/consts.ts).
 
-Editorial copy and images load from Sanity project `dj9l9mvw` / dataset `production` at build time. If the dataset is empty or unreachable, the YAML collections in [`src/content/`](src/content/) and files under `public/` are used instead. Studio pages: Work, Archive, Homepage (eyebrow, FAQ, process), Footer, About, Marquee. Manifesto, team, preloader, 404 copy, and view-switcher labels are hardcoded. Copy [`.env.example`](.env.example) to `.env` to override the project, dataset, or add a token.
+Editorial copy and images load from Sanity project `dj9l9mvw` / dataset `production` at build time. If the dataset is empty or unreachable, the YAML collections in [`src/content/`](src/content/) and files under `public/` are used instead. Studio pages: Work, Archive, Homepage (Sitecopy, FAQ, Process), Marquee, Social, Footer, About. View-switcher labels are hardcoded. Copy [`.env.example`](.env.example) to `.env` to override the project, dataset, or add a token.
 
 ## License
 

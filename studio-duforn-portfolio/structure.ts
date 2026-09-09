@@ -2,10 +2,11 @@ import type { StructureResolver } from "sanity/structure";
 import { SINGLETON_IDS, SINGLETON_TYPES } from "./schemaTypes/constants";
 
 const SINGLETON_TITLES: Record<(typeof SINGLETON_TYPES)[number], string> = {
-  siteSettings: "Homepage",
-  footerSettings: "Footer",
-  aboutSettings: "About",
-  marqueeSettings: "Marquee",
+  site: "Homepage",
+  marquee: "Marquee",
+  social: "Social",
+  footer: "Footer",
+  about: "About",
 };
 
 export const structure: StructureResolver = (S) =>

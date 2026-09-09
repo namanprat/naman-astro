@@ -1,0 +1,14 @@
+# One source for the header Contact dropdown and the footer connect column.
+# Labels and newTab are derived in mapSocial when this comes from Sanity.
+social:
+  emailHref: mailto:a.namanprat@gmail.com
+  links:
+    - label: Email
+      href: mailto:a.namanprat@gmail.com
+      newTab: false
+    - label: Instagram
+      href: https://www.instagram.com/namanprat_
+      newTab: true
+    - label: Discovery Call
+      href: https://cal.com/namanprat/discovery-call
+      newTab: true

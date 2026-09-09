@@ -132,11 +132,16 @@ async function seedSingletons() {
   const about = loadYaml("src/content/about.yaml").about;
   const footer = loadYaml("src/content/footer.yaml").footer;
   const marquee = loadYaml("src/content/marquee.yaml").marquee;
+  const social = loadYaml("src/content/social.yaml").social;
 
   await client.createOrReplace({
     _id: "site",
-    _type: "siteSettings",
+    _type: "site",
     eyebrow: site.eyebrow,
+    manifesto: site.manifesto,
+    team: site.team,
+    preloader: site.preloader,
+    notFound: site.notFound,
     faq: {
       statement: site.faq.statement,
       lead: site.faq.lead,
@@ -149,20 +154,28 @@ async function seedSingletons() {
   });
   await client.createOrReplace({
     _id: "about",
-    _type: "aboutSettings",
+    _type: "about",
     ...about,
   });
   await client.createOrReplace({
     _id: "footer",
-    _type: "footerSettings",
+    _type: "footer",
     tagline: footer.tagline,
     links: keyed(footer.links, "link"),
   });
   await client.createOrReplace({
     _id: "marquee",
-    _type: "marqueeSettings",
+    _type: "marquee",
     copy: marquee.copy,
     enabled: Boolean(marquee.enabled),
+  });
+  await client.createOrReplace({
+    _id: "social",
+    _type: "social",
+    email: social.emailHref.replace(/^mailto:/i, ""),
+    instagram: social.links.find((link) => link.label === "Instagram")?.href,
+    discoveryCall: social.links.find((link) => link.label === "Discovery Call")
+      ?.href,
   });
   console.log("seed-sanity: singletons");
 }

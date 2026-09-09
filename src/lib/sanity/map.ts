@@ -45,9 +45,31 @@ export type RawProcess = {
   cards?: { title?: string; description?: string; model?: string }[];
 };
 
+export type RawTeam = {
+  titleLines?: string[];
+  body?: string;
+  ctaLabel?: string;
+  ctaHref?: string;
+};
+
+export type RawPreloader = {
+  locationLine?: string;
+  disciplineLine?: string;
+};
+
+export type RawNotFound = {
+  title?: string;
+  body?: string;
+  linkLabel?: string;
+};
+
 export type RawSite = {
   eyebrow?: string[];
   heroNote?: string[];
+  manifesto?: string;
+  team?: RawTeam;
+  preloader?: RawPreloader;
+  notFound?: RawNotFound;
   faq?: RawFaq;
   process?: RawProcess;
 };
@@ -68,12 +90,20 @@ export type RawMarquee = {
   enabled?: boolean;
 };
 
+export type RawSocial = {
+  email?: string;
+  instagram?: string;
+  discoveryCall?: string;
+};
+
 function asWorkService(value: string): WorkService | null {
   return WORK_SERVICE_SET.has(value) ? (value as WorkService) : null;
 }
 
 /** Studio used to store videos as `file` assets; live docs also hold string paths. */
-function fileOrStringUrl(value: string | FileAsset | undefined): string | undefined {
+function fileOrStringUrl(
+  value: string | FileAsset | undefined,
+): string | undefined {
   if (typeof value === "string") {
     const trimmed = value.trim();
     return trimmed || undefined;
@@ -161,9 +191,11 @@ function requiredList(values: string[] | undefined): string[] | null {
   return next.length ? next : null;
 }
 
-export function mapFaq(
-  doc: RawFaq | null | undefined,
-): { statement: string; lead: string; items: { question: string; answer: string }[] } | null {
+export function mapFaq(doc: RawFaq | null | undefined): {
+  statement: string;
+  lead: string;
+  items: { question: string; answer: string }[];
+} | null {
   if (!doc) return null;
   const statement = requiredString(doc.statement);
   const lead = requiredString(doc.lead);
@@ -175,9 +207,7 @@ export function mapFaq(
   return { statement, lead, items };
 }
 
-export function mapProcess(
-  doc: RawProcess | null | undefined,
-): {
+export function mapProcess(doc: RawProcess | null | undefined): {
   statement: string;
   cards: { title: string; description: string; model: "1" | "2" | "3" }[];
 } | null {
@@ -189,12 +219,48 @@ export function mapProcess(
     ): card is { title: string; description: string; model: "1" | "2" | "3" } =>
       Boolean(
         card.title &&
-          card.description &&
-          (card.model === "1" || card.model === "2" || card.model === "3"),
+        card.description &&
+        (card.model === "1" || card.model === "2" || card.model === "3"),
       ),
   );
   if (!statement || !cards.length) return null;
   return { statement, cards };
+}
+
+function mapTeam(doc: RawTeam | null | undefined): {
+  titleLines: string[];
+  body: string;
+  ctaLabel: string;
+  ctaHref: string;
+} | null {
+  if (!doc) return null;
+  const titleLines = requiredList(doc.titleLines);
+  const body = requiredString(doc.body);
+  const ctaLabel = requiredString(doc.ctaLabel);
+  const ctaHref = requiredString(doc.ctaHref);
+  if (!titleLines || !body || !ctaLabel || !ctaHref) return null;
+  return { titleLines, body, ctaLabel, ctaHref };
+}
+
+function mapPreloader(
+  doc: RawPreloader | null | undefined,
+): { locationLine: string; disciplineLine: string } | null {
+  if (!doc) return null;
+  const locationLine = requiredString(doc.locationLine);
+  const disciplineLine = requiredString(doc.disciplineLine);
+  if (!locationLine || !disciplineLine) return null;
+  return { locationLine, disciplineLine };
+}
+
+function mapNotFound(
+  doc: RawNotFound | null | undefined,
+): { title: string; body: string; linkLabel: string } | null {
+  if (!doc) return null;
+  const title = requiredString(doc.title);
+  const body = requiredString(doc.body);
+  const linkLabel = requiredString(doc.linkLabel);
+  if (!title || !body || !linkLabel) return null;
+  return { title, body, linkLabel };
 }
 
 export function mapSite(
@@ -202,12 +268,26 @@ export function mapSite(
 ): { id: string; data: Record<string, unknown> } | null {
   if (!doc) return null;
   const eyebrow = requiredList(doc.eyebrow ?? doc.heroNote);
+  const manifesto = requiredString(doc.manifesto);
+  const team = mapTeam(doc.team);
+  const preloader = mapPreloader(doc.preloader);
+  const notFound = mapNotFound(doc.notFound);
   const faq = mapFaq(doc.faq);
   const process = mapProcess(doc.process);
-  if (!eyebrow || !faq || !process) return null;
+  if (
+    !eyebrow ||
+    !manifesto ||
+    !team ||
+    !preloader ||
+    !notFound ||
+    !faq ||
+    !process
+  ) {
+    return null;
+  }
   return {
     id: "site",
-    data: { eyebrow, faq, process },
+    data: { eyebrow, manifesto, team, preloader, notFound, faq, process },
   };
 }
 
@@ -255,6 +335,35 @@ export function mapMarquee(
     data: {
       copy,
       enabled: Boolean(doc.enabled),
+    },
+  };
+}
+
+function mailtoHref(value: string): string {
+  const trimmed = value.trim();
+  return trimmed.toLowerCase().startsWith("mailto:")
+    ? trimmed
+    : `mailto:${trimmed}`;
+}
+
+export function mapSocial(
+  doc: RawSocial | null | undefined,
+): { id: string; data: Record<string, unknown> } | null {
+  if (!doc) return null;
+  const email = requiredString(doc.email);
+  const instagram = requiredString(doc.instagram);
+  const discoveryCall = requiredString(doc.discoveryCall);
+  if (!email || !instagram || !discoveryCall) return null;
+  const emailHref = mailtoHref(email);
+  return {
+    id: "social",
+    data: {
+      emailHref,
+      links: [
+        { label: "Email", href: emailHref, newTab: false },
+        { label: "Instagram", href: instagram, newTab: true },
+        { label: "Discovery Call", href: discoveryCall, newTab: true },
+      ],
     },
   };
 }

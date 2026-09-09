@@ -1,5 +1,4 @@
-# Homepage. Identity and SEO stay in src/consts.ts; manifesto, team,
-# preloader, and 404 copy live in src/lib/content/copy.ts.
+# Homepage. Identity and SEO stay in src/consts.ts.
 #
 # ponytail: eyebrow is lines, not one string with a <br /> in it. The break
 # is an editorial decision so it belongs in the content, but as markup it
@@ -11,6 +10,30 @@ site:
   eyebrow:
     - Brand, web, and motion
     - for early-stage companies.
+
+  manifesto: We're a design practice for early-stage brands, closing the gap
+    between who you already are and how the world sees you. Good design isn't
+    about adding more. It's about knowing what to leave out.
+
+  team:
+    titleLines:
+      - We close
+      - that gap.
+    body: Early on, every impression counts double. People decide whether you're
+      worth their time before they read a word. We find what makes you different,
+      build the whole presence around it, and make sure they feel that first.
+    ctaLabel: View Work
+    ctaHref: /work
+
+  preloader:
+    locationLine: Based in Mumbai and Bangalore, working worldwide
+    disciplineLine: Brand, web, and motion for early-stage companies
+
+  notFound:
+    title: This page doesn't exist
+    body: The page you're looking for may have moved, or the link that brought
+      you here might be out of date.
+    linkLabel: Back to home
 
   faq:
     statement: We take on fewer projects so we can be fully present on each one.

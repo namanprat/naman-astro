@@ -9,6 +9,7 @@ import {
   mapFooter,
   mapMarquee,
   mapSite,
+  mapSocial,
   mapWorkProject,
   type RawWorkProject,
 } from "../src/lib/sanity/map.ts";
@@ -18,13 +19,26 @@ const work = mapWorkProject({
   order: 1,
   title: "Haptic",
   description: "A tactile AI brand.",
-  image: { asset: { _id: "image-abc-800x600-webp", url: "https://cdn.sanity.io/images/dj9l9mvw/production/abc-800x600.webp" } },
+  image: {
+    asset: {
+      _id: "image-abc-800x600-webp",
+      url: "https://cdn.sanity.io/images/dj9l9mvw/production/abc-800x600.webp",
+    },
+  },
   alt: "Haptic",
   featured: true,
   services: ["Brand identity", "Motion design"],
-  coverVideo: { asset: { url: "https://cdn.sanity.io/files/dj9l9mvw/production/reveal.webm" } },
+  coverVideo: {
+    asset: {
+      url: "https://cdn.sanity.io/files/dj9l9mvw/production/reveal.webm",
+    },
+  },
   panels: [
-    { _type: "workPanelImage", image: { asset: { _id: "image-hero-800x600-webp" } }, alt: "Hero" },
+    {
+      _type: "workPanelImage",
+      image: { asset: { _id: "image-hero-800x600-webp" } },
+      alt: "Hero",
+    },
     { _type: "workPanelText", title: "Why this", body: "Because." },
   ],
 } satisfies RawWorkProject);
@@ -49,13 +63,16 @@ assert.equal(
     order: 1,
     title: "Haptic",
     description: "A tactile AI brand.",
-    image: { asset: { _id: "image-abc-800x600-webp", url: "https://cdn.sanity.io/images/dj9l9mvw/production/abc-800x600.webp" } },
+    image: {
+      asset: {
+        _id: "image-abc-800x600-webp",
+        url: "https://cdn.sanity.io/images/dj9l9mvw/production/abc-800x600.webp",
+      },
+    },
     alt: "Haptic",
     services: ["Brand identity"],
     coverVideo: "/work/haptic/haptic-reveal.webm",
-    panels: [
-      { _type: "workPanelText", title: "Why this", body: "Because." },
-    ],
+    panels: [{ _type: "workPanelText", title: "Why this", body: "Because." }],
   })?.data.coverVideo,
   "/work/haptic/haptic-reveal.webm",
   "string coverVideo paths survive mapping",
@@ -96,8 +113,28 @@ const faq = mapFaq({
 assert.ok(faq);
 assert.equal(faq.items[0]?.question, "Who?");
 
+const sitecopy = {
+  manifesto: "We're a design practice.",
+  team: {
+    titleLines: ["We close", "that gap."],
+    body: "Every impression counts.",
+    ctaLabel: "View Work",
+    ctaHref: "/work",
+  },
+  preloader: {
+    locationLine: "Based in Mumbai",
+    disciplineLine: "Brand, web, and motion",
+  },
+  notFound: {
+    title: "This page doesn't exist",
+    body: "It may have moved.",
+    linkLabel: "Back to home",
+  },
+};
+
 const site = mapSite({
   eyebrow: ["Brand, web, and motion", "for early-stage companies."],
+  ...sitecopy,
   faq,
   process: {
     statement: "We build brands.",
@@ -107,11 +144,32 @@ const site = mapSite({
 assert.ok(site);
 assert.equal(site.id, "site");
 assert.equal((site.data.eyebrow as string[])[0], "Brand, web, and motion");
-assert.equal(mapSite({ eyebrow: ["only"] }), null, "homepage without faq/process is dropped");
+assert.equal(site.data.manifesto, "We're a design practice.");
+assert.deepEqual(
+  mapSite({
+    heroNote: ["Brand, web, and motion"],
+    ...sitecopy,
+    faq,
+    process: {
+      statement: "We build brands.",
+      cards: [{ title: "Uncover", description: "Dig.", model: "1" }],
+    },
+  })?.data.eyebrow,
+  ["Brand, web, and motion"],
+  "heroNote aliases eyebrow",
+);
+assert.equal(
+  mapSite({ eyebrow: ["only"] }),
+  null,
+  "homepage without sitecopy/faq/process is dropped",
+);
 
 const footer = mapFooter({
   tagline: "A design practice.",
-  links: [{ label: "Home", path: "/" }, { label: "Work", path: "/work" }],
+  links: [
+    { label: "Home", path: "/" },
+    { label: "Work", path: "/work" },
+  ],
 });
 assert.ok(footer);
 assert.equal(footer.data.tagline, "A design practice.");
@@ -128,6 +186,43 @@ assert.equal(
   mapMarquee({ enabled: true }),
   null,
   "incomplete marquee is dropped so YAML can take over",
+);
+assert.equal(
+  mapMarquee({ copy: "from nav" })?.data.enabled,
+  false,
+  "nav fallback without enabled stays off",
+);
+
+const social = mapSocial({
+  email: "a.namanprat@gmail.com",
+  instagram: "https://www.instagram.com/namanprat_",
+  discoveryCall: "https://cal.com/namanprat/discovery-call",
+});
+assert.ok(social);
+assert.equal(social.data.emailHref, "mailto:a.namanprat@gmail.com");
+const socialLinks = social.data.links as {
+  label: string;
+  href: string;
+  newTab: boolean;
+}[];
+assert.equal(socialLinks[0]?.label, "Email");
+assert.equal(socialLinks[0]?.newTab, false);
+assert.equal(socialLinks[1]?.label, "Instagram");
+assert.equal(socialLinks[1]?.newTab, true);
+assert.equal(socialLinks[2]?.label, "Discovery Call");
+assert.equal(
+  mapSocial({
+    email: "mailto:a.namanprat@gmail.com",
+    instagram: "https://www.instagram.com/namanprat_",
+    discoveryCall: "https://cal.com/namanprat/discovery-call",
+  })?.data.emailHref,
+  "mailto:a.namanprat@gmail.com",
+  "mailto prefix is not doubled",
+);
+assert.equal(
+  mapSocial({ email: "a.namanprat@gmail.com" }),
+  null,
+  "incomplete social is dropped so YAML can take over",
 );
 
 console.log("sanityMap: all assertions passed");
