@@ -17,12 +17,7 @@
  * own island is the only other reason any of that would load.
  */
 import { getEntry } from "astro:content";
-import {
-  EMAIL_HREF,
-  NAV_STACKS,
-  SOCIAL_LINKS,
-} from "@/lib/content/nav";
-import FooterAsciiStage from "./FooterAsciiStage";
+import { EMAIL_HREF, NAV_STACKS, SOCIAL_LINKS } from "@/lib/content/nav";
 import RollingText from "./RollingText.astro";
 
 const site = await getEntry("site", "site");
@@ -36,7 +31,9 @@ const { footerTagline } = site.data;
  */
 const footerLinks = [
   ...NAV_STACKS.flatMap(({ links }) =>
-    links.filter(({ id }) => id !== "contact").map(({ label, path }) => ({ label, path })),
+    links
+      .filter(({ id }) => id !== "contact")
+      .map(({ label, path }) => ({ label, path })),
   ),
   { label: "Archive", path: "/archive" },
 ];
@@ -45,9 +42,11 @@ const footerLinks = [
 <footer class="footer_wrap" id="contact">
   <div class="footer_child">
     <div class="footer_scale">
-      {/* Panel is the floating card; the container inside keeps content on grid. */}
+      {
+        /* Panel is the floating card; the container inside keeps content on grid. */
+      }
       <div class="footer_box">
-        <FooterAsciiStage client:only="react" sourceSelector=".footer_logo_source" />
+        <div class="footer_ascii" data-footer-ascii aria-hidden="true"></div>
         <div class="footer_contain container gap-0">
           <div class="footer_layout grid is-12">
             <h3 class="footer_tagline text-style-main">{footerTagline}</h3>
@@ -57,7 +56,11 @@ const footerLinks = [
                 {
                   footerLinks.map(({ label, path }) => (
                     <li>
-                      <a class="footer_link text-style-h4" href={path} data-footer-nav={path}>
+                      <a
+                        class="footer_link text-style-h4"
+                        href={path}
+                        data-footer-nav={path}
+                      >
                         <span class="footer_text">
                           <span class="footer_text_content gooey_reveal_inner">
                             <RollingText>{label}</RollingText>
@@ -78,14 +81,24 @@ const footerLinks = [
                       <a
                         class="footer_link is-external text-style-h4"
                         href={href}
-                        aria-live={href.startsWith("mailto:") ? "polite" : undefined}
-                        data-copy-email={href.startsWith("mailto:") ? EMAIL_HREF : undefined}
-                        {...(newTab ? { target: "_blank", rel: "noreferrer noopener" } : {})}
+                        aria-live={
+                          href.startsWith("mailto:") ? "polite" : undefined
+                        }
+                        data-copy-email={
+                          href.startsWith("mailto:") ? EMAIL_HREF : undefined
+                        }
+                        {...(newTab
+                          ? { target: "_blank", rel: "noreferrer noopener" }
+                          : {})}
                       >
                         <span class="footer_text">
                           <span class="footer_text_content gooey_reveal_inner">
                             <RollingText>{label}</RollingText>
-                            {newTab && <span class="footer_link_icon" aria-hidden="true">↗</span>}
+                            {newTab && (
+                              <span class="footer_link_icon" aria-hidden="true">
+                                ↗
+                              </span>
+                            )}
                           </span>
                         </span>
                       </a>
@@ -96,8 +109,10 @@ const footerLinks = [
             </div>
           </div>
 
-          {/* Same container as the copy above so the wordmark locks to the
-              12-col band, not the full card bleed. */}
+          {
+            /* Same container as the copy above so the wordmark locks to the
+              12-col band, not the full card bleed. */
+          }
           <div class="footer_logo">
             <img
               class="footer_logo_source"
@@ -115,6 +130,7 @@ const footerLinks = [
 
 <script>
   import gsap from "gsap";
+  import { bootFooterAscii } from "@/lib/site/ascii/footerAsciiBoot";
   import ScrollTrigger from "gsap/ScrollTrigger";
   import { go } from "@/lib/site/nav/navigate";
   import { replayHomeIntro } from "@/lib/site/reveal/heroIntro";
@@ -126,11 +142,17 @@ const footerLinks = [
     prepareGooey,
     type GooeyTarget,
   } from "@/lib/site/reveal/gooeyReveal";
-  import { getSiteLenis, subscribeSiteLenis } from "@/lib/site/scroll/lenisBridge";
+  import {
+    getSiteLenis,
+    subscribeSiteLenis,
+  } from "@/lib/site/scroll/lenisBridge";
   import { prefersReducedMotion } from "@/lib/site/util/prefersReducedMotion";
   import { previousFlowSibling } from "@/lib/site/util/previousFlowSibling";
   import { bindCopyEmail } from "@/lib/site/util/copyEmail";
-  import { bootRollingText, initRollingText } from "@/lib/site/reveal/rollingText";
+  import {
+    bootRollingText,
+    initRollingText,
+  } from "@/lib/site/reveal/rollingText";
 
   gsap.registerPlugin(ScrollTrigger);
 
@@ -148,12 +170,18 @@ const footerLinks = [
       ?.setAttribute("data-roll-ready", "");
     bootRollingText(footer);
 
+    /* The ASCII wordmark. Gated inside — desktop only, and only once the footer
+       is near — so this call is unconditional and costs an observer until then. */
+    bootFooterAscii();
+
     let lenis = getSiteLenis();
     subscribeSiteLenis((next) => {
       lenis = next;
     });
 
-    for (const anchor of footer.querySelectorAll<HTMLAnchorElement>("[data-footer-nav]")) {
+    for (const anchor of footer.querySelectorAll<HTMLAnchorElement>(
+      "[data-footer-nav]",
+    )) {
       const href = anchor.dataset.footerNav ?? "/";
       anchor.addEventListener("click", (event) => {
         event.preventDefault();
@@ -260,45 +288,58 @@ const footerLinks = [
      below stay self-contained. The `@layer` wrapper matters because a scoped
      block is unlayered by default and unlayered beats every layer.
 
-     ponytail: no `:global()` needed here, unlike Process. The only island in
-     this component is `FooterAsciiStage`, and the canvas it mounts is styled by
-     `FooterAsciiLogo.css` — which stays a sibling sheet, because that component
-     is React with no `.astro` boundary anywhere in its render path. Every
-     selector below matches an element this template writes. */
-@layer components.chrome {
-.footer_wrap {
-  position: relative;
-  z-index: 2;
-  width: 100%;
-  /* Same identity as .about_panel: leftover after the orange is grid + 2*gutter. */
-  --about--inset: calc(var(--site-margin) - var(--site-gutter));
-  /* Outer float — gutter air on all four sides; child is width 100% inside. */
-  padding-inline: calc(var(--site-gutter) * (1 - var(--_responsive---large)));
-  padding-top: calc(var(--site-gutter) * (1 - var(--_responsive---large)) + var(--about--inset) * var(--_responsive---large));
-  padding-bottom: calc(var(--site-gutter) * (1 - var(--_responsive---large)) + var(--about--inset) * var(--_responsive---large) + var(--site--safe-area-bottom));
-  /* Visible, not hidden: overflow other than visible makes this a backdrop
+     ponytail: no `:global()` needed here, unlike Process. Every selector below
+     matches an element this template writes. The ASCII wordmark's canvas is
+     created at runtime by `canvasStage`, so Astro's cid is not on it and a
+     scoped rule could never match — its styles stay in the sibling
+     `lib/site/ascii/footerAscii.css`, imported by the module that builds it. */
+  @layer components.chrome {
+    .footer_wrap {
+      position: relative;
+      z-index: 2;
+      width: 100%;
+      /* Same identity as .about_panel: leftover after the orange is grid + 2*gutter. */
+      --about--inset: calc(var(--site-margin) - var(--site-gutter));
+      /* Outer float — gutter air on all four sides; child is width 100% inside. */
+      padding-inline: calc(
+        var(--site-gutter) * (1 - var(--_responsive---large))
+      );
+      padding-top: calc(
+        var(--site-gutter) * (1 - var(--_responsive---large)) +
+          var(--about--inset) * var(--_responsive---large)
+      );
+      padding-bottom: calc(
+        var(--site-gutter) * (1 - var(--_responsive---large)) +
+          var(--about--inset) * var(--_responsive---large) +
+          var(--site--safe-area-bottom)
+      );
+      /* Visible, not hidden: overflow other than visible makes this a backdrop
      root, so frost on `.footer_child` would sample this padding (empty)
      instead of the liquid behind the card. */
-  overflow: visible;
-  display: flex;
-  flex-direction: column;
-  box-sizing: border-box;
-  background-color: transparent;
-}
+      overflow: visible;
+      display: flex;
+      flex-direction: column;
+      box-sizing: border-box;
+      background-color: transparent;
+    }
 
-/*
+    /*
   Fill + frost live on this node. Scale is on `.footer_scale` inside — a
   transform on the frost box itself (or an ancestor) makes a backdrop root
   and the filter samples empty padding instead of the liquid behind the card.
 */
-.footer_child {
-  position: relative;
-  display: flex;
-  flex-direction: column;
-  width: calc(100% * (1 - var(--_responsive---large)) + (var(--site--grid-width) + var(--site-gutter) * 2) * var(--_responsive---large));
-  margin-inline: auto;
-  background-color: var(--surface-accent);
-  /*
+    .footer_child {
+      position: relative;
+      display: flex;
+      flex-direction: column;
+      width: calc(
+        100% * (1 - var(--_responsive---large)) +
+          (var(--site--grid-width) + var(--site-gutter) * 2) *
+          var(--_responsive---large)
+      );
+      margin-inline: auto;
+      background-color: var(--surface-accent);
+      /*
     Same recipe as `.about_panel_surface` down to the token, and deliberately
     nothing more. This carried `will-change: backdrop-filter` to promote the
     in-flow card to its own layer, on the theory that WebKit was the engine
@@ -309,173 +350,176 @@ const footerLinks = [
     the liquid. Same trap `.about_panel_scroll` already documents for
     `will-change: transform`, same fix: do not promote the frost node.
   */
-  backdrop-filter: blur(var(--surface-frost-blur));
-}
+      backdrop-filter: blur(var(--surface-frost-blur));
+    }
 
-.footer_scale {
-  display: flex;
-  flex-direction: column;
-  width: 100%;
-  transform-origin: center bottom;
-}
+    .footer_scale {
+      display: flex;
+      flex-direction: column;
+      width: 100%;
+      transform-origin: center bottom;
+    }
 
-/* Dark mode: fully opaque orange; disable blur for crisp edges. */
-html.theme-dark .footer_child {
-  background-color: var(--brand-500);
-  backdrop-filter: none;
-}
+    /* Dark mode: fully opaque orange; disable blur for crisp edges. */
+    html.theme-dark .footer_child {
+      background-color: var(--brand-500);
+      backdrop-filter: none;
+    }
 
-.footer_box {
-  position: relative;
-  width: 100%;
-  background-color: transparent;
-  /* Dark mode: black on accent. Light mode: white on frost. */
-  color: var(--dark-900);
-  box-sizing: border-box;
-  /* Gutter on all sides — same inner pad as desktop. Below 64rem the contain
+    .footer_box {
+      position: relative;
+      width: 100%;
+      background-color: transparent;
+      /* Dark mode: black on accent. Light mode: white on frost. */
+      color: var(--dark-900);
+      box-sizing: border-box;
+      /* Gutter on all sides — same inner pad as desktop. Below 64rem the contain
      is width 100% so this inset is real air inside the orange card, not a
      second pass over a vw-sized grid band. */
-  --text: var(--dark-900);
-  padding: var(--site-gutter);
-  padding-block: calc(var(--space-6) * (1 - var(--_responsive---large)) + var(--site-gutter) * var(--_responsive---large));
-}
+      --text: var(--dark-900);
+      padding: var(--site-gutter);
+      padding-block: calc(
+        var(--space-6) * (1 - var(--_responsive---large)) + var(--site-gutter) *
+          var(--_responsive---large)
+      );
+    }
 
-html.theme-light .footer_box {
-  --text: var(--light-100);
-  color: var(--light-100);
-}
+    html.theme-light .footer_box {
+      --text: var(--light-100);
+      color: var(--light-100);
+    }
 
-/* Full-width content shell inside the padded box. */
-.footer_contain.container {
-  position: relative;
-  z-index: 1;
-  gap: 0;
-  width: 100%;
-  max-width: none;
-  margin-inline: 0;
-  padding: 0;
-}
+    /* Full-width content shell inside the padded box. */
+    .footer_contain.container {
+      position: relative;
+      z-index: 1;
+      gap: 0;
+      width: 100%;
+      max-width: none;
+      margin-inline: 0;
+      padding: 0;
+    }
 
-/*
+    /*
   base.css sets `body, h1..h6, p, a, time { color: var(--text) }` — a direct
   type-selector hit, which beats the panel's colour arriving by inheritance. So
   every typographic element in here has to opt back in explicitly.
 */
-.footer_wrap :is(h1, h2, h3, h4, h5, h6, p, a, time) {
-  color: inherit;
-}
+    .footer_wrap :is(h1, h2, h3, h4, h5, h6, p, a, time) {
+      color: inherit;
+    }
 
-.footer_wrap a {
-  text-decoration: none;
-}
+    .footer_wrap a {
+      text-decoration: none;
+    }
 
-/* Gooey reveal host — .footer_text_content inside it also carries
+    /* Gooey reveal host — .footer_text_content inside it also carries
    `.gooey_reveal_inner`, which is what the filter chain hangs off.
    No `overflow: clip` here on the desktop melt: it would crop the blur bleed.
    The mobile clip-up hangs `overflow: clip` off `.gooey_reveal_slide` in
    site.css instead, and only while the entrance is parked / running. */
-.footer_text {
-  display: block;
-}
+    .footer_text {
+      display: block;
+    }
 
-/* Beats `.gooey_reveal_inner { display: inline-block }` in site.css —
+    /* Beats `.gooey_reveal_inner { display: inline-block }` in site.css —
    same layer, later source. */
-.footer_text_content {
-  display: block;
-}
+    .footer_text_content {
+      display: block;
+    }
 
-/* ─── Main block ────────────────────────────────────────────────────────────
+    /* ─── Main block ────────────────────────────────────────────────────────────
    12-col map, on the navbar's own tracks: tagline 1–5, Navigation 8–9
    (.nav_stack.is-home), Connect 10–12 (.nav_stack.is-about + .nav_utility_stack).
    Columns 6–7 stay empty. */
-.footer_layout {
-  width: 100%;
-  align-items: start;
-  row-gap: var(--space-6);
-}
+    .footer_layout {
+      width: 100%;
+      align-items: start;
+      row-gap: var(--space-6);
+    }
 
-.footer_tagline {
-  grid-column: 1 / span 5;
-  margin: 0;
-  text-wrap: balance;
-}
+    .footer_tagline {
+      grid-column: 1 / span 5;
+      margin: 0;
+      text-wrap: balance;
+    }
 
-.footer_col.is-nav {
-  grid-column: 8 / span 2;
-}
+    .footer_col.is-nav {
+      grid-column: 8 / span 2;
+    }
 
-.footer_col.is-connect {
-  grid-column: 10 / -1;
-}
+    .footer_col.is-connect {
+      grid-column: 10 / -1;
+    }
 
-.footer_list {
-  list-style: none;
-  margin: 0;
-  padding: 0;
-}
+    .footer_list {
+      list-style: none;
+      margin: 0;
+      padding: 0;
+    }
 
-/* Hover is the navbar's rolling-char effect (RollingText), not a fade — the
+    /* Hover is the navbar's rolling-char effect (RollingText), not a fade — the
    roll clips per character, so it nests inside the reveal mask safely. */
-.footer_link {
-  display: inline-block;
-  line-height: 1.05;
-}
+    .footer_link {
+      display: inline-block;
+      line-height: 1.05;
+    }
 
-.footer_link_icon {
-  display: inline-block;
-  margin-left: 0.25em;
-  font-size: 0.45em;
-  vertical-align: super;
-}
+    .footer_link_icon {
+      display: inline-block;
+      margin-left: 0.25em;
+      font-size: 0.45em;
+      vertical-align: super;
+    }
 
-/* Full width of the padded box. Section space separates the top block from
+    /* Full width of the padded box. Section space separates the top block from
    the wordmark. */
-.footer_logo {
-  width: 100%;
-  min-width: 0;
-  margin-top: var(--section-space-large);
-  box-sizing: border-box;
-}
+    .footer_logo {
+      width: 100%;
+      min-width: 0;
+      margin-top: var(--section-space-large);
+      box-sizing: border-box;
+    }
 
-.footer_logo_source {
-  width: 100%;
-  height: auto;
-  display: block;
-  /* In flow so the SVG sizes the slot; canvas paints the ASCII over the card. */
-  visibility: hidden;
-}
+    .footer_logo_source {
+      width: 100%;
+      height: auto;
+      display: block;
+      /* In flow so the SVG sizes the slot; canvas paints the ASCII over the card. */
+      visibility: hidden;
+    }
 
-/* Reduced motion: same mask the phone uses, not the SVG's baked white fill.
+    /* Reduced motion: same mask the phone uses, not the SVG's baked white fill.
    Un-hiding `.footer_logo_source` would stack that fill on top of `--text`.
    The hidden `<img>` still sizes the slot. */
-@media (prefers-reduced-motion: reduce) and (width >= 48rem) {
-  .footer_logo {
-    background-color: var(--text);
-    -webkit-mask: url("/main-assets/name-hero.svg") left center / contain
-      no-repeat;
-    mask: url("/main-assets/name-hero.svg") left center / contain no-repeat;
-  }
-}
+    @media (prefers-reduced-motion: reduce) and (width >= 48rem) {
+      .footer_logo {
+        background-color: var(--text);
+        -webkit-mask: url("/main-assets/name-hero.svg") left center / contain
+          no-repeat;
+        mask: url("/main-assets/name-hero.svg") left center / contain no-repeat;
+      }
+    }
 
-/* ─── Bands ─────────────────────────────────────────────────────────────────
+    /* ─── Bands ─────────────────────────────────────────────────────────────────
    12-col anchors only exist at large. Re-anchor on 8-col, then stack. */
 
-@media (width < 64rem) {
-  .footer_tagline {
-    grid-column: 1 / -1;
-  }
+    @media (width < 64rem) {
+      .footer_tagline {
+        grid-column: 1 / -1;
+      }
 
-  .footer_col.is-nav {
-    grid-column: 1 / span 4;
-  }
+      .footer_col.is-nav {
+        grid-column: 1 / span 4;
+      }
 
-  .footer_col.is-connect {
-    grid-column: 5 / span 4;
-  }
-}
+      .footer_col.is-connect {
+        grid-column: 5 / span 4;
+      }
+    }
 
-@media (width < 48rem) {
-  /*
+    @media (width < 48rem) {
+      /*
     Full-bleed on the phone — no float, so no padding on the wrap at all.
 
     The wrap is `background-color: transparent` and the fill lives on
@@ -487,33 +531,33 @@ html.theme-light .footer_box {
     is inside the fill — so the colour reaches the physical bottom edge while
     the type still clears the home indicator.
   */
-  .footer_wrap {
-    padding-inline: 0;
-    padding-block: 0;
-  }
+      .footer_wrap {
+        padding-inline: 0;
+        padding-block: 0;
+      }
 
-  /* The card is full-bleed here, so this padding *is* the content's side inset
+      /* The card is full-bleed here, so this padding *is* the content's side inset
      — it has to be the same `--site-margin` the rest of the page uses, not
      `--site-gutter`. Block padding stays as it was (deliberate air inside the
      card), plus the safe area inherited from the wrap. */
-  .footer_box {
-    padding-inline: var(--site-margin);
-    padding-bottom: calc(var(--space-6) + var(--site--safe-area-bottom));
-  }
+      .footer_box {
+        padding-inline: var(--site-margin);
+        padding-bottom: calc(var(--space-6) + var(--site--safe-area-bottom));
+      }
 
-  .footer_tagline,
-  .footer_col.is-nav,
-  .footer_col.is-connect {
-    grid-column: 1 / -1;
-  }
+      .footer_tagline,
+      .footer_col.is-nav,
+      .footer_col.is-connect {
+        grid-column: 1 / -1;
+      }
 
-  .footer_tagline {
-    width: 100%;
-    max-width: 100%;
-    text-wrap: wrap;
-  }
+      .footer_tagline {
+        width: 100%;
+        max-width: 100%;
+        text-wrap: wrap;
+      }
 
-  /*
+      /*
     Plain wordmark instead of the ASCII canvas, which is not mounted at this
     width (Footer.tsx). Masked rather than showing the `<img>` directly: the
     SVG's own fill is fixed, while `.footer_box` already forces `--text` per
@@ -523,13 +567,13 @@ html.theme-light .footer_box {
     `aspect-ratio` is load-bearing — a zero-height box makes `mask-size`
     resolve to nothing on WebKit.
   */
-  .footer_logo {
-    aspect-ratio: 363 / 44;
-    background-color: var(--text);
-    -webkit-mask: url("/main-assets/name-hero.svg") left center / contain
-      no-repeat;
-    mask: url("/main-assets/name-hero.svg") left center / contain no-repeat;
+      .footer_logo {
+        aspect-ratio: 363 / 44;
+        background-color: var(--text);
+        -webkit-mask: url("/main-assets/name-hero.svg") left center / contain
+          no-repeat;
+        mask: url("/main-assets/name-hero.svg") left center / contain no-repeat;
+      }
+    }
   }
-}
-}
 </style>
