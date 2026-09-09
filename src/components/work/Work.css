@@ -227,9 +227,9 @@ html.work-transitioning * {
   gap: 0;
 }
 
-/* Square thumbnails on the ring. The grid's span tokens and its translateX
-   column placement are both meaningless here — the tile's position is polar,
-   not a grid block. The project cover keeps its 0.8 crop; Flip interpolates. */
+/* Square thumbnails on the ring. Uniform tile width is meaningless here —
+   the tile's position is polar, not a grid block. The project cover keeps
+   its 0.8 crop; Flip interpolates. */
 .work_wrap[data-work-view="slider"] .gallery_slide {
   position: absolute;
   top: 0;
@@ -356,24 +356,12 @@ html.work-returning .view_switcher {
   }
 }
 
-/* Slides are centred by the flex column, so a translate alone can never land
-   on a grid line: a span-3 block centred in 12 columns starts at column 4.5.
-   Anchor the left edge to a real column start instead — shift the block back
-   to the grid's left edge, then step out by whole columns.
-
-   `col` is authored against the 12-column grid, so narrower breakpoints scale
-   it into the starts they actually have (rounded back to a whole column) and
-   span shrinks to fit. Straight clamping would pile every slide onto the last
-   legal column at 4 columns and flatten the left/right rhythm; this keeps it
-   on desktop. Phones drop the translate so the stack sits on centre. */
+/* ponytail: tile size is a layout token (span 3), not per-project data.
+   Flex already centres the stack; no column offset. */
 .work_wrap .gallery_slide {
-  --_span: min(var(--slide-span, 3), calc(var(--site-column-count) - 1));
-  --_max-col: calc(var(--site-column-count) - var(--_span));
-  --_ref-max-col: calc(var(--site-column-count-max) - var(--slide-span, 3));
-  --_col: clamp(0, round(nearest, var(--slide-col, 0) * var(--_max-col) / var(--_ref-max-col), 1), var(--_max-col));
+  --_span: min(3, calc(var(--site-column-count) - 1));
   --_span-width: calc(var(--_span) * var(--site--column-width-plus-gutter) - var(--site-gutter));
   flex-shrink: 0;
-  transform: translateX(calc(var(--_col) * var(--site--column-width-plus-gutter) - (var(--site--grid-width) - var(--_span-width)) / 2));
   cursor: pointer;
   outline: none;
   padding: 0;
@@ -431,13 +419,8 @@ html.work-returning .view_switcher {
   }
 }
 
-/* Phone grid: no column stagger — flex already centres the stack. Cover crop
-   is centred too; image parallax (same factor on every tile) lives in Slider. */
+/* Phone grid: cover crop is centred; image parallax lives in Slider. */
 @media (width < 48rem) {
-  .work_wrap[data-work-view="grid"] .gallery_slide {
-    transform: none;
-  }
-
   .work_wrap[data-work-view="grid"] .gallery_img_wrap .gallery_img {
     object-position: center;
   }

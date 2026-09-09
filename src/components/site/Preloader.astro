@@ -1,10 +1,8 @@
 ---
-import { getEntry } from "astro:content";
 import { SITE_NAME } from "@/consts.ts";
+import { SITE_COPY } from "@/lib/content/copy";
 
-const site = await getEntry("site", "site");
-if (!site) throw new Error("content: the `site` entry is missing");
-const { locationLine, disciplineLine } = site.data.preloader;
+const { locationLine, disciplineLine } = SITE_COPY.preloader;
 
 /**
  * Home boot overlay. Static markup so it paints on first paint — no island, no

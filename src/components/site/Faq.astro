@@ -17,9 +17,9 @@
  */
 import { getEntry } from "astro:content";
 
-const faq = await getEntry("faq", "faq");
-if (!faq) throw new Error("content: the `faq` entry is missing");
-const { statement, lead, items } = faq.data;
+const site = await getEntry("site", "site");
+if (!site) throw new Error("content: the `site` entry is missing");
+const { statement, lead, items } = site.data.faq;
 ---
 
 <section class="faq_wrap studio_section" id="faq" aria-label="FAQ">

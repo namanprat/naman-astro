@@ -3,14 +3,12 @@
  * Studio closer. Copy is server-rendered; the cylinder is an R3F island,
  * same split as archive.astro / CamilleSlider.
  */
-import { getEntry } from "astro:content";
 import { getWorkItems } from "@/lib/content/work";
+import { SITE_COPY } from "@/lib/content/copy";
 import TeamCylinderCarousel from "./TeamCylinderCarousel";
 import AnimeLink from "./AnimeLink.astro";
 
-const site = await getEntry("site", "site");
-if (!site) throw new Error("content: the `site` entry is missing");
-const { titleLines, body, ctaLabel, ctaHref } = site.data.team;
+const { titleLines, body, ctaLabel, ctaHref } = SITE_COPY.team;
 const work = await getWorkItems();
 const imageSrcs = [
   ...work.map((entry) => entry.data.image),

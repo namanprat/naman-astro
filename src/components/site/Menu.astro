@@ -8,6 +8,7 @@ import { getEntry } from "astro:content";
 import { SITE_NAME } from "@/consts.ts";
 import {
   EMAIL_HREF,
+  MARQUEE_COPIES,
   NAV_STACKS,
   OVERLAY_COLUMNS,
   SOCIAL_LINKS,
@@ -19,13 +20,14 @@ import ThemeToggle from "./ThemeToggle.astro";
 import AboutPanel from "./AboutPanel.astro";
 import "./Menu.css";
 
-const [nav, about] = await Promise.all([
-  getEntry("nav", "nav"),
+const [marquee, about] = await Promise.all([
+  getEntry("marquee", "marquee"),
   getEntry("about", "about"),
 ]);
-if (!nav || !about) throw new Error("content: `nav` or `about` entry is missing");
+if (!marquee || !about)
+  throw new Error("content: `marquee` or `about` entry is missing");
 
-const { availabilityLine, availabilityCopies } = nav.data;
+const { copy, enabled } = marquee.data;
 const pathname = pagePathname(Astro.url.pathname);
 const showAboutOverlay = pathname !== ABOUT_PATH;
 
@@ -38,23 +40,27 @@ const initialActive =
         ? "archive"
         : "hero";
 
-const copies = Array.from({ length: availabilityCopies }, (_, i) => i);
+const copies = Array.from({ length: MARQUEE_COPIES }, (_, i) => i);
 ---
 
-<div class="nav_marquee">
-  <p class="sr-only">{availabilityLine}</p>
-  <div class="nav_marquee_track" aria-hidden="true">
-    {
-      [0, 1].map(() => (
-        <div class="nav_marquee_group">
-          {copies.map(() => (
-            <span class="nav_marquee_copy text-style-small">{availabilityLine}</span>
-          ))}
-        </div>
-      ))
-    }
-  </div>
-</div>
+{
+  enabled ? (
+    <div class="nav_marquee">
+      <p class="sr-only">{copy}</p>
+      <div class="nav_marquee_track" aria-hidden="true">
+        {
+          [0, 1].map(() => (
+            <div class="nav_marquee_group">
+              {copies.map(() => (
+                <span class="nav_marquee_copy text-style-small">{copy}</span>
+              ))}
+            </div>
+          ))
+        }
+      </div>
+    </div>
+  ) : null
+}
 
 <div class="hero_chrome">
   <div class="name_hero">

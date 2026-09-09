@@ -7,11 +7,9 @@ export const WORK_QUERY = /* groq */ `*[_type == "workProject"] | order(order as
   description,
   ${IMAGE},
   alt,
-  coverVideo { asset->{ url, mimeType, originalFilename } },
+  "coverVideo": coalesce(coverVideo.asset->url, coverVideo),
   coverImage { asset->{_id, url}, hotspot, crop },
   featured,
-  span,
-  col,
   services,
   panels[] {
     _type,
@@ -27,18 +25,13 @@ export const ARCHIVE_QUERY = /* groq */ `*[_type == "archiveItem"] | order(order
   order,
   span,
   ${IMAGE},
-  video { asset->{ url, mimeType, originalFilename } }
+  "videoPath": coalesce(videoPath, video.asset->url)
 }`;
 
 export const SITE_QUERY = /* groq */ `*[_id == "site"][0]{
-  heroNote,
-  manifesto,
-  team,
-  footerTagline,
-  preloader,
-  notFound,
-  workViews[]{ id, label },
-  archiveViews[]{ id, label }
+  "eyebrow": coalesce(eyebrow, heroNote),
+  faq { statement, lead, items[]{ question, answer } },
+  process { statement, cards[]{ title, description, model } }
 }`;
 
 export const ABOUT_QUERY = /* groq */ `*[_id == "about"][0]{
@@ -47,18 +40,12 @@ export const ABOUT_QUERY = /* groq */ `*[_id == "about"][0]{
   services
 }`;
 
-export const FAQ_QUERY = /* groq */ `*[_id == "faq"][0]{
-  statement,
-  lead,
-  items[]{ question, answer }
+export const FOOTER_QUERY = /* groq */ `*[_id == "footer"][0]{
+  tagline,
+  links[]{ label, path }
 }`;
 
-export const PROCESS_QUERY = /* groq */ `*[_id == "process"][0]{
-  statement,
-  cards[]{ title, description, model }
-}`;
-
-export const NAV_QUERY = /* groq */ `*[_id == "nav"][0]{
-  availabilityLine,
-  availabilityCopies
+export const MARQUEE_QUERY = /* groq */ `*[_id == "marquee"][0]{
+  copy,
+  enabled
 }`;

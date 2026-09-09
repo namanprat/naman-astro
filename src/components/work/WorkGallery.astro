@@ -2,28 +2,24 @@
 /**
  * Work gallery on the Lumos grid. Markup is Astro; `WorkGallery.ts` owns the
  * slider/wheel engines and the Flip overlay. React is not involved.
+ *
+ * ponytail: view ids live next to the controller. Labels are not CMS copy.
  */
 import type { WorkItem } from "@/content/work";
-import type { ViewItem } from "@/lib/content/models";
 import ViewSwitcher from "@/components/ViewSwitcher.astro";
 import ProjectDetail from "./ProjectDetail.astro";
 import "./Work.css";
 
 interface Props {
   items: WorkItem[];
-  views?: readonly ViewItem[];
 }
 
-const DEFAULT_VIEWS = [
+const WORK_VIEWS = [
   { id: "slider", label: "Slider" },
   { id: "grid", label: "Grid" },
 ] as const;
 
-const { items, views } = Astro.props;
-const workViews = (views ?? []).filter(
-  (view) => view.id === "slider" || view.id === "grid",
-);
-const tabs = workViews.length ? workViews : DEFAULT_VIEWS;
+const { items } = Astro.props;
 ---
 
 <div class="work_wrap is-loading" data-work-view="slider">
@@ -46,12 +42,10 @@ const tabs = workViews.length ? workViews : DEFAULT_VIEWS;
           data-slug={item.slug}
           data-title={item.title}
           data-href={`/work/${item.slug}`}
-          data-span={item.span}
           data-index={index}
           tabindex={0}
           role="link"
           aria-label={`View ${item.title}`}
-          style={`--slide-span: ${item.span}; --slide-col: ${item.col};`}
         >
           <div class="gallery_img_wrap">
             <img
@@ -67,7 +61,7 @@ const tabs = workViews.length ? workViews : DEFAULT_VIEWS;
     }
   </div>
 
-  <ViewSwitcher label="Work view" views={tabs} view="slider" busy />
+  <ViewSwitcher label="Work view" views={WORK_VIEWS} view="slider" busy />
 
   <div class="content" aria-hidden="true">
     <div class="content_wrap">

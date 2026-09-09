@@ -8,35 +8,23 @@
  * wrong scroll position. Callers render `<Footer />` as a direct sibling of the
  * content above it.
  *
- * ponytail: the nav links come from `src/lib/content/nav.ts`, not from `Menu`
- * and not from the `nav` collection. That collection is the availability
- * marquee only. `Footer.tsx` imported NAV_STACKS, EMAIL_HREF, SOCIAL_LINKS and
+ * ponytail: the nav links come from the `footer` collection, not from `Menu`
+ * and not from `src/lib/content/nav.ts`. That module is menu chrome (stacks,
+ * socials, overlay). Footer labels can diverge from the menu on purpose.
+ * `Footer.tsx` imported NAV_STACKS, EMAIL_HREF, SOCIAL_LINKS and
  * socialLinkTabProps from `./Menu`, which meant every page carrying a footer
  * also pulled Menu's 1370 lines, gsap/SplitText, AboutPanel and the whole
  * About stack into its chunk — on /work/[slug] and /about, where the menu's
  * own island is the only other reason any of that would load.
  */
 import { getEntry } from "astro:content";
-import { EMAIL_HREF, NAV_STACKS, SOCIAL_LINKS } from "@/lib/content/nav";
+import { EMAIL_HREF, SOCIAL_LINKS } from "@/lib/content/nav";
 import RollingText from "./RollingText.astro";
 
-const site = await getEntry("site", "site");
-if (!site) throw new Error("content: `site` entry is missing");
+const footerEntry = await getEntry("footer", "footer");
+if (!footerEntry) throw new Error("content: the `footer` entry is missing");
 
-const { footerTagline } = site.data;
-
-/**
- * Same routes the navbar carries, flattened, with Archive on the end.
- * Contact is omitted — the footer *is* the contact section.
- */
-const footerLinks = [
-  ...NAV_STACKS.flatMap(({ links }) =>
-    links
-      .filter(({ id }) => id !== "contact")
-      .map(({ label, path }) => ({ label, path })),
-  ),
-  { label: "Archive", path: "/archive" },
-];
+const { tagline, links: footerLinks } = footerEntry.data;
 ---
 
 <footer class="footer_wrap" id="contact">
@@ -49,7 +37,7 @@ const footerLinks = [
         <div class="footer_ascii" data-footer-ascii aria-hidden="true"></div>
         <div class="footer_contain container gap-0">
           <div class="footer_layout grid is-12">
-            <h3 class="footer_tagline text-style-main">{footerTagline}</h3>
+            <h3 class="footer_tagline text-style-main">{tagline}</h3>
 
             <nav class="footer_col is-nav" aria-label="Footer">
               <ul class="footer_list">

@@ -34,8 +34,6 @@ export function toWorkItem(entry: WorkEntry): WorkItem {
     coverVideo: entry.data.coverVideo,
     coverImage: entry.data.coverImage,
     featured: entry.data.featured,
-    span: entry.data.span,
-    col: entry.data.col,
     services: [...entry.data.services],
     panels: entry.data.panels,
   };

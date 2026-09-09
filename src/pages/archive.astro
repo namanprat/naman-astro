@@ -3,21 +3,14 @@ import Layout from "@/layouts/BaseLayout.astro";
 import ArchiveCanvas from "@/components/archive/ArchiveCanvas";
 import ViewSwitcher from "@/components/ViewSwitcher.astro";
 import { getArchiveItems } from "@/lib/content/archive";
-import { getEntry } from "astro:content";
 import "@/components/archive/Archive.css";
 
 const items = await getArchiveItems();
-const site = await getEntry("site", "site");
 
-const DEFAULT_VIEWS = [
+const ARCHIVE_VIEWS = [
   { id: "orb", label: "Orb" },
   { id: "grid", label: "Grid" },
 ] as const;
-
-const archiveViews = (site?.data.archiveViews ?? []).filter(
-  (view) => view.id === "orb" || view.id === "grid",
-);
-const tabs = archiveViews.length ? archiveViews : DEFAULT_VIEWS;
 ---
 
 <Layout
@@ -34,7 +27,7 @@ const tabs = archiveViews.length ? archiveViews : DEFAULT_VIEWS;
   <div class="archive_stage">
     <p class="sr-only" role="heading" aria-level={1}>Archive</p>
     <ArchiveCanvas client:only="react" items={items} />
-    <ViewSwitcher label="Archive view" views={tabs} view="orb" locked />
+    <ViewSwitcher label="Archive view" views={ARCHIVE_VIEWS} view="orb" locked />
   </div>
   <script>
     import { bootArchiveSwitcher } from "@/lib/archive/bootArchiveSwitcher";

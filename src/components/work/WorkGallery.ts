@@ -490,7 +490,7 @@ export function bootWorkGallery(): void {
 
   /* The returning path must not sit behind image decode: the gallery is
      hidden until the reverse starts, and its box sizes come from CSS
-     (span token + aspect-ratio), so centreOn can measure before any
+     (span-3 token + aspect-ratio), so centreOn can measure before any
      thumbnail has decoded. The project's own image is already cached.
      Two frames so imported CSS has laid out slide sizes before measure. */
   if (!pending.length || returnIndex >= 0) scheduleBoot();

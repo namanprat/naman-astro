@@ -1,0 +1,4 @@
+# ponytail: only copy and on/off. Repeat count is layout in Menu.
+marquee:
+  copy: available for projects from october ’26
+  enabled: false

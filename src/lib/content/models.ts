@@ -3,8 +3,3 @@ export type AboutData = {
   clients: string[];
   services: string[];
 };
-
-export type ViewItem = {
-  id: string;
-  label: string;
-};

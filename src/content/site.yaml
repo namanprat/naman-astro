@@ -1,52 +1,67 @@
-# Page copy that belongs to no single section. Identity and SEO stay in
-# src/consts.ts — see the ponytail in content.config.ts for where that line is
-# drawn and why consts.ts cannot move.
+# Homepage. Identity and SEO stay in src/consts.ts; manifesto, team,
+# preloader, and 404 copy live in src/lib/content/copy.ts.
+#
+# ponytail: eyebrow is lines, not one string with a <br /> in it. The break
+# is an editorial decision so it belongs in the content, but as markup it
+# would force set:html at every render site and put raw HTML in a CMS field.
+# FAQ and process live here because they belong to the homepage, not their
+# own routes.
 
 site:
-  # ponytail: lines, not one string with a <br /> in it. The break is an
-  # editorial decision so it belongs in the content, but as markup it would
-  # force set:html at every render site and put raw HTML in a CMS field.
-  heroNote:
+  eyebrow:
     - Brand, web, and motion
     - for early-stage companies.
 
-  manifesto: We're a design practice for early-stage brands, closing the gap
-    between who you already are and how the world sees you. Good design isn't
-    about adding more. It's about knowing what to leave out.
+  faq:
+    statement: We take on fewer projects so we can be fully present on each one.
+      Every layer earns its place before we move to the next.
+    lead: Here's what's worth knowing before we start.
+    items:
+      - question: Who will actually be working on the project?
+        answer: "We lead every project: strategy, creative direction, and your point
+          of contact throughout. Depending on scope, a few trusted collaborators
+          help on design and build. You get us in the work with you, not a vendor
+          you brief and wait on. Small projects get the same attention as large
+          ones."
+      - question: How long do projects usually take?
+        answer: Most projects run 10 to 14 weeks start to finish. Timelines move
+          with scope, but milestones are set on day one so nothing catches you off
+          guard.
+      - question: How do you keep me in the loop?
+        answer: Simple and transparent. You get written updates as things move,
+          plus a weekly check-in, and we get on a call for the decisions that
+          actually need one. We'll work in whatever tools you already use.
+      - question: What do you need to start?
+        answer: We get on a call, you tell us what you need, and we send back a
+          proposal built for it. Then a signed agreement and the deposit. That's
+          it. Onboarding stays short so we can get to the actual work.
+      - question: What happens after launch?
+        answer: A stretch of hands-on support while everything settles, plus notes
+          clear enough that you can update it yourself. After that it's yours to
+          run. If you'd rather we stay on, that's a separate conversation.
+      - question: Can you handle branding, design and development?
+        answer: Yes, and doing them together is the point. Story, identity, visuals
+          and build line up from day one, so what you end up with is one thing
+          instead of three handoffs.
+      - question: Who do you work with?
+        answer: Early-stage brands and startups, usually right before they meet the
+          world properly for the first time. We're in Mumbai and Bangalore, and
+          work with clients anywhere. If you'd rather not look like every other
+          company in your category, that's the brief.
 
-  team:
-    titleLines:
-      - We close
-      - that gap.
-    body: Early on, every impression counts double. People decide whether you're
-      worth their time before they read a word. We find what makes you different,
-      build the whole presence around it, and make sure they feel that first.
-    ctaLabel: View Work
-    ctaHref: /work
-
-  footerTagline: We're a design practice. We work with early-stage brands on
-    identity, web, and motion, and we care more about what gets left out than
-    what gets added.
-
-  preloader:
-    # Two lines with a hard break between them on the phone card.
-    locationLine: Based in Mumbai and Bangalore, working worldwide
-    disciplineLine: Brand, web, and motion for early-stage companies
-
-  notFound:
-    title: This page doesn't exist
-    body: The page you're looking for may have moved, or the link that brought
-      you here might be out of date.
-    linkLabel: Back to home
-
-  # View-switcher labels. `id` is the view key the controller stores, not copy.
-  workViews:
-    - id: slider
-      label: Slider
-    - id: grid
-      label: Grid
-  archiveViews:
-    - id: orb
-      label: Orb
-    - id: grid
-      label: Grid
+  process:
+    statement: We build brands and everything they live on, so you look like
+      yourself from day one.
+    cards:
+      - title: Uncover story
+        description: We dig until we find what makes you irreplaceable. That
+          becomes the strategy.
+        model: "1"
+      - title: Shape presence
+        description: We design the identity and everywhere it shows up. One thing,
+          not three that nearly match.
+        model: "2"
+      - title: Send it
+        description: Everything ships together and keeps working as you grow.
+          Nothing to redo in a year.
+        model: "3"

@@ -25,13 +25,21 @@ export const archiveItem = defineType({
       name: "image",
       type: "image",
       options: { hotspot: true },
-      hidden: ({ parent }) => Boolean(parent?.video),
+      hidden: ({ parent }) =>
+        Boolean(parent?.videoPath || parent?.video),
+    }),
+    defineField({
+      name: "videoPath",
+      description:
+        "Public path or CDN URL for a WebM, e.g. /archive/IMG_4294.webm.",
+      type: "string",
+      hidden: ({ parent }) => Boolean(parent?.image || parent?.video),
     }),
     defineField({
       name: "video",
       type: "file",
       options: { accept: "video/*" },
-      hidden: ({ parent }) => Boolean(parent?.image),
+      hidden: ({ parent }) => Boolean(parent?.image || parent?.videoPath),
     }),
     defineField({
       name: "span",
