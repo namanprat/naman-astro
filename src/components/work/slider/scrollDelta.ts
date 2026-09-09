@@ -22,8 +22,14 @@ import type { Observer } from "gsap/Observer";
  */
 export function scrollDelta(self: Observer): number {
   const { deltaX, deltaY } = self;
-  const delta = Math.abs(deltaX) > Math.abs(deltaY) ? deltaX : deltaY;
   /* `self.event` is the raw event, set before `Observer` unwraps a touch, so
      the type is `wheel` / `touchmove` / `pointermove` rather than a `Touch`. */
-  return self.event?.type === "wheel" ? delta : -delta;
+  if (self.event?.type === "wheel") {
+    /* Vertical only. A sideways trackpad swipe is the browser's back/forward
+       gesture and belongs to the browser — taking the dominant axis here meant
+       swiping back turned the ring instead. Touch keeps the dominant axis
+       below: a finger swiping a gallery sideways does mean "advance". */
+    return deltaY;
+  }
+  return -(Math.abs(deltaX) > Math.abs(deltaY) ? deltaX : deltaY);
 }

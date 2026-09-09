@@ -9,9 +9,16 @@
  */
 export type ArchiveSpan = "height" | "width";
 
+/**
+ * `title` and `description` are the lightbox caption — the artwork is a WebGL
+ * tile, so this is the only text the archive carries. Optional: an item with
+ * neither still renders, it just opens without a caption.
+ */
 export type ArchiveItem = {
   src: string;
   span?: ArchiveSpan;
+  title?: string;
+  description?: string;
 };
 
 export function isArchiveVideo(src: string): boolean {

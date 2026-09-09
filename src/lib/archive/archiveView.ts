@@ -26,6 +26,10 @@ export function getArchiveViewSnapshot(): ArchiveViewSnapshot {
 
 export function setArchiveView(view: ArchiveView): void {
   if (snapshot.isMorphing || snapshot.view === view) return;
+  // The switcher is greyed out while a poster is open (`archive-focused`), but
+  // a keyboard press could still reach it — unwrapping the orb out from under
+  // the lightbox would strand the focused tile mid-flight.
+  if (rigState.focusIndex >= 0) return;
   rigState.morphTarget = view === "grid" ? 1 : 0;
   emit({ view, isMorphing: true });
   requestArchiveMorph(() => emit({ view, isMorphing: false }));

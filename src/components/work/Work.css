@@ -11,7 +11,9 @@ html.page-work body {
   height: 100svh;
   max-height: 100svh;
   overflow: hidden;
-  overscroll-behavior: none;
+  /* y only: a sideways trackpad swipe is the browser's back/forward
+     gesture, and any non-`auto` `overscroll-behavior-x` disables it. */
+  overscroll-behavior-y: none;
   touch-action: none;
   scrollbar-width: none;
   --site--screen-height: 100svh;
@@ -442,7 +444,7 @@ html.work-returning .view_switcher {
   height: 100%;
   overflow-x: hidden;
   overflow-y: auto;
-  overscroll-behavior: contain;
+  overscroll-behavior-y: contain;
   touch-action: pan-y;
   scrollbar-width: none;
 }

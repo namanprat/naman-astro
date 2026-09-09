@@ -88,12 +88,32 @@ const archive = mapArchiveItem({
   id: "vector-1",
   order: 10,
   span: "width",
+  title: "  Vector  ",
+  description: "  Sticker study.  ",
   image: { asset: { _id: "image-sticker-400x200-webp" } },
 });
 assert.ok(archive);
 assert.equal(archive.id, "vector-1");
 assert.equal(archive.data.span, "width");
 assert.match(String(archive.data.src), /cdn\.sanity\.io/);
+assert.equal(archive.data.title, "Vector", "caption title is trimmed");
+assert.equal(
+  archive.data.description,
+  "Sticker study.",
+  "caption description is trimmed",
+);
+
+/* Omitted, not nulled: the collection schema has both `.optional()`, so a null
+   would fail validation where an absent key is the no-caption case. */
+const bare = mapArchiveItem({
+  id: "brhm",
+  order: 0,
+  title: "   ",
+  image: { asset: { _id: "image-brhm-400x600-webp" } },
+});
+assert.ok(bare);
+assert.equal("title" in bare.data, false, "a blank title is dropped, not null");
+assert.equal("description" in bare.data, false, "a missing description is dropped");
 
 assert.equal(
   mapArchiveItem({

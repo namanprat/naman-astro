@@ -17,6 +17,13 @@ export const archiveItem = defineType({
       validation: (rule) => rule.required(),
     }),
     defineField({
+      name: "description",
+      description:
+        "Caption shown under the artwork when it is opened from the orb.",
+      type: "text",
+      rows: 3,
+    }),
+    defineField({
       name: "order",
       type: "number",
       validation: (rule) => rule.required().integer().min(0),

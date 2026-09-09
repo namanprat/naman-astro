@@ -4,7 +4,7 @@ import {
   ARCHIVE_GRID_COLS,
   ARCHIVE_GRID_ROWS,
   ARCHIVE_UNWRAP_SCALE,
-} from "./archiveConfig";
+} from "./archiveConfig.ts";
 
 export type Vec3 = { x: number; y: number; z: number };
 

@@ -27,6 +27,8 @@ export const ARCHIVE_QUERY = /* groq */ `*[_type == "archiveItem"] | order(order
   "id": slug.current,
   order,
   span,
+  title,
+  description,
   ${IMAGE},
   "videoPath": coalesce(videoPath, video.asset->url)
 }`;

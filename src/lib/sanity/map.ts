@@ -30,6 +30,8 @@ export type RawArchiveItem = {
   id?: string;
   order?: number;
   span?: string;
+  title?: string;
+  description?: string;
   image?: SanityImage;
   videoPath?: string | FileAsset;
 };
@@ -171,12 +173,19 @@ export function mapArchiveItem(
   const id = doc.id?.trim();
   const src = fileOrStringUrl(doc.videoPath) || imageUrl(doc.image);
   if (!id || !src) return null;
+  /* Omitted rather than nulled: the collection schema has these `.optional()`,
+     and a null would fail validation where an absent key is the "no caption"
+     case the lightbox already handles. */
+  const title = requiredString(doc.title);
+  const description = requiredString(doc.description);
   return {
     id,
     data: {
       order: doc.order ?? 0,
       src,
       span: doc.span === "width" ? "width" : "height",
+      ...(title ? { title } : {}),
+      ...(description ? { description } : {}),
     },
   };
 }

@@ -401,7 +401,7 @@
   html.is-preloading,
   html.is-preloading body {
     overflow: hidden !important;
-    overscroll-behavior: none;
+    overscroll-behavior-y: none;
     touch-action: none;
   }
 
