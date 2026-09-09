@@ -29,7 +29,21 @@ export type CanvasStageOptions = {
   /** A laid-out box. The canvas is appended to it and pinned to 100%/100%. */
   host: HTMLElement;
   /** Defaults to `PerspectiveCamera(35, aspect, 0.1, 50)`. */
-  camera?: (aspect: number) => THREE.PerspectiveCamera;
+  camera?: (
+    aspect: number,
+  ) => THREE.PerspectiveCamera | THREE.OrthographicCamera;
+  /**
+   * Re-fit the camera when the host box changes.
+   *
+   * ponytail: a hook, because only a perspective camera resizes by itself. The
+   * stage keeps `aspect` current for one of those and calls this either way —
+   * an orthographic stage (the footer wordmark, the ASCII glyph grid) has to
+   * move `left`/`right` instead, and the numbers are the surface's business.
+   */
+  onResize?: (
+    size: { width: number; height: number },
+    camera: THREE.PerspectiveCamera | THREE.OrthographicCamera,
+  ) => void;
   /** Clamped device pixel ratio, as R3F's `dpr` prop. Default `[1, 1.75]`. */
   dpr?: readonly [min: number, max: number];
   alpha?: boolean;
@@ -45,7 +59,7 @@ export type CanvasStageOptions = {
 export type CanvasStage = {
   renderer: THREE.WebGPURenderer;
   scene: THREE.Scene;
-  camera: THREE.PerspectiveCamera;
+  camera: THREE.PerspectiveCamera | THREE.OrthographicCamera;
   canvas: HTMLCanvasElement;
   /** CSS pixels, kept current by one ResizeObserver on the host. */
   readonly size: { width: number; height: number };
@@ -78,6 +92,7 @@ export async function createCanvasStage(
     clear = [0x000000, 0],
     paused = false,
     canvasClass,
+    onResize,
   } = options;
 
   const canvas = document.createElement("canvas");
@@ -135,7 +150,10 @@ export async function createCanvasStage(
     // `false` — never write width/height back onto the canvas element's style.
     // The stylesheet owns the box; the stage owns the drawing buffer.
     renderer.setSize(size.width, size.height, false);
-    camera.aspect = size.width / size.height;
+    if ((camera as THREE.PerspectiveCamera).isPerspectiveCamera) {
+      (camera as THREE.PerspectiveCamera).aspect = size.width / size.height;
+    }
+    onResize?.(size, camera);
     camera.updateProjectionMatrix();
   };
   applySize();

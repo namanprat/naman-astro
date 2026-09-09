@@ -1,13 +1,39 @@
 /**
- * Desktop footer wordmark — Duforn atlas + asciiFieldShader, spring push from
- * the interactive-ascii-logo snippet. Samples `.footer_logo` rather than a
- * separate PNG. Not an R3F canvas: one extra WebGL context is enough.
+ * Desktop footer wordmark — Duforn atlas + the shared ASCII node graph, spring
+ * push from the interactive-ascii-logo snippet. Samples `.footer_logo` rather
+ * than a separate PNG.
+ *
+ * ponytail: the lattice is built here rather than with `asciiGridData.ts`. That
+ * one lays cells out from the bottom up over a density figure; this one derives
+ * its rows and columns from `CELL_STEP` in CSS pixels and counts from the *top*,
+ * because every cell has to line up with the pixel of `.footer_logo` it sampled.
+ * They look like the same grid and are not.
+ *
+ * ponytail: it drives a `canvasStage` rather than owning a renderer, which it
+ * used to. The stage is what shares one `GPUDevice` with the rest of the page —
+ * this surface booting its own would mean a second device for a wordmark.
  */
-import * as THREE from "three";
-import { shaderColor } from "../webgl/cssColor";
+import {
+  DataTexture,
+  InstancedBufferAttribute,
+  InstancedBufferGeometry,
+  LinearFilter,
+  Mesh,
+  NearestFilter,
+  OrthographicCamera,
+  PlaneGeometry,
+  RGBAFormat,
+  type Texture,
+} from "three/webgpu";
+import { shaderColor } from "../webgl/cssColorGpu";
 import { footerAsciiInk } from "../webgl/siteColors";
-import { getDufornAsciiAtlas } from "./asciiAtlas";
-import { ASCII_FIELD_FRAG, ASCII_FIELD_VERT } from "./asciiFieldShader";
+import { createCanvasStage, type CanvasStage } from "../webgl/canvasStage";
+import { getDufornAsciiBake } from "./asciiAtlasBake";
+import {
+  atlasTexture,
+  createAsciiFieldMaterial,
+  type AsciiFieldUniforms,
+} from "./asciiFieldNodes";
 
 const CELL_SIZE = 8;
 const CELL_GAP = 2;
@@ -23,10 +49,10 @@ const CHAR_NOISE = 0.85;
 const CHAR_JITTER = 0.12;
 
 const blankHighlight = (() => {
-  const tex = new THREE.DataTexture(new Uint8Array([0, 0, 0, 255]), 1, 1);
+  const tex = new DataTexture(new Uint8Array([0, 0, 0, 255]), 1, 1);
   tex.needsUpdate = true;
-  tex.minFilter = THREE.NearestFilter;
-  tex.magFilter = THREE.NearestFilter;
+  tex.minFilter = NearestFilter;
+  tex.magFilter = NearestFilter;
   return tex;
 })();
 
@@ -57,16 +83,16 @@ export class FooterAsciiField {
   private readonly wrap: HTMLElement;
   private readonly logoImg: HTMLImageElement;
   private readonly box: HTMLElement;
-  private readonly renderer: THREE.WebGLRenderer;
-  private readonly scene = new THREE.Scene();
-  private readonly camera = new THREE.OrthographicCamera(-1, 1, 1, -1, -1, 1);
+  private readonly stage: CanvasStage;
   private readonly abort = new AbortController();
 
-  private mesh: THREE.Mesh | null = null;
-  private geometry: THREE.InstancedBufferGeometry | null = null;
-  private material: THREE.ShaderMaterial | null = null;
-  private sceneTexture: THREE.DataTexture | null = null;
-  private atlasTexture: THREE.CanvasTexture | null = null;
+  private mesh: Mesh | null = null;
+  private geometry: InstancedBufferGeometry | null = null;
+  private uniforms: AsciiFieldUniforms | null = null;
+  private material:
+    ReturnType<typeof createAsciiFieldMaterial>["material"] | null = null;
+  private sceneTexture: DataTexture | null = null;
+  private atlas: Texture | null = null;
   private positions: Float32Array | null = null;
   private random: Float32Array | null = null;
   private lit: LitCell[] = [];
@@ -80,41 +106,59 @@ export class FooterAsciiField {
   private reduced = false;
   private running = false;
   private disposed = false;
-  private raf = 0;
+  private offFrame: (() => void) | null = null;
   private ready = false;
 
-  constructor(
+  /**
+   * ponytail: a static factory, because `WebGPURenderer.init()` is async and the
+   * node renderer throws outright from `render()` before it resolves. A
+   * constructor cannot await, so the alternative is an object that exists but
+   * cannot draw yet — which is exactly the state every caller would then have to
+   * check for.
+   */
+  static async create(
     wrap: HTMLElement,
-    canvas: HTMLCanvasElement,
+    logoImg: HTMLImageElement,
+    box: HTMLElement,
+    reduced: boolean,
+  ): Promise<FooterAsciiField> {
+    const stage = await createCanvasStage({
+      host: wrap,
+      canvasClass: "footer_ascii_canvas",
+      alpha: true,
+      antialias: false,
+      dpr: [1, 2],
+      clear: [0x000000, 0],
+      // Screen-aligned quads: the lattice is authored in clip units directly.
+      camera: (aspect) => new OrthographicCamera(-aspect, aspect, 1, -1, -1, 1),
+      onResize: (size, camera) => {
+        const aspect = size.width / size.height;
+        const ortho = camera as OrthographicCamera;
+        ortho.left = -aspect;
+        ortho.right = aspect;
+      },
+      // Nothing to draw until the atlas and the lattice exist.
+      paused: true,
+    });
+    return new FooterAsciiField(stage, wrap, logoImg, box, reduced);
+  }
+
+  private constructor(
+    stage: CanvasStage,
+    wrap: HTMLElement,
     logoImg: HTMLImageElement,
     box: HTMLElement,
     reduced: boolean,
   ) {
+    this.stage = stage;
     this.wrap = wrap;
     this.logoImg = logoImg;
     this.box = box;
     this.reduced = reduced;
 
-    this.renderer = new THREE.WebGLRenderer({
-      canvas,
-      antialias: false,
-      alpha: true,
-      /* No `premultipliedAlpha: false` here. The material blends with
-         `SRC_ALPHA, ONE_MINUS_SRC_ALPHA` over a transparent clear, so the
-         buffer holds `colour * a` — premultiplied. Declaring it straight made
-         the compositor multiply a second time (`colour * a^2`), and every
-         partial-alpha pixel the scroll scale / DPR resample produces got
-         pulled toward black: a dark outline on each glyph, visible on light
-         where the ink is `--light-100` and hidden on dark where it is
-         already `#101010`. Three's default `true` is the correct pairing,
-         and it is what every other canvas in the app uses. */
-      powerPreference: "low-power",
-    });
-    this.renderer.setClearColor(0x000000, 0);
-    this.renderer.outputColorSpace = THREE.SRGBColorSpace;
     // Same as `.footer_ascii_canvas { color-scheme: only light }` — keep the
     // authored ink if a parent ever restyles the canvas.
-    canvas.style.colorScheme = "only light";
+    stage.canvas.style.colorScheme = "only light";
 
     const { signal } = this.abort;
     this.box.addEventListener("pointermove", this.onPointerMove, {
@@ -141,57 +185,42 @@ export class FooterAsciiField {
     this.tearDownGrid();
     this.material?.dispose();
     this.material = null;
-    this.atlasTexture?.dispose();
-    const gl = this.renderer.getContext();
-    gl.getExtension("WEBGL_lose_context")?.loseContext();
-    this.renderer.dispose();
+    this.atlas?.dispose();
+    this.atlas = null;
+    // ponytail: no WEBGL_lose_context here any more. That extension was how the
+    // WebGL build gave its context straight back instead of waiting for the GC;
+    // the stage's dispose covers the WebGPU and WebGL2 backends alike, and the
+    // device it was using is shared with the rest of the page either way.
+    this.stage.dispose();
   }
 
   private async boot(): Promise<void> {
     try {
-      const atlas = await getDufornAsciiAtlas();
-      if (this.disposed) {
-        atlas.texture.dispose();
-        return;
-      }
-      this.atlasTexture = atlas.texture;
-      this.material = new THREE.ShaderMaterial({
-        vertexShader: ASCII_FIELD_VERT,
-        fragmentShader: ASCII_FIELD_FRAG,
-        uniforms: {
-          uScene: { value: null },
-          uAtlas: { value: atlas.texture },
-          uHighlight: { value: blankHighlight },
-          uGlyphCount: { value: atlas.glyphCount },
-          uColor: { value: shaderColor(this.readInk()) },
-          uHighlightColor: { value: shaderColor(this.readInk()) },
-          uHasHighlight: { value: 0 },
-          uWarp: { value: 1 },
-          uGamma: { value: 0.8 },
-          uGlyphScale: { value: 1.15 },
-          uJitter: { value: this.reduced ? 0 : CHAR_JITTER },
-          uTime: { value: 0 },
-          uNoise: { value: this.reduced ? 0 : 0.45 },
-          uCharNoise: { value: this.reduced ? 0 : CHAR_NOISE },
-          // Holey glyphs at atlas alpha wash to grey on the frost card; opaque
-          // ink is what makes --light-100 actually read as white.
-          uOpaqueGlyphs: { value: 1 },
-          /* The shared shader's fluid mask, which this surface does not use.
-             They still have to be declared: an undeclared uniform reads 0, and
-             the shader multiplies the glyph alpha by `uOpacity` unconditionally
-             — 0 there discards every glyph and the wordmark vanishes. */
-          uFluid: { value: null },
-          uHasFluid: { value: 0 },
-          uFluidThreshold: { value: 1 },
-          uFluidSoft: { value: 0 },
-          uOpacity: { value: 1 },
-          uResolution: { value: new THREE.Vector2(1, 1) },
-        },
-        transparent: true,
-        depthTest: false,
-        depthWrite: false,
-        toneMapped: false,
-      });
+      const bake = await getDufornAsciiBake();
+      if (this.disposed) return;
+
+      this.atlas = atlasTexture(bake.canvas);
+      const { material, uniforms } = createAsciiFieldMaterial();
+      this.material = material;
+      this.uniforms = uniforms;
+
+      uniforms.atlas.value = this.atlas;
+      uniforms.highlight.value = blankHighlight;
+      uniforms.glyphCount.value = bake.glyphCount;
+      uniforms.hasHighlight.value = 0;
+      uniforms.warp.value = 1;
+      uniforms.gamma.value = 0.8;
+      uniforms.glyphScale.value = 1.15;
+      // Holey glyphs at atlas alpha wash to grey on the frost card; opaque ink
+      // is what makes --light-100 actually read as white.
+      uniforms.opaqueGlyphs.value = 1;
+      this.applyMotion();
+
+      /* The shared graph's fluid mask, which this surface does not use. It no
+         longer has to be spelled out — the factory ships defaults, so `opacity`
+         is 1 rather than the 0 an undeclared uniform used to read, which
+         discarded every glyph and vanished the wordmark. */
+
       this.ready = true;
       this.rebuild();
       this.startLoop();
@@ -200,20 +229,41 @@ export class FooterAsciiField {
     }
   }
 
+  /**
+   * Follow a live `prefers-reduced-motion` change.
+   *
+   * ponytail: the field stays and stops moving, where the React version tore it
+   * down and rebuilt it. The stylesheet already hides `.footer_ascii` under the
+   * reduced-motion query, so a rebuild bought nothing visible and cost a GPU
+   * stage teardown on a media change the visitor can toggle at will.
+   */
+  setReduced(reduced: boolean): void {
+    if (this.reduced === reduced) return;
+    this.reduced = reduced;
+    this.applyMotion();
+    if (reduced) this.stopLoop();
+    else this.startLoop();
+    this.render();
+  }
+
+  /** Motion-sensitive knobs, re-applied on rebuild and on a preference change. */
+  private applyMotion(): void {
+    const u = this.uniforms;
+    if (!u) return;
+    u.noise.value = this.reduced ? 0 : 0.45;
+    u.charNoise.value = this.reduced ? 0 : CHAR_NOISE;
+    u.jitter.value = this.reduced ? 0 : CHAR_JITTER;
+  }
+
   rebuild(): void {
     if (this.disposed || !this.ready || !this.material) return;
     this.tearDownGrid();
 
-    const w = Math.max(1, this.wrap.clientWidth);
-    const h = Math.max(1, this.wrap.clientHeight);
-    const ratio = Math.min(window.devicePixelRatio || 1, 2);
-    this.renderer.setPixelRatio(ratio);
-    this.renderer.setSize(w, h, false);
-
+    // The stage owns the drawing buffer and the camera box; this only needs the
+    // CSS size the lattice is measured in.
+    const w = this.stage.size.width;
+    const h = this.stage.size.height;
     const aspect = w / h;
-    this.camera.left = -aspect;
-    this.camera.right = aspect;
-    this.camera.updateProjectionMatrix();
 
     this.cols = Math.max(1, Math.floor(w / CELL_STEP));
     this.rows = Math.max(1, Math.floor(h / CELL_STEP));
@@ -240,37 +290,29 @@ export class FooterAsciiField {
       }
     }
 
-    const base = new THREE.PlaneGeometry(this.cellW, this.cellH, 1, 1);
-    const geometry = new THREE.InstancedBufferGeometry();
+    const base = new PlaneGeometry(this.cellW, this.cellH, 1, 1);
+    const geometry = new InstancedBufferGeometry();
     geometry.index = base.index;
     geometry.setAttribute("position", base.attributes.position);
     geometry.setAttribute("uv", base.attributes.uv);
     geometry.instanceCount = count;
     geometry.setAttribute(
       "aPosition",
-      new THREE.InstancedBufferAttribute(positions, 3),
+      new InstancedBufferAttribute(positions, 3),
     );
-    geometry.setAttribute(
-      "aPixelUV",
-      new THREE.InstancedBufferAttribute(pixelUv, 2),
-    );
-    geometry.setAttribute(
-      "aRandom",
-      new THREE.InstancedBufferAttribute(random, 1),
-    );
+    geometry.setAttribute("aPixelUV", new InstancedBufferAttribute(pixelUv, 2));
+    geometry.setAttribute("aRandom", new InstancedBufferAttribute(random, 1));
 
     this.geometry = geometry;
     this.positions = positions;
     this.random = random;
-    this.mesh = new THREE.Mesh(geometry, this.material);
+    this.mesh = new Mesh(geometry, this.material);
     this.mesh.frustumCulled = false;
-    this.scene.add(this.mesh);
+    this.stage.scene.add(this.mesh);
 
     this.sampleLogo(positions);
     this.syncInk();
-    this.material.uniforms.uNoise.value = this.reduced ? 0 : 0.45;
-    this.material.uniforms.uCharNoise.value = this.reduced ? 0 : CHAR_NOISE;
-    this.material.uniforms.uJitter.value = this.reduced ? 0 : CHAR_JITTER;
+    this.applyMotion();
     this.render();
   }
 
@@ -333,23 +375,18 @@ export class FooterAsciiField {
     }
 
     this.sceneTexture?.dispose();
-    const texture = new THREE.DataTexture(
-      tex,
-      this.cols,
-      this.rows,
-      THREE.RGBAFormat,
-    );
+    const texture = new DataTexture(tex, this.cols, this.rows, RGBAFormat);
     texture.needsUpdate = true;
-    texture.minFilter = THREE.LinearFilter;
-    texture.magFilter = THREE.LinearFilter;
+    texture.minFilter = LinearFilter;
+    texture.magFilter = LinearFilter;
     texture.flipY = false;
     this.sceneTexture = texture;
-    if (this.material) this.material.uniforms.uScene.value = texture;
+    if (this.uniforms) this.uniforms.scene.value = texture;
   }
 
   private tearDownGrid(): void {
     if (this.mesh) {
-      this.scene.remove(this.mesh);
+      this.stage.scene.remove(this.mesh);
       this.mesh = null;
     }
     this.geometry?.dispose();
@@ -368,10 +405,10 @@ export class FooterAsciiField {
   }
 
   private syncInk = (): void => {
-    if (!this.material) return;
+    if (!this.uniforms) return;
     const color = shaderColor(this.readInk());
-    this.material.uniforms.uColor.value.copy(color);
-    this.material.uniforms.uHighlightColor.value.copy(color);
+    this.uniforms?.color.value.copy(color);
+    this.uniforms?.highlightColor.value.copy(color);
     this.render();
   };
 
@@ -397,28 +434,25 @@ export class FooterAsciiField {
   private startLoop(): void {
     if (this.disposed || this.running) return;
     this.running = true;
-    const tick = (now: number) => {
-      if (!this.running) return;
-      this.raf = requestAnimationFrame(tick);
-      this.frame(now);
-    };
-    this.raf = requestAnimationFrame(tick);
+    this.offFrame = this.stage.onFrame((_dt, elapsed) => {
+      this.frame(elapsed * 1000);
+    });
+    this.stage.setPaused(false);
   }
 
   private stopLoop(): void {
     this.running = false;
-    if (this.raf) {
-      cancelAnimationFrame(this.raf);
-      this.raf = 0;
-    }
+    this.offFrame?.();
+    this.offFrame = null;
+    this.stage.setPaused(true);
     window.clearTimeout(this.idleTimer);
   }
 
   private frame(now: number): void {
-    if (!this.material || !this.positions || !this.geometry) return;
+    if (!this.uniforms || !this.positions || !this.geometry) return;
 
     if (!this.reduced) {
-      this.material.uniforms.uTime.value = now * 0.001;
+      this.uniforms.time.value = now * 0.001;
       this.updatePhysics();
       if (now - this.flickerAt >= FLICKER_MS) {
         this.flickerAt = now;
@@ -433,7 +467,7 @@ export class FooterAsciiField {
     if (!this.positions || !this.geometry) return;
     const attr = this.geometry.getAttribute(
       "aPosition",
-    ) as THREE.InstancedBufferAttribute;
+    ) as InstancedBufferAttribute;
     let dirty = false;
 
     for (const cell of this.lit) {
@@ -477,7 +511,7 @@ export class FooterAsciiField {
     if (!this.random || !this.geometry) return;
     const attr = this.geometry.getAttribute(
       "aRandom",
-    ) as THREE.InstancedBufferAttribute;
+    ) as InstancedBufferAttribute;
     for (const cell of this.lit) {
       // Unbiased — pow(random, 4) sat near 0 and the glyph never jumped.
       this.random[cell.index] = Math.random();
@@ -485,7 +519,15 @@ export class FooterAsciiField {
     attr.needsUpdate = true;
   }
 
+  /**
+   * Draw one frame while the loop is parked.
+   *
+   * ponytail: `invalidate`, not a direct `render`. Booting, a theme change and a
+   * rebuild all need the wordmark repainted at a moment the loop may not be
+   * running, and calling the renderer straight would draw before the stage has
+   * re-fitted its buffer to a resize it has already observed.
+   */
   private render(): void {
-    this.renderer.render(this.scene, this.camera);
+    this.stage.invalidate();
   }
 }
