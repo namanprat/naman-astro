@@ -1,0 +1,25 @@
+---
+/**
+ * About as a real route — phones only. Markup on the Lumos grid; the bust
+ * is the R3F island inside AboutContent.
+ */
+import type { AboutData } from "@/lib/content/models";
+import AboutContent from "./AboutContent.astro";
+import "../AboutPanel.css";
+
+interface Props {
+  about: AboutData;
+}
+
+const { about } = Astro.props;
+---
+
+<div class="about_panel is-page is-open">
+  <div class="about_panel_surface">
+    <div class="about_panel_scroll">
+      <div class="about_panel_inner container gap-0">
+        <AboutContent about={about} eager />
+      </div>
+    </div>
+  </div>
+</div>

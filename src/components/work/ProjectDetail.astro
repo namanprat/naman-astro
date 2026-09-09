@@ -1,0 +1,26 @@
+---
+/**
+ * Vertical case-study wrapper. Page variant is the hard `/work/[slug]`
+ * document; overlay variant is the Flip target list on `/work`.
+ */
+import type { WorkItem } from "@/content/work";
+import ProjectLayout from "./ProjectLayout.astro";
+
+interface Props {
+  item: WorkItem;
+  variant?: "page" | "overlay";
+  index?: number;
+}
+
+const { item, variant = "page", index = 0 } = Astro.props;
+---
+
+{
+  variant === "overlay" ? (
+    <div class="content_group" data-index={index} data-slug={item.slug}>
+      <ProjectLayout item={item} />
+    </div>
+  ) : (
+    <ProjectLayout item={item} />
+  )
+}
