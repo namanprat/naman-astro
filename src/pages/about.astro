@@ -9,7 +9,7 @@
  */
 import { getEntry } from "astro:content";
 import Layout from "@/layouts/BaseLayout.astro";
-import AboutPage from "@/components/site/about/AboutPage";
+import AboutPage from "@/components/site/about/AboutPage.astro";
 import Footer from "@/components/site/Footer.astro";
 
 const about = await getEntry("about", "about");
@@ -58,7 +58,7 @@ if (!about) throw new Error("content: the `about` entry is missing");
        the real `.studio` div; this is that same shape. */
   }
   <div class="about_page">
-    <AboutPage client:only="react" about={about.data} />
+    <AboutPage about={about.data} />
   </div>
   <Footer />
   <script>

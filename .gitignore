@@ -35,4 +35,10 @@ studio-duforn-portfolio/.sanity
 
 # leftover local test output
 /test-results/
+/playwright-report/
+/blob-report/
+/.playwright/
+
+# Lumos upgrade working copies
+.lumos-upgrade/
 

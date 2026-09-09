@@ -7,6 +7,9 @@
  */
 export const MOBILE_LAYOUT_MQ = "(width < 48rem)";
 
+/** Where the chrome switches between compact mobile nav and desktop stacks. */
+export const DESKTOP_NAV_MQ = "(width >= 48rem)";
+
 export function isMobileLayout(): boolean {
   if (typeof window === "undefined") return false;
   return window.matchMedia(MOBILE_LAYOUT_MQ).matches;
