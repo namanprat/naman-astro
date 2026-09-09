@@ -20,7 +20,7 @@ export type WorkItem = {
   coverVideo?: string;
   /** Still stacked under the cover — same slot as `coverVideo`. */
   coverImage?: string;
-  /** Shown in the home Camille featured slider when true. */
+  /** Shown in the home featured slider when true. */
   featured?: boolean;
   services: WorkService[];
   panels: WorkPanel[];

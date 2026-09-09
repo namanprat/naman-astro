@@ -1,0 +1,54 @@
+---
+import type { HTMLAttributes } from "astro/types";
+import Section from "@/components/Wrapper/Section.astro";
+import Heading from "@/components/Typography/Heading.astro";
+import Paragraph from "@/components/Typography/Paragraph.astro";
+import Button from "@/components/Button.astro";
+
+interface Props {
+  /** Set to `false` to skip rendering this component and its children. */
+  render?: boolean;
+  title?: string;
+  body?: string;
+  linkLabel?: string;
+  href?: string;
+}
+
+const {
+  render = true,
+  title,
+  body,
+  linkLabel,
+  href = "/",
+} = Astro.props as Props & HTMLAttributes<"section">;
+---
+
+{
+  render && title && body && linkLabel && (
+    <Section
+      class="not-found_wrap"
+      fullHeight
+      paddingTop="navoverlap"
+      paddingBottom="navoverlap"
+      gap="4"
+    >
+      <Heading tag="h1" variant="h3">
+        {title}
+      </Heading>
+      <Paragraph variant="large">{body}</Paragraph>
+      <Button element="link" variant="link" href={href}>
+        {linkLabel}
+      </Button>
+    </Section>
+  )
+}
+
+<style is:global>
+  @layer components {
+    .not-found_wrap > .container {
+      max-width: 36rem;
+      margin-inline: var(--site-margin);
+      align-items: start;
+    }
+  }
+</style>

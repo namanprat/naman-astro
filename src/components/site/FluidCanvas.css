@@ -92,7 +92,7 @@ html.is-preloading .fluid_wrap {
  *
  * Add a selector here to have the trail cut through something else.
  *
- * Process cards, the Camille stage and the footer card keep their own fill, so
+ * Process cards, the hero slider stage and the footer card keep their own fill, so
  * a blend on that copy would invert the card — not the trail.
  */
 /*
@@ -117,12 +117,12 @@ html:not(.theme-light) :is(
     .team_title,
     .team_copy_stack,
     .faq_lead,
-    .faq_question_text,
-    .faq_answer_copy,
+    .accordion_title,
+    .accordion_body,
     .hero_note,
     .gallery_label,
     .project_title,
-    .camille_slider_pill,
+    .hero_slider_pill,
     .is-trail-invert
   ) {
   mix-blend-mode: var(--trail-blend);

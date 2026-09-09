@@ -1,10 +1,13 @@
 ---
 /**
  * Studio closer. Copy is server-rendered; the cylinder is an R3F island,
- * same split as archive.astro / CamilleSlider.
+ * same split as archive.astro / HeroSlider.
  */
 import { getEntry } from "astro:content";
 import { getWorkItems } from "@/lib/content/work";
+import Grid from "@/components/Wrapper/Grid.astro";
+import Heading from "@/components/Typography/Heading.astro";
+import Paragraph from "@/components/Typography/Paragraph.astro";
 import TeamCylinderCarousel from "./TeamCylinderCarousel";
 import AnimeLink from "./AnimeLink.astro";
 
@@ -28,15 +31,15 @@ const imageSrcs = [
       Astro's visible observer has no child box and never hydrates. */}
   <TeamCylinderCarousel client:only="react" imageSrcs={imageSrcs} />
   <div class="team_copy container">
-    <div class="team_layout grid is-12">
-      <h2 class="team_title text-style-h1 alignment-center">
+    <Grid class="is-12 team_layout">
+      <Heading tag="h2" variant="h1" class="team_title alignment-center">
         {titleLines.map((line, i) => (<>{i > 0 && <br />}{line}</>))}
-      </h2>
+      </Heading>
       <div class="team_copy_stack">
-        <p class="text-style-main alignment-center">{body}</p>
+        <Paragraph variant="main" class="alignment-center">{body}</Paragraph>
         <AnimeLink href={ctaHref} class="team_cta">{ctaLabel}</AnimeLink>
       </div>
-    </div>
+    </Grid>
   </div>
 </section>
 <script>

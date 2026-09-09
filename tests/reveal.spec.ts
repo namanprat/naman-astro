@@ -234,19 +234,19 @@ test("featured slider copy uses the shared gooey, not a custom chain", async ({
   await page.goto("/");
   await expectRevealed(page);
 
-  const title = page.locator(".camille_slider_title");
+  const title = page.locator(".hero_slider_title");
   await title.scrollIntoViewIfNeeded();
 
   const slide = isNarrowNav();
 
   const snapshot = () =>
     page.evaluate(() => {
-      const el = document.querySelector<HTMLElement>(".camille_slider_title");
+      const el = document.querySelector<HTMLElement>(".hero_slider_title");
       const inner = document.querySelector<HTMLElement>(
-        ".camille_slider_title_inner",
+        ".hero_slider_title_inner",
       );
       const kicker = document.querySelector<HTMLElement>(
-        ".camille_slider_kicker",
+        ".hero_slider_kicker",
       );
       if (!el || !inner || !kicker) return null;
       const official = [
@@ -289,7 +289,7 @@ test("featured slider copy uses the shared gooey, not a custom chain", async ({
   const first = await snapshot();
   if (!first) throw new Error("missing slider title");
 
-  await page.locator(".camille_slider_next").click();
+  await page.locator(".hero_slider_next").click();
 
   await expect
     .poll(async () => {
@@ -323,12 +323,12 @@ test("haptic featured slide is the reveal film", async ({ page }) => {
   await page.goto("/");
   await expectRevealed(page);
 
-  const haptic = page.locator('.camille_slider_img[data-slide-title="Haptic"]');
-  const film = haptic.locator("video.camille_slider_photo");
+  const haptic = page.locator('.hero_slider_img[data-slide-title="Haptic"]');
+  const film = haptic.locator("video.hero_slider_photo");
   await expect(film).toHaveAttribute("src", /.+/);
   await expect(film).toHaveAttribute("poster", /.+/);
 
-  await page.locator(".camille_slider_next").click();
+  await page.locator(".hero_slider_next").click();
   await expect(haptic).toHaveClass(/is-active|is-hopping/);
 });
 
@@ -341,20 +341,20 @@ test("featured slider trails a view chip behind the pointer, not a replacement c
   await page.goto("/");
   await expectRevealed(page);
 
-  const frame = page.locator(".camille_slider_frame");
+  const frame = page.locator(".hero_slider_frame");
   await frame.scrollIntoViewIfNeeded();
 
-  await expect(page.locator(".camille_slider_view")).toHaveCount(0);
-  await expect(page.locator(".camille_slider_view_label")).toHaveCount(0);
+  await expect(page.locator(".hero_slider_view")).toHaveCount(0);
+  await expect(page.locator(".hero_slider_view_label")).toHaveCount(0);
 
-  const photo = page.locator(".camille_slider_img.is-active .camille_slider_photo");
+  const photo = page.locator(".hero_slider_img.is-active .hero_slider_photo");
   const box = await photo.boundingBox();
   if (!box) throw new Error("no photo box");
   const pointerX = box.x + box.width * 0.4;
   const pointerY = box.y + box.height * 0.45;
   await page.mouse.move(pointerX, pointerY);
 
-  const cursor = page.locator(".camille_slider_cursor");
+  const cursor = page.locator(".hero_slider_cursor");
   await expect(frame).toHaveClass(/is-view-cursor/);
   await expect(cursor).toBeVisible();
   await expect(cursor).toHaveText(/^view$/i);
@@ -372,7 +372,7 @@ test("featured slider trails a view chip behind the pointer, not a replacement c
 
   const [cursorPad, pillPad] = await Promise.all([
     cursor.evaluate((el) => getComputedStyle(el).padding),
-    page.locator(".camille_slider_pill").first().evaluate((el) => getComputedStyle(el).padding),
+    page.locator(".hero_slider_pill").first().evaluate((el) => getComputedStyle(el).padding),
   ]);
   expect(cursorPad).toBe(pillPad);
 });

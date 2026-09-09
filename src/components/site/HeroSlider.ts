@@ -24,16 +24,16 @@ import { prefersReducedMotion } from "../../lib/site/util/prefersReducedMotion";
 import { initRollingText } from "../../lib/site/reveal/rollingText";
 
 gsap.registerPlugin(CustomEase, ScrollTrigger);
-if (!CustomEase.get("camilleHop")) {
+if (!CustomEase.get("heroHop")) {
   CustomEase.create(
-    "camilleHop",
+    "heroHop",
     "M0,0 C0.071,0.505 0.192,0.726 0.318,0.852 0.45,0.984 0.504,1 1,1",
   );
 }
 
 const AUTOPLAY_MS = 5000;
 
-export type CamilleSliderHandle = { destroy: () => void };
+export type HeroSliderHandle = { destroy: () => void };
 
 function kickerLabel(raw: string): string {
   const trimmed = raw.trim();
@@ -44,29 +44,29 @@ function padIndex(index: number): string {
   return String(index + 1).padStart(2, "0");
 }
 
-export function initCamilleSlider(root: HTMLElement): CamilleSliderHandle {
-  const stage = root.querySelector<HTMLElement>(".camille_slider_stage");
-  const frame = root.querySelector<HTMLElement>(".camille_slider_frame");
-  const images = root.querySelector<HTMLElement>(".camille_slider_images");
-  const prevBtn = root.querySelector<HTMLElement>(".camille_slider_prev");
-  const nextBtn = root.querySelector<HTMLElement>(".camille_slider_next");
-  const indexEl = root.querySelector<HTMLElement>(".camille_slider_index");
-  const titleEl = root.querySelector<HTMLElement>(".camille_slider_title");
+export function initHeroSlider(root: HTMLElement): HeroSliderHandle {
+  const stage = root.querySelector<HTMLElement>(".hero_slider_stage");
+  const frame = root.querySelector<HTMLElement>(".hero_slider_frame");
+  const images = root.querySelector<HTMLElement>(".hero_slider_images");
+  const prevBtn = root.querySelector<HTMLElement>(".hero_slider_prev");
+  const nextBtn = root.querySelector<HTMLElement>(".hero_slider_next");
+  const indexEl = root.querySelector<HTMLElement>(".hero_slider_index");
+  const titleEl = root.querySelector<HTMLElement>(".hero_slider_title");
   const titleInner = root.querySelector<HTMLElement>(
-    ".camille_slider_title_inner",
+    ".hero_slider_title_inner",
   );
-  const kickerEl = root.querySelector<HTMLElement>(".camille_slider_kicker");
+  const kickerEl = root.querySelector<HTMLElement>(".hero_slider_kicker");
   const kickerInner = root.querySelector<HTMLElement>(
-    ".camille_slider_kicker_inner",
+    ".hero_slider_kicker_inner",
   );
-  const hitLink = root.querySelector<HTMLAnchorElement>(".camille_slider_hit");
-  const cursorEl = root.querySelector<HTMLElement>(".camille_slider_cursor");
+  const hitLink = root.querySelector<HTMLAnchorElement>(".hero_slider_hit");
+  const cursorEl = root.querySelector<HTMLElement>(".hero_slider_cursor");
   const pills = [
-    ...root.querySelectorAll<HTMLButtonElement>(".camille_slider_pill"),
+    ...root.querySelectorAll<HTMLButtonElement>(".hero_slider_pill"),
   ];
   const layers = [
     ...root.querySelectorAll<HTMLElement>(
-      ".camille_slider_images .camille_slider_img",
+      ".hero_slider_images .hero_slider_img",
     ),
   ];
 
@@ -154,7 +154,7 @@ export function initCamilleSlider(root: HTMLElement): CamilleSliderHandle {
   const wrap = (index: number) => ((index % total) + total) % total;
 
   const chromeSel =
-    ".camille_slider_prev, .camille_slider_next, .camille_slider_rail, .camille_slider_copy, .camille_slider_pills, .camille_slider_hit";
+    ".hero_slider_prev, .hero_slider_next, .hero_slider_rail, .hero_slider_copy, .hero_slider_pills, .hero_slider_hit";
 
   const overChrome = (target: EventTarget | null) =>
     target instanceof Element && !!target.closest(chromeSel);
@@ -222,7 +222,7 @@ export function initCamilleSlider(root: HTMLElement): CamilleSliderHandle {
   const resetLayer = (layer: HTMLElement) => {
     layer.classList.remove("is-hopping", "is-incoming");
     gsap.killTweensOf(layer);
-    const photo = layer.querySelector(".camille_slider_photo");
+    const photo = layer.querySelector(".hero_slider_photo");
     if (photo) gsap.killTweensOf(photo);
     gsap.set(layer, { clearProps: "clipPath" });
     if (photo) gsap.set(photo, { clearProps: "x" });
@@ -231,7 +231,7 @@ export function initCamilleSlider(root: HTMLElement): CamilleSliderHandle {
   const syncFilms = (active: number) => {
     layers.forEach((layer, i) => {
       const video = layer.querySelector<HTMLVideoElement>(
-        "video.camille_slider_photo",
+        "video.hero_slider_photo",
       );
       if (!video) return;
       if (i === active) {
@@ -327,9 +327,9 @@ export function initCamilleSlider(root: HTMLElement): CamilleSliderHandle {
     inLayer.classList.remove("is-active");
 
     const outPhoto = outLayer.querySelector<HTMLElement>(
-      ".camille_slider_photo",
+      ".hero_slider_photo",
     );
-    const inPhoto = inLayer.querySelector<HTMLElement>(".camille_slider_photo");
+    const inPhoto = inLayer.querySelector<HTMLElement>(".hero_slider_photo");
 
     if (inPhoto) gsap.set(inPhoto, { x: dir === "left" ? -500 : 500 });
 
@@ -337,7 +337,7 @@ export function initCamilleSlider(root: HTMLElement): CamilleSliderHandle {
       gsap.to(outPhoto, {
         x: dir === "left" ? 500 : -500,
         duration: 1.5,
-        ease: "camilleHop",
+        ease: "heroHop",
       });
     }
 
@@ -352,7 +352,7 @@ export function initCamilleSlider(root: HTMLElement): CamilleSliderHandle {
       {
         clipPath: "polygon(0% 0%, 100% 0%, 100% 100%, 0% 100%)",
         duration: 1.5,
-        ease: "camilleHop",
+        ease: "heroHop",
       },
     );
 
@@ -360,7 +360,7 @@ export function initCamilleSlider(root: HTMLElement): CamilleSliderHandle {
       gsap.to(inPhoto, {
         x: 0,
         duration: 1.5,
-        ease: "camilleHop",
+        ease: "heroHop",
         onComplete: finishHop,
       });
     } else finishHop();
@@ -441,7 +441,7 @@ export function initCamilleSlider(root: HTMLElement): CamilleSliderHandle {
       });
       for (const dispose of rollDisposes) dispose();
       gsap.killTweensOf(
-        images.querySelectorAll(".camille_slider_photo, .camille_slider_img"),
+        images.querySelectorAll(".hero_slider_photo, .hero_slider_img"),
       );
     },
   };

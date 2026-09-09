@@ -1,5 +1,6 @@
 ---
 import Layout from "@/layouts/BaseLayout.astro";
+import ContentNotFound from "@/components/site/ContentNotFound.astro";
 import { getEntry } from "astro:content";
 
 const site = await getEntry("site", "site");
@@ -12,36 +13,5 @@ const { title, body, linkLabel } = site.data.notFound;
   description={body}
   theme="dark"
 >
-  <section class="not_found">
-    <h1 class="text-style-h3">{title}</h1>
-    <p class="text-style-large">{body}</p>
-    <a class="not_found_link text-style-main" href="/">{linkLabel}</a>
-  </section>
+  <ContentNotFound title={title} body={body} linkLabel={linkLabel} />
 </Layout>
-
-<style>
-  .not_found {
-    box-sizing: border-box;
-    /* `vh` is the large viewport, so on mobile Safari it centred this block
-       against a screen taller than the one showing and pushed the link under the
-       toolbar. */
-    min-height: 100svh;
-    min-height: 100dvh;
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    align-items: flex-start;
-    padding: var(--section-space-nav-overlap) var(--site-margin);
-    padding-bottom: calc(
-      var(--section-space-nav-overlap) + var(--site--safe-area-bottom)
-    );
-    gap: var(--space-4);
-    max-width: 36rem;
-  }
-
-  .not_found_link {
-    color: var(--link-text);
-    text-decoration: underline;
-    text-underline-offset: 0.2em;
-  }
-</style>

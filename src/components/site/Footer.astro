@@ -15,6 +15,7 @@
  * header stacks on purpose.
  */
 import { getEntry } from "astro:content";
+import Heading from "@/components/Typography/Heading.astro";
 import RollingText from "./RollingText.astro";
 
 const [footerEntry, social] = await Promise.all([
@@ -38,7 +39,7 @@ const { links: socialLinks, emailHref } = social.data;
         <div class="footer_ascii" data-footer-ascii aria-hidden="true"></div>
         <div class="footer_contain container gap-0">
           <div class="footer_layout grid is-12">
-            <h3 class="footer_tagline text-style-main">{tagline}</h3>
+            <Heading tag="h3" variant="main" class="footer_tagline">{tagline}</Heading>
 
             <nav class="footer_col is-nav" aria-label="Footer">
               <ul class="footer_list">

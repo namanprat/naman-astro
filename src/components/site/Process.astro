@@ -1,20 +1,9 @@
 ---
-/**
- * The section heading is an ordinary `h2` and each card title an `h3`, so both
- * are picked up by the site-wide gooey entrance in
- * `lib/site/reveal/gooeyReveal.ts` — `.process` is absent from that module's
- * SKIP list for exactly this reason. The heading's hanging first line is the
- * empty `.studio_title_indent` box, not a `text-indent` — being ordinary
- * inline content, it wraps and splits along with the rest of the heading.
- *
- * ponytail: server-rendered Astro, where this used to be a `client:only`
- * React island. The directive was not a preference — `revealLines()` and
- * `bootGooeyHeadings()` rewrite this copy with SplitText before React could
- * hydrate, so a server-rendered React subtree mismatched and React threw it
- * away. Markup that never hydrates cannot mismatch. What is left as React is
- * `ProcessCardStage`, one per card, because an R3F tree needs a React root.
- */
 import { getEntry } from "astro:content";
+import Section from "@/components/Wrapper/Section.astro";
+import Grid from "@/components/Wrapper/Grid.astro";
+import Heading from "@/components/Typography/Heading.astro";
+import Paragraph from "@/components/Typography/Paragraph.astro";
 import ProcessCardStage from "./ProcessCardStage";
 
 const site = await getEntry("site", "site");
@@ -22,135 +11,133 @@ if (!site) throw new Error("content: the `site` entry is missing");
 const { statement, cards } = site.data.process;
 ---
 
-<section class="process_wrap studio_section" id="process" aria-label="Process">
-  <div class="process_contain container gap-0">
-    <div class="process_layout studio_layout grid is-12">
-      <div class="process_statement studio_statement">
-        <h2 class="process_title studio_title text-style-h2">
-          <span class="studio_title_indent" aria-hidden="true"></span>{statement}
-        </h2>
-      </div>
-
-      <ul class="process_cards">
-        {
-          cards.map((card, i) => (
-            <li class="process_card">
-              <div class="process_card_head">
-                <h3 class="process_card_title text-style-h3">{card.title}</h3>
-                <span class="process_card_index text-style-small" aria-hidden="true">
-                  {String(i + 1).padStart(3, "0")}
-                </span>
-              </div>
-              <div class="process_card_media">
-                <ProcessCardStage client:only="react" model={card.model} />
-              </div>
-              <p class="process_card_copy text-style-main">{card.description}</p>
-            </li>
-          ))
-        }
-      </ul>
+<Section
+  class="process_wrap"
+  id="process"
+  aria-label="Process"
+  paddingTop="large"
+  paddingBottom="large"
+  gap="0"
+>
+  <Grid class="is-12 studio_layout process_layout">
+    <div class="process_statement studio_statement">
+      <Heading tag="h2" variant="h2" class="process_title studio_title">
+        <span class="studio_title_indent" aria-hidden="true"></span>{statement}
+      </Heading>
     </div>
-  </div>
-</section>
+
+    <ul class="process_cards">
+      {
+        cards.map((card, i) => (
+          <li class="process_card">
+            <div class="process_card_head">
+              <Heading tag="h3" variant="h3" class="process_card_title">
+                {card.title}
+              </Heading>
+              <Paragraph tag="span" variant="small" class="process_card_index">
+                {String(i + 1).padStart(3, "0")}
+              </Paragraph>
+            </div>
+            <div class="process_card_media">
+              <ProcessCardStage client:only="react" model={card.model} />
+            </div>
+            <Paragraph variant="main" class="process_card_copy">
+              {card.description}
+            </Paragraph>
+          </li>
+        ))
+      }
+    </ul>
+  </Grid>
+</Section>
 
 <style>
-  /* ponytail: scoped, and layered on purpose. Astro adds its cid to this
-     component's own selectors and leaves `html.*` alone, so nothing here can
-     reach another component. The `@layer` wrapper is what keeps that from
-     changing the cascade: a scoped block is unlayered by default and unlayered
-     beats every layer, so without it these rules would outrank the whole
-     `components` layer they came from.
+  @layer components.section {
+    .process_layout {
+      grid-column: 1 / -1;
+    }
 
-     ponytail: `.process_card_stage` and `.process_card_canvas` are styled here
-     but rendered by `ProcessCardStage`, a React island — so they never receive
-     Astro's cid and these two rules would not match. `:global()` is why they
-     still do. */
-@layer components.section {
-  .process_layout {
-    grid-column: 1 / -1;
-  }
+    .process_statement {
+      grid-column: 1 / span calc(10 * var(--_responsive---large) + 12 * (1 - var(--_responsive---large)));
+    }
 
-  .process_statement {
-    grid-column: 1 / span calc(10 * var(--_responsive---large) + 12 * (1 - var(--_responsive---large)));
-  }
+    .process_cards {
+      grid-column: calc(1 * var(--_responsive---large) + 1) / span calc(10 * var(--_responsive---large) + 12 * (1 - var(--_responsive---large)));
+      display: grid;
+      grid-template-columns: repeat(calc(3 - 2 * var(--_responsive---small)), minmax(0, 1fr));
+      align-items: stretch;
+      gap: var(--site-gutter);
+      margin: 0;
+      padding: 0;
+      list-style: none;
+    }
 
-  .process_cards {
-    grid-column: calc(1 * var(--_responsive---large) + 1) / span calc(10 * var(--_responsive---large) + 12 * (1 - var(--_responsive---large)));
-    display: grid;
-    grid-template-columns: repeat(calc(3 - 2 * var(--_responsive---small)), minmax(0, 1fr));
-    align-items: stretch;
-    gap: var(--site-gutter);
-    margin: 0;
-    padding: 0;
-    list-style: none;
-  }
+    .process_card {
+      position: relative;
+      width: 100%;
+      max-width: 100%;
+      min-width: 0;
+      padding: var(--space-4);
+      display: flex;
+      flex-direction: column;
+      align-items: stretch;
+      gap: var(--space-4);
+      text-align: left;
+      overflow: clip;
+      background-color: var(--brand-500);
+      color: var(--dark-900);
+    }
 
-  .process_card {
-    position: relative;
-    width: 100%;
-    max-width: 100%;
-    min-width: 0;
-    padding: var(--space-4);
-    display: flex;
-    flex-direction: column;
-    align-items: stretch;
-    gap: var(--space-4);
-    text-align: left;
-    overflow: clip;
-    background-color: var(--brand-500);
-    color: var(--dark-900);
-  }
+    .process_card_head {
+      display: flex;
+      flex-direction: row;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: var(--space-3);
+      flex: none;
+      width: 100%;
+    }
 
-  .process_card_head {
-    display: flex;
-    flex-direction: row;
-    align-items: flex-start;
-    justify-content: space-between;
-    gap: var(--space-3);
-    flex: none;
-    width: 100%;
-  }
+    .process_card_title {
+      margin: 0;
+      min-width: 0;
+      color: inherit;
+      white-space: nowrap;
+      text-wrap: nowrap;
+    }
 
-  .process_card_title {
-    margin: 0;
-    min-width: 0;
-    color: inherit;
-    white-space: nowrap;
-    text-wrap: nowrap;
-  }
+    .process_card_index {
+      flex: none;
+      margin: 0;
+      color: color-mix(in srgb, currentcolor 40%, transparent);
+    }
 
-  .process_card_index {
-    flex: none;
-    margin: 0;
-    color: color-mix(in srgb, currentcolor 40%, transparent);
-  }
+    .process_card_media {
+      position: relative;
+      flex: none;
+      width: 100%;
+      aspect-ratio: 1;
+    }
 
-  .process_card_media {
-    position: relative;
-    flex: none;
-    width: 100%;
-    aspect-ratio: 1;
-  }
+    :global(.process_card_stage) {
+      position: absolute;
+      inset: var(--space-3);
+    }
 
-  :global(.process_card_stage) {
-    position: absolute;
-    inset: var(--space-3);
-  }
+    :global(.process_card_canvas) {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      display: block;
+      pointer-events: none;
+    }
 
-  :global(.process_card_canvas) {
-    position: absolute;
-    inset: 0;
-    width: 100%;
-    height: 100%;
-    display: block;
-    pointer-events: none;
+    .process_card_copy {
+      margin: 0;
+      flex: none;
+      color: inherit;
+      text-align: left;
+    }
   }
-
-  .process_card_copy {
-    margin: 0;
-    flex: none;
-    color: inherit;
-    text-align: left;
-  }
-}
 </style>

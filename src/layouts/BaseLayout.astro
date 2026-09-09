@@ -3,6 +3,7 @@ import Analytics from "@vercel/analytics/astro";
 import "@/styles/global.css";
 import "@/styles/site.css";
 import BaseHead from "@/components/BaseHead.astro";
+import SkipLink from "@/components/Global/SkipLink.astro";
 import Menu from "@/components/site/Menu.astro";
 import GooeyFilter from "@/components/site/GooeyFilter.astro";
 import FluidCanvas from "@/components/site/FluidCanvas.astro";
@@ -102,6 +103,7 @@ const isArchive = pagePathname(Astro.url.pathname) === "/archive";
     <GooeyFilter />
     <div class="site-grain" aria-hidden="true"></div>
     <div class="transition_panel" aria-hidden="true"></div>
+    <SkipLink />
     <Menu />
     <div class="site-backdrop">
       <slot name="backdrop" />
