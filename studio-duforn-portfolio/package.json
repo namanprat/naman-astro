@@ -9,8 +9,9 @@
   "scripts": {
     "dev": "sanity dev --host 0.0.0.0 --port 3333",
     "start": "sanity dev --host 0.0.0.0 --port 3333",
-    "build": "sanity build -y",
-    "vercel-build": "sanity build -y",
+    "build": "vite build",
+    "build:sanity": "sanity build -y",
+    "vercel-build": "vite build",
     "deploy": "sanity deploy"
   },
   "dependencies": {
@@ -18,7 +19,8 @@
     "react": "^19.2.8",
     "react-dom": "^19.2.8",
     "sanity": "^6.13.0",
-    "styled-components": "^6.1.19"
+    "styled-components": "^6.1.19",
+    "vite": "^8.2.2"
   },
   "devDependencies": {
     "@types/react": "^19.2.18",
