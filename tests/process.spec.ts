@@ -33,13 +33,11 @@ test.describe("process cards", () => {
     await expectRevealed(page);
     await page.locator("#process").scrollIntoViewIfNeeded();
     await expect(page.locator("[data-process-model]")).toHaveCount(3);
-    await expect(
-      page.locator(".lil-gui").filter({ hasText: "Process models" }),
-    ).toBeVisible({ timeout: 20_000 });
     const panel = page
       .locator(".lil-gui")
       .filter({ hasText: "Process models" });
-    await panel.locator(":scope > .title").click();
+    await expect(panel).toBeVisible({ timeout: 20_000 });
+    await panel.getByRole("button", { name: /Process models/ }).click();
     await expect(panel.getByText("1 · rock")).toBeVisible();
     await expect(panel.getByText("2 · flower")).toBeVisible();
     await expect(panel.getByText("3 · bolt")).toBeVisible();

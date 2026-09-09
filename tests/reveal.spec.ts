@@ -364,11 +364,8 @@ test("featured slider trails a view chip behind the pointer, not a replacement c
 
   await expect
     .poll(async () => {
-      const box = await photo.boundingBox();
       const chip = await cursor.boundingBox();
-      if (!box || !chip) return "missing";
-      const pointerX = box.x + box.width / 2;
-      const pointerY = box.y + box.height / 2;
+      if (!chip) return "missing";
       return chip.x > pointerX && chip.y > pointerY ? "trailed" : "catching-up";
     })
     .toBe("trailed");
