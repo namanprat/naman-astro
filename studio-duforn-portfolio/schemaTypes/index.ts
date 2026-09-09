@@ -3,6 +3,9 @@ import {
   aboutSettings,
   faqSettings,
   navSettings,
+  overlayAction,
+  overlayColumn,
+  overlayLink,
   processSettings,
   siteSettings,
 } from "./singletons";
@@ -19,4 +22,7 @@ export const schemaTypes = [
   faqSettings,
   processSettings,
   navSettings,
+  overlayColumn,
+  overlayLink,
+  overlayAction,
 ];

@@ -231,6 +231,37 @@ export const processSettings = defineType({
   },
 });
 
+/** Stored on production `nav` from the old full-nav schema. Named types match `_type`. */
+export const overlayLink = defineType({
+  name: "overlayLink",
+  title: "Overlay link",
+  type: "object",
+  fields: [
+    defineField({ name: "label", type: "string" }),
+    defineField({ name: "path", type: "string" }),
+  ],
+});
+
+export const overlayAction = defineType({
+  name: "overlayAction",
+  title: "Overlay action",
+  type: "object",
+  fields: [defineField({ name: "label", type: "string" })],
+});
+
+export const overlayColumn = defineType({
+  name: "overlayColumn",
+  title: "Overlay column",
+  type: "object",
+  fields: [
+    defineField({
+      name: "items",
+      type: "array",
+      of: [{ type: "overlayLink" }, { type: "overlayAction" }],
+    }),
+  ],
+});
+
 export const navSettings = defineType({
   name: "navSettings",
   title: "Marquee",
@@ -240,12 +271,14 @@ export const navSettings = defineType({
       name: "enabled",
       title: "Enable marquee",
       type: "boolean",
+      description: "Turn the homepage availability ticker on or off.",
       initialValue: false,
     }),
     defineField({
       name: "availabilityLine",
+      title: "Availability line",
       type: "string",
-      hidden: ({ parent }) => !parent?.enabled,
+      description: "Text shown in the ticker when the marquee is enabled.",
       validation: (rule) =>
         rule.custom((value, context) => {
           const enabled = Boolean(
@@ -254,6 +287,62 @@ export const navSettings = defineType({
           if (!enabled) return true;
           return value?.trim() ? true : "Required when the marquee is on";
         }),
+    }),
+    defineField({ name: "availabilityCopies", type: "number", hidden: true }),
+    defineField({ name: "email", type: "string", hidden: true }),
+    defineField({
+      name: "sectionIds",
+      type: "array",
+      of: [{ type: "string" }],
+      hidden: true,
+    }),
+    defineField({
+      name: "socials",
+      type: "array",
+      hidden: true,
+      of: [
+        {
+          type: "object",
+          fields: [
+            defineField({ name: "label", type: "string" }),
+            defineField({ name: "href", type: "string" }),
+            defineField({ name: "newTab", type: "boolean" }),
+          ],
+        },
+      ],
+    }),
+    defineField({
+      name: "stacks",
+      type: "array",
+      hidden: true,
+      of: [
+        {
+          type: "object",
+          fields: [
+            defineField({ name: "col", type: "string" }),
+            defineField({
+              name: "links",
+              type: "array",
+              of: [
+                {
+                  type: "object",
+                  fields: [
+                    defineField({ name: "id", type: "string" }),
+                    defineField({ name: "label", type: "string" }),
+                    defineField({ name: "path", type: "string" }),
+                  ],
+                },
+              ],
+            }),
+          ],
+        },
+      ],
+    }),
+    defineField({
+      name: "overlayColumns",
+      type: "array",
+      hidden: true,
+      of: [{ type: "overlayColumn" }],
     }),
   ],
   preview: {
