@@ -7,6 +7,7 @@ import Menu from "@/components/site/Menu.astro";
 import GooeyFilter from "@/components/site/GooeyFilter.astro";
 import FluidCanvas from "@/components/site/FluidCanvas.astro";
 import type { SeoProps } from "@/types.ts";
+import { pagePathname } from "@/utils/seo.ts";
 
 type Props = SeoProps & {
   /** Theme for the whole page. `inherit` leaves the root defaults in place. */
@@ -22,7 +23,7 @@ type Props = SeoProps & {
 
 const { theme = "inherit", rootClass, ...seo } = Astro.props;
 
-const isArchive = Astro.url.pathname === "/archive";
+const isArchive = pagePathname(Astro.url.pathname) === "/archive";
 ---
 
 <!doctype html>

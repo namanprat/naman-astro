@@ -13,6 +13,7 @@ import {
   SOCIAL_LINKS,
 } from "@/lib/content/nav";
 import { ABOUT_PATH } from "@/lib/site/about/aboutPanel";
+import { pagePathname } from "@/utils/seo.ts";
 import RollingText from "./RollingText.astro";
 import ThemeToggle from "./ThemeToggle.astro";
 import AboutPanel from "./AboutPanel.astro";
@@ -25,7 +26,7 @@ const [nav, about] = await Promise.all([
 if (!nav || !about) throw new Error("content: `nav` or `about` entry is missing");
 
 const { availabilityLine, availabilityCopies } = nav.data;
-const pathname = Astro.url.pathname;
+const pathname = pagePathname(Astro.url.pathname);
 const showAboutOverlay = pathname !== ABOUT_PATH;
 
 const initialActive =
