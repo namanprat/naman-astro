@@ -252,6 +252,8 @@ export function bootWorkGallery(): void {
       gsap.set(root.querySelectorAll(".gallery_img"), {
         clearProps: "transform",
       });
+      // Flush the new view's boxes before Slider/WheelView measure.
+      void root.offsetHeight;
 
       const built = makeEngine(next);
       built.centerOn(centered);

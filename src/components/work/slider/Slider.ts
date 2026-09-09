@@ -70,6 +70,9 @@ export default class Slider {
   private onResize: () => void;
   private mobileMq: MediaQueryList;
   private onMobileMq: () => void;
+  /** Watches for the first non-zero slide box when createLoop ran too early. */
+  private sizeObserver?: ResizeObserver;
+  private loopMeasureFrame?: number;
 
   constructor({
     root = document,
@@ -101,16 +104,61 @@ export default class Slider {
   }
 
   createLoop() {
+    const slides = this.slides();
+    // Force layout: a 0-height measure bakes a 0-duration loop, and
+    // `loop.time()` is then a no-op even after the tiles have a real size.
+    void slides[0]?.offsetHeight;
+
     const gallery = this.root.querySelector(".gallery") as HTMLElement;
     const gap = parseFloat(getComputedStyle(gallery).rowGap);
 
-    this.loop = verticalLoop(this.slides(), {
+    this.loop = verticalLoop(slides, {
       repeat: -1,
       paused: true,
       paddingBottom: gap,
     });
 
-    this.wrap = gsap.utils.wrap(0, this.loop.duration());
+    const duration = this.loop.duration();
+    this.wrap =
+      duration > 0 ? gsap.utils.wrap(0, duration) : (value: number) => value;
+
+    if (duration > 0) this.unwatchLoopMeasure();
+    else this.watchLoopMeasure();
+  }
+
+  private slidesHaveHeight() {
+    return this.slides().some((el) => el.offsetHeight > 0);
+  }
+
+  /** Rebuild once tiles have a box — the window did not resize, so bindResize misses it. */
+  private refreshLoop() {
+    if (this.loop.duration() > 0) {
+      this.unwatchLoopMeasure();
+      return;
+    }
+    if (!this.scrub || !this.slidesHaveHeight()) return;
+    this.rebuild();
+  }
+
+  private watchLoopMeasure() {
+    if (this.sizeObserver) return;
+    const gallery = this.root.querySelector(".gallery");
+    if (!(gallery instanceof HTMLElement)) return;
+
+    const tryRebuild = () => this.refreshLoop();
+    this.sizeObserver = new ResizeObserver(tryRebuild);
+    this.sizeObserver.observe(gallery);
+    for (const slide of this.slides()) this.sizeObserver.observe(slide);
+    this.loopMeasureFrame = requestAnimationFrame(tryRebuild);
+  }
+
+  private unwatchLoopMeasure() {
+    this.sizeObserver?.disconnect();
+    this.sizeObserver = undefined;
+    if (this.loopMeasureFrame != null) {
+      cancelAnimationFrame(this.loopMeasureFrame);
+      this.loopMeasureFrame = undefined;
+    }
   }
 
   createParallax() {
@@ -245,6 +293,7 @@ export default class Slider {
 
   scroll(self: Observer) {
     if (!this.enabled()) return;
+    this.refreshLoop();
 
     this.scrub.vars.time += scrollDelta(self) / 100;
     if (prefersReducedMotion()) {
@@ -271,6 +320,7 @@ export default class Slider {
    * because the parallax factors are small and bounded.
    */
   centerOn(index: number) {
+    this.refreshLoop();
     const el = this.slides()[index];
     if (!el) return;
 
@@ -340,15 +390,17 @@ export default class Slider {
   }
 
   start() {
+    this.refreshLoop();
     this.observer.enable();
   }
 
   rebuild() {
     const progress = this.loop.progress();
 
+    this.unwatchLoopMeasure();
     this.freeze();
     this.loop.kill();
-    gsap.set(this.slides(), { clearProps: "transform" });
+    gsap.set(this.slides(), { clearProps: "transform,y,yPercent" });
     this.parallax.forEach((item) => {
       if (item.img) gsap.set(item.img, { clearProps: "transform" });
     });
@@ -365,6 +417,7 @@ export default class Slider {
   }
 
   destroy() {
+    this.unwatchLoopMeasure();
     window.removeEventListener("resize", this.onResize);
     this.mobileMq.removeEventListener("change", this.onMobileMq);
     clearTimeout(this.resizeId);
