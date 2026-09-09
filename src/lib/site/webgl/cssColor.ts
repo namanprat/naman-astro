@@ -7,25 +7,10 @@
 import * as THREE from "three";
 
 /**
- * Read a CSS custom property as a plain sRGB color.
- *
- * Deliberately NOT converted to linear. `colorspace_fragment` — the chunk that
- * encodes linear → sRGB on output — is an `#include` that only exists in three's
- * built-in material shaders. A raw ShaderMaterial writing gl_FragColor by hand
- * gets no output encoding at all, so whatever we write lands in the framebuffer
- * as-is and is read as sRGB. Converting here would darken the plate with nothing
- * to convert it back, which is exactly how it drifted off the CSS `--dark` band.
- *
- * Custom properties resolve in getComputedStyle, so no probe element is needed —
- * which matters, because this runs from a MutationObserver.
+ * Re-exported from `cssToken.ts`, which has no `three` import, so a WebGPU
+ * module can read a theme token without pulling a second copy of the library in.
  */
-export function readCssColor(token: string, fallback: string): string {
-  if (typeof document === "undefined") return fallback;
-  const raw = getComputedStyle(document.documentElement)
-    .getPropertyValue(token)
-    .trim();
-  return raw || fallback;
-}
+export { readCssColor } from "./cssToken";
 
 /**
  * Build a Color whose channels are the literal sRGB values, with no conversion.
