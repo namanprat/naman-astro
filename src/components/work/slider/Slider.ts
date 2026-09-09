@@ -4,6 +4,7 @@ import verticalLoop from "./verticalLoop";
 import { scrollDelta } from "./scrollDelta";
 import type { RevealChange } from "./Reveal";
 import { isMobileLayout, MOBILE_LAYOUT_MQ } from "@/lib/site/util/isMobileLayout";
+import { prefersReducedMotion } from "@/lib/site/util/prefersReducedMotion";
 
 gsap.registerPlugin(Observer);
 
@@ -246,6 +247,18 @@ export default class Slider {
     if (!this.enabled()) return;
 
     this.scrub.vars.time += scrollDelta(self) / 100;
+    if (prefersReducedMotion()) {
+      // Skip the 0.75s scrub: Lumos zeros CSS transitions to 0.01ms, and
+      // interpolating that against the stylesheet `translateX` on each slide
+      // leaves the loop's yPercent at whatever GSAP last cached — which is
+      // "nothing moved".
+      this.playhead.time = this.scrub.vars.time;
+      this.loop.time(this.wrap(this.playhead.time));
+      this.applyParallax(true);
+      this.scrub.pause();
+      this.scrub.invalidate();
+      return;
+    }
     this.scrub.invalidate().restart();
   }
 

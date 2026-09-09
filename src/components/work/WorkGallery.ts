@@ -442,6 +442,7 @@ export function bootWorkGallery(): void {
       on(window, "popstate", onPopState);
 
       if (returnIndex < 0) {
+        engine.start();
         endReturn();
         return;
       }
