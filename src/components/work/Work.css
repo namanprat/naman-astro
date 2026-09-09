@@ -380,6 +380,16 @@ html.work-returning .view_switcher {
   margin: 0;
 }
 
+@media (prefers-reduced-motion: reduce) {
+  .work_wrap .gallery_slide {
+    /* Lumos sets `transition-duration: 0.01ms !important` on `*`. GSAP owns
+       this node's `transform` (column stagger + verticalLoop yPercent), so
+       that duration interpolates against the stylesheet translateX and the
+       loop never sticks. */
+    transition: none !important;
+  }
+}
+
 .work_wrap .gallery_img_wrap {
   position: relative;
   margin: 0;

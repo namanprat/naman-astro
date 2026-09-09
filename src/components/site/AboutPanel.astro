@@ -1,0 +1,40 @@
+---
+/**
+ * Floating About overlay. Markup is Astro; open/close choreography lives in
+ * `bootAboutPanel`. The bust stays an R3F island inside AboutContent.
+ */
+import type { AboutData } from "@/lib/content/models";
+import AboutContent from "./about/AboutContent.astro";
+import "./AboutPanel.css";
+
+interface Props {
+  about: AboutData;
+}
+
+const { about } = Astro.props;
+---
+
+<button
+  type="button"
+  class="about_panel_backdrop"
+  aria-label="Close about"
+  tabindex="-1"
+  data-about-backdrop
+>
+</button>
+<aside
+  id="site-about-panel"
+  tabindex="-1"
+  class="about_panel"
+  aria-hidden="true"
+  aria-label="About"
+  data-about-panel
+>
+  <div class="about_panel_surface" data-about-surface>
+    <div class="about_panel_scroll" data-lenis-prevent>
+      <div class="about_panel_inner container gap-0">
+        <AboutContent about={about} />
+      </div>
+    </div>
+  </div>
+</aside>

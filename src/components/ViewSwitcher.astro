@@ -1,0 +1,36 @@
+---
+import "./ViewSwitcher.css";
+
+interface Props {
+  label: string;
+  views: readonly { id: string; label: string }[];
+  view: string;
+  locked?: boolean;
+  busy?: boolean;
+}
+
+const { label, views, view, locked = false, busy = false } = Astro.props;
+---
+
+<div
+  class:list={["view_switcher", locked && "is-locked"]}
+  role="group"
+  aria-label={label}
+  data-view-switcher
+  data-view={view}
+  data-busy={busy ? "" : undefined}
+>
+  {
+    views.map(({ id, label: tabLabel }) => (
+      <button
+        type="button"
+        class="view_switcher_tab text-style-small"
+        data-view-id={id}
+        aria-pressed={view === id}
+        disabled={busy || undefined}
+      >
+        {tabLabel}
+      </button>
+    ))
+  }
+</div>

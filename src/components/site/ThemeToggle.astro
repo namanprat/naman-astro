@@ -1,0 +1,42 @@
+---
+/**
+ * Theme switch. Markup only — `bootThemeToggles` owns the html class write
+ * and the circle tween, so every instance stays in step without a store.
+ */
+---
+
+<button
+  type="button"
+  class="nav_theme_toggle"
+  aria-pressed="false"
+  aria-label="Switch theme"
+>
+  <span class="nav_theme_toggle_label">
+    <h5 class="text-style-main">Switch theme</h5>
+  </span>
+  <svg
+    class="nav_theme_toggle_svg"
+    width="124"
+    height="73"
+    viewBox="0 0 124 73"
+    fill="none"
+    xmlns="http://www.w3.org/2000/svg"
+    aria-hidden="true"
+  >
+    <circle
+      data-theme-filled
+      cx="36.3018"
+      cy="36.3018"
+      r="33.3018"
+      fill="currentColor"
+      stroke="currentColor"
+      stroke-width="6"></circle>
+    <circle
+      data-theme-stroke
+      cx="87.4512"
+      cy="36.3018"
+      r="33.3018"
+      stroke="currentColor"
+      stroke-width="6"></circle>
+  </svg>
+</button>
