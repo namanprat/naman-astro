@@ -11,18 +11,46 @@
  * on each reset would churn the CDN for nothing.
  */
 import { createReadStream, existsSync, readdirSync, readFileSync } from "node:fs";
+import os from "node:os";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { createClient } from "@sanity/client";
 import { parse } from "yaml";
 
 const ROOT = path.join(path.dirname(fileURLToPath(import.meta.url)), "..");
-const TOKEN = process.env.SANITY_API_WRITE_TOKEN;
+
+/**
+ * The session `sanity login` already stored, so a local reset needs no token
+ * juggling — the same credential `npx sanity` uses, read from the same file.
+ *
+ * ponytail: a fallback, never an override. CI has no such file and keeps taking
+ * the env var, and the log below always names which one is in play: a script
+ * that rewrites a dataset should never leave you guessing whose keys it used.
+ */
+function cliToken() {
+  const config = path.join(os.homedir(), ".config", "sanity", "config.json");
+  if (!existsSync(config)) return undefined;
+  try {
+    return JSON.parse(readFileSync(config, "utf8")).authToken || undefined;
+  } catch {
+    return undefined;
+  }
+}
+
+const TOKEN = process.env.SANITY_API_WRITE_TOKEN ?? cliToken();
 
 if (!TOKEN) {
-  console.log("seed-sanity: SANITY_API_WRITE_TOKEN unset; skipping.");
+  console.log(
+    "seed-sanity: no SANITY_API_WRITE_TOKEN and no `sanity login`; skipping.",
+  );
   process.exit(0);
 }
+
+console.log(
+  process.env.SANITY_API_WRITE_TOKEN
+    ? "seed-sanity: using SANITY_API_WRITE_TOKEN."
+    : "seed-sanity: using your `sanity login` session.",
+);
 
 const client = createClient({
   projectId: process.env.SANITY_PROJECT_ID ?? "dj9l9mvw",
