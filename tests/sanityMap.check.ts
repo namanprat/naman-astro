@@ -29,11 +29,7 @@ const work = mapWorkProject({
   alt: "Haptic",
   featured: true,
   services: ["Brand identity", "Motion design"],
-  coverVideo: {
-    asset: {
-      url: "https://cdn.sanity.io/files/dj9l9mvw/production/reveal.webm",
-    },
-  },
+  coverVideo: "/work/haptic/haptic-reveal.webm",
   panels: [
     {
       _type: "workPanelImage",
@@ -50,35 +46,12 @@ assert.equal(work.data.title, "Haptic");
 assert.equal(work.data.website, "https://haptic.example");
 assert.equal(work.data.featured, true);
 assert.match(String(work.data.image), /cdn\.sanity\.io/);
-assert.equal(
-  work.data.coverVideo,
-  "https://cdn.sanity.io/files/dj9l9mvw/production/reveal.webm",
-);
+assert.equal(work.data.coverVideo, "/work/haptic/haptic-reveal.webm");
 assert.deepEqual(work.data.services, ["Brand identity", "Motion design"]);
 const panels = work.data.panels as { kind: string }[];
 assert.equal(panels[0]?.kind, "image");
 assert.equal(panels[1]?.kind, "text");
 
-assert.equal(
-  mapWorkProject({
-    slug: "haptic",
-    order: 1,
-    title: "Haptic",
-    description: "A tactile AI brand.",
-    image: {
-      asset: {
-        _id: "image-abc-800x600-webp",
-        url: "https://cdn.sanity.io/images/dj9l9mvw/production/abc-800x600.webp",
-      },
-    },
-    alt: "Haptic",
-    services: ["Brand identity"],
-    coverVideo: "/work/haptic/haptic-reveal.webm",
-    panels: [{ _type: "workPanelText", title: "Why this", body: "Because." }],
-  })?.data.coverVideo,
-  "/work/haptic/haptic-reveal.webm",
-  "string coverVideo paths survive mapping",
-);
 
 assert.equal(
   mapWorkProject({ slug: "x", title: "Nope" }),
@@ -147,19 +120,6 @@ assert.ok(site);
 assert.equal(site.id, "site");
 assert.equal((site.data.eyebrow as string[])[0], "Brand, web, and motion");
 assert.equal(site.data.manifesto, "We're a design practice.");
-assert.deepEqual(
-  mapSite({
-    heroNote: ["Brand, web, and motion"],
-    ...sitecopy,
-    faq,
-    process: {
-      statement: "We build brands.",
-      cards: [{ title: "Uncover", description: "Dig.", model: "1" }],
-    },
-  })?.data.eyebrow,
-  ["Brand, web, and motion"],
-  "heroNote aliases eyebrow",
-);
 assert.equal(
   mapSite({ eyebrow: ["only"] }),
   null,

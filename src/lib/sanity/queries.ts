@@ -1,7 +1,14 @@
+/**
+ * Every read the site makes, against the current schema only.
+ *
+ * ponytail: no migration fallbacks. These queries used to coalesce onto retired
+ * shapes — `heroNote` before it was `eyebrow`, standalone `faq` / `process` /
+ * `nav` / `about` documents before they folded into the home page. Each one was
+ * a branch that could quietly win, so an editor could change the real field and
+ * see nothing move. `npm run sanity:reset` rewrites the dataset into these
+ * shapes; anything older is deleted rather than read around.
+ */
 const IMAGE = /* groq */ `image { asset->{_id, url}, hotspot, crop }`;
-
-const FAQ = /* groq */ `{ statement, lead, items[]{ question, answer } }`;
-const PROCESS = /* groq */ `{ statement, cards[]{ title, description, model } }`;
 
 export const WORK_QUERY = /* groq */ `*[_type == "workProject"] | order(order asc) {
   "slug": slug.current,
@@ -11,7 +18,7 @@ export const WORK_QUERY = /* groq */ `*[_type == "workProject"] | order(order as
   website,
   ${IMAGE},
   alt,
-  "coverVideo": coalesce(coverVideo.asset->url, coverVideo),
+  coverVideo,
   coverImage { asset->{_id, url}, hotspot, crop },
   featured,
   services,
@@ -24,6 +31,7 @@ export const WORK_QUERY = /* groq */ `*[_type == "workProject"] | order(order as
   }
 }`;
 
+/** `videoPath` is a public path or CDN URL; `video` is an uploaded file. */
 export const ARCHIVE_QUERY = /* groq */ `*[_type == "archiveItem"] | order(order asc) {
   "id": slug.current,
   order,
@@ -32,37 +40,29 @@ export const ARCHIVE_QUERY = /* groq */ `*[_type == "archiveItem"] | order(order
   "videoPath": coalesce(videoPath, video.asset->url)
 }`;
 
+/**
+ * The home page, plus the two globals that live on `siteSettings`. They stay in
+ * this one collection because `mapSite` and every consumer already read them
+ * there — the split is editorial, so it belongs in the desk, not in the shapes.
+ */
 export const SITE_QUERY = /* groq */ `*[_id == "site"][0]{
-  "eyebrow": coalesce(eyebrow, heroNote),
+  eyebrow,
   manifesto,
   team { titleLines, body, ctaLabel, ctaHref },
-  preloader { locationLine, disciplineLine },
-  notFound { title, body, linkLabel },
-  "faq": coalesce(faq${FAQ}, *[_id == "faq"][0]${FAQ}),
-  "process": coalesce(process${PROCESS}, *[_id == "process"][0]${PROCESS})
+  process { statement, cards[]{ title, description, model } },
+  faq { statement, lead, items[]{ question, answer } },
+  "preloader": *[_id == "siteSettings"][0].preloader{ locationLine, disciplineLine },
+  "notFound": *[_id == "siteSettings"][0].notFound{ title, body, linkLabel }
 }`;
 
-export const ABOUT_QUERY = /* groq */ `*[_id == "about"][0]{
-  lead,
-  clients,
-  services
-}`;
+/** A section of the home page document; its own collection for the consumers. */
+export const ABOUT_QUERY = /* groq */ `*[_id == "site"][0].about{ lead, clients, services }`;
 
 export const FOOTER_QUERY = /* groq */ `*[_id == "footer"][0]{
   tagline,
   links[]{ label, path }
 }`;
 
-export const MARQUEE_QUERY = /* groq */ `coalesce(
-  *[_id == "marquee" && defined(copy)][0]{ copy, enabled },
-  *[_id == "nav"][0]{ "copy": availabilityLine, "enabled": false }
-)`;
+export const MARQUEE_QUERY = /* groq */ `*[_id == "marquee"][0]{ copy, enabled }`;
 
-export const SOCIAL_QUERY = /* groq */ `coalesce(
-  *[_id == "social" && defined(email)][0]{ email, instagram, discoveryCall },
-  *[_id == "nav"][0]{
-    "email": coalesce(email, socials[label == "Email"][0].href),
-    "instagram": socials[label == "Instagram"][0].href,
-    "discoveryCall": socials[label == "Discovery Call"][0].href
-  }
-)`;
+export const SOCIAL_QUERY = /* groq */ `*[_id == "social"][0]{ email, instagram, discoveryCall }`;

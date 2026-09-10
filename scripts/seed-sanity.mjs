@@ -1,9 +1,14 @@
 #!/usr/bin/env node
 /**
- * Upload the YAML collections and public/ media into Sanity.
+ * Rebuild the Sanity dataset from the YAML collections and public/ media.
  *
  * Requires SANITY_API_WRITE_TOKEN. Without it this exits 0 so CI/local
  * builds that only read the dataset are not blocked.
+ *
+ * Pass --fresh (npm run sanity:reset) to clear existing documents first, so the
+ * dataset holds exactly what the current schemas define. Uploaded assets are
+ * kept: Sanity refuses to remove a referenced one, and re-uploading every image
+ * on each reset would churn the CDN for nothing.
  */
 import { createReadStream, existsSync, readdirSync, readFileSync } from "node:fs";
 import path from "node:path";
@@ -141,22 +146,22 @@ async function seedSingletons() {
     eyebrow: site.eyebrow,
     manifesto: site.manifesto,
     team: site.team,
-    preloader: site.preloader,
-    notFound: site.notFound,
+    about,
+    process: {
+      statement: site.process.statement,
+      cards: keyed(site.process.cards, "process"),
+    },
     faq: {
       statement: site.faq.statement,
       lead: site.faq.lead,
       items: keyed(site.faq.items, "faq"),
     },
-    process: {
-      statement: site.process.statement,
-      cards: keyed(site.process.cards, "process"),
-    },
   });
   await client.createOrReplace({
-    _id: "about",
-    _type: "about",
-    ...about,
+    _id: "siteSettings",
+    _type: "siteSettings",
+    preloader: site.preloader,
+    notFound: site.notFound,
   });
   await client.createOrReplace({
     _id: "footer",
@@ -181,7 +186,35 @@ async function seedSingletons() {
   console.log("seed-sanity: singletons");
 }
 
+/**
+ * Clear every document that is not an uploaded asset, drafts included, so a
+ * reset lands exactly what the current schemas define and nothing older.
+ *
+ * ponytail: matched by what to keep, not by a list of retired type names. Such
+ * a list is itself the thing that rots — it has to be extended by whoever
+ * retires the next type, and the one they forget is the one that goes on
+ * answering a query. `sanity.*` covers assets and system documents; every other
+ * document is written back from YAML on the lines below.
+ */
+async function clearDocuments() {
+  const query = '*[!(_type match "sanity.*")]';
+  const docs = await client.fetch(`${query}{_id, _type}`);
+  if (!docs.length) {
+    console.log("seed-sanity: nothing to clear.");
+    return;
+  }
+  for (const doc of docs) {
+    console.log(`seed-sanity: clear ${doc._id} (${doc._type})`);
+  }
+  await client.delete({ query });
+  console.log(`seed-sanity: cleared ${docs.length} document(s).`);
+}
+
+// Clear first so a reset cannot leave a half-migrated document behind, then
+// write every collection back from the YAML that is the source of truth.
+if (process.argv.includes("--fresh")) await clearDocuments();
 await seedWork();
 await seedArchive();
 await seedSingletons();
+if (process.argv.includes("--prune")) await pruneRetired();
 console.log("seed-sanity: done");

@@ -67,14 +67,23 @@ const footerLink = defineArrayMember({
   preview: { select: { title: "label", subtitle: "path" } },
 });
 
+/**
+ * Every section the home page renders, in the order it renders them: hero note,
+ * manifesto, team, about, process, FAQ.
+ *
+ * ponytail: the type stays `site` and the document stays `_id: "site"`. Renaming
+ * either orphans every published document for the sake of a label — the title is
+ * the only thing an editor ever sees.
+ */
 export const site = defineType({
   name: "site",
-  title: "Homepage",
+  title: "Home page",
   type: "document",
   fieldsets: [
     { name: "sitecopy", title: "Sitecopy", options: { collapsible: false } },
-    { name: "faq", title: "FAQ", options: { collapsible: false } },
+    { name: "about", title: "About", options: { collapsible: false } },
     { name: "process", title: "Process", options: { collapsible: false } },
+    { name: "faq", title: "FAQ", options: { collapsible: false } },
   ],
   fields: [
     defineField({
@@ -130,48 +139,51 @@ export const site = defineType({
       validation: (rule) => rule.required(),
     }),
     defineField({
-      name: "preloader",
-      title: "Preloader",
+      name: "about",
+      title: "About",
       type: "object",
-      fieldset: "sitecopy",
+      fieldset: "about",
+      description: "Feeds the /#about overlay and the /about phone route.",
       fields: [
         defineField({
-          name: "locationLine",
-          title: "Location line",
-          type: "string",
+          name: "lead",
+          type: "text",
+          rows: 4,
           validation: (rule) => rule.required(),
         }),
         defineField({
-          name: "disciplineLine",
-          title: "Discipline line",
-          type: "string",
-          validation: (rule) => rule.required(),
+          name: "clients",
+          type: "array",
+          of: [{ type: "string" }],
+          validation: (rule) => rule.required().min(1),
+        }),
+        defineField({
+          name: "services",
+          type: "array",
+          of: [{ type: "string" }],
+          options: { list: [...WORK_SERVICES] },
+          initialValue: [...WORK_SERVICES],
         }),
       ],
       validation: (rule) => rule.required(),
     }),
     defineField({
-      name: "notFound",
-      title: "404",
+      name: "process",
+      title: "Process",
       type: "object",
-      fieldset: "sitecopy",
+      fieldset: "process",
       fields: [
         defineField({
-          name: "title",
-          type: "string",
-          validation: (rule) => rule.required(),
-        }),
-        defineField({
-          name: "body",
+          name: "statement",
           type: "text",
           rows: 3,
           validation: (rule) => rule.required(),
         }),
         defineField({
-          name: "linkLabel",
-          title: "Link label",
-          type: "string",
-          validation: (rule) => rule.required(),
+          name: "cards",
+          type: "array",
+          of: [processCard],
+          validation: (rule) => rule.required().min(1),
         }),
       ],
       validation: (rule) => rule.required(),
@@ -202,30 +214,66 @@ export const site = defineType({
       ],
       validation: (rule) => rule.required(),
     }),
+  ],
+  preview: {
+    prepare: () => ({ title: "Home page" }),
+  },
+});
+
+/** Copy that belongs to the site rather than to any one page. */
+export const siteSettings = defineType({
+  name: "siteSettings",
+  title: "Site settings",
+  type: "document",
+  fields: [
     defineField({
-      name: "process",
-      title: "Process",
+      name: "preloader",
+      title: "Preloader",
       type: "object",
-      fieldset: "process",
       fields: [
         defineField({
-          name: "statement",
+          name: "locationLine",
+          title: "Location line",
+          type: "string",
+          validation: (rule) => rule.required(),
+        }),
+        defineField({
+          name: "disciplineLine",
+          title: "Discipline line",
+          type: "string",
+          validation: (rule) => rule.required(),
+        }),
+      ],
+      validation: (rule) => rule.required(),
+    }),
+    defineField({
+      name: "notFound",
+      title: "404",
+      type: "object",
+      fields: [
+        defineField({
+          name: "title",
+          type: "string",
+          validation: (rule) => rule.required(),
+        }),
+        defineField({
+          name: "body",
           type: "text",
           rows: 3,
           validation: (rule) => rule.required(),
         }),
         defineField({
-          name: "cards",
-          type: "array",
-          of: [processCard],
-          validation: (rule) => rule.required().min(1),
+          name: "linkLabel",
+          title: "Link label",
+          type: "string",
+          validation: (rule) => rule.required(),
         }),
       ],
       validation: (rule) => rule.required(),
     }),
   ],
   preview: {
-    prepare: () => ({ title: "Homepage" }),
+    prepare: () => ({ title: "Site settings" }),
   },
 });
 
@@ -302,35 +350,5 @@ export const footer = defineType({
   ],
   preview: {
     prepare: () => ({ title: "Footer" }),
-  },
-});
-
-export const about = defineType({
-  name: "about",
-  title: "About",
-  type: "document",
-  fields: [
-    defineField({
-      name: "lead",
-      type: "text",
-      rows: 4,
-      validation: (rule) => rule.required(),
-    }),
-    defineField({
-      name: "clients",
-      type: "array",
-      of: [{ type: "string" }],
-      validation: (rule) => rule.required().min(1),
-    }),
-    defineField({
-      name: "services",
-      type: "array",
-      of: [{ type: "string" }],
-      options: { list: [...WORK_SERVICES] },
-      initialValue: [...WORK_SERVICES],
-    }),
-  ],
-  preview: {
-    prepare: () => ({ title: "About" }),
   },
 });

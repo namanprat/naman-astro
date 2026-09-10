@@ -20,7 +20,7 @@ export type RawWorkProject = {
   website?: string;
   image?: SanityImage;
   alt?: string;
-  coverVideo?: string | FileAsset;
+  coverVideo?: string;
   coverImage?: SanityImage;
   featured?: boolean;
   services?: string[];
@@ -66,7 +66,6 @@ export type RawNotFound = {
 
 export type RawSite = {
   eyebrow?: string[];
-  heroNote?: string[];
   manifesto?: string;
   team?: RawTeam;
   preloader?: RawPreloader;
@@ -101,7 +100,7 @@ function asWorkService(value: string): WorkService | null {
   return WORK_SERVICE_SET.has(value) ? (value as WorkService) : null;
 }
 
-/** Studio used to store videos as `file` assets; live docs also hold string paths. */
+/** Archive holds either a `videoPath` string or an uploaded `video` file. */
 function fileOrStringUrl(
   value: string | FileAsset | undefined,
 ): string | undefined {
@@ -147,7 +146,7 @@ export function mapWorkProject(
   if (!services.length || !panels.length || typeof doc.order !== "number") {
     return null;
   }
-  const coverVideo = fileOrStringUrl(doc.coverVideo);
+  const coverVideo = requiredString(doc.coverVideo);
   const coverImage = imageUrl(doc.coverImage, 1800);
   const website = requiredString(doc.website);
   return {
@@ -270,7 +269,7 @@ export function mapSite(
   doc: RawSite | null | undefined,
 ): { id: string; data: Record<string, unknown> } | null {
   if (!doc) return null;
-  const eyebrow = requiredList(doc.eyebrow ?? doc.heroNote);
+  const eyebrow = requiredList(doc.eyebrow);
   const manifesto = requiredString(doc.manifesto);
   const team = mapTeam(doc.team);
   const preloader = mapPreloader(doc.preloader);

@@ -1,5 +1,5 @@
 import { archiveItem } from "./archiveItem";
-import { about, footer, marquee, site, social } from "./singletons";
+import { footer, marquee, site, siteSettings, social } from "./singletons";
 import { workPanelImage, workPanelText, workProject } from "./workProject";
 
 export const schemaTypes = [
@@ -11,5 +11,5 @@ export const schemaTypes = [
   marquee,
   social,
   footer,
-  about,
+  siteSettings,
 ];

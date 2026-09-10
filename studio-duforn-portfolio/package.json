@@ -1,6 +1,7 @@
 {
   "name": "studio-duforn-portfolio",
   "private": true,
+  "type": "module",
   "version": "1.0.0",
   "license": "UNLICENSED",
   "engines": {

@@ -18,6 +18,7 @@
     "format": "prettier --write .",
     "studio": "npm run dev --prefix studio-duforn-portfolio",
     "sanity:seed": "node scripts/seed-sanity.mjs",
+    "sanity:reset": "node scripts/seed-sanity.mjs --fresh",
     "test:unit": "node scripts/run-checks.mjs",
     "test:e2e": "playwright test"
   },

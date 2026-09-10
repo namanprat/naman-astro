@@ -13,7 +13,7 @@ export const SINGLETON_TYPES = [
   "marquee",
   "social",
   "footer",
-  "about",
+  "siteSettings",
 ] as const;
 
 export type SingletonType = (typeof SINGLETON_TYPES)[number];
@@ -24,5 +24,5 @@ export const SINGLETON_IDS = {
   marquee: "marquee",
   social: "social",
   footer: "footer",
-  about: "about",
+  siteSettings: "siteSettings",
 } as const satisfies Record<SingletonType, string>;
